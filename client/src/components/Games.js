@@ -1,0 +1,15 @@
+import { Link } from 'react-router-dom'
+
+export default function Games() {
+
+
+
+
+    return (
+        <>
+            <Link to='/baseballweekly'>
+                <button>Baseball weekly pick em</button>
+            </Link>
+        </>
+    )
+}
