@@ -34,8 +34,8 @@ export default function BaseballWeeklyPicks() {
                 // })
                 // console.log(pickSet)
                 let i = 0
-                for (i = 0; i < response.data.length; i++) {
-                    for (const [key, value] of Object.entries(response.data)) {
+                for (i = 0; i < 4; i++) {
+                    for (const [key, value] of Object.entries(response.data[i])) {
                         if (key.includes("game")) {
                             setBwPicks(response.data)
                             console.log(response.data)
