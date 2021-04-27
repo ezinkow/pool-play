@@ -43,7 +43,7 @@ export default function BaseballWeekly() {
       const newArray = picks
       newArray.push({ id, value, className })
       setPicks(newArray)
-      console.log('picks', picks)
+      console.log('picks', picks, name)
     }
   }
 

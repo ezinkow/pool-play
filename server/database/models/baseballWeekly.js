@@ -11,63 +11,63 @@ const BaseballWeeklySchema = new Schema({
         type: String,
         required: true
     },
-    game1: {
+    1: {
         type: String,
         required: true
     },
-    game2: {
+    2: {
         type: String,
         required: true
     },
-    game3: {
+    3: {
         type: String,
         required: true
     },
-    game4: {
+    4: {
         type: String,
         required: true
     },
-    game5: {
+    5: {
         type: String,
         required: true
     },
-    game6: {
+    6: {
         type: String,
         required: true
     },
-    game7: {
+    7: {
         type: String,
         required: true
     },
-    game8: {
+    8: {
         type: String,
         required: true
     },
-    game9: {
+    9: {
         type: String,
         required: true
     },
-    game10: {
+    10: {
         type: String,
         required: true
     },
-    game11: {
+    11: {
         type: String,
         required: true
     },
-    game12: {
+    12: {
         type: String,
         required: true
     },
-    game13: {
+    13: {
         type: String,
         required: true
     },
-    game14: {
+    14: {
         type: String,
         required: true
     },
-    // game15: {
+    // 15: {
     //     type: String,
     //     required: true
     // },
