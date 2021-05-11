@@ -33,9 +33,11 @@ export default function BaseballWeekly() {
 
   function handleChange(event) {
     const { id, value, className } = event.target
+    console.log(event)
     console.log(id, value, className)
     if (picks.find(findClass => findClass.className === className) !== undefined) {
       const foundObj = picks.find((findClass => findClass.className === className))
+      console.log(foundObj)
       const i = picks.indexOf(foundObj)
       picks[i] = { id, value, className }
       console.log('picks', picks)
@@ -88,13 +90,13 @@ export default function BaseballWeekly() {
             {baseballWeekly.map((game) => (
               < TableRow key={game.id} >
                 <TableCell align="right">
-                  <input type="radio" id={`${game.id}a`} className={game.id} name={`${game.id}radio`} value={game.away} onChange={handleChange} />
+                  <input type="radio" id={`${game.id}a`} className={game.id} name={`${game.id}radio`} value={game.away} opponent={game.home} game={`${game.away} at ${game.home}`} onChange={handleChange} />
                   <label htmlFor={`${game.id}a`}>{game.away} ({game.line})</label>
                 </TableCell>
                 <TableCell align="center">@</TableCell>
                 <TableCell align="left">
                   <label htmlFor={`${game.id}h`}>{game.home} ({game.line})</label>
-                  <input type="radio" id={`${game.id}h`} className={game.id} name={`${game.id}radio`} value={game.home} onChange={handleChange} />
+                  <input type="radio" id={`${game.id}h`} className={game.id} name={`${game.id}radio`} value={game.home} opponent={game.away} game={`${game.away} at ${game.home}`} onChange={handleChange} />
                 </TableCell>
                 <TableCell align="left">
                   <label htmlFor={`${game.id}n`}>No Pick</label>

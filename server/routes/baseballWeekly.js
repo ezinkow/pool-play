@@ -50,29 +50,33 @@ router.get('/user/jobs', (req, res) => {
 
 // Creates a new pickset
 router.post('/baseballweekly', (req, res) => {
-    const {name, picks} = req.body
+    const { name, picks } = req.body
     console.log(name, picks[0].value)
-    BaseballWeekly.create({
-        name: name,
-        game1: picks[0].value,
-        game2: picks[1].value,
-        game3: picks[2].value,
-        game4: picks[3].value,
-        game5: picks[4].value,
-        game6: picks[5].value,
-        game7: picks[6].value,
-        game8: picks[7].value,
-        game9: picks[8].value,
-        game10: picks[9].value,
-        game11: picks[10].value,
-        game12: picks[11].value,
-        game13: picks[12].value,
-        game14: picks[13].value,
+    BaseballWeekly.create([
+        { name: name },
+        {
+            game: game,
+            pick: picks[0].value,
+            id: picks[0].id
+        },
+        // game2: picks[1].value,
+        // game3: picks[2].value,
+        // game4: picks[3].value,
+        // game5: picks[4].value,
+        // game6: picks[5].value,
+        // game7: picks[6].value,
+        // game8: picks[7].value,
+        // game9: picks[8].value,
+        // game10: picks[9].value,
+        // game11: picks[10].value,
+        // game12: picks[11].value,
+        // game13: picks[12].value,
+        // game14: picks[13].value,
         // game15: picks[14].value
-    })
-        .then((book) => {
-            console.log(book);
-            res.send(book);
+    ])
+        .then((picks) => {
+            console.log(picks);
+            res.send(picks);
         });
 })
 
