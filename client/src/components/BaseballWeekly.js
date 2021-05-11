@@ -33,8 +33,8 @@ export default function BaseballWeekly() {
 
   function handleChange(event) {
     const { id, value, className } = event.target
-    console.log(event)
-    console.log(id, value, className)
+    const game = event.target.attributes[5].value
+    console.log(id, value, className, game)
     if (picks.find(findClass => findClass.className === className) !== undefined) {
       const foundObj = picks.find((findClass => findClass.className === className))
       console.log(foundObj)
@@ -43,7 +43,7 @@ export default function BaseballWeekly() {
       console.log('picks', picks)
     } else {
       const newArray = picks
-      newArray.push({ id, value, className })
+      newArray.push({ game, id, value, className })
       setPicks(newArray)
       console.log('picks', picks, name)
     }

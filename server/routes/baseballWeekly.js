@@ -53,11 +53,12 @@ router.post('/baseballweekly', (req, res) => {
     const { name, picks } = req.body
     console.log(name, picks[0].value)
     BaseballWeekly.create([
-        { name: name },
+        name,
         {
-            game: game,
+            game: picks[0].game,
+            id: picks[0].id,
             pick: picks[0].value,
-            id: picks[0].id
+            class: picks[0].className
         },
         // game2: picks[1].value,
         // game3: picks[2].value,
