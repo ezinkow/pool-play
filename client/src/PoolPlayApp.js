@@ -10,8 +10,8 @@ import {
   Switch,
   Route,
 } from "react-router-dom";
-
-
+import NbaPlayoffs21 from './components/NbaPlayoffs21';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
   return (
@@ -27,6 +27,9 @@ function App() {
             </Route>
             <Route path="/baseballweeklypicks">
               <BaseballWeeklyPicks />
+            </Route>
+            <Route path="/nbaplayoffs21">
+              <NbaPlayoffs21 />
             </Route>
             <Route path="/">
               <Games />

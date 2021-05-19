@@ -51,14 +51,20 @@ router.get('/user/jobs', (req, res) => {
 // Creates a new pickset
 router.post('/baseballweekly', (req, res) => {
     const { name, picks } = req.body
-    console.log(name, picks[0].value)
+    console.log('submitttttttt', name, picks[0].game)
     BaseballWeekly.create([
-        name,
+        {name},
         {
             game: picks[0].game,
             id: picks[0].id,
-            pick: picks[0].value,
-            class: picks[0].className
+            value: picks[0].value,
+            className: picks[0].className
+        },
+        {
+            game: picks[1].game,
+            id: picks[1].id,
+            value: picks[1].value,
+            className: picks[1].className
         },
         // game2: picks[1].value,
         // game3: picks[2].value,
