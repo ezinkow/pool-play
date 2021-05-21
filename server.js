@@ -12,6 +12,7 @@ const app = express();
 const user = require('./server/routes/user')
 const baseballWeekly = require('./server/routes/baseballWeekly')
 const bw051021 = require('./server/routes/bw051021')
+const nbaPlayoffs21 = require('./server/routes/nbaPlayoffs21')
 const send_sms = require('./server/routes/send_sms')
 
 // MIDDLEWARE
@@ -38,6 +39,7 @@ if (process.env.NODE_ENV === "production") {
 // routes
 app.use('/user', user)
 app.use('/api', baseballWeekly)
+app.use('/api', nbaPlayoffs21)
 // app.use('/api', bw051021)
 // app.use('/sms', send_sms)
 

@@ -1,19 +1,27 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-const nbaPlayoffs21Schema = new Schema({
+const NbaPlayoffs21Schema = new Schema({
 
     name: {
         type: String,
-        required: true
+        // required: true
     },
-    game: {
-        type: String,
-        required: true
-    },
-    1: {
-        
-    }
+    picks: [{
+        teamName: {
+            type: String,
+            // required: true
+        },
+        points: {
+            type: Number,
+            // required: true
+        },
+        games: {
+            type: Number,
+            // required: true
+        }
+    }]
 })
 
-const nbaPlayoffs21 = mongoose.model('nbaPlayoffs21', nbaPlayoffs21Schema)
+const NbaPlayoffs21 = mongoose.model('NbaPlayoffs21', NbaPlayoffs21Schema)
+module.exports = NbaPlayoffs21;
