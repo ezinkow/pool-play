@@ -75,8 +75,6 @@ export default function NbaPlayoffs21() {
         update team name of found object
         setPicks with all old picks + updated pick
         */
-
-
         if (picks.find(id => id.id === event.target.name) !== undefined) {
             const foundObj = picks.find(pick => pick.id === event.target.name)
             const i = picks.indexOf(foundObj)
@@ -84,6 +82,13 @@ export default function NbaPlayoffs21() {
             const picksArray = picks.slice()
             picksArray[i] = updatedPick
             setPicks(picksArray)
+            if (foundObj.points !== undefined) {
+                let { points } = event.target
+                let resetPoints = totalPoints - foundObj.points
+                let newPoints = resetPoints + points
+                setTotalPoints(newPoints)
+                console.log('test')
+            }
         } else {
             const newArray = picks.slice()
             newArray.push({ teamName, id })
@@ -103,9 +108,7 @@ export default function NbaPlayoffs21() {
             const picksArray = picks.slice()
             picksArray[i] = updatedPick
             setPicks(picksArray)
-            let resetPoints = totalPoints - foundObj.points
-            let newPoints = resetPoints + points
-            setTotalPoints(newPoints)
+            console.log(foundObj.points)
         } else {
             const newArray = picks.slice()
             newArray.push({ points, id })
