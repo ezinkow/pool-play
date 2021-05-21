@@ -15,14 +15,9 @@ router.get('/nbaplayoffs21', function (req, res) {
 
 // Post picks
 router.post('/nbaplayoffs21', (req, res) => {
-    const { name, picks } = req.body
-    console.log(name, picks)
-    NbaPlayoffs21.create([
-        {name},   
-        {
-            picks:[picks]
-        }
-    ])
+    const newPicks = req.body
+    console.log(newPicks)
+    NbaPlayoffs21.create(newPicks)
     .then((picks)=>{
         console.log(picks)
         res.send(picks)

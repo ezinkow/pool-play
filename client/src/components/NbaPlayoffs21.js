@@ -51,6 +51,7 @@ export default function NbaPlayoffs21() {
     const classes = useStyles();
     const [name, setName] = useState("")
     const [picks, setPicks] = useState([])
+    const [totalPoints, setTotalPoints] = useState(0)
     // const [teamName, setTeamName] = useState("");
     // const [points, setPoints] = useState("")
     // const [games, setGames] = useState("")
@@ -59,7 +60,7 @@ export default function NbaPlayoffs21() {
     const handleNameChange = (event) => {
         setName(event.target.value)
     }
-    //find series by id in picks array and update it. if is undefined, push new object
+
     const handlePickChange = (event) => {
         console.log(event.target)
         const { value, name } = event.target
@@ -102,11 +103,15 @@ export default function NbaPlayoffs21() {
             const picksArray = picks.slice()
             picksArray[i] = updatedPick
             setPicks(picksArray)
+            let resetPoints = totalPoints - foundObj.points
+            let newPoints = resetPoints + points
+            setTotalPoints(newPoints)
         } else {
             const newArray = picks.slice()
             newArray.push({ points, id })
             console.log('new array', newArray)
             setPicks(newArray)
+            setTotalPoints(points + totalPoints)
         }
     };
 
@@ -130,13 +135,13 @@ export default function NbaPlayoffs21() {
         }
     };
 
-    function handleSubmit(event) {
+    function handleClick(event) {
         event.preventDefault()
+        console.log("submit", picks)
         axios.post('/api/nbaplayoffs21', {
             name,
             picks
         })
-        console.log("submit", picks)
         setName("")
         setPicks([])
 
@@ -158,7 +163,7 @@ export default function NbaPlayoffs21() {
                         <TableRow>
                             <TableCell>Game</TableCell>
                             <TableCell>Pick</TableCell>
-                            <TableCell>Confidence Points</TableCell>
+                            <TableCell>Confidence Points (Must equal 32:{totalPoints})</TableCell>
                             <TableCell>Number of Games</TableCell>
                         </TableRow>
                     </TableHead>
@@ -234,7 +239,7 @@ export default function NbaPlayoffs21() {
                 </Table>
             </TableContainer>
             <div className={classes.root}>
-                <Button variant="contained" onClick={handleSubmit}>Submit</Button>
+                <Button variant="contained" onClick={handleClick}>Submit</Button>
             </div>
         </>
     );
