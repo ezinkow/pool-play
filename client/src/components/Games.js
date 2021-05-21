@@ -10,6 +10,9 @@ export default function Games() {
             <Link to='/baseballweekly'>
                 <button>Baseball weekly pick em</button>
             </Link>
+            <Link to='/nbaplayoffs21'>
+                <button>NBA Playoffs 2021</button>
+            </Link>
         </>
     )
 }

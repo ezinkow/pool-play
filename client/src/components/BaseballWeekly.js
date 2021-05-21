@@ -39,11 +39,12 @@ export default function BaseballWeekly() {
       const foundObj = picks.find((findClass => findClass.className === className))
       console.log(foundObj)
       const i = picks.indexOf(foundObj)
-      picks[i] = { id, value, className }
+      picks[i] = { game, id, value, className }
       console.log('picks', picks)
     } else {
-      const newArray = picks
+      const newArray = picks.slice()
       newArray.push({ game, id, value, className })
+      console.log('new array', newArray)
       setPicks(newArray)
       console.log('picks', picks, name)
     }
@@ -56,9 +57,10 @@ export default function BaseballWeekly() {
   function handleSubmit(event) {
     event.preventDefault()
     axios.post('/api/baseballweekly', {
-      name: name,
-      picks: picks
+      name,
+      picks
     })
+    console.log("submit", picks)
     setName("")
     setPicks([])
     

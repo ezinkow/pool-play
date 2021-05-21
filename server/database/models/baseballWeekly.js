@@ -9,23 +9,15 @@ const BaseballWeeklySchema = new Schema({
     // },
     name: {
         type: String,
-        required: true
+        // required: true
     },
-    game: {
+    pick: {
         type: String,
-        required: true
+        // required: true
     },
-    id: {
-        type: String,
-        required: true
-    },
-    value: {
-        type: String,
-        required: true
-    },
-    className: {
+    class: {
         type: Number,
-        required: true
+        // required: true
     }
     // 2: {
     //     type: String,
