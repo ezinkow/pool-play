@@ -82,13 +82,6 @@ export default function NbaPlayoffs21() {
             const picksArray = picks.slice()
             picksArray[i] = updatedPick
             setPicks(picksArray)
-            if (foundObj.points !== undefined) {
-                let { points } = event.target
-                let resetPoints = totalPoints - foundObj.points
-                let newPoints = resetPoints + points
-                setTotalPoints(newPoints)
-                console.log('test')
-            }
         } else {
             const newArray = picks.slice()
             newArray.push({ teamName, id })
@@ -108,7 +101,13 @@ export default function NbaPlayoffs21() {
             const picksArray = picks.slice()
             picksArray[i] = updatedPick
             setPicks(picksArray)
-            console.log(foundObj.points)
+            if (foundObj.points == undefined) {
+                setTotalPoints(points + totalPoints)
+            } else {
+                let resetPoints = totalPoints - foundObj.points
+                let newPoints = resetPoints + points
+                setTotalPoints(newPoints)
+            }
         } else {
             const newArray = picks.slice()
             newArray.push({ points, id })
@@ -166,7 +165,7 @@ export default function NbaPlayoffs21() {
                         <TableRow>
                             <TableCell>Game</TableCell>
                             <TableCell>Pick</TableCell>
-                            <TableCell>Confidence Points (Must equal 32:{totalPoints})</TableCell>
+                            <TableCell>Confidence Points (Must equal 32: {totalPoints})</TableCell>
                             <TableCell>Number of Games</TableCell>
                         </TableRow>
                     </TableHead>
