@@ -93,7 +93,6 @@ export default function NbaPlayoffs21() {
         const { value, name } = event.target
         const points = value
         const id = name
-        // setPoints(event.target.value)
         if (picks.find(id => id.id === event.target.name) !== undefined) {
             const foundObj = picks.find(id => id.id === event.target.name)
             const i = picks.indexOf(foundObj)

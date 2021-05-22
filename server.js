@@ -31,8 +31,13 @@ if (process.env.NODE_ENV === "production") {
   
   // Connect to the Mongo DB
   mongoose.connect(
-	process.env.MONGODB_URI || "mongodb://localhost/pool-play",
-	{ useUnifiedTopology: true, useNewUrlParser: true, useCreateIndex: true }
+	process.env.MONGODB_URI || 'mongodb://localhost/pool-play',
+	{
+	  useNewUrlParser: true,
+	  useUnifiedTopology: true,
+	  useCreateIndex: true,
+	  useFindAndModify: false
+	}
   );
 
 
