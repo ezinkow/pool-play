@@ -40,7 +40,7 @@ const useStyles = makeStyles((theme) => ({
     },
     container: {
         minHeight: 300,
-        backgroundColor: 'yellow'
+        backgroundColor: 'lightGray'
     },
     select: {
         maxHeight: '30px'
