@@ -75,7 +75,7 @@ export default function NbaPlayoffs21() {
         update team name of found object
         setPicks with all old picks + updated pick
         */
-        if (picks.find(id => id.id === event.target.name) !== undefined) {
+        if (picks.find(pick => pick.id === event.target.name) !== undefined) {
             const foundObj = picks.find(pick => pick.id === event.target.name)
             const i = picks.indexOf(foundObj)
             const updatedPick = { ...foundObj, teamName }
@@ -93,8 +93,8 @@ export default function NbaPlayoffs21() {
         const { value, name } = event.target
         const points = value
         const id = name
-        if (picks.find(id => id.id === event.target.name) !== undefined) {
-            const foundObj = picks.find(id => id.id === event.target.name)
+        if (picks.find(pick => pick.id === event.target.name) !== undefined) {
+            const foundObj = picks.find(pick => pick.id === event.target.name)
             const i = picks.indexOf(foundObj)
             const updatedPick = { ...foundObj, points }
             const picksArray = picks.slice()
@@ -121,8 +121,8 @@ export default function NbaPlayoffs21() {
         let games = value
         const id = name
         // setGames(event.target.value)
-        if (picks.find(id => id.id === event.target.name) !== undefined) {
-            const foundObj = picks.find(id => id.id === event.target.name)
+        if (picks.find(pick => pick.id === event.target.name) !== undefined) {
+            const foundObj = picks.find(pick => pick.id === event.target.name)
             const i = picks.indexOf(foundObj)
             const updatedPick = { ...foundObj, games }
             const picksArray = picks.slice()
