@@ -6,6 +6,7 @@ const picksSchema = {
     teamName: String,
     points: Number,
     games: Number,
+    series: String
 }
 
 const NbaPlayoffs21Schema = new Schema({

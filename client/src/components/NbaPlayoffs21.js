@@ -44,33 +44,32 @@ const useStyles = makeStyles((theme) => ({
     },
     select: {
         maxHeight: '30px'
+    },
+    viewPicksBtn: {
+        // marginLeft: '5000px'
+        display: 'none'
     }
 }));
 
 export default function NbaPlayoffs21() {
     const classes = useStyles();
-    const [name, setName] = useState("")
+    const [userName, setUserName] = useState("")
     const [picks, setPicks] = useState([])
     const [totalPoints, setTotalPoints] = useState(0)
-    // const [teamName, setTeamName] = useState("");
-    // const [points, setPoints] = useState("")
-    // const [games, setGames] = useState("")
-
 
     const handleNameChange = (event) => {
-        setName(event.target.value)
+        setUserName(event.target.value)
+        console.log(userName)
     }
 
     const handlePickChange = (event) => {
-        console.log(event.target)
+        // console.log(event.target)
         const { value, name } = event.target
         const teamName = value
         const id = name
-        console.log(event.target)
-        // setTeamName(event.target.value)
         /*
         when user selects a drop down, either add the new team name or change it
-
+        
         find the object
         update team name of found object
         setPicks with all old picks + updated pick
@@ -78,13 +77,19 @@ export default function NbaPlayoffs21() {
         if (picks.find(pick => pick.id === event.target.name) !== undefined) {
             const foundObj = picks.find(pick => pick.id === event.target.name)
             const i = picks.indexOf(foundObj)
-            const updatedPick = { ...foundObj, teamName }
+            let seriesObj = nbaPlayoffs21.find(srs => srs.id === event.target.name)
+            let series = `${seriesObj.lowSeed} vs ${seriesObj.highSeed}`
+            console.log(series)
+            const updatedPick = { ...foundObj, teamName, series }
             const picksArray = picks.slice()
             picksArray[i] = updatedPick
             setPicks(picksArray)
+            console.log("TEST", picks)
         } else {
             const newArray = picks.slice()
-            newArray.push({ teamName, id })
+            let seriesObj = nbaPlayoffs21.find(srs => srs.id === event.target.name)
+            let series = `${seriesObj.lowSeed} vs ${seriesObj.highSeed}`
+            newArray.push({ teamName, id, series })
             setPicks(newArray)
         }
     };
@@ -110,7 +115,7 @@ export default function NbaPlayoffs21() {
         } else {
             const newArray = picks.slice()
             newArray.push({ points, id })
-            console.log('new array', newArray)
+            // console.log('new array', newArray)
             setPicks(newArray)
             setTotalPoints(points + totalPoints)
         }
@@ -131,26 +136,34 @@ export default function NbaPlayoffs21() {
         } else {
             const newArray = picks.slice()
             newArray.push({ games, id })
-            console.log('new array', newArray)
+            // console.log('new array', newArray)
             setPicks(newArray)
         }
     };
 
-    function handleClick(event) {
-        event.preventDefault()
-        console.log("submit", picks)
+    function handleSubmitClick(event) {
+        // event.preventDefault()
+        // console.log("submit", picks)
         axios.post('/api/nbaplayoffs21', {
-            name,
+            name: userName,
             picks
         })
-        setName("")
+        setUserName("")
         setPicks([])
+        // console.log(event.target)
+        // document.getElementById('picksBtn').classlist.remove('hide');
 
     }
+
+    // function handlePicksViewClick(){
+    //     console.log('clik')
+    // }
 
     useEffect(() => {
         console.log(picks)
     }, [picks])
+
+    const val = picks.teamName !== undefined ? picks.teamName : ''
 
 
     return (
@@ -174,13 +187,13 @@ export default function NbaPlayoffs21() {
                                 <TableCell align="left">{series.highSd} {series.highSeed} vs {series.lowSd} {series.lowSeed}</TableCell>
                                 <TableCell align="left">
                                     <FormControl letiant="outlined" className={classes.formControl}>
-                                        <InputLabel id="demo-simple-select-outlined-label">Pick</InputLabel>
+                                        <InputLabel id="teamPicks" key={series.id}>Pick</InputLabel>
                                         <Select
                                             className={classes.select}
                                             labelId='a'
                                             onChange={handlePickChange}
                                             name={series.id}
-                                        // value={picks}
+                                            // value={picks.teamName}
                                         // id={pick}
                                         // label="test"
                                         >
@@ -194,13 +207,13 @@ export default function NbaPlayoffs21() {
                                 </TableCell>
                                 <TableCell>
                                     <FormControl letiant="outlined" className={classes.formControl}>
-                                        <InputLabel id="demo-simple-select-outlined-label">Points</InputLabel>
+                                        <InputLabel id="points" key={series.id}>Points</InputLabel>
                                         <Select
                                             className={classes.select}
                                             labelId='a'
                                             name={series.id}
                                             onChange={handleConfidencePointsChange}
-                                        // value={picks}
+                                            // value={picks.points}
                                         // id={series.id}
                                         // label="Pick"
                                         >
@@ -219,13 +232,13 @@ export default function NbaPlayoffs21() {
                                 </TableCell>
                                 <TableCell>
                                     <FormControl letiant="outlined" className={classes.formControl}>
-                                        <InputLabel id="demo-simple-select-outlined-label">Games</InputLabel>
+                                        <InputLabel id="games" key={series.id}>Games</InputLabel>
                                         <Select
                                             className={classes.select}
                                             labelId='a'
                                             name={series.id}
                                             onChange={handleGamesChange}
-                                        // value={picks}
+                                            // value={picks.games}
                                         >
                                             <MenuItem value={4}>4</MenuItem>
                                             <MenuItem value={5}>5</MenuItem>
@@ -240,7 +253,8 @@ export default function NbaPlayoffs21() {
                 </Table>
             </TableContainer>
             <div className={classes.root}>
-                <Button variant="contained" onClick={handleClick}>Submit</Button>
+                <Button variant="contained" onClick={handleSubmitClick}>Submit</Button>
+                {/* <Button variant="contained" onClick={handlePicksViewClick} className={classes.viewPicksBtn} id='picksBtn'>View Picks</Button> */}
             </div>
         </>
     );
