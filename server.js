@@ -114,7 +114,7 @@ const db = require("./models");
 
 // { alter: true } will update tables to match your models without dropping data
 // { force: false } ensures it doesn't delete your data on every restart
-db.sequelize.sync({ force: false, alter: false }).then(() => {
+db.sequelize.sync({ force: true, alter: true }).then(() => {
   app.listen(PORT, () => {
     console.log(`App listening on PORT ${PORT}`);
   });
