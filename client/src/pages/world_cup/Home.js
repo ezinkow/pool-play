@@ -98,14 +98,14 @@ export default function Home() {
             Pick match outcomes across the complete group stage schedule 🌎
           </Link>
 
-          <Link to={alreadyIn ? "/worldcup/picks" : "/worldcup/signup"} className="step step-link">
+          <Link to={alreadyIn ? "/worldcup/grouppicks" : "/worldcup/signup"} className="step step-link">
             <span>2) </span>
             Earn points (1 for win selections, 2 for drawing selections) 🥅
           </Link>
 
-          <Link to={alreadyIn ? "/worldcup/scoreboard" : "/worldcup/signup"} className="step step-link">
+          <Link to={alreadyIn ? "/worldcup/standings" : "/worldcup/signup"} className="step step-link">
             <span>3) </span>
-            Climb the live matrix leaderboards 🏆
+            Climb the leaderboard 🏆
           </Link>
         </div>
       </div>
