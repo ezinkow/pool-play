@@ -26,18 +26,26 @@ export default function Home() {
                 <div className="container" style={{ textAlign: "center" }}>
                     <NbaGatekeeper user={authUser}>
 
-                        <div style={{ marginBottom: 20 }}>
+                        {/* Action Buttons Grid Layout Cluster */}
+                        <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", marginBottom: 20 }}>
+
                             {/* Since they passed the Gatekeeper, they definitely have an entry */}
                             <Link to="/nba/picks" style={{ textDecoration: 'none' }}>
                                 <button className="btn-nba-main">🏀 Make My Picks</button>
                             </Link>
+
+                            {/* ✨ NEW ADDITION: Fast-navigation shortcut path node to user's summary card sheet */}
+                            <Link to="/nba/mypicks" style={{ textDecoration: 'none' }}>
+                                <button className="btn-nba-secondary">📋 My Picks</button>
+                            </Link>
                         </div>
+
                         <a href="https://www.nba.com/playoffs/2026"
                             target="_blank"
                             rel="noreferrer"
                             style={{
                                 display: "inline-block",
-                                padding: "12px 24px 12px 24px",
+                                padding: "12px 24px",
                                 backgroundColor: "var(--primary-navy)",
                                 color: "white",
                                 border: "none",
@@ -97,6 +105,26 @@ export default function Home() {
                         text-decoration: none;
                     }
                     .btn-nba-main:hover { opacity: 0.9; }
+
+                    /* ✨ NEW BUTTON LAYOUT STYLE SHEET SECTIONS */
+                    .btn-nba-secondary {
+                        padding: 14px 32px;
+                        background-color: transparent;
+                        color: ${NAVY};
+                        border: 2px solid ${NAVY};
+                        border-radius: 8px;
+                        font-size: 16px;
+                        font-weight: 700;
+                        cursor: pointer;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        transition: background-color 0.2s, color 0.2s;
+                        text-decoration: none;
+                    }
+                    .btn-nba-secondary:hover { 
+                        background-color: ${NAVY};
+                        color: white;
+                    }
                 `}</style>
         </div >
     );

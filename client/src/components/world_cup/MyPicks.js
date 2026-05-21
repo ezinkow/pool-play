@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom"; // ✨ Imported for optimized routing paths
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 
 const GOLD = "#c89d3c";
+const NAVY = "#13447a";
 const WORLDCUPGREEN = "#226750";
 
 const ROUND_LABELS = {
@@ -15,6 +17,7 @@ const ROUND_LABELS = {
 };
 
 export default function MyPicks() {
+    const navigate = useNavigate(); // ✨ Instantiated native React router hook
     const { user: authUser, loading: authLoading } = useAuth();
     const [groupPicks, setGroupPicks] = useState([]);
     const [bracketPicks, setBracketPicks] = useState([]);
@@ -94,11 +97,10 @@ export default function MyPicks() {
                     if (userSelection) {
                         const s = match.status || "";
                         if (s.includes("FINAL")) {
-                            // Bracket logic determines if the clicked country won the real match outcome
                             const realWinner = match.home_score > match.away_score ? match.home_team : match.away_team;
                             if (userSelection === realWinner) {
                                 pickStatus = "Correct";
-                                calculatedPoints = match.points_value || 2; // Knockout values scale by round config
+                                calculatedPoints = match.points_value || 2;
                             } else {
                                 pickStatus = "Incorrect";
                             }
@@ -114,7 +116,6 @@ export default function MyPicks() {
                         outcome_status: pickStatus
                     };
                 });
-                // Sort by round progression sequence, then bracket slots layout
                 enrichedBracket.sort((a, b) => a.round - b.round || a.bracket_slot - b.bracket_slot);
                 setBracketPicks(enrichedBracket);
 
@@ -140,21 +141,53 @@ export default function MyPicks() {
     const currentDisplayPicks = activeSection === "group" ? groupPicks : bracketPicks;
     const hasPicksMade = currentDisplayPicks.some(p => p.my_selection);
 
+    // ── EXTRACTION ENGINE FOR SWITCH STATE BOXES ─────────────────────────────
+    const renderEmptyOrPendingState = () => {
+        const BRACKET_SET_LOCK = new Date("2026-03-19T16:15:00Z");
+        const isBracketSet = new Date() <= BRACKET_SET_LOCK;
+
+        // Condition A: Looking at bracket tab, but it hasn't been set up/locked down yet
+        if (activeSection === "bracket" && !isBracketSet) {
+            return (
+                <div style={{ padding: "40px 24px", textAlign: "center", background: "#f8fafc", borderRadius: 12, border: "1px dashed #cbd5e1", margin: "0 8px" }}>
+                    <span style={{ fontSize: "36px", display: "block", marginBottom: "12px" }}>⏳</span>
+                    <p style={{ color: "#475569", fontWeight: 700, margin: "0 0 6px", fontSize: "15px" }}>Come back when the bracket is set</p>
+                    <p style={{ color: "#64748b", margin: 0, fontSize: 13 }}>The group stages are still active. Bracket phase grids open up as soon as knockout spots lock down.</p>
+                </div>
+            );
+        }
+
+        // Condition B: Bracket phase IS active or we are on Group tab, and user sheet rows are blank
+        return (
+            <div style={{ padding: 40, textAlign: "center", background: activeSection === "bracket" ? "#fffdf5" : "#f9fafb", borderRadius: 12, border: `2px dashed ${activeSection === "bracket" ? GOLD : "#d1d5db"}`, margin: "0 8px" }}>
+                <p style={{ color: "#6b7280", fontWeight: 600, marginBottom: 16 }}>
+                    {activeSection === "bracket"
+                        ? "No picks! The bracket is set but your prediction sheet is currently blank."
+                        : "You have no submitted picks recorded for this section yet!"
+                    }
+                </p>
+                <button
+                    onClick={() => { navigate("/worldcup/picks"); }}
+                    style={{
+                        padding: "10px 20px", backgroundColor: activeSection === "group" ? WORLDCUPGREEN : GOLD, color: "white",
+                        border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700,
+                    }}
+                >
+                    Go Fill Out Selections →
+                </button>
+            </div>
+        );
+    };
+
     return (
         <div style={{ padding: "85px 8px 80px", maxWidth: "800px", margin: "0 auto", overflow: "hidden" }}>
             <Toaster />
 
             {/* Header Scoreboard Dashboard */}
-            <div style={{
-                display: "flex", justifyContent: "space-between",
-                alignItems: "flex-end", marginBottom: 20, flexWrap: "wrap", gap: 12,
-                paddingRight: "8px", paddingLeft: "8px"
-            }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20, flexWrap: "wrap", gap: 12, paddingRight: "8px", paddingLeft: "8px" }}>
                 <div>
                     <h2 style={{ color: WORLDCUPGREEN, margin: 0, fontSize: "22px", fontWeight: 900 }}>🌎 My Prediction Center</h2>
-                    <p style={{ color: "#6b7280", margin: "2px 0 0", fontSize: 13 }}>
-                        Manager: <strong>{authUser.name}</strong>
-                    </p>
+                    <p style={{ color: "#6b7280", margin: "2px 0 0", fontSize: 13 }}>Manager: <strong>{authUser.name}</strong></p>
                 </div>
                 <div style={{ display: "flex", gap: 16, textAlign: "right" }}>
                     <div>
@@ -173,17 +206,9 @@ export default function MyPicks() {
                 {(() => {
                     const finalNode = bracketPicks.find(p => parseInt(p.round) === 5);
                     if (!finalNode || !finalNode.my_selection || finalNode.my_selection === "TBD") return null;
-
                     const champLogo = finalNode.my_selection === finalNode.home_team ? finalNode.home_logo : finalNode.away_logo;
-
                     return (
-                        <div style={{
-                            display: "flex", alignItems: "center", gap: 10,
-                            padding: "8px 16px", borderRadius: "20px",
-                            background: "rgba(200, 157, 60, 0.12)",
-                            border: `1px solid ${GOLD}`,
-                            boxShadow: "0 4px 12px rgba(200, 157, 60, 0.05)"
-                        }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 16px", borderRadius: "20px", background: "rgba(200, 157, 60, 0.12)", border: `1px solid ${GOLD}`, boxShadow: "0 4px 12px rgba(200, 157, 60, 0.05)" }}>
                             <span style={{ fontSize: 11, fontWeight: 800, color: "#b45309", letterSpacing: "0.5px" }}>MY CHAMP:</span>
                             {champLogo && <img src={champLogo} alt="" style={{ height: 14, width: 20, objectFit: "contain" }} />}
                             <strong style={{ fontSize: 14, color: "#1e293b", fontWeight: 800 }}>{finalNode.my_selection}</strong>
@@ -196,21 +221,13 @@ export default function MyPicks() {
             <div style={{ display: "flex", gap: 8, marginBottom: 16, padding: "0 8px" }}>
                 <button
                     onClick={() => setActiveSection("group")}
-                    style={{
-                        flex: 1, padding: "10px", borderRadius: "8px", fontWeight: 700, border: "none", cursor: "pointer",
-                        backgroundColor: activeSection === "group" ? WORLDCUPGREEN : "#e2e8f0",
-                        color: activeSection === "group" ? "white" : "#475569"
-                    }}
+                    style={{ flex: 1, padding: "10px", borderRadius: "8px", fontWeight: 700, border: "none", cursor: "pointer", backgroundColor: activeSection === "group" ? WORLDCUPGREEN : "#e2e8f0", color: activeSection === "group" ? "white" : "#475569" }}
                 >
                     📊 Group Stage Selections ({groupPicks.filter(p => p.my_selection).length}/72)
                 </button>
                 <button
                     onClick={() => setActiveSection("bracket")}
-                    style={{
-                        flex: 1, padding: "10px", borderRadius: "8px", fontWeight: 700, border: "none", cursor: "pointer",
-                        backgroundColor: activeSection === "bracket" ? GOLD : "#e2e8f0",
-                        color: activeSection === "bracket" ? "white" : "#475569"
-                    }}
+                    style={{ flex: 1, padding: "10px", borderRadius: "8px", fontWeight: 700, border: "none", cursor: "pointer", backgroundColor: activeSection === "bracket" ? GOLD : "#e2e8f0", color: activeSection === "bracket" ? "white" : "#475569" }}
                 >
                     🏆 Knockout Bracket Choices ({bracketPicks.filter(p => p.my_selection).length}/31)
                 </button>
@@ -219,60 +236,17 @@ export default function MyPicks() {
             {loading ? (
                 <p style={{ textAlign: "center", color: "#6b7280", marginTop: 40 }}>Fetching prediction records...</p>
             ) : !hasPicksMade ? (
-                <div style={{
-                    padding: 40, textAlign: "center", background: "#f9fafb", borderRadius: 12,
-                    border: "2px dashed #d1d5db", margin: "0 8px"
-                }}>
-                    <p style={{ color: "#6b7280", fontWeight: 600, marginBottom: 16 }}>
-                        You have no submitted picks recorded for this section yet!
-                    </p>
-                    <button
-                        onClick={() => { window.location.hash = activeSection === "group" ? "#/worldcup/picks" : "#/worldcup/bracket"; }}
-                        style={{
-                            padding: "10px 20px", backgroundColor: activeSection === "group" ? WORLDCUPGREEN : GOLD, color: "white",
-                            border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700,
-                        }}
-                    >
-                        Go Fill Out Selections →
-                    </button>
-                </div>
+                /* ✨ MODIFIED: Now runs our conditional date filter engine */
+                renderEmptyOrPendingState()
             ) : (
                 /* DATA TABLE WRAPPER CONTAINER */
-                <div style={{
-                    overflow: "auto",
-                    maxHeight: "calc(100vh - 240px)",
-                    width: "100%",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "6px",
-                    WebkitOverflowScrolling: "touch",
-                    maxWidth: "800px",
-                    margin: "0 auto"
-                }}>
+                <div style={{ overflow: "auto", maxHeight: "calc(100vh - 240px)", width: "100%", border: "1px solid #e5e7eb", borderRadius: "6px", WebkitOverflowScrolling: "touch", maxWidth: "800px", margin: "0 auto" }}>
                     <table style={{ borderCollapse: "separate", borderSpacing: 0, background: "white", width: "100%", fontSize: 13 }}>
                         <thead>
                             <tr>
-                                {/* UPGRADED STICKY CORNER PIN: 
-                                  Uses high zIndex (10) and forced position sync to anchor perfectly while scrolling multi-dimensionally
-                                */}
-                                <th style={{
-                                    position: "sticky",
-                                    top: 0,
-                                    left: 0,
-                                    zIndex: 10,
-                                    backgroundColor: "#13447a",
-                                    color: "white",
-                                    borderBottom: `2px solid ${GOLD}`,
-                                    borderRight: `2px solid ${GOLD}`,
-                                    whiteSpace: "nowrap",
-                                    textTransform: "uppercase",
-                                    fontSize: 11,
-                                    letterSpacing: "0.5px",
-                                    padding: "12px 8px",
-                                    minWidth: isMobile ? "75px" : "150px"
-                                }}>
+                                <th style={{ position: "sticky", top: 0, left: 0, zIndex: 10, backgroundColor: "#13447a", color: "white", borderBottom: `2px solid ${GOLD}`, borderRight: `2px solid ${GOLD}`, whiteSpace: "nowrap", textTransform: "uppercase", fontSize: 11, letterSpacing: "0.5px", padding: "12px 8px", minWidth: isMobile ? "75px" : "150px" }}>
                                     {activeSection === "group" ? "Matchup" : "Stage Node"}
                                 </th>
-
                                 <th style={thStyle}>Real Status/Score</th>
                                 <th style={{ ...thStyle, minWidth: isMobile ? "60px" : "130px" }}>My Choice</th>
                                 <th style={thStyle}>Result</th>
@@ -296,18 +270,7 @@ export default function MyPicks() {
 
                                 return (
                                     <tr key={p.match_id || i} style={{ backgroundColor: isFinal ? "#f9fafb" : "white" }}>
-
-                                        {/* STICKY LEFT LABEL COLUMN */}
-                                        <td style={{
-                                            position: "sticky",
-                                            left: 0,
-                                            zIndex: 2,
-                                            backgroundColor: isFinal ? "#f1f5f9" : "#f8fafc",
-                                            borderRight: `2px solid ${GOLD}`,
-                                            borderBottom: "1px solid #e5e7eb",
-                                            padding: "10px 8px",
-                                            whiteSpace: "nowrap"
-                                        }}>
+                                        <td style={{ position: "sticky", left: 0, zIndex: 2, backgroundColor: isFinal ? "#f1f5f9" : "#f8fafc", borderRight: `2px solid ${GOLD}`, borderBottom: "1px solid #e5e7eb", padding: "10px 8px", whiteSpace: "nowrap" }}>
                                             {activeSection === "group" ? (
                                                 <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, fontSize: "11px" }}>
                                                     <img src={p.away_logo} alt="" style={{ height: 14, width: 20, objectFit: "contain" }} />
@@ -323,8 +286,6 @@ export default function MyPicks() {
                                                 </div>
                                             )}
                                         </td>
-
-                                        {/* Real Score Box */}
                                         <td style={{ ...tdStyle, textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>
                                             {p.status === "STATUS_SCHEDULED" ? (
                                                 <span style={{ color: "#9ca3af", fontSize: "11px", fontWeight: 400 }}>
@@ -334,8 +295,6 @@ export default function MyPicks() {
                                                 `${p.away_score} - ${p.home_score}`
                                             )}
                                         </td>
-
-                                        {/* My Pick Choice Info */}
                                         <td style={{ ...tdStyle, textAlign: "center", fontWeight: 700 }}>
                                             {p.my_selection ? (
                                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
@@ -348,23 +307,14 @@ export default function MyPicks() {
                                                 <span style={{ color: "#cbd5e1" }}>–</span>
                                             )}
                                         </td>
-
-                                        {/* Outcome Status Badge */}
                                         <td style={{ ...tdStyle, textAlign: "center" }}>
-                                            <span style={{
-                                                padding: "2px 6px", borderRadius: "10px", color: "white",
-                                                fontSize: "10px", fontWeight: 700, textTransform: "uppercase",
-                                                backgroundColor: badgeBg, display: "inline-block"
-                                            }}>
+                                            <span style={{ padding: "2px 6px", borderRadius: "10px", color: "white", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", backgroundColor: badgeBg, display: "inline-block" }}>
                                                 {p.outcome_status}
                                             </span>
                                         </td>
-
-                                        {/* Points Earned Column */}
                                         <td style={{ ...tdStyle, textAlign: "right", fontWeight: 800, color: p.points_earned > 0 ? "#16a34a" : "#64748b", fontSize: "14px" }}>
                                             +{p.points_earned}
                                         </td>
-
                                     </tr>
                                 );
                             })}
@@ -376,11 +326,10 @@ export default function MyPicks() {
     );
 }
 
-/* ---------------- UPGRADED LAYOUT STYLES ---------------- */
 const thStyle = {
     position: "sticky",
     top: 0,
-    zIndex: 8, // Set high enough to sail above scrolling <td> content rows cleanly
+    zIndex: 8,
     backgroundColor: "#13447a",
     color: "white",
     borderBottom: `2px solid ${GOLD}`,
