@@ -9,6 +9,7 @@ import Navbar from './components/Navbar';
 import ChangePassword from './pages/ChangePassword';
 import LoginPage from "./pages/LogIn";
 import MyAccount from "./pages/MyAccount";
+import Comments from "./pages/Comments";
 
 // TourneyPickem pages
 import TourneyPickemHome from './pages/tourney_pickem/Home';
@@ -81,6 +82,7 @@ export default function App() {
         <Route path="/changepassword" element={<ChangePassword />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/myaccount" element={<MyAccount />} />
+        <Route path="/comments" element={<Comments />} />
 
         {/* Tourney Pickem */}
         <Route path="/tourneypickem" element={<TourneyPickemHome />} />

@@ -21,7 +21,7 @@ const db = require("./models");
 
 // ── 2. INITIALIZE SYNCHRONIZATION MATRIX ─────────────────────────────────────
 // NOTE: Turn force: false and alter: false once your tables create so you don't drop data!
-db.sequelize.sync({ force: false, alter: false }).then(() => {
+db.sequelize.sync({ force: false, alter: true }).then(() => {
   console.log("🟩 Database tables verified / created successfully.");
 
   // ── 3. MOVED INSIDE: Routes only load AFTER tables exist ────────────────────
@@ -30,6 +30,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/shared/auth-api-routes.js")(app);
   require("./routes/shared/gamesettings-api-routes.js")(app);
   require("./routes/shared/myaccount-api-routes.js")(app);
+  require("./routes/shared/comments-api-routes.js")(app);
 
   // Bracket
   require("./routes/bracket/picks-api-routes.js")(app);

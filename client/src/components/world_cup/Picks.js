@@ -15,6 +15,14 @@ export default function Picks() {
 
   // Sorting Control Hook State: 'date' | 'group' | 'home' | 'away'
   const [sortBy, setSortBy] = useState("date");
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  /* ---------------- DETECT MOBILE SCREEN VIEWPORTS ---------------- */
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (!authUser || authLoading || hasFetched.current) return;
@@ -23,7 +31,6 @@ export default function Picks() {
       setLoading(true);
       try {
         const res = await axios.get("/api/worldcup/matches");
-        // Filter for Group Stage matches (using fallback filter mapping strings safely)
         const groupStageMatches = res.data.filter(
           m => m.round_label === "Group Stage" || parseInt(m.round) === 0
         );
@@ -86,7 +93,6 @@ export default function Picks() {
   const arrangedGroups = useMemo(() => {
     const sorted = [...matches];
 
-    // 1. Sort base array elements
     if (sortBy === "date") {
       sorted.sort((a, b) => new Date(a.match_date) - new Date(b.match_date));
     } else if (sortBy === "group") {
@@ -102,7 +108,6 @@ export default function Picks() {
       sorted.sort((a, b) => a.away_team.localeCompare(b.away_team));
     }
 
-    // 2. Reduce objects into dynamic headers maps
     const groups = {};
     sorted.forEach((match) => {
       let key = "";
@@ -234,8 +239,14 @@ export default function Picks() {
         ))
       )}
 
-      {/* Floating Save Anchor Footer */}
-      <div style={submitContainerStyle}>
+      {/* 🛠️ FIXED: Floating Save Anchor Footer uses explicit viewport offset bounds */}
+      <div style={{
+        marginTop: "40px",
+        textAlign: "center",
+        position: "sticky",
+        bottom: isMobile ? "76px" : "20px", // Pushes button above the 56px navbar + 20px padding buffer
+        zIndex: 90 // Float cleanly over the inner layout blocks
+      }}>
         <button onClick={handleSubmit} style={submitButtonStyle}>
           💾 Save Picks
         </button>
@@ -337,14 +348,6 @@ const teamNameStyle = {
   fontSize: "13px",
   color: NAVY,
   marginTop: "4px"
-};
-
-const submitContainerStyle = {
-  marginTop: "40px",
-  textAlign: "center",
-  position: "sticky",
-  bottom: "20px",
-  zIndex: 10
 };
 
 const submitButtonStyle = {

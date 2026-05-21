@@ -4,6 +4,7 @@ import useAuth from "../hooks/useAuth";
 import axios from "axios";
 
 const GOLD = "#c89d3c";
+const NAVY = "#0a1628";
 
 export default function Navbar() {
     const location = useLocation();
@@ -12,6 +13,11 @@ export default function Navbar() {
 
     const [menuOpen, setMenuOpen] = useState(false);
     const [showLogin, setShowLogin] = useState(false);
+
+    // ── AUTH MODE SWITCHES ──────────────────────────────────────────────────
+    const [isSignUpMode, setIsSignUpMode] = useState(false); // Toggle between Login and Registration
+    const [registerName, setRegisterName] = useState("");     // Full Name for Sign Up
+
     const [loginName, setLoginName] = useState("");
     const [loginPassword, setLoginPassword] = useState("");
     const [loginError, setLoginError] = useState("");
@@ -27,20 +33,62 @@ export default function Navbar() {
 
     const isHome = location.pathname === "/";
 
-    // ── AUTH HANDLERS (SCOPED HIGH TO PREVENT REF ERRORS) ──────────────────
-    const handleLogin = async (e) => {
+    // ── AUTH HANDLERS ──────────────────────────────────────────────────────
+    const handleAuthSubmit = async (e) => {
         e.preventDefault();
         setLoginError("");
         setLoginSubmitting(true);
-        const result = await login(loginName.trim(), loginPassword);
-        setLoginSubmitting(false);
-        if (result.success) {
-            setShowLogin(false);
-            setLoginName("");
-            setLoginPassword("");
+
+        if (isSignUpMode) {
+            // ── SIGN UP REGISTRATION FLOW ──────────────────────────────────────
+            if (!registerName.trim()) {
+                setLoginError("Please enter your display name.");
+                setLoginSubmitting(false);
+                return;
+            }
+            try {
+                const res = await axios.post("/api/shared/auth/signup", {
+                    username: loginName.trim(),
+                    password: loginPassword,
+                    name: registerName.trim()
+                });
+
+                if (res.data && res.data.success) {
+                    // Auto-log the user in following successful creation
+                    const result = await login(loginName.trim(), loginPassword);
+                    if (result.success) {
+                        closeAuthModal();
+                    } else {
+                        setLoginError("Account created! Please log in manually.");
+                        setIsSignUpMode(false);
+                    }
+                } else {
+                    setLoginError(res.data.error || "Failed to create account.");
+                }
+            } catch (err) {
+                setLoginError(err.response?.data?.error || "Registration error occurred.");
+            } finally {
+                setLoginSubmitting(false);
+            }
         } else {
-            setLoginError(result.error);
+            // ── LOG IN FLOW ──────────────────────────────────────────────────
+            const result = await login(loginName.trim(), loginPassword);
+            setLoginSubmitting(false);
+            if (result.success) {
+                closeAuthModal();
+            } else {
+                setLoginError(result.error);
+            }
         }
+    };
+
+    const closeAuthModal = () => {
+        setShowLogin(false);
+        setIsSignUpMode(false);
+        setRegisterName("");
+        setLoginName("");
+        setLoginPassword("");
+        setLoginError("");
     };
 
     const handleLogout = () => {
@@ -255,33 +303,47 @@ export default function Navbar() {
                             user ? (
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }} className="desktop-auth-cluster">
                                     <button
+                                        onClick={() => navigate("/comments")}
+                                        style={{
+                                            fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 12,
+                                            border: "1px solid rgba(255,255,255,0.4)", backgroundColor: "rgba(255,255,255,0.1)",
+                                            color: "white", cursor: "pointer", whiteSpace: "nowrap"
+                                        }}
+                                    >
+                                        📩 Contact Us
+                                    </button>
+
+                                    <button
                                         onClick={() => navigate("/myaccount")}
                                         style={{
-                                            fontSize: 11,
-                                            fontWeight: 700,
-                                            padding: "4px 10px",
-                                            borderRadius: 12,
-                                            border: `1px solid ${GOLD}`,
-                                            backgroundColor: "transparent",
-                                            color: GOLD,
-                                            cursor: "pointer",
-                                            whiteSpace: "nowrap"
+                                            fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 12,
+                                            border: `1px solid ${GOLD}`, backgroundColor: "transparent", color: GOLD,
+                                            cursor: "pointer", whiteSpace: "nowrap"
                                         }}
                                     >
                                         👤 My Pools
                                     </button>
 
-                                    <span style={{ color: GOLD, fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>
-                                        {user.name}
-                                    </span>
-                                    <button onClick={handleLogout} style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.3)", background: "transparent", color: "white", cursor: "pointer", whiteSpace: "nowrap" }}>
-                                        Log out
-                                    </button>
+                                    {!isMobile && (
+                                        <>
+                                            <span style={{ color: GOLD, fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>
+                                                {user.name}
+                                            </span>
+                                            <button onClick={handleLogout} style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.3)", background: "transparent", color: "white", cursor: "pointer", whiteSpace: "nowrap" }}>
+                                                Log out
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             ) : (
-                                <button onClick={() => setShowLogin(true)} style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 12, border: "none", background: GOLD, color: "#0a1628", cursor: "pointer", whiteSpace: "nowrap" }}>
-                                    Log in
-                                </button>
+                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                    <button onClick={() => navigate("/comments")} style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "transparent", color: "white", cursor: "pointer" }}>
+                                        📩 Contact Us
+                                    </button>
+                                    <button onClick={() => setShowLogin(true)} style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 12, border: "none", background: GOLD, color: "#0a1628", cursor: "pointer", whiteSpace: "nowrap" }}>
+                                        Log in
+                                    </button>
+                                </div>
                             )
                         )}
 
@@ -299,10 +361,8 @@ export default function Navbar() {
                 {/* DESKTOP HORIZONTAL LINK SUB-ROW BAR */}
                 {!isHome && activeLinks.length > 0 && (
                     <div className="desktop-subnav-row" style={{
-                        backgroundColor: "rgba(0, 0, 0, 0.14)",
-                        borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-                        overflowX: "auto", whiteSpace: "nowrap",
-                        padding: "6px 16px", display: "flex", gap: "18px",
+                        backgroundColor: "rgba(0, 0, 0, 0.14)", borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+                        overflowX: "auto", whiteSpace: "nowrap", padding: "6px 16px", display: "flex", gap: "18px",
                         WebkitOverflowScrolling: "touch"
                     }}>
                         {activeLinks.map(({ to, label }) => {
@@ -312,9 +372,8 @@ export default function Navbar() {
                                     key={to}
                                     to={to}
                                     style={{
-                                        color: isActive ? GOLD : "rgba(255,255,255,0.75)",
-                                        textDecoration: "none", fontSize: "12px",
-                                        fontWeight: isActive ? "700" : "500", padding: "4px 2px"
+                                        color: isActive ? GOLD : "rgba(255,255,255,0.75)", textDecoration: "none",
+                                        fontSize: "12px", fontWeight: isActive ? "700" : "500", padding: "4px 2px"
                                     }}
                                 >
                                     {label}
@@ -366,8 +425,8 @@ export default function Navbar() {
                                             to={to}
                                             onClick={() => setMenuOpen(false)}
                                             style={{
-                                                display: "flex", alignItems: "center", gap: "12px",
-                                                padding: "10px 20px", textDecoration: "none", color: isActive ? GOLD : "#334155",
+                                                display: "flex", alignItems: "center", gap: "12px", padding: "10px 20px",
+                                                textDecoration: "none", color: isActive ? GOLD : "#334155",
                                                 backgroundColor: isActive ? "rgba(0,0,0,0.03)" : "transparent",
                                                 fontWeight: isActive ? 700 : 500, fontSize: "13px"
                                             }}
@@ -380,17 +439,29 @@ export default function Navbar() {
                             </>
                         )}
 
+                        <div style={{ display: "flex", flexDirection: "column", padding: "12px 0", borderTop: "1px solid #e2e8f0", marginTop: currentGame ? 12 : 0 }}>
+                            <button
+                                onClick={() => { setMenuOpen(false); navigate("/comments"); }}
+                                style={{
+                                    display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 20px",
+                                    border: "none", background: "transparent", color: "#334155", fontWeight: 700, fontSize: "13px",
+                                    cursor: "pointer", textAlign: "left"
+                                }}
+                            >
+                                <span style={{ fontSize: "15px" }}>📩</span>
+                                Contact Us
+                            </button>
+                        </div>
+
                         {user && (
                             <div style={{ marginTop: "auto", padding: "16px 20px", borderTop: "1px solid #e2e8f0" }}>
                                 <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "8px" }}>User: <strong>{user.name}</strong></div>
-
                                 <button
                                     onClick={() => { setMenuOpen(false); navigate("/myaccount"); }}
                                     style={{ width: "100%", padding: "8px", borderRadius: "6px", border: `1px solid ${GOLD}`, background: "white", color: GOLD, fontWeight: 700, fontSize: "12px", cursor: "pointer", marginBottom: "8px" }}
                                 >
                                     👤 My Pools Dashboard
                                 </button>
-
                                 <button onClick={handleLogout} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "white", color: "#b91c1c", fontWeight: 700, fontSize: "12px", cursor: "pointer" }}>
                                     Log Out
                                 </button>
@@ -429,27 +500,63 @@ export default function Navbar() {
                     })}
             </nav>
 
-            {/* Login Modal Overlay UI */}
+            {/* Auth Modal Overlay UI (Handles Login & Registration Switches) */}
             {showLogin && (
-                <div onClick={() => setShowLogin(false)} style={{ position: "fixed", inset: 0, zIndex: 9000, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+                <div onClick={closeAuthModal} style={{ position: "fixed", inset: 0, zIndex: 9000, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
                     <div onClick={e => e.stopPropagation()} style={{ position: "relative", background: "white", borderRadius: 16, padding: 32, width: "100%", maxWidth: 380, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
-                        <button onClick={() => setShowLogin(false)} style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#9ca3af" }}>✕</button>
-                        <h2 style={{ marginBottom: 4, color: "#0a1628", fontWeight: 800, fontSize: 20 }}>Log in</h2>
-                        <p style={{ color: "#6b7280", fontSize: 13, marginBottom: 24 }}>One account works across all games.</p>
-                        <form onSubmit={handleLogin}>
+                        <button onClick={closeAuthModal} style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#9ca3af" }}>✕</button>
+
+                        <h2 style={{ marginBottom: 4, color: "#0a1628", fontWeight: 800, fontSize: 20 }}>
+                            {isSignUpMode ? "Create Account" : "Log in"}
+                        </h2>
+                        <p style={{ color: "#6b7280", fontSize: 13, marginBottom: 24 }}>
+                            One account works across all games.
+                        </p>
+
+                        <form onSubmit={handleAuthSubmit}>
+                            {/* Conditional Display Name input for registration */}
+                            {isSignUpMode && (
+                                <div style={{ marginBottom: 16 }}>
+                                    <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Full Name</label>
+                                    <input type="text" value={registerName} onChange={e => setRegisterName(e.target.value)} placeholder="e.g. John Doe" required style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 15, outline: "none", boxSizing: "border-box" }} />
+                                </div>
+                            )}
+
                             <div style={{ marginBottom: 16 }}>
                                 <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Username</label>
                                 <input type="text" value={loginName} onChange={e => setLoginName(e.target.value)} placeholder="Your username" required style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 15, outline: "none", boxSizing: "border-box" }} />
                             </div>
+
                             <div style={{ marginBottom: 16 }}>
                                 <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Password</label>
                                 <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} placeholder="Password" required style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 15, outline: "none", boxSizing: "border-box" }} />
                             </div>
+
                             {loginError && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{loginError}</p>}
-                            <button type="submit" disabled={loginSubmitting} style={{ width: "100%", padding: "12px", backgroundColor: loginSubmitting ? "#9ca3af" : "#0a1628", color: "white", border: "none", borderRadius: 8, fontWeight: 700, fontSize: 15, cursor: loginSubmitting ? "default" : "pointer" }}>
-                                {loginSubmitting ? "Logging in…" : "Log in"}
+
+                            <button type="submit" disabled={loginSubmitting} style={{ width: "100%", padding: "12px", backgroundColor: loginSubmitting ? "#9ca3af" : "#0a1628", color: "white", border: "none", borderRadius: 8, fontWeight: 700, fontSize: 15, cursor: loginSubmitting ? "default" : "pointer", marginBottom: 16 }}>
+                                {loginSubmitting ? "Processing…" : (isSignUpMode ? "Sign Up" : "Log in")}
                             </button>
                         </form>
+
+                        {/* Modal Footer Account Switch Mode Links */}
+                        <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: 14, textAlign: "center", fontSize: 13, color: "#4b5563" }}>
+                            {isSignUpMode ? (
+                                <>
+                                    Already have an account?{" "}
+                                    <button onClick={() => { setIsSignUpMode(false); setLoginError(""); }} style={{ background: "none", border: "none", color: NAVY, fontWeight: 700, cursor: "pointer", padding: 0, fontSize: "inherit" }}>
+                                        Log In
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    Don't have an account?{" "}
+                                    <button onClick={() => { setIsSignUpMode(true); setLoginError(""); }} style={{ background: "none", border: "none", color: NAVY, fontWeight: 700, cursor: "pointer", padding: 0, fontSize: "inherit" }}>
+                                        Create one
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
