@@ -91,7 +91,7 @@ db.sequelize.sync({ force: true, alter: true }).then(() => {
   const syncBracket = require("./services/bracket/sync.js");
   const syncNba = require("./services/nba/sync");
   const syncWorldCup = require("./services/world_cup/sync");
-  const tourneyPickemLockLines = require("./jobs/tourney_pickem/locklines.js");
+  const tourneyPickemLockLines = require("./jobs/tourney_pickem/lockLines.js");
 
   async function runSync() {
     try {
