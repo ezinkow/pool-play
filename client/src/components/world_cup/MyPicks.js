@@ -1,0 +1,401 @@
+import React, { useState, useEffect, useMemo } from "react";
+import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
+import useAuth from "../../hooks/useAuth";
+
+const GOLD = "#c89d3c";
+const WORLDCUPGREEN = "#226750";
+
+const ROUND_LABELS = {
+    1: "Round of 32",
+    2: "Round of 16",
+    3: "Quarterfinals",
+    4: "Semifinals",
+    5: "Championship"
+};
+
+export default function MyPicks() {
+    const { user: authUser, loading: authLoading } = useAuth();
+    const [groupPicks, setGroupPicks] = useState([]);
+    const [bracketPicks, setBracketPicks] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
+    const [activeSection, setActiveSection] = useState("group"); // Toggle between 'group' and 'bracket' views
+
+    /* ---------------- DETECT MOBILE SCREEN VIEWPORTS ---------------- */
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 600);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    /* ---------------- FETCH PICKS & MATCHES ---------------- */
+    useEffect(() => {
+        if (!authUser) return;
+
+        async function fetchMyPicksAndSchedule() {
+            setLoading(true);
+            try {
+                // Fetch all user picks from database
+                const picksRes = await axios.get("/api/worldcup/picks", {
+                    params: { user_id: authUser.id },
+                });
+
+                // Fetch all matches (Group + Knockouts)
+                const matchesRes = await axios.get("/api/worldcup/matches");
+                const allMatches = matchesRes.data;
+
+                // Create lookups from user selections
+                const userPicksMap = picksRes.data.reduce((acc, p) => {
+                    acc[String(p.match_id || p.game_id)] = p.selection || p.pick;
+                    return acc;
+                }, {});
+
+                // 1. COMPILE GROUP STAGE TRACKER (ROUND 0)
+                const groupMatches = allMatches.filter(g => parseInt(g.round) === 0);
+                const enrichedGroup = groupMatches.map((match) => {
+                    const userSelection = userPicksMap[String(match.match_id)] || null;
+                    let calculatedPoints = 0;
+                    let pickStatus = "Pending";
+
+                    if (userSelection) {
+                        const s = match.status || "";
+                        if (s.includes("FINAL")) {
+                            if (userSelection === match.result) {
+                                pickStatus = "Correct";
+                                calculatedPoints = match.result === "Draw"
+                                    ? (match.draw_points_value || 2)
+                                    : (match.points_value || 1);
+                            } else {
+                                pickStatus = "Incorrect";
+                            }
+                        } else if (s.includes("PROGRESS") || s.includes("HALF")) {
+                            pickStatus = "Live";
+                        }
+                    }
+
+                    return {
+                        ...match,
+                        my_selection: userSelection,
+                        points_earned: calculatedPoints,
+                        outcome_status: pickStatus
+                    };
+                });
+                enrichedGroup.sort((a, b) => new Date(a.match_date) - new Date(b.match_date));
+                setGroupPicks(enrichedGroup);
+
+                // 2. COMPILE KNOCKOUT BRACKET TRACKER (ROUNDS 1-5)
+                const knockoutMatches = allMatches.filter(g => parseInt(g.round) > 0 && parseInt(g.round) <= 5);
+                const enrichedBracket = knockoutMatches.map((match) => {
+                    const userSelection = userPicksMap[String(match.match_id)] || null;
+                    let calculatedPoints = 0;
+                    let pickStatus = "Pending";
+
+                    if (userSelection) {
+                        const s = match.status || "";
+                        if (s.includes("FINAL")) {
+                            // Bracket logic determines if the clicked country won the real match outcome
+                            const realWinner = match.home_score > match.away_score ? match.home_team : match.away_team;
+                            if (userSelection === realWinner) {
+                                pickStatus = "Correct";
+                                calculatedPoints = match.points_value || 2; // Knockout values scale by round config
+                            } else {
+                                pickStatus = "Incorrect";
+                            }
+                        } else if (s.includes("PROGRESS") || s.includes("HALF")) {
+                            pickStatus = "Live";
+                        }
+                    }
+
+                    return {
+                        ...match,
+                        my_selection: userSelection,
+                        points_earned: calculatedPoints,
+                        outcome_status: pickStatus
+                    };
+                });
+                // Sort by round progression sequence, then bracket slots layout
+                enrichedBracket.sort((a, b) => a.round - b.round || a.bracket_slot - b.bracket_slot);
+                setBracketPicks(enrichedBracket);
+
+            } catch (err) {
+                console.error("❌ Error compiling user picks dashboard data tree:", err);
+                toast.error("Failed to load your personal predictions list");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchMyPicksAndSchedule();
+    }, [authUser]);
+
+    // Points Summaries Separations
+    const groupTotal = useMemo(() => groupPicks.reduce((sum, item) => sum + item.points_earned, 0), [groupPicks]);
+    const bracketTotal = useMemo(() => bracketPicks.reduce((sum, item) => sum + item.points_earned, 0), [bracketPicks]);
+    const accumulatedTotal = groupTotal + bracketTotal;
+
+    if (authLoading) return <div style={{ paddingTop: 100, textAlign: "center" }}>Verifying session…</div>;
+    if (!authUser) return <div style={{ paddingTop: 100, textAlign: "center" }}><h3>Please log in to view your selections dashboard.</h3></div>;
+
+    const currentDisplayPicks = activeSection === "group" ? groupPicks : bracketPicks;
+    const hasPicksMade = currentDisplayPicks.some(p => p.my_selection);
+
+    return (
+        <div style={{ padding: "85px 8px 80px", maxWidth: "800px", margin: "0 auto", overflow: "hidden" }}>
+            <Toaster />
+
+            {/* Header Scoreboard Dashboard */}
+            <div style={{
+                display: "flex", justifyContent: "space-between",
+                alignItems: "flex-end", marginBottom: 20, flexWrap: "wrap", gap: 12,
+                paddingRight: "8px", paddingLeft: "8px"
+            }}>
+                <div>
+                    <h2 style={{ color: WORLDCUPGREEN, margin: 0, fontSize: "22px", fontWeight: 900 }}>🌎 My Prediction Center</h2>
+                    <p style={{ color: "#6b7280", margin: "2px 0 0", fontSize: 13 }}>
+                        Manager: <strong>{authUser.name}</strong>
+                    </p>
+                </div>
+                <div style={{ display: "flex", gap: 16, textAlign: "right" }}>
+                    <div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b" }}>GROUP STAGE</div>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: WORLDCUPGREEN }}>{groupTotal} <span style={{ fontSize: 11, fontWeight: 400 }}>pts</span></div>
+                    </div>
+                    <div style={{ borderLeft: "1px solid #cbd5e1", paddingLeft: 16 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b" }}>BRACKET STAGE</div>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: GOLD }}>{bracketTotal} <span style={{ fontSize: 11, fontWeight: 400 }}>pts</span></div>
+                    </div>
+                    <div style={{ borderLeft: "2px solid #94a3b8", paddingLeft: 16 }}>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: "#1e293b" }}>TOTAL POINTS</div>
+                        <div style={{ fontSize: 20, fontWeight: 900, color: "#16a34a" }}>{accumulatedTotal}</div>
+                    </div>
+                </div>
+                {(() => {
+                    const finalNode = bracketPicks.find(p => parseInt(p.round) === 5);
+                    if (!finalNode || !finalNode.my_selection || finalNode.my_selection === "TBD") return null;
+
+                    const champLogo = finalNode.my_selection === finalNode.home_team ? finalNode.home_logo : finalNode.away_logo;
+
+                    return (
+                        <div style={{
+                            display: "flex", alignItems: "center", gap: 10,
+                            padding: "8px 16px", borderRadius: "20px",
+                            background: "rgba(200, 157, 60, 0.12)",
+                            border: `1px solid ${GOLD}`,
+                            boxShadow: "0 4px 12px rgba(200, 157, 60, 0.05)"
+                        }}>
+                            <span style={{ fontSize: 11, fontWeight: 800, color: "#b45309", letterSpacing: "0.5px" }}>MY CHAMP:</span>
+                            {champLogo && <img src={champLogo} alt="" style={{ height: 14, width: 20, objectFit: "contain" }} />}
+                            <strong style={{ fontSize: 14, color: "#1e293b", fontWeight: 800 }}>{finalNode.my_selection}</strong>
+                        </div>
+                    );
+                })()}
+            </div>
+
+            {/* Section View Switcher Tabs */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 16, padding: "0 8px" }}>
+                <button
+                    onClick={() => setActiveSection("group")}
+                    style={{
+                        flex: 1, padding: "10px", borderRadius: "8px", fontWeight: 700, border: "none", cursor: "pointer",
+                        backgroundColor: activeSection === "group" ? WORLDCUPGREEN : "#e2e8f0",
+                        color: activeSection === "group" ? "white" : "#475569"
+                    }}
+                >
+                    📊 Group Stage Selections ({groupPicks.filter(p => p.my_selection).length}/72)
+                </button>
+                <button
+                    onClick={() => setActiveSection("bracket")}
+                    style={{
+                        flex: 1, padding: "10px", borderRadius: "8px", fontWeight: 700, border: "none", cursor: "pointer",
+                        backgroundColor: activeSection === "bracket" ? GOLD : "#e2e8f0",
+                        color: activeSection === "bracket" ? "white" : "#475569"
+                    }}
+                >
+                    🏆 Knockout Bracket Choices ({bracketPicks.filter(p => p.my_selection).length}/31)
+                </button>
+            </div>
+
+            {loading ? (
+                <p style={{ textAlign: "center", color: "#6b7280", marginTop: 40 }}>Fetching prediction records...</p>
+            ) : !hasPicksMade ? (
+                <div style={{
+                    padding: 40, textAlign: "center", background: "#f9fafb", borderRadius: 12,
+                    border: "2px dashed #d1d5db", margin: "0 8px"
+                }}>
+                    <p style={{ color: "#6b7280", fontWeight: 600, marginBottom: 16 }}>
+                        You have no submitted picks recorded for this section yet!
+                    </p>
+                    <button
+                        onClick={() => { window.location.hash = activeSection === "group" ? "#/worldcup/picks" : "#/worldcup/bracket"; }}
+                        style={{
+                            padding: "10px 20px", backgroundColor: activeSection === "group" ? WORLDCUPGREEN : GOLD, color: "white",
+                            border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 700,
+                        }}
+                    >
+                        Go Fill Out Selections →
+                    </button>
+                </div>
+            ) : (
+                /* DATA TABLE WRAPPER CONTAINER */
+                <div style={{
+                    overflow: "auto",
+                    maxHeight: "calc(100vh - 240px)",
+                    width: "100%",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "6px",
+                    WebkitOverflowScrolling: "touch",
+                    maxWidth: "800px",
+                    margin: "0 auto"
+                }}>
+                    <table style={{ borderCollapse: "separate", borderSpacing: 0, background: "white", width: "100%", fontSize: 13 }}>
+                        <thead>
+                            <tr>
+                                {/* UPGRADED STICKY CORNER PIN: 
+                                  Uses high zIndex (10) and forced position sync to anchor perfectly while scrolling multi-dimensionally
+                                */}
+                                <th style={{
+                                    position: "sticky",
+                                    top: 0,
+                                    left: 0,
+                                    zIndex: 10,
+                                    backgroundColor: "#13447a",
+                                    color: "white",
+                                    borderBottom: `2px solid ${GOLD}`,
+                                    borderRight: `2px solid ${GOLD}`,
+                                    whiteSpace: "nowrap",
+                                    textTransform: "uppercase",
+                                    fontSize: 11,
+                                    letterSpacing: "0.5px",
+                                    padding: "12px 8px",
+                                    minWidth: isMobile ? "75px" : "150px"
+                                }}>
+                                    {activeSection === "group" ? "Matchup" : "Stage Node"}
+                                </th>
+
+                                <th style={thStyle}>Real Status/Score</th>
+                                <th style={{ ...thStyle, minWidth: isMobile ? "60px" : "130px" }}>My Choice</th>
+                                <th style={thStyle}>Result</th>
+                                <th style={{ ...thStyle, textAlign: "right" }}>Earned</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {currentDisplayPicks.map((p, i) => {
+                                const isFinal = p.status?.includes("FINAL");
+                                const badgeBg = p.outcome_status === "Correct" ? "#166534"
+                                    : p.outcome_status === "Incorrect" ? "#991b1b"
+                                        : p.outcome_status === "Live" ? "#1e40af" : "#475569";
+
+                                const selectionText = activeSection === "group"
+                                    ? (p.my_selection === "Home" ? p.home_team : p.my_selection === "Away" ? p.away_team : "Draw")
+                                    : p.my_selection;
+
+                                const selectionLogo = activeSection === "group"
+                                    ? (p.my_selection === "Home" ? p.home_logo : p.my_selection === "Away" ? p.away_logo : null)
+                                    : (p.my_selection === p.home_team ? p.home_logo : p.my_selection === p.away_team ? p.away_logo : null);
+
+                                return (
+                                    <tr key={p.match_id || i} style={{ backgroundColor: isFinal ? "#f9fafb" : "white" }}>
+
+                                        {/* STICKY LEFT LABEL COLUMN */}
+                                        <td style={{
+                                            position: "sticky",
+                                            left: 0,
+                                            zIndex: 2,
+                                            backgroundColor: isFinal ? "#f1f5f9" : "#f8fafc",
+                                            borderRight: `2px solid ${GOLD}`,
+                                            borderBottom: "1px solid #e5e7eb",
+                                            padding: "10px 8px",
+                                            whiteSpace: "nowrap"
+                                        }}>
+                                            {activeSection === "group" ? (
+                                                <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, fontSize: "11px" }}>
+                                                    <img src={p.away_logo} alt="" style={{ height: 14, width: 20, objectFit: "contain" }} />
+                                                    {!isMobile && <span>{p.away_team}</span>}
+                                                    <span style={{ color: "#9ca3af", fontWeight: 400 }}>@</span>
+                                                    <img src={p.home_logo} alt="" style={{ height: 14, width: 20, objectFit: "contain" }} />
+                                                    {!isMobile && <span>{p.home_team}</span>}
+                                                    <span style={{ fontSize: 10, color: "#475569", backgroundColor: "#e2e8f0", padding: "1px 4px", borderRadius: 4, marginLeft: 4 }}>{p.group}</span>
+                                                </div>
+                                            ) : (
+                                                <div style={{ fontWeight: 700, color: WORLDCUPGREEN, fontSize: "11px" }}>
+                                                    {ROUND_LABELS[p.round]} <span style={{ color: "#64748b", fontWeight: 500 }}>(Slot {p.bracket_slot})</span>
+                                                </div>
+                                            )}
+                                        </td>
+
+                                        {/* Real Score Box */}
+                                        <td style={{ ...tdStyle, textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>
+                                            {p.status === "STATUS_SCHEDULED" ? (
+                                                <span style={{ color: "#9ca3af", fontSize: "11px", fontWeight: 400 }}>
+                                                    {new Date(p.match_date).toLocaleDateString([], { month: "short", day: "numeric" })}
+                                                </span>
+                                            ) : (
+                                                `${p.away_score} - ${p.home_score}`
+                                            )}
+                                        </td>
+
+                                        {/* My Pick Choice Info */}
+                                        <td style={{ ...tdStyle, textAlign: "center", fontWeight: 700 }}>
+                                            {p.my_selection ? (
+                                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                                                    {selectionLogo && <img src={selectionLogo} alt="" style={{ height: 14, width: 20, objectFit: "contain" }} />}
+                                                    <span style={{ fontSize: "11px", color: activeSection === "group" ? "#1e293b" : GOLD }}>
+                                                        {selectionText}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span style={{ color: "#cbd5e1" }}>–</span>
+                                            )}
+                                        </td>
+
+                                        {/* Outcome Status Badge */}
+                                        <td style={{ ...tdStyle, textAlign: "center" }}>
+                                            <span style={{
+                                                padding: "2px 6px", borderRadius: "10px", color: "white",
+                                                fontSize: "10px", fontWeight: 700, textTransform: "uppercase",
+                                                backgroundColor: badgeBg, display: "inline-block"
+                                            }}>
+                                                {p.outcome_status}
+                                            </span>
+                                        </td>
+
+                                        {/* Points Earned Column */}
+                                        <td style={{ ...tdStyle, textAlign: "right", fontWeight: 800, color: p.points_earned > 0 ? "#16a34a" : "#64748b", fontSize: "14px" }}>
+                                            +{p.points_earned}
+                                        </td>
+
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </div>
+    );
+}
+
+/* ---------------- UPGRADED LAYOUT STYLES ---------------- */
+const thStyle = {
+    position: "sticky",
+    top: 0,
+    zIndex: 8, // Set high enough to sail above scrolling <td> content rows cleanly
+    backgroundColor: "#13447a",
+    color: "white",
+    borderBottom: `2px solid ${GOLD}`,
+    padding: "12px 8px",
+    whiteSpace: "nowrap",
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+    textAlign: "center"
+};
+
+const tdStyle = {
+    padding: "10px 8px",
+    verticalAlign: "middle",
+    borderBottom: "1px solid #f3f4f6",
+    borderRight: "1px solid #f3f4f6",
+    whiteSpace: "nowrap"
+};
