@@ -88,13 +88,12 @@ const syncNba = require("./services/nba/sync");
 const syncWorldCup = require("./services/world_cup/sync");
 
 //lock lines
-const tourneyPickemLockLines = require("./jobs/tourney_pickem/locklines.js");
-
+const tourneyPickemLockLines = require("./jobs/tourney_pickem/lockLines.js");
 async function runSync() {
   try {
     // await syncTourneyPickem();
     // await syncBracket();
-    // await syncNba();
+    await syncNba();
     // await tourneyPickemLockLines();
     await syncWorldCup();
   } catch (err) {
