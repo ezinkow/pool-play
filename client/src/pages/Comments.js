@@ -10,16 +10,20 @@ export default function Comments() {
     const { user: authUser, loading: authLoading } = useAuth();
     const [comments, setComments] = useState([]);
     const [message, setMessage] = useState("");
+    const [isPrivate, setIsPrivate] = useState(false); // ✨ Added privacy state tracker
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         setLoading(true);
-        axios.get("/api/comments")
+        // Pass user_id query param so backend can verify ownership of private rows if needed
+        const url = authUser ? `/api/comments?user_id=${authUser.id}` : "/api/comments";
+
+        axios.get(url)
             .then(res => setComments(res.data || []))
             .catch(err => console.error("Error retrieving contact submission logs:", err))
             .finally(() => setLoading(false));
-    }, []);
+    }, [authUser]);
 
     const handleSubmitComment = async (e) => {
         e.preventDefault();
@@ -33,11 +37,13 @@ export default function Comments() {
         try {
             const res = await axios.post("/api/comments", {
                 user_id: authUser.id,
-                message: message
+                message: message,
+                is_private: isPrivate // ✨ Pass state flag value down to database engine
             });
             setComments(prev => [res.data, ...prev]);
             setMessage("");
-            toast.success("Message submitted successfully!");
+            setIsPrivate(false); // Reset toggle state down following successful dispatch
+            toast.success(isPrivate ? "Private message sent to admins!" : "Message posted successfully!");
         } catch (err) {
             toast.error("Failed sending your message submission.");
         } finally {
@@ -78,8 +84,22 @@ export default function Comments() {
                                 marginBottom: 12, fontFamily: "inherit"
                             }}
                         />
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ fontSize: 11, color: "#94a3b8" }}>Sending as: <strong style={{ color: GOLD }}>@{authUser.name}</strong></span>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                                <span style={{ fontSize: 11, color: "#94a3b8" }}>Sending as: <strong style={{ color: GOLD }}>@{authUser.name}</strong></span>
+
+                                {/* ✨ PRIVACY INTERFACE FOOTER TOGGLE */}
+                                <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#475569", cursor: "pointer", userSelect: "none" }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={isPrivate}
+                                        onChange={e => setIsPrivate(e.target.checked)}
+                                        style={{ cursor: "pointer", width: 14, height: 14 }}
+                                    />
+                                    🔒 Send as private note to admins
+                                </label>
+                            </div>
+
                             <button
                                 type="submit"
                                 disabled={submitting}
@@ -110,9 +130,26 @@ export default function Comments() {
                 ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                         {comments.map(comment => (
-                            <div key={comment.id} style={{ background: "white", padding: "16px 20px", borderRadius: 12, border: "1px solid #e2e8f0", boxShadow: "0 2px 4px rgba(0,0,0,0.01)" }}>
+                            <div
+                                key={comment.id}
+                                style={{
+                                    background: "white", padding: "16px 20px", borderRadius: 12,
+                                    border: `1px solid ${comment.is_private ? "#fed7aa" : "#e2e8f0"}`, // Light orange tint if private
+                                    backgroundColor: comment.is_private ? "#fffaf5" : "white",
+                                    boxShadow: "0 2px 4px rgba(0,0,0,0.01)"
+                                }}
+                            >
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                                    <strong style={{ color: GOLD, fontSize: 13 }}>@{comment.author?.name || "Anonymous"}</strong>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                        <strong style={{ color: GOLD, fontSize: 13 }}>@{comment.author?.name || "Anonymous"}</strong>
+
+                                        {/* ✨ CONDITIONAL BADGE INDICATION CHIP */}
+                                        {comment.is_private && (
+                                            <span style={{ fontSize: 10, backgroundColor: "#ffedd5", color: "#c2410c", padding: "1px 6px", borderRadius: 4, fontWeight: 700 }}>
+                                                🔒 Private Note
+                                            </span>
+                                        )}
+                                    </div>
                                     <span style={{ color: "#94a3b8", fontSize: 11 }}>
                                         {new Date(comment.createdAt).toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                                     </span>

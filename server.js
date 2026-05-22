@@ -28,9 +28,12 @@ db.sequelize.sync({ force: false, alter: true }).then(() => {
 
   // Shared auth (single login for all games)
   require("./routes/shared/auth-api-routes.js")(app);
+
   require("./routes/shared/gamesettings-api-routes.js")(app);
   require("./routes/shared/myaccount-api-routes.js")(app);
   require("./routes/shared/comments-api-routes.js")(app);
+  require("./routes/shared/banter-api-routes.js")(app);
+  
 
   // Bracket
   require("./routes/bracket/picks-api-routes.js")(app);

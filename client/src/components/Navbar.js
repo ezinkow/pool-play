@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import axios from "axios";
+import BanterDrawer from './BanterDrawer'
 
 const GOLD = "#c89d3c";
 const NAVY = "#0a1628";
@@ -10,6 +11,7 @@ export default function Navbar() {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, login, logout, loading } = useAuth();
+    const [chatOpen, setChatOpen] = useState(false);
 
     const [menuOpen, setMenuOpen] = useState(false);
     const [showLogin, setShowLogin] = useState(false);
@@ -380,6 +382,17 @@ export default function Navbar() {
                                 </Link>
                             );
                         })}
+                        <button
+                            onClick={() => setChatOpen(true)}
+                            style={{
+                                marginLeft: "auto", // Automatically pins the chat button nicely to the far right edge!
+                                background: "rgba(255, 255, 255, 0.15)", color: "white",
+                                border: "1px solid rgba(255, 255, 255, 0.25)", borderRadius: "4px",
+                                padding: "2px 10px", fontSize: "11px", fontWeight: 700, cursor: "pointer"
+                            }}
+                        >
+                            💬 Open Pool Chat
+                        </button>
                     </div>
                 )}
             </header>
@@ -560,6 +573,12 @@ export default function Navbar() {
                     </div>
                 </div>
             )}
+            <BanterDrawer
+                isOpen={chatOpen}
+                onClose={() => setChatOpen(false)}
+                gameKey={currentGame?.game_key}
+                authUser={user}
+            />
         </>
     );
 }

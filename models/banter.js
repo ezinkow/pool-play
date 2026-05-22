@@ -1,9 +1,14 @@
 module.exports = function (sequelize, DataTypes) {
-    const Comments = sequelize.define("Comments", {
+    const Banter = sequelize.define("Banter", {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true
+        },
+        game_key: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            comment: "Scopes banter to specific pools like 'worldcup', 'nba', etc."
         },
         user_id: {
             type: DataTypes.INTEGER,
@@ -13,23 +18,18 @@ module.exports = function (sequelize, DataTypes) {
         message: {
             type: DataTypes.TEXT,
             allowNull: false
-        },
-        is_private: {
-            type: DataTypes.BOOLEAN,
-            allowNull: false,
-            defaultValue: false // Default to public visibility
         }
     }, {
-        tableName: "comments",
+        tableName: "pool_banter",
         timestamps: true
     });
 
-    Comments.associate = function (models) {
-        Comments.belongsTo(models.Users || models.User || models.users, {
+    Banter.associate = function (models) {
+        Banter.belongsTo(models.Users || models.User || models.users, {
             foreignKey: "user_id",
             as: "author"
         });
     };
 
-    return Comments;
+    return Banter;
 };
