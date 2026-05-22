@@ -303,27 +303,42 @@ export default function Navbar() {
                         {/* USER AUTH TRACKER CLUSTERS */}
                         {!loading && (
                             user ? (
-                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }} className="desktop-auth-cluster">
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }} className="desktop-auth-cluster">
+
+                                    {/* Optimized Contact Us Button */}
                                     <button
                                         onClick={() => navigate("/comments")}
                                         style={{
-                                            fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 12,
-                                            border: "1px solid rgba(255,255,255,0.4)", backgroundColor: "rgba(255,255,255,0.1)",
-                                            color: "white", cursor: "pointer", whiteSpace: "nowrap"
+                                            fontSize: isMobile ? "10px" : "11px",
+                                            fontWeight: 700,
+                                            padding: isMobile ? "4px 6px" : "4px 10px",
+                                            borderRadius: 12,
+                                            border: "1px solid rgba(255,255,255,0.4)",
+                                            backgroundColor: "rgba(255,255,255,0.1)",
+                                            color: "white",
+                                            cursor: "pointer",
+                                            whiteSpace: "nowrap"
                                         }}
                                     >
-                                        📩 Contact Us
+                                        📩 {isMobile ? "Contact" : "Contact Us"}
                                     </button>
 
+                                    {/* Optimized My Pools Button */}
                                     <button
                                         onClick={() => navigate("/myaccount")}
                                         style={{
-                                            fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 12,
-                                            border: `1px solid ${GOLD}`, backgroundColor: "transparent", color: GOLD,
-                                            cursor: "pointer", whiteSpace: "nowrap"
+                                            fontSize: isMobile ? "10px" : "11px",
+                                            fontWeight: 700,
+                                            padding: isMobile ? "4px 6px" : "4px 10px",
+                                            borderRadius: 12,
+                                            border: `1px solid ${GOLD}`,
+                                            backgroundColor: "transparent",
+                                            color: GOLD,
+                                            cursor: "pointer",
+                                            whiteSpace: "nowrap"
                                         }}
                                     >
-                                        👤 My Pools
+                                        👤 {isMobile ? "Pools" : "My Pools"}
                                     </button>
 
                                     {!isMobile && (
@@ -338,11 +353,11 @@ export default function Navbar() {
                                     )}
                                 </div>
                             ) : (
-                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                    <button onClick={() => navigate("/comments")} style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "transparent", color: "white", cursor: "pointer" }}>
-                                        📩 Contact Us
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                    <button onClick={() => navigate("/comments")} style={{ fontSize: isMobile ? "10px" : "11px", fontWeight: 700, padding: isMobile ? "4px 6px" : "4px 10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "transparent", color: "white", cursor: "pointer" }}>
+                                        📩 {isMobile ? "Contact" : "Contact Us"}
                                     </button>
-                                    <button onClick={() => setShowLogin(true)} style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 12, border: "none", background: GOLD, color: "#0a1628", cursor: "pointer", whiteSpace: "nowrap" }}>
+                                    <button onClick={() => setShowLogin(true)} style={{ fontSize: isMobile ? "10px" : "11px", fontWeight: 700, padding: isMobile ? "4px 6px" : "4px 10px", borderRadius: 12, border: "none", background: GOLD, color: "#0a1628", cursor: "pointer", whiteSpace: "nowrap" }}>
                                         Log in
                                     </button>
                                 </div>
@@ -362,38 +377,76 @@ export default function Navbar() {
 
                 {/* DESKTOP HORIZONTAL LINK SUB-ROW BAR */}
                 {!isHome && activeLinks.length > 0 && (
-                    <div className="desktop-subnav-row" style={{
-                        backgroundColor: "rgba(0, 0, 0, 0.14)", borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-                        overflowX: "auto", whiteSpace: "nowrap", padding: "6px 16px", display: "flex", gap: "18px",
-                        WebkitOverflowScrolling: "touch"
-                    }}>
-                        {activeLinks.map(({ to, label }) => {
-                            const isActive = location.pathname === to;
-                            return (
-                                <Link
-                                    key={to}
-                                    to={to}
+                    <>
+                        <div className="desktop-subnav-row" style={{
+                            backgroundColor: "rgba(0, 0, 0, 0.14)",
+                            borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+                            overflowX: "auto", whiteSpace: "nowrap",
+                            padding: "6px 16px", display: "flex", gap: "18px",
+                            alignItems: "center",
+                            WebkitOverflowScrolling: "touch"
+                        }}>
+                            {activeLinks.map(({ to, label }) => {
+                                const isActive = location.pathname === to;
+                                return (
+                                    <Link
+                                        key={to}
+                                        to={to}
+                                        style={{
+                                            color: isActive ? GOLD : "rgba(255,255,255,0.75)",
+                                            textDecoration: "none", fontSize: "12px",
+                                            fontWeight: isActive ? "700" : "500", padding: "4px 2px"
+                                        }}
+                                    >
+                                        {label}
+                                    </Link>
+                                );
+                            })}
+
+                            {/* Desktop Inline Trigger View Node */}
+                            {!isMobile && (
+                                <button
+                                    onClick={() => setChatOpen(true)}
                                     style={{
-                                        color: isActive ? GOLD : "rgba(255,255,255,0.75)", textDecoration: "none",
-                                        fontSize: "12px", fontWeight: isActive ? "700" : "500", padding: "4px 2px"
+                                        marginLeft: "auto",
+                                        background: "rgba(255, 255, 255, 0.15)", color: "white",
+                                        border: "1px solid rgba(255, 255, 255, 0.25)", borderRadius: "4px",
+                                        padding: "2px 10px", fontSize: "11px", fontWeight: 700, cursor: "pointer"
                                     }}
                                 >
-                                    {label}
-                                </Link>
-                            );
-                        })}
-                        <button
-                            onClick={() => setChatOpen(true)}
-                            style={{
-                                marginLeft: "auto", // Automatically pins the chat button nicely to the far right edge!
-                                background: "rgba(255, 255, 255, 0.15)", color: "white",
-                                border: "1px solid rgba(255, 255, 255, 0.25)", borderRadius: "4px",
-                                padding: "2px 10px", fontSize: "11px", fontWeight: 700, cursor: "pointer"
-                            }}
-                        >
-                            💬 Open Pool Chat
-                        </button>
-                    </div>
+                                    💬 Open Pool Chat
+                                </button>
+                            )}
+                        </div>
+
+                        {/* 📱 MOBILE FLOATING CHAT BUBBLE TRIGGER */}
+                        {isMobile && (
+                            <button
+                                onClick={() => setChatOpen(true)}
+                                style={{
+                                    position: "fixed",
+                                    top: "66px", // Fixed layout offset height beneath navbar header line
+                                    right: "12px",
+                                    backgroundColor: "#16a34a",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "50%",
+                                    width: "42px",
+                                    height: "42px",
+                                    fontSize: "18px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    cursor: "pointer",
+                                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                                    zIndex: 95
+                                }}
+                                aria-label="Open pool trash talk chat"
+                            >
+                                💬
+                            </button>
+                        )}
+                    </>
                 )}
             </header>
 
@@ -401,7 +454,7 @@ export default function Navbar() {
             {menuOpen && (
                 <>
                     <div className="menu-overlay" onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.4)", zIndex: 199 }} />
-                    <nav className="nav-links open" style={{ position: "fixed", top: "56px", right: 0, bottom: 0, width: "270px", backgroundColor: "#f8f9fa", boxShadow: "-4px 0 12px rgba(0,0,0,0.1)", zIndex: 200, display: "flex", flexDirection: "column", padding: "16px 0", overflowY: "auto" }}>
+                    <nav className="nav-links open" style={{ position: "fixed", top: "56px", right: 0, bottom: isMobile ? "56px" : 0, width: "270px", backgroundColor: "#f8f9fa", boxShadow: "-4px 0 12px rgba(0,0,0,0.1)", zIndex: 200, display: "flex", flexDirection: "column", padding: "16px 0", overflowY: "auto" }}>
                         <div style={{ padding: "6px 16px", fontSize: "10px", color: "#64748b", fontWeight: 800, letterSpacing: "0.5px" }}>SELECT TOURNAMENT</div>
                         <div style={{ display: "flex", flexDirection: "column", borderBottom: "1px solid #e2e8f0", paddingBottom: "12px", marginBottom: "12px" }}>
                             {rawGameSettings.map((game) => {
@@ -527,7 +580,6 @@ export default function Navbar() {
                         </p>
 
                         <form onSubmit={handleAuthSubmit}>
-                            {/* Conditional Display Name input for registration */}
                             {isSignUpMode && (
                                 <div style={{ marginBottom: 16 }}>
                                     <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Full Name</label>
@@ -552,7 +604,6 @@ export default function Navbar() {
                             </button>
                         </form>
 
-                        {/* Modal Footer Account Switch Mode Links */}
                         <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: 14, textAlign: "center", fontSize: 13, color: "#4b5563" }}>
                             {isSignUpMode ? (
                                 <>
@@ -573,11 +624,14 @@ export default function Navbar() {
                     </div>
                 </div>
             )}
+
+            {/* 🛠️ PASSED VIEWPORT PROPERTY STATE TRACKER DOWN */}
             <BanterDrawer
                 isOpen={chatOpen}
                 onClose={() => setChatOpen(false)}
                 gameKey={currentGame?.game_key}
                 authUser={user}
+                isMobile={isMobile}
             />
         </>
     );
