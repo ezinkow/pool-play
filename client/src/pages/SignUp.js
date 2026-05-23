@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import useAuth from "../hooks/useAuth";
+import AuthModal from "../components/AuthModal"; // 🧠 Fixed relative path step so it stays within src/ boundaries
 
 const NAVY = "#0a1628";
 const GOLD = "#c89d3c";
@@ -20,6 +21,7 @@ export default function SignUp() {
     });
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [showLoginModal, setShowLoginModal] = useState(false);
 
     // Already logged in — nothing to do here
     useEffect(() => {
@@ -178,11 +180,17 @@ export default function SignUp() {
 
                 <p style={{ textAlign: "center", marginTop: 20, fontSize: 14, color: "#6b7280" }}>
                     Already have an account?{" "}
-                    <Link to="/" style={{ color: NAVY, fontWeight: 600 }}>
-                        Log in from the nav bar
-                    </Link>
+                    <button
+                        type="button"
+                        onClick={() => setShowLoginModal(true)}
+                        style={{ background: "none", border: "none", color: NAVY, fontWeight: 700, cursor: "pointer", padding: 0, fontSize: "inherit", textDecoration: "underline" }}
+                    >
+                        Log in here
+                    </button>
                 </p>
             </div>
+
+            <AuthModal show={showLoginModal} onClose={() => setShowLoginModal(false)} />
         </div>
     );
 }

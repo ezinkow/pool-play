@@ -2,7 +2,8 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import axios from "axios";
-import BanterDrawer from './BanterDrawer'
+import BanterDrawer from './BanterDrawer';
+import AuthModal from "./AuthModal"; // 🧠 Imports your new standalone decoupled module
 
 const GOLD = "#c89d3c";
 const NAVY = "#0a1628";
@@ -10,20 +11,11 @@ const NAVY = "#0a1628";
 export default function Navbar() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { user, login, logout, loading } = useAuth();
+    const { user, logout, loading } = useAuth();
     const [chatOpen, setChatOpen] = useState(false);
 
     const [menuOpen, setMenuOpen] = useState(false);
-    const [showLogin, setShowLogin] = useState(false);
-
-    // ── AUTH MODE SWITCHES ──────────────────────────────────────────────────
-    const [isSignUpMode, setIsSignUpMode] = useState(false); // Toggle between Login and Registration
-    const [registerName, setRegisterName] = useState("");     // Full Name for Sign Up
-
-    const [loginName, setLoginName] = useState("");
-    const [loginPassword, setLoginPassword] = useState("");
-    const [loginError, setLoginError] = useState("");
-    const [loginSubmitting, setLoginSubmitting] = useState(false);
+    const [showLogin, setShowLogin] = useState(false); // Clean master toggle control state
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -34,64 +26,6 @@ export default function Navbar() {
     const [rawGameSettings, setRawGameSettings] = useState([]);
 
     const isHome = location.pathname === "/";
-
-    // ── AUTH HANDLERS ──────────────────────────────────────────────────────
-    const handleAuthSubmit = async (e) => {
-        e.preventDefault();
-        setLoginError("");
-        setLoginSubmitting(true);
-
-        if (isSignUpMode) {
-            // ── SIGN UP REGISTRATION FLOW ──────────────────────────────────────
-            if (!registerName.trim()) {
-                setLoginError("Please enter your display name.");
-                setLoginSubmitting(false);
-                return;
-            }
-            try {
-                const res = await axios.post("/api/shared/auth/signup", {
-                    username: loginName.trim(),
-                    password: loginPassword,
-                    name: registerName.trim()
-                });
-
-                if (res.data && res.data.success) {
-                    // Auto-log the user in following successful creation
-                    const result = await login(loginName.trim(), loginPassword);
-                    if (result.success) {
-                        closeAuthModal();
-                    } else {
-                        setLoginError("Account created! Please log in manually.");
-                        setIsSignUpMode(false);
-                    }
-                } else {
-                    setLoginError(res.data.error || "Failed to create account.");
-                }
-            } catch (err) {
-                setLoginError(err.response?.data?.error || "Registration error occurred.");
-            } finally {
-                setLoginSubmitting(false);
-            }
-        } else {
-            // ── LOG IN FLOW ──────────────────────────────────────────────────
-            const result = await login(loginName.trim(), loginPassword);
-            setLoginSubmitting(false);
-            if (result.success) {
-                closeAuthModal();
-            } else {
-                setLoginError(result.error);
-            }
-        }
-    };
-
-    const closeAuthModal = () => {
-        setShowLogin(false);
-        setIsSignUpMode(false);
-        setRegisterName("");
-        setLoginName("");
-        setLoginPassword("");
-        setLoginError("");
-    };
 
     const handleLogout = () => {
         logout();
@@ -425,7 +359,7 @@ export default function Navbar() {
                                 onClick={() => setChatOpen(true)}
                                 style={{
                                     position: "fixed",
-                                    top: "66px", // Fixed layout offset height beneath navbar header line
+                                    top: "66px",
                                     right: "12px",
                                     backgroundColor: "#16a34a",
                                     color: "white",
@@ -566,66 +500,9 @@ export default function Navbar() {
                     })}
             </nav>
 
-            {/* Auth Modal Overlay UI (Handles Login & Registration Switches) */}
-            {showLogin && (
-                <div onClick={closeAuthModal} style={{ position: "fixed", inset: 0, zIndex: 9000, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-                    <div onClick={e => e.stopPropagation()} style={{ position: "relative", background: "white", borderRadius: 16, padding: 32, width: "100%", maxWidth: 380, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
-                        <button onClick={closeAuthModal} style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#9ca3af" }}>✕</button>
+            {/* Shared Reusable Auth Modal Engine Hook Component */}
+            <AuthModal show={showLogin} onClose={() => setShowLogin(false)} />
 
-                        <h2 style={{ marginBottom: 4, color: "#0a1628", fontWeight: 800, fontSize: 20 }}>
-                            {isSignUpMode ? "Create Account" : "Log in"}
-                        </h2>
-                        <p style={{ color: "#6b7280", fontSize: 13, marginBottom: 24 }}>
-                            One account works across all games.
-                        </p>
-
-                        <form onSubmit={handleAuthSubmit}>
-                            {isSignUpMode && (
-                                <div style={{ marginBottom: 16 }}>
-                                    <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Full Name</label>
-                                    <input type="text" value={registerName} onChange={e => setRegisterName(e.target.value)} placeholder="e.g. John Doe" required style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 15, outline: "none", boxSizing: "border-box" }} />
-                                </div>
-                            )}
-
-                            <div style={{ marginBottom: 16 }}>
-                                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Username</label>
-                                <input type="text" value={loginName} onChange={e => setLoginName(e.target.value)} placeholder="Your username" required style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 15, outline: "none", boxSizing: "border-box" }} />
-                            </div>
-
-                            <div style={{ marginBottom: 16 }}>
-                                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Password</label>
-                                <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} placeholder="Password" required style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 15, outline: "none", boxSizing: "border-box" }} />
-                            </div>
-
-                            {loginError && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{loginError}</p>}
-
-                            <button type="submit" disabled={loginSubmitting} style={{ width: "100%", padding: "12px", backgroundColor: loginSubmitting ? "#9ca3af" : "#0a1628", color: "white", border: "none", borderRadius: 8, fontWeight: 700, fontSize: 15, cursor: loginSubmitting ? "default" : "pointer", marginBottom: 16 }}>
-                                {loginSubmitting ? "Processing…" : (isSignUpMode ? "Sign Up" : "Log in")}
-                            </button>
-                        </form>
-
-                        <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: 14, textAlign: "center", fontSize: 13, color: "#4b5563" }}>
-                            {isSignUpMode ? (
-                                <>
-                                    Already have an account?{" "}
-                                    <button onClick={() => { setIsSignUpMode(false); setLoginError(""); }} style={{ background: "none", border: "none", color: NAVY, fontWeight: 700, cursor: "pointer", padding: 0, fontSize: "inherit" }}>
-                                        Log In
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    Don't have an account?{" "}
-                                    <button onClick={() => { setIsSignUpMode(true); setLoginError(""); }} style={{ background: "none", border: "none", color: NAVY, fontWeight: 700, cursor: "pointer", padding: 0, fontSize: "inherit" }}>
-                                        Create one
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* 🛠️ PASSED VIEWPORT PROPERTY STATE TRACKER DOWN */}
             <BanterDrawer
                 isOpen={chatOpen}
                 onClose={() => setChatOpen(false)}
