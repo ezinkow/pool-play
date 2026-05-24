@@ -33,7 +33,16 @@ db.sequelize.sync({ force: false, alter: true }).then(() => {
   require("./routes/shared/myaccount-api-routes.js")(app);
   require("./routes/shared/comments-api-routes.js")(app);
   require("./routes/shared/banter-api-routes.js")(app);
-  
+
+  //Champ Week
+  require("./routes/champweek_pickem/picks-api-routes.js")(app);
+  require("./routes/champweek_pickem/games-api-routes.js")(app);
+  require("./routes/champweek_pickem/entries-api-routes.js")(app);
+  require("./routes/champweek_pickem/standings-api-routes.js")(app);
+  require("./routes/champweek_pickem/scoreboard-api-routes.js")(app);
+  require("./routes/champweek_pickem/adminRefreshGames.js")(app);
+  require("./routes/champweek_pickem/picksdisplay-api-routes.js")(app);
+  require("./routes/champweek_pickem/tiebreaker-api-routes.js")(app);
 
   // Bracket
   require("./routes/bracket/picks-api-routes.js")(app);

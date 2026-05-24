@@ -1,43 +1,33 @@
 module.exports = function (sequelize, DataTypes) {
     const OlympicsEntries = sequelize.define("OlympicsEntries", {
-        real_name: {
-            type: DataTypes.TEXT,
-            allowNull: false
+        id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
         },
-        name: {
-            type: DataTypes.TEXT,
-            allowNull: false
+        user_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            unique: true,
+            references: { model: "users", key: "id" },
         },
-        password: {
-            type: DataTypes.TEXT,
-            allowNull: false
+        entry_name: {
+            type: DataTypes.STRING(255), // 🧠 Explicit bounds added for clean unique indexing
+            allowNull: false,
+            unique: true,
         },
-        email_address: {
-            type: DataTypes.TEXT,
-            allowNull: true
-        },
-        phone: {
-            type: DataTypes.TEXT,
-            allowNull: true
-        },
-        email_opt_in: {
-            type: DataTypes.TEXT,
-            allowNull: true
-        },
-        paid_commitment: {
-            type: DataTypes.TEXT,
-            allowNull: true
-        },
-        paid: {
-            type: DataTypes.TEXT,
-            allowNull: true
-        }
     }, {
         tableName: "olympics_entries",
         timestamps: true,
         createdAt: "createdAt",
         updatedAt: false,
     });
+
+    // 🧠 Standard association mapping block
+    OlympicsEntries.associate = function (models) {
+        // Lets you easily do OlympicsEntries.findAll({ include: [models.Users] }) later
+        OlympicsEntries.belongsTo(models.Users, { foreignKey: "user_id" });
+    };
 
     return OlympicsEntries;
 };

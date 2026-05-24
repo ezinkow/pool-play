@@ -106,6 +106,14 @@ export default function Navbar() {
             templateLinks.push({ to: "/tourneypickem/scoreboard", label: "Scores", emoji: "🏀" });
             templateLinks.push({ to: "/tourneypickem/picksdisplay", label: "User Picks", emoji: "🔍" });
             templateLinks.push({ to: "/tourneypickem/signup", label: "Join Pool", emoji: "▶️" });
+        } else if (pfx === "/champweekpickem") {
+            templateLinks.splice(1, 2,
+                { to: "/champweekpickem/picks", label: "Submit Picks", emoji: "📝" },
+                { to: "/champweekpickem/mypicks", label: "My Sheet", emoji: "📋" }
+            );
+            templateLinks.push({ to: "/champweekpickem/scoreboard", label: "Scores", emoji: "🏀" });
+            templateLinks.push({ to: "/champweekpickem/picksdisplay", label: "User Picks", emoji: "🔍" });
+            templateLinks.push({ to: "/champweekpickem/signup", label: "Join Pool", emoji: "▶️" });
         } else if (pfx === "/bracket") {
             templateLinks.splice(1, 2,
                 { to: "/bracket/bracket", label: "Bracket Board", emoji: "🔱" },

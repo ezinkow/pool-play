@@ -13,7 +13,7 @@ export default function Home() {
           </p>
 
           <div className="hero-actions">
-            <Link to="/scoreboard" className="primary-btn">
+            <Link to="/nfl/standings" className="primary-btn">
               View Leaderboard
             </Link>
 

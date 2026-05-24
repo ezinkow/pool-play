@@ -11,6 +11,16 @@ import LoginPage from "./pages/LogIn";
 import MyAccount from "./pages/MyAccount";
 import Comments from "./pages/Comments";
 
+// ChampWeekPickem pages
+import ChampWeekPickemHome from './pages/champweek_pickem/Home';
+import ChampWeekPickemPicks from './pages/champweek_pickem/Picks';
+import ChampWeekPickemMyPicks from './pages/champweek_pickem/MyPicks';
+import ChampWeekPickemStandings from './pages/champweek_pickem/Standings';
+import ChampWeekPickemScoreboard from './pages/champweek_pickem/Scoreboard';
+import ChampWeekPickemUserPicksDisplay from './pages/champweek_pickem/UserPicksDisplay';
+import ChampWeekPickemSignUp from './pages/champweek_pickem/SignUp';
+import ChampWeekPickemAdminRefresh from './pages/champweek_pickem/AdminRefresh';
+
 // TourneyPickem pages
 import TourneyPickemHome from './pages/tourney_pickem/Home';
 import TourneyPickemPicks from './pages/tourney_pickem/Picks';
@@ -83,6 +93,16 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/myaccount" element={<MyAccount />} />
         <Route path="/comments" element={<Comments />} />
+
+        {/* Champ Week Pickem */}
+        <Route path="/champweekpickem/" element={<ChampWeekPickemHome />} />
+        <Route path="/champweekpickem/signup" element={<ChampWeekPickemSignUp />} />
+        <Route path="/champweekpickem/picks" element={<ChampWeekPickemPicks />} />
+        <Route path="/champweekpickem/mypicks" element={<ChampWeekPickemMyPicks />} />
+        <Route path="/champweekpickem/scoreboard" element={<ChampWeekPickemScoreboard />} />
+        <Route path="/champweekpickem/picksdisplay" element={<ChampWeekPickemUserPicksDisplay />} />
+        <Route path="/champweekpickem/standings" element={<ChampWeekPickemStandings />} />
+        <Route path="/champweekpickem/adminrefresh" element={<ChampWeekPickemAdminRefresh />} />
 
         {/* Tourney Pickem */}
         <Route path="/tourneypickem" element={<TourneyPickemHome />} />

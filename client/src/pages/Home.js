@@ -15,8 +15,17 @@ export default function Home() {
     useEffect(() => {
         axios.get("/api/settings/active-states")
             .then(res => {
-                // Map straight over database attributes on response return
-                const dynamicCards = (res.data || []).map(row => ({
+                const rawData = res.data || [];
+
+                // 🧠 Sort the raw rows alphabetically by game_label before mapping to properties
+                const sortedData = [...rawData].sort((a, b) => {
+                    const labelA = a.game_label || "";
+                    const labelB = b.game_label || "";
+                    return labelA.localeCompare(labelB);
+                });
+
+                // Map straight over database attributes on sorted response return
+                const dynamicCards = sortedData.map(row => ({
                     key: row.game_key,
                     emoji: row.emoji,
                     title: row.title,
@@ -28,6 +37,7 @@ export default function Home() {
                     isActive: row.is_active,
                     cta: row.is_active ? "Play →" : "Game ended, come back next year"
                 }));
+
                 setCards(dynamicCards);
                 setLoading(false);
             })
