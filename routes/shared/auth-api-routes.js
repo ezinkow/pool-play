@@ -1,4 +1,4 @@
-const { Users, Tokens, NbaEntries } = require("../../models");
+const { Users, Tokens } = require("../../models"); // Cleaned out legacy NbaEntries model dependency
 const crypto = require("crypto");
 
 module.exports = function (app) {
@@ -26,22 +26,18 @@ module.exports = function (app) {
                 return res.json({ success: false });
             }
 
-            // --- NEW LOGIC START ---
-            const entry = await NbaEntries.findOne({ where: { user_id: user.id } });
-            // --- NEW LOGIC END ---
-
             const token = crypto.randomBytes(32).toString("hex");
             const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
             await Tokens.upsert({ token, user_id: user.id, expires });
 
-            // Add hasNbaEntry to the response below
+            // ✨ Modified: Returns is_admin profile instead of legacy pool entries
             res.json({
                 success: true,
                 token,
-                id: user.id, // Good to include ID for frontend lookups
+                id: user.id,
                 name: user.name,
                 real_name: user.real_name,
-                hasNbaEntry: !!entry // true if they joined, false if not
+                is_admin: !!user.is_admin // Forced explicitly to boolean value
             });
         } catch (err) {
             console.error(err);
@@ -63,21 +59,17 @@ module.exports = function (app) {
                 return res.json({ success: false });
             }
 
-            // --- NEW LOGIC START ---
-            const entry = await NbaEntries.findOne({ where: { user_id: user.id } });
-            // --- NEW LOGIC END ---
-
             await record.update({
                 expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             });
 
-            // Add id and hasNbaEntry to the response below
+            // ✨ Modified: Returns is_admin profile instead of legacy pool entries
             res.json({
                 success: true,
                 id: user.id,
                 name: user.name,
                 real_name: user.real_name,
-                hasNbaEntry: !!entry
+                is_admin: !!user.is_admin
             });
         } catch (err) {
             console.error(err);

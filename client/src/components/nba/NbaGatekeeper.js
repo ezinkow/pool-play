@@ -3,13 +3,13 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const NAVY = "#0a1628";
-const RED  = "#c8102e";
+const RED = "#c8102e";
 
-export default function NbaGatekeeper({ user, children }) {
-    const [showModal,  setShowModal]  = useState(false);
-    const [entryName,  setEntryName]  = useState("");
-    const [loading,    setLoading]    = useState(false);
-    const [error,      setError]      = useState("");
+export default function NbaGatekeeper({ user, children, isAdmin }) {
+    const [showModal, setShowModal] = useState(false);
+    const [entryName, setEntryName] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
     const openModal = () => {
         setEntryName(user?.name || "");
@@ -63,7 +63,13 @@ export default function NbaGatekeeper({ user, children }) {
         );
     }
 
-    // Logged in but no entry yet
+    // ✨ ADMIN BYPASS: Instantly pass-through if the user has an admin flag, 
+    // skipping the entry registration gating check entirely.
+    if (isAdmin) {
+        return <>{children}</>;
+    }
+
+    // Logged in but no entry yet (Regular users only)
     if (!user.hasNbaEntry) {
         return (
             <>

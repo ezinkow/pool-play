@@ -1,4 +1,4 @@
-const syncBracket = require("../../services/bracket/sync.js");
+const syncBracket = require("../../syncs/bracket/sync.js");
 
 module.exports = function (app) {
     app.post("/api/bracket/admin/refresh-games", async (req, res) => {

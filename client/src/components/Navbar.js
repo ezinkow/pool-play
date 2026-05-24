@@ -82,6 +82,7 @@ export default function Navbar() {
         if (!currentGame || !currentGame.prefix) return [];
 
         const pfx = currentGame.prefix;
+        const isAdmin = user?.is_admin === true; // 🧠 Check admin authority context
 
         let templateLinks = [
             { to: `${pfx}`, label: "Home", emoji: "🏠" },
@@ -141,8 +142,8 @@ export default function Navbar() {
             ];
         }
 
-        return templateLinks.filter(({ to }) => !signupLocked || !to.endsWith("/signup"));
-    }, [currentGame, signupLocked]);
+        return templateLinks.filter(({ to }) => isAdmin || !signupLocked || !to.endsWith("/signup"));
+    }, [currentGame, signupLocked, user]); // 🧠 Added user dependency track
 
     const brandLabel = currentGame ? `${currentGame.emoji} ${currentGame.game_label.toUpperCase()}` : "🏆 POOL PLAY 🏊";
     const navBg = currentGame ? currentGame.navBg : "#13447a";
@@ -208,7 +209,7 @@ export default function Navbar() {
                                         border: "1px solid #e2e8f0", padding: "6px 0", zIndex: 500
                                     }}>
                                         {rawGameSettings.map((game) => {
-                                            const isLinkActive = game.is_active === true;
+                                            const isLinkActive = game.is_active === true || user?.is_admin === true;
                                             const isSelected = currentGame?.game_key === game.game_key;
                                             return (
                                                 <Link
@@ -392,7 +393,7 @@ export default function Navbar() {
                         <div style={{ padding: "6px 16px", fontSize: "10px", color: "#64748b", fontWeight: 800, letterSpacing: "0.5px" }}>SELECT TOURNAMENT</div>
                         <div style={{ display: "flex", flexDirection: "column", borderBottom: "1px solid #e2e8f0", paddingBottom: "12px", marginBottom: "12px" }}>
                             {rawGameSettings.map((game) => {
-                                const isLinkActive = game.is_active === true;
+                                const isLinkActive = game.is_active === true || user?.is_admin === true;
                                 const isSelected = currentGame?.game_key === game.game_key;
                                 return (
                                     <Link

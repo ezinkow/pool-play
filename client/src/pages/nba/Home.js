@@ -14,22 +14,21 @@ export default function Home() {
 
     // 1. Handle the initial auth loading state
     if (authLoading) return null;
+    console.log(authLoading, authUser)
 
-    // 2. Wrap everything in the Gatekeeper. 
-    // If authUser has no entry, the Gatekeeper displays the "Join" UI.
-    // If they do have an entry, it shows the Home page content below.
     return (
         <div>
             <Toaster />
             <div className="page-content">
                 <Countdown />
                 <div className="container" style={{ textAlign: "center" }}>
-                    <NbaGatekeeper user={authUser}>
+                    {/* 🧠 Passing isAdmin down to let the gatekeeper know it should grant full pass-through access */}
+                    <NbaGatekeeper user={authUser} isAdmin={authUser?.is_admin === true}>
 
                         {/* Action Buttons Grid Layout Cluster */}
                         <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", marginBottom: 20 }}>
 
-                            {/* Since they passed the Gatekeeper, they definitely have an entry */}
+                            {/* Since they passed the Gatekeeper, they can access sheets */}
                             <Link to="/nba/picks" style={{ textDecoration: 'none' }}>
                                 <button className="btn-nba-main">🏀 Make My Picks</button>
                             </Link>
