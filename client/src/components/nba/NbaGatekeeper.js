@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // 🧠 Added useEffect to pull live state tracks
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -10,6 +10,28 @@ export default function NbaGatekeeper({ user, children, isAdmin }) {
     const [entryName, setEntryName] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    
+    // ✨ NEW STATE: Track entry validation status independently from useAuth
+    const [hasEntry, setHasEntry] = useState(null); 
+    const [checking, setChecking] = useState(true);
+
+    useEffect(() => {
+        if (!user?.name) {
+            setChecking(false);
+            return;
+        }
+        
+        // 🧠 Live lookup against our verified backend check route node
+        axios.get(`/api/nba/entries/check/${user.name}`)
+            .then(res => {
+                setHasEntry(res.data.exists);
+                setChecking(false);
+            })
+            .catch(err => {
+                console.error("Error checking pool entry status:", err);
+                setChecking(false);
+            });
+    }, [user]);
 
     const openModal = () => {
         setEntryName(user?.name || "");
@@ -36,7 +58,9 @@ export default function NbaGatekeeper({ user, children, isAdmin }) {
             );
             toast.success("You're in! Good luck 🏀");
             setShowModal(false);
-            setTimeout(() => window.location.reload(), 800);
+            
+            // Set local state immediately so it changes view layouts without a hard reload crash
+            setHasEntry(true); 
         } catch (err) {
             const msg = err.response?.data?.error || "Failed to join. Please try again.";
             setError(msg);
@@ -45,55 +69,38 @@ export default function NbaGatekeeper({ user, children, isAdmin }) {
         }
     };
 
-    // Not logged in
+    // 1. Not logged in
     if (!user) {
         return (
-            <div style={{
-                maxWidth: 480, margin: "20px auto", padding: 40,
-                textAlign: "center", background: "#fdfdfd",
-                borderRadius: 12, border: "1px solid #e5e7eb",
-                boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
-            }}>
+            <div style={{ maxWidth: 480, margin: "20px auto", padding: 40, textAlign: "center", background: "#fdfdfd", borderRadius: 12, border: "1px solid #e5e7eb" }}>
                 <span style={{ fontSize: 40 }}>🏀</span>
                 <h2 style={{ color: NAVY, marginTop: 10 }}>NBA Playoffs Pool</h2>
-                <p style={{ color: "#4b5563", lineHeight: "1.6" }}>
-                    Please log in to participate.
-                </p>
+                <p style={{ color: "#4b5563" }}>Please log in to participate.</p>
             </div>
         );
     }
 
-    // ✨ ADMIN BYPASS: Instantly pass-through if the user has an admin flag, 
-    // skipping the entry registration gating check entirely.
+    // 2. Admin absolute pass-through bypass node
     if (isAdmin) {
         return <>{children}</>;
     }
 
-    // Logged in but no entry yet (Regular users only)
-    if (!user.hasNbaEntry) {
+    // 3. Keep visual window clean while loading backend validation requests
+    if (checking) {
+        return <div style={{ color: "white", padding: 20 }}>Verifying registration status...</div>;
+    }
+
+    // 4. Logged in but no entry yet (Switched from old user.hasNbaEntry dependency tracking matrix)
+    if (!hasEntry) {
         return (
             <>
-                <div style={{
-                    maxWidth: 480, margin: "20px auto", padding: 40,
-                    textAlign: "center", background: "#fdfdfd",
-                    borderRadius: 12, border: "1px solid #e5e7eb",
-                    boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
-                }}>
+                <div style={{ maxWidth: 480, margin: "20px auto", padding: 40, textAlign: "center", background: "#fdfdfd", borderRadius: 12, border: "1px solid #e5e7eb", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" }}>
                     <span style={{ fontSize: 40 }}>🏀</span>
                     <h2 style={{ color: NAVY, marginTop: 10 }}>NBA Playoffs Pool</h2>
-                    <p style={{ color: "#4b5563", marginBottom: 24, lineHeight: "1.6" }}>
-                        You're logged in as <strong>{user.name}</strong>, but haven't
-                        joined the pool yet. Create your entry to start making picks!
+                    <p style={{ color: "#4b5563", marginBottom: 24 }}>
+                        You're logged in as <strong>{user.name}</strong>, but haven't joined the pool yet. Create your entry to start making picks!
                     </p>
-                    <button
-                        onClick={openModal}
-                        style={{
-                            backgroundColor: "#16a34a", color: "white",
-                            padding: "14px 28px", borderRadius: 8,
-                            fontWeight: 700, border: "none",
-                            cursor: "pointer", fontSize: 16,
-                        }}
-                    >
+                    <button onClick={openModal} style={{ backgroundColor: "#16a34a", color: "white", padding: "14px 28px", borderRadius: 8, fontWeight: 700, border: "none", cursor: "pointer", fontSize: 16 }}>
                         ➕ Join NBA Playoff Pool
                     </button>
                 </div>
