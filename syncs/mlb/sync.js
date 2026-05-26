@@ -1,7 +1,7 @@
 const axios = require("axios");
 const db = require("../../models");
 
-const SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20260418-20260620";
+const SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=20260918-20261031";
 
 const ROUND_CONFIG = {
     1: { label: "R1", maxPoints: 32 },
@@ -10,18 +10,18 @@ const ROUND_CONFIG = {
     4: { label: "Finals", maxPoints: 8 },
 };
 
-const TEAM_TO_SEED = {
-    // East
-    "Detroit Pistons": 1, "Boston Celtics": 2,
-    "New York Knicks": 3, "Cleveland Cavaliers": 4,
-    "Toronto Raptors": 5, "Atlanta Hawks": 6,
-    "Philadelphia 76ers": 7, "Orlando Magic": 7, "76ers/Magic": 7,
-    // West
-    "Oklahoma City Thunder": 1, "San Antonio Spurs": 2,
-    "Denver Nuggets": 3, "Los Angeles Lakers": 4,
-    "Houston Rockets": 5, "Minnesota Timberwolves": 6,
-    "Phoenix Suns": 7, "Portland Trail Blazers": 7, "Suns/Trail Blazers": 7,
-};
+// const TEAM_TO_SEED = {
+//     // East
+//     "Detroit Pistons": 1, "Boston Celtics": 2,
+//     "New York Knicks": 3, "Cleveland Cavaliers": 4,
+//     "Toronto Raptors": 5, "Atlanta Hawks": 6,
+//     "Philadelphia 76ers": 7, "Orlando Magic": 7, "76ers/Magic": 7,
+//     // West
+//     "Oklahoma City Thunder": 1, "San Antonio Spurs": 2,
+//     "Denver Nuggets": 3, "Los Angeles Lakers": 4,
+//     "Houston Rockets": 5, "Minnesota Timberwolves": 6,
+//     "Phoenix Suns": 7, "Portland Trail Blazers": 7, "Suns/Trail Blazers": 7,
+// };
 
 function getRound(headline) {
     if (headline && headline.includes("Finals") && !headline.includes("West") && !headline.includes("East")) return 4;
@@ -130,7 +130,7 @@ function extractSeries(data) {
 }
 
 async function processSeries(s) {
-    const { NbaSeries } = db;
+    const { MlbSeries } = db;
     try {
         const roundCfg = ROUND_CONFIG[s.roundNum];
 
@@ -189,7 +189,7 @@ async function processSeries(s) {
         // Lock if the game has started OR if any wins are recorded
         const isLocked = (now >= startTime) || (finalHomeWins + finalAwayWins > 0);
 
-        await NbaSeries.upsert({
+        await MlbSeries.upsert({
             id: s.id,
             round: s.roundNum,
             round_label: roundCfg.label,
@@ -209,21 +209,25 @@ async function processSeries(s) {
             series_length: parsedLength
         });
     } catch (err) {
-        console.error(`[NBA sync] Error on ${s.id}:`, err.message);
+        console.error(`[MLB sync] Error on ${s.id}:`, err.message);
     }
 }
 
-async function syncNba() {
+async function syncMlb() {
     try {
         const { data } = await axios.get(SCOREBOARD_URL, { timeout: 15000 });
         const series = extractSeries(data);
+
+        if (!series.length) {
+            return;
+        }
 
         for (const s of series) {
             await processSeries(s);
         }
     } catch (err) {
-        console.error("[NBA sync] Fatal Error:", err.message);
+        console.error("[MLB sync] Fatal Error:", err.message);
     }
 }
 
-module.exports = syncNba;
+module.exports = syncMlb;

@@ -1,7 +1,7 @@
 import React from 'react'
-import MyPicks from '../../components/nba/MyPicks'
+import MyPicks from '../../components/mlb/MyPicks'
 
-export default function NbaMyPicks() {
+export default function MlbMyPicks() {
 
 
     return (

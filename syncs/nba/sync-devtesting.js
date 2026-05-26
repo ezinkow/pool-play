@@ -29,7 +29,6 @@ async function syncGames() {
     for (const event of data.events) {
         const comp = event?.competitions?.[0];
         if (!comp) continue;
-        // console.log('coooommmppppp', comp)
         const home = comp.competitors.find(c => c.homeAway === "home");
         const away = comp.competitors.find(c => c.homeAway === "away");
         if (!home || !away) continue;

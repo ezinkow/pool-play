@@ -9,8 +9,6 @@ const GAME_LOCK_SWITCHOVER = new Date("2026-03-19T16:15:00Z"); // 11:15 AM CT
 
 export default function Home() {
     const gameLocked = new Date() >= GAME_LOCK_SWITCHOVER;
-        console.log(gameLocked)
-
     return (
         <div>
             <div className="page-content">

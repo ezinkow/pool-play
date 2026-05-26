@@ -154,13 +154,10 @@ function UserPicksDrawer({ name, onClose }) {
     useEffect(() => {
         axios.get("/api/bracket/picks", { params: { name } })
             .then(res => {
-                console.log("picks response sample:", res.data[0]);
                 setPicks(res.data);
             })
             .finally(() => setLoading(false));
     }, [name]);
-
-    console.log(picks)
 
     // Group by region then round
     const grouped = React.useMemo(() => {

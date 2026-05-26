@@ -22,8 +22,6 @@ const db = require("./models");
 // ── 2. INITIALIZE SYNCHRONIZATION MATRIX ─────────────────────────────────────
 // NOTE: Turn force: false and alter: false once your tables create so you don't drop data!
 db.sequelize.sync({ force: false, alter: false }).then(() => {
-  console.log("🟩 Database tables verified / created successfully.");
-
   // ── 3. MOVED INSIDE: Routes only load AFTER tables exist ────────────────────
 
   // Shared auth (single login for all games)
@@ -83,6 +81,14 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/nfl/startingrosters-api-routes.js")(app);
   require("./routes/nfl/gamestates-api-routes.js")(app);
 
+  // MLB
+  require("./routes/mlb/entries-api-routes.js")(app);
+  require("./routes/mlb/series-api-routes.js")(app);
+  require("./routes/mlb/picks-api-routes.js")(app);
+  require("./routes/mlb/standings-api-routes.js")(app);
+  require("./routes/mlb/tiebreaker-api-routes.js")(app);
+  require("./routes/mlb/admin-api-routes.js")(app);
+
   // Olympics
   require("./routes/olympics/countrypools-api-routes")(app);
   require("./routes/olympics/entries-api-routes.js")(app);
@@ -103,6 +109,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   const syncTourneyPickem = require("./syncs/tourney_pickem/sync.js");
   const syncBracket = require("./syncs/bracket/sync.js");
   const syncNba = require("./syncs/nba/sync.js");
+  const syncMlb = require("./syncs/mlb/sync.js");
   const syncWorldCup = require("./syncs/world_cup/sync.js");
   const tourneyPickemLockLines = require("./jobs/tourney_pickem/lockLines.js");
 
@@ -111,6 +118,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
       // await syncTourneyPickem();
       // await syncBracket();
       await syncNba();
+      // await syncMlb();
       await syncWorldCup();
       // await tourneyPickemLockLines();
     } catch (err) {

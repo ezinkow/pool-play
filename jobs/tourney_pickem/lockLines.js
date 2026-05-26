@@ -65,7 +65,6 @@ const lockLines = async () => {
         await PicksPickem.bulkCreate(missedPicks, {
             ignoreDuplicates: true
         });
-        console.log(`[Job] Created ${missedPicks.length} missed picks`);
     }
 };
 

@@ -138,8 +138,6 @@ async function syncBracketGames() {
                 locked: isLocked,
             });
         }
-
-        console.log("Bracket sync complete");
         return true;
     } catch (error) {
         console.error("Bracket sync error:", error);

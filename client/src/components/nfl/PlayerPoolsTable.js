@@ -6,7 +6,6 @@ export default function PlayerPoolsTable() {
 
     useEffect(() => {
         axios.get("/api/playerpools").then((res) => {
-            console.log("API response:", res.data);
             setPlayers(res.data);
         });
     }, []);

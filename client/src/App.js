@@ -54,6 +54,13 @@ import NbaStandings from './pages/nba/Standings';
 import NbaGroupPicks from './pages/nba/GroupPicks';
 import NbaSignUp from './pages/nba/SignUp';       // ← pool entry, not account creation
 
+// MLB Pages
+import MlbHome from './pages/mlb/Home';
+import MlbPicks from './pages/mlb/Picks';
+import MlbPicksDisplay from './pages/mlb/GroupPicks';
+import MlbStandings from './pages/mlb/Standings';
+import MlbSignUp from './pages/mlb/SignUp';
+
 // NFL pages
 import NflHome from './pages/nfl/Home';
 import NflScoreboard from './pages/nfl/Scoreboard';
@@ -63,7 +70,7 @@ import NflMyRoster from './pages/nfl/MyRoster';
 import NflSignUp from './pages/nfl/SignUp';
 import NflPlayerPoolsTable from './pages/nfl/PlayerStats';
 
-// SuperBowlSquares pages
+// Super Bowl Squares pages
 import SuperBowlSquaresGrid from "./pages/superbowl_squares/Grid";
 import SuperBowlSquaresResults from "./pages/superbowl_squares/Results";
 import SuperBowlSquaresSignUp from "./pages/superbowl_squares/SignUp";
@@ -88,6 +95,8 @@ import WorldCupScoreboard from './pages/world_cup/Scoreboard';
 import WorldCupSignUp from './pages/world_cup/SignUp';
 import WorldCupStandings from './pages/world_cup/Standings';
 import WorldCupGroupPicks from './pages/world_cup/GroupPicks';
+
+
 
 export default function App() {
   return (
@@ -144,6 +153,13 @@ export default function App() {
         <Route path="/nba/standings" element={<NbaStandings />} />
         <Route path="/nba/grouppicks" element={<NbaGroupPicks />} />
         <Route path="/nba/signup" element={<NbaSignUp />} />
+
+        {/* MLB */}
+        <Route path="/mlb" element={<MlbHome />} />
+        <Route path="/mlb/signup" element={<MlbSignUp />} />
+        <Route path="/mlb/picks" element={<MlbPicks />} />
+        <Route path="/mlb/picksdisplay" element={<MlbPicksDisplay />} />
+        <Route path="/mlb/standings" element={<MlbStandings />} />
 
         {/* NFL */}
         <Route path="/nfl" element={<NflHome />} />

@@ -2,8 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import useAuth from '../../hooks/useAuth';
-import Countdown from '../../components/nba/Countdown';
-import NbaGatekeeper from '../../components/nba/NbaGatekeeper';
+import Countdown from '../../components/mlb/Countdown';
+import MlbGatekeeper from '../../components/mlb/MlbGatekeeper';
 
 const GOLD = "#c89d3c";
 const NAVY = "#0a1628";
@@ -22,23 +22,23 @@ export default function Home() {
                 <Countdown />
                 <div className="container" style={{ textAlign: "center" }}>
                     {/* 🧠 Passing isAdmin down to let the gatekeeper know it should grant full pass-through access */}
-                    <NbaGatekeeper user={authUser} isAdmin={authUser?.is_admin === true}>
+                    <MlbGatekeeper user={authUser} isAdmin={authUser?.is_admin === true}>
 
                         {/* Action Buttons Grid Layout Cluster */}
                         <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", marginBottom: 20 }}>
 
                             {/* Since they passed the Gatekeeper, they can access sheets */}
-                            <Link to="/nba/picks" style={{ textDecoration: 'none' }}>
-                                <button className="btn-nba-main">🏀 Make My Picks</button>
+                            <Link to="/mlb/picks" style={{ textDecoration: 'none' }}>
+                                <button className="btn-mlb-main">🏀 Make My Picks</button>
                             </Link>
 
                             {/* ✨ NEW ADDITION: Fast-navigation shortcut path node to user's summary card sheet */}
-                            <Link to="/nba/mypicks" style={{ textDecoration: 'none' }}>
-                                <button className="btn-nba-secondary">📋 My Picks</button>
+                            <Link to="/mlb/mypicks" style={{ textDecoration: 'none' }}>
+                                <button className="btn-mlb-secondary">📋 My Picks</button>
                             </Link>
                         </div>
 
-                        <a href="https://www.nba.com/playoffs/2026"
+                        <a href="https://www.mlb.com/playoffs/2026"
                             target="_blank"
                             rel="noreferrer"
                             style={{
@@ -57,7 +57,7 @@ export default function Home() {
                             }}>
                             ⛹🏾‍♂️ Playoff Bracket ↗
                         </a>
-                    </NbaGatekeeper>
+                    </MlbGatekeeper>
 
                     {/* Rules card */}
                     <div style={{
@@ -88,7 +88,7 @@ export default function Home() {
             </div>
 
             <style>{`
-                    .btn-nba-main {
+                    .btn-mlb-main {
                         padding: 14px 32px;
                         background-color: ${NAVY};
                         color: white;
@@ -102,10 +102,10 @@ export default function Home() {
                         transition: opacity 0.2s;
                         text-decoration: none;
                     }
-                    .btn-nba-main:hover { opacity: 0.9; }
+                    .btn-mlb-main:hover { opacity: 0.9; }
 
                     /* ✨ NEW BUTTON LAYOUT STYLE SHEET SECTIONS */
-                    .btn-nba-secondary {
+                    .btn-mlb-secondary {
                         padding: 14px 32px;
                         background-color: transparent;
                         color: ${NAVY};
@@ -119,7 +119,7 @@ export default function Home() {
                         transition: background-color 0.2s, color 0.2s;
                         text-decoration: none;
                     }
-                    .btn-nba-secondary:hover { 
+                    .btn-mlb-secondary:hover { 
                         background-color: ${NAVY};
                         color: white;
                     }

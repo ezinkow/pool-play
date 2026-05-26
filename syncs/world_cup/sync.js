@@ -72,7 +72,6 @@ function getWorldCupRound(event) {
 async function syncWorldCup() {
     const { WorldCupMatches } = db;
     try {
-        console.log("[WC Sync] Fetching multi-window parallel endpoints...");
         const responses = await Promise.all(URL_WINDOWS.map(url => axios.get(url)));
         
         const allEvents = responses.reduce((acc, currentRes) => {
@@ -144,8 +143,6 @@ async function syncWorldCup() {
             await WorldCupMatches.upsert(payload);
             processedCount++;
         }
-
-        console.log(`[WC Sync] Successfully synchronized ${processedCount} valid tournament nodes.`);
     } catch (err) {
         console.error(`[WC Sync] Sync Error:`, err.message);
     }

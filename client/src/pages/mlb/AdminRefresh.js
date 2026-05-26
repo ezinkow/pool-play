@@ -1,5 +1,5 @@
 import React from 'react'
-import RefreshGamesButton from '../../components/nba/RefreshGamesButton'
+import RefreshGamesButton from '../../components/mlb/RefreshGamesButton'
 
 export default function AdminRefresh() {
 

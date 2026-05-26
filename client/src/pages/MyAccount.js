@@ -24,7 +24,6 @@ export default function MyAccount() {
             .then(res => {
                 setMyPools(res.data || []);
                 setLoading(false);
-                console.log(myPools, authUser.id)
             })
             .catch(err => {
                 console.error("❌ Failed gathering user entry sheets maps:", err);
