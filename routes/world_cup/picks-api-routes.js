@@ -1,4 +1,4 @@
-const { WorldCupMatches, WorldCupMatchPicks, WorldCupEntries } = require("../../models");
+const { WorldCupMatches, WorldCupPicks, WorldCupEntries } = require("../../models");
 
 module.exports = function (app) {
 
@@ -7,7 +7,7 @@ module.exports = function (app) {
     // ----------------------------------
     app.get("/api/worldcup/picks/all", async (req, res) => {
         try {
-            const allPicks = await WorldCupMatchPicks.findAll({
+            const allPicks = await WorldCupPicks.findAll({
                 include: [{
                     model: WorldCupEntries,
                     attributes: ["entry_name"]
@@ -44,7 +44,7 @@ module.exports = function (app) {
             const { user_id } = req.query;
             if (!user_id) return res.status(400).json({ error: "Missing user_id" });
 
-            const rows = await WorldCupMatchPicks.findAll({
+            const rows = await WorldCupPicks.findAll({
                 where: { user_id }
             });
             res.json(rows);
@@ -69,7 +69,7 @@ module.exports = function (app) {
             const matchIds = picks.map(p => p.match_id);
 
             // 2. Delete existing picks for these specific matches to prevent duplicates
-            await WorldCupMatchPicks.destroy({
+            await WorldCupPicks.destroy({
                 where: {
                     user_id,
                     match_id: matchIds
@@ -84,7 +84,7 @@ module.exports = function (app) {
             }));
 
             // 4. Insert the new selections
-            const created = await WorldCupMatchPicks.bulkCreate(pickEntries);
+            const created = await WorldCupPicks.bulkCreate(pickEntries);
 
             res.json({ success: true, createdCount: created.length });
         } catch (err) {
@@ -120,10 +120,10 @@ module.exports = function (app) {
 
             const knockoutMatchIds = knockoutMatches.map(m => m.match_id);
 
-            // 2. Clear old bracket picks using your correct Model name (WorldCupMatchPicks)
+            // 2. Clear old bracket picks using your correct Model name (WorldCupPicks)
             // Maps match_id to your database table column key name
             if (knockoutMatchIds.length > 0) {
-                await WorldCupMatchPicks.destroy({
+                await WorldCupPicks.destroy({
                     where: {
                         user_id: user_id,
                         match_id: knockoutMatchIds
@@ -143,7 +143,7 @@ module.exports = function (app) {
 
             // 4. Bulk insert matches seamlessly
             if (recordsToInsert.length > 0) {
-                await WorldCupMatchPicks.bulkCreate(recordsToInsert, { transaction });
+                await WorldCupPicks.bulkCreate(recordsToInsert, { transaction });
             }
 
             await transaction.commit();

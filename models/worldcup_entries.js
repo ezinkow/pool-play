@@ -12,7 +12,7 @@ module.exports = function (sequelize, DataTypes) {
             references: { model: "users", key: "id" },
         },
         entry_name: {
-            type: DataTypes.STRING(255), // 🧠 Explicit bounds added for clean unique indexing
+            type: DataTypes.STRING(255),
             allowNull: false,
             unique: true,
         },
@@ -23,10 +23,15 @@ module.exports = function (sequelize, DataTypes) {
         updatedAt: false,
     });
 
-    // 🧠 Standard association mapping block
     WorldCupEntries.associate = function (models) {
-        // Lets you easily do WorldCupEntries.findAll({ include: [models.Users] }) later
+        // Links this pool entry to the user profile table (users.id)
         WorldCupEntries.belongsTo(models.Users, { foreignKey: "user_id" });
+
+        // 🧠 FIXED: Standard primary key mapping. An entry's unique ID owns the picks.
+        // We tell it to look for the "user_id" column inside your picks table as the target hook.
+        WorldCupEntries.hasMany(models.WorldCupPicks, {
+            foreignKey: "user_id"
+        });
     };
 
     return WorldCupEntries;

@@ -4,15 +4,15 @@ module.exports = function (app) {
     app.get("/api/worldcup/standings", async (req, res) => {
         try {
             const EntryModel = db.WorldCupEntries || db.world_cup_entries;
-            const MatchPicksModel = db.WorldCupMatchPicks || db.world_cup_match_picks;
+            const PicksModel = db.WorldCupPicks || db.world_cup_match_picks;
             const MatchesModel = db.WorldCupMatches || db.world_cup_matches;
 
             // 1. Fetch from Entries instead of base users table
             const entriesWithPicks = await EntryModel.findAll({
                 attributes: ["user_id", "entry_name"],
                 include: [{
-                    model: MatchPicksModel,
-                    as: "matchPicks",
+                    model: PicksModel,
+                    as: "WorldCupPicks",
                     include: [{
                         model: MatchesModel,
                         as: "match"
@@ -24,8 +24,8 @@ module.exports = function (app) {
             const standings = entriesWithPicks.map(entry => {
                 let totalPoints = 0;
 
-                if (entry.matchPicks && Array.isArray(entry.matchPicks)) {
-                    entry.matchPicks.forEach(pick => {
+                if (entry.WorldCupPicks && Array.isArray(entry.WorldCupPicks)) {
+                    entry.WorldCupPicks.forEach(pick => {
                         const match = pick.match;
 
                         if (match && match.status === "STATUS_FINAL") {
