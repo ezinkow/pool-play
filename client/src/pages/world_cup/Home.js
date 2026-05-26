@@ -100,7 +100,7 @@ export default function Home() {
 
           <Link to={alreadyIn ? "/worldcup/grouppicks" : "/worldcup/signup"} className="step step-link">
             <span>2) </span>
-            Earn points (1 for win selections, 2 for drawing selections) 🥅
+            Pick correctly and earn points 🥅
           </Link>
 
           <Link to={alreadyIn ? "/worldcup/standings" : "/worldcup/signup"} className="step step-link">
