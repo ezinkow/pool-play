@@ -93,12 +93,30 @@ module.exports = function (app) {
     app.post("/api/auth/signup", async (req, res) => {
         try {
             const { real_name, name, password, email, phone } = req.body;
-            if (!real_name || !name || !password) {
-                return res.status(400).json({ error: "Name, username, and password are required" });
+
+            // 🧠 MODIFIED: Added email to the strict required fields check
+            if (!real_name || !name || !password || !email || !email.trim()) {
+                return res.status(400).json({ error: "Name, username, password, and email address are required" });
             }
-            const existing = await Users.findOne({ where: { name } });
-            if (existing) return res.status(400).json({ error: "Username taken" });
-            await Users.create({ real_name, name, password, email, phone });
+
+            // 1. Guard against duplicate usernames
+            const existingUsername = await Users.findOne({ where: { name } });
+            if (existingUsername) return res.status(400).json({ error: "Username taken" });
+
+            // 2. Guard against duplicate emails (Now strictly enforced)
+            const existingEmail = await Users.findOne({ where: { email: email.trim() } });
+            if (existingEmail) {
+                return res.status(400).json({ error: "An account already exists for this email address." });
+            }
+
+            await Users.create({
+                real_name: real_name.trim(),
+                name: name.trim(),
+                password,
+                email: email.trim(), // Stored safely as a verified string
+                phone: phone ? phone.trim() : null
+            });
+
             res.json({ success: true });
         } catch (err) {
             console.error(err);

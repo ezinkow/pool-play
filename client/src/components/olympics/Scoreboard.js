@@ -95,7 +95,7 @@ export default function Scoreboard() {
           {users.length === 0 && <div>No entries yet.</div>}
 
           {users.map((user, idx) => (
-            <div key={user.name} className="scoreboard-card">
+            <div key={user.id} className="scoreboard-card">
               <div className="scoreboard-card-header">
                 {idx === 0 && "🥇 "}
                 {idx === 1 && "🥈 "}

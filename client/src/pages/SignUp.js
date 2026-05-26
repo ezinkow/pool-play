@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import useAuth from "../hooks/useAuth";
-import AuthModal from "../components/AuthModal"; // 🧠 Fixed relative path step so it stays within src/ boundaries
+import AuthModal from "../components/AuthModal";
 
 const NAVY = "#0a1628";
 const GOLD = "#c89d3c";
@@ -41,6 +41,8 @@ export default function SignUp() {
         if (!form.name.trim()) return setError("Please choose a username.");
         if (form.password.length < 1) return setError("Please enter a password.");
         if (form.password !== form.confirm_password) return setError("Passwords do not match.");
+        // 🧠 NEW: Front-end mandatory field verification catch
+        if (!form.email.trim()) return setError("Please enter a valid email address.");
 
         setSubmitting(true);
         try {
@@ -48,7 +50,7 @@ export default function SignUp() {
                 real_name: form.real_name.trim(),
                 name: form.name.trim(),
                 password: form.password,
-                email: form.email.trim() || null,
+                email: form.email.trim(),
                 phone: form.phone.trim() || null,
             });
 
@@ -131,7 +133,8 @@ export default function SignUp() {
                             />
                         </Field>
 
-                        <Field label="Email" hint="Used for password recovery">
+                        {/* 🧠 MODIFIED: Added required prop node flag handle below */}
+                        <Field label="Email" required hint="Used for password recovery">
                             <input
                                 type="email"
                                 value={form.email}

@@ -143,7 +143,7 @@ export default function PlayerPicksMatrix() {
         </thead>
         <tbody>
           {users.map((user, idx) => (
-            <tr key={user.name}>
+            <tr key={user.id}>
               <td style={{
                 position: "sticky", left: 0, zIndex: 2,
                 backgroundColor: "white",

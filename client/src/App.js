@@ -63,6 +63,14 @@ import NflMyRoster from './pages/nfl/MyRoster';
 import NflSignUp from './pages/nfl/SignUp';
 import NflPlayerPoolsTable from './pages/nfl/PlayerStats';
 
+// SuperBowlSquares pages
+import SuperBowlSquaresGrid from "./pages/superbowl_squares/Grid";
+import SuperBowlSquaresResults from "./pages/superbowl_squares/Results";
+import SuperBowlSquaresSignUp from "./pages/superbowl_squares/SignUp";
+import SuperBowlSquaresNumbers from "./pages/superbowl_squares/SquaresNumbers";
+import SuperBowlSquaresHome from "./pages/superbowl_squares/Home";
+import SuperBowlSquaresAdmin from "./pages/superbowl_squares/Admin";
+
 // Olympics pages
 import OlympicsHome from './pages/olympics/Home';
 import OlympicsScoreboard from './pages/olympics/Scoreboard';
@@ -145,6 +153,14 @@ export default function App() {
         <Route path="/nfl/myroster" element={<NflMyRoster />} />
         <Route path="/nfl/standings" element={<NflStandings />} />
         <Route path="/nfl/playerstats" element={<NflPlayerPoolsTable />} />
+
+        {/* Super Bowl Squares */}
+        <Route path="/superbowlsquares" element={<SuperBowlSquaresHome />} />
+        <Route path="/superbowlsquares/grid" element={<SuperBowlSquaresGrid />} />
+        <Route path="/superbowlsquares/results" element={<SuperBowlSquaresResults />} />
+        <Route path="/superbowlsquares/signup" element={<SuperBowlSquaresSignUp />} />
+        <Route path="/superbowlsquares/numbers" element={<SuperBowlSquaresNumbers />} />
+        <Route path="/superbowlsquares/admin" element={<SuperBowlSquaresAdmin />} />
 
         {/* Olympics */}
         <Route path="/olympics" element={<OlympicsHome />} />

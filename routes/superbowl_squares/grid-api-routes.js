@@ -1,5 +1,5 @@
-const { TourneySquaresGrid } = require("../../models");
-const { GamesBracket } = require("../../models");
+const { SuperBowlSquaresGrid } = require("../../models");
+const { SuperBowlGames } = require("../../models");
 const { Op } = require("sequelize");
 
 const LOCK_TIME = new Date("2026-03-19T11:10:00-05:00");
@@ -8,10 +8,10 @@ const ROUND_PAYOUTS = { 1: 12.5, 2: 25, 3: 50, 4: 100, 5: 200, 6: 500 };
 module.exports = function (app) {
 
     // Get full grid — filter by grid_id
-    app.get("/api/tourneysquares/grid", async (req, res) => {
+    app.get("/api/superbowlsquares/grid", async (req, res) => {
         try {
             const grid_id = parseInt(req.query.grid_id) || 1;
-            const squares = await TourneySquaresGrid.findAll({
+            const squares = await SuperBowlSquaresGrid.findAll({
                 where: { grid_id },
                 order: [["square_id", "ASC"]]
             });
@@ -23,7 +23,7 @@ module.exports = function (app) {
     });
 
     // Claim a square
-    app.post("/api/tourneysquares/claim", async (req, res) => {
+    app.post("/api/superbowlsquares/claim", async (req, res) => {
         try {
             if (new Date() >= LOCK_TIME) {
                 return res.status(403).json({ error: "Squares are locked" });
@@ -31,7 +31,7 @@ module.exports = function (app) {
             const { square_id, owner_name } = req.body;
             if (!owner_name) return res.status(400).json({ error: "Name required" });
 
-            const square = await TourneySquaresGrid.findOne({ where: { square_id } });
+            const square = await SuperBowlSquaresGrid.findOne({ where: { square_id } });
             if (!square) return res.status(404).json({ error: "Square not found" });
             if (square.owner_name) return res.status(409).json({ error: "Square already claimed" });
 
@@ -44,13 +44,13 @@ module.exports = function (app) {
     });
 
     // Unclaim a square
-    app.post("/api/tourneysquares/unclaim", async (req, res) => {
+    app.post("/api/superbowlsquares/unclaim", async (req, res) => {
         try {
             if (new Date() >= LOCK_TIME) {
                 return res.status(403).json({ error: "Squares are locked" });
             }
             const { square_id, owner_name } = req.body;
-            const square = await TourneySquaresGrid.findOne({ where: { square_id } });
+            const square = await SuperBowlSquaresGrid.findOne({ where: { square_id } });
             if (!square) return res.status(404).json({ error: "Square not found" });
             if (square.owner_name !== owner_name) {
                 return res.status(403).json({ error: "You can only unclaim your own squares" });
@@ -64,14 +64,14 @@ module.exports = function (app) {
     });
 
     // Results — accepts grid_id param
-    app.get("/api/tourneysquares/results", async (req, res) => {
+    app.get("/api/superbowlsquares/results", async (req, res) => {
         try {
             const grid_id = parseInt(req.query.grid_id) || 1;
-            const games = await GamesBracket.findAll({
+            const games = await SuperBowlGamesBracket.findAll({
                 where: { status: "STATUS_FINAL" },
                 order: [["round", "ASC"], ["bracket_slot", "ASC"]]
             });
-            const squares = await TourneySquaresGrid.findAll({ where: { grid_id } });
+            const squares = await SuperBowlSquaresGrid.findAll({ where: { grid_id } });
             const squareMap = {};
             for (const s of squares) {
                 if (s.rowNumber !== null && s.colNumber !== null) {
@@ -113,10 +113,10 @@ module.exports = function (app) {
     });
 
     // My numbers — filter by grid_id
-    app.get("/api/tourneysquares/my-numbers", async (req, res) => {
+    app.get("/api/superbowlsquares/my-numbers", async (req, res) => {
         try {
             const grid_id = parseInt(req.query.grid_id) || 1;
-            const squares = await TourneySquaresGrid.findAll({
+            const squares = await SuperBowlSquaresGrid.findAll({
                 where: { owner_name: { [Op.not]: null }, grid_id },
                 order: [["square_id", "ASC"]]
             });
@@ -138,13 +138,13 @@ module.exports = function (app) {
     });
 
     //admin
-    app.post("/api/tourneysquares/admin/assign-numbers", async (req, res) => {
+    app.post("/api/superbowlsquares/admin/assign-numbers", async (req, res) => {
         try {
             const { grid_id, col_numbers, row_numbers } = req.body;
             // col_numbers: array of 10 numbers in order [col0, col1, ... col9]
             // row_numbers: array of 10 numbers in order [row0, row1, ... row9]
 
-            const squares = await TourneySquaresGrid.findAll({
+            const squares = await SuperBowlSquaresGrid.findAll({
                 where: { grid_id },
                 order: [["square_id", "ASC"]]
             });

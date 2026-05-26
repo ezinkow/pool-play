@@ -28,33 +28,9 @@ export default function UsersDisplay() {
         fetchUsers()
     }, [])
 
-    const tableGrid =
-        users.map(name =>
-            <tr>
-                <>
-                    <td key={name.id}>{name.name}</td>
-                    <td key={name.name}>{name.paid}</td>
-                </>
-            </tr>
-        )
-
-
     return (
         <div className='container'>
-            <div className="table" style={{paddingBottom: 80}}>
-                <h2>Signed Up:</h2>
-                <Table striped bordered hover>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Paid?</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {tableGrid}
-                    </tbody>
-                </Table>
-
+            <div className="table" style={{ paddingBottom: 80 }}>
             </div>
         </div>
     )

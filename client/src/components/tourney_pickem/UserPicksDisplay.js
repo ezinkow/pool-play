@@ -190,7 +190,7 @@ export default function PlayerPicksMatrix() {
           {users.map((user, idx) => {
             const tb = tiebreakerMap[user.name];
             return (
-              <tr key={user.name}>
+              <tr key={user.id}>
                 {/* Player cell */}
                 <td style={{
                   position: "sticky", left: 0, zIndex: 2,
