@@ -44,25 +44,22 @@ body {
   .main-content,
   main,
   .page-content {
-    padding-top: 100px !important;
-    /* Grants breathing room below desktop subnav tracks */
+    /* Instead of just padding, set the hero color here to fill the gap */
+    background: linear-gradient(135deg, #0f172a, #020617);
+    padding-top: 80px !important;
   }
 }
 
 /* 📱 MOBILE & TABLET VIEWPORT APPARATUS (992px and below) */
 @media (max-width: 992px) {
-  body {
-    padding-bottom: 60px;
-    /* Yields clean space layout limits for bottom navigation tabs */
-  }
 
-  /* 🧠 COMBINED AND UNIFIED: Forces all content nodes to sit cleanly right below the 50px navbar header */
   .page-content,
   .main-content,
   main,
   #root>div {
+    /* Sync background to match your hero section */
+    background: linear-gradient(135deg, #0f172a, #020617);
     padding-top: 56px !important;
-    /* Pulls elements straight up to seal empty window gaps */
     margin-top: 0 !important;
   }
 }
@@ -1036,12 +1033,14 @@ Hide mobile picks on desktop
 */
 @media (min-width: 769px) {
   .mypicks-mobile {
-    display: none !important; /* Hide mobile cards on desktop */
+    display: none !important;
+    /* Hide mobile cards on desktop */
   }
 }
 
 @media (max-width: 768px) {
   .mypicks-desktop {
-    display: none !important; /* Hide desktop table on mobile */
+    display: none !important;
+    /* Hide desktop table on mobile */
   }
 }
