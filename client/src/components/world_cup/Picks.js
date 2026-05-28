@@ -7,7 +7,7 @@ const NAVY = "#13447a";
 const GOLD = "#c89d3c";
 
 export default function Picks() {
-  const { user: authUser, loading: authLoading } = useAuth();
+  const { user: user, loading: authLoading } = useAuth();
   const [matches, setMatches] = useState([]);
   const [userPicks, setUserPicks] = useState({});
   const [loading, setLoading] = useState(false);
@@ -25,7 +25,7 @@ export default function Picks() {
   }, []);
 
   useEffect(() => {
-    if (!authUser || authLoading || hasFetched.current) return;
+    if (!user || authLoading || hasFetched.current) return;
 
     async function fetchMatchData() {
       setLoading(true);
@@ -36,7 +36,7 @@ export default function Picks() {
         );
         setMatches(groupStageMatches);
 
-        const picksRes = await axios.get(`/api/worldcup/picks?user_id=${authUser.id}`);
+        const picksRes = await axios.get(`/api/worldcup/picks?user_id=${user.id}`);
         const existingPicks = picksRes.data.reduce((acc, pick) => {
           acc[pick.match_id] = pick.selection;
           return acc;
@@ -53,7 +53,7 @@ export default function Picks() {
     }
 
     fetchMatchData();
-  }, [authUser, authLoading]);
+  }, [user, authLoading]);
 
   const handlePickSelection = (matchId, selection) => {
     setUserPicks((prev) => ({
@@ -64,7 +64,7 @@ export default function Picks() {
 
   const handleSubmit = async () => {
     const payload = {
-      user_id: authUser.id,
+      user_id: user.id,
       picks: Object.entries(userPicks).map(([matchId, selection]) => ({
         match_id: matchId,
         selection,
@@ -129,10 +129,10 @@ export default function Picks() {
   }, [matches, sortBy]);
 
   if (authLoading) return <div style={{ paddingTop: 100, textAlign: "center" }}>Verifying session…</div>;
-  if (!authUser) return <div style={{ paddingTop: 100, textAlign: "center" }}><h3>Please log in to make picks.</h3></div>;
+  if (!user) return <div style={{ paddingTop: 100, textAlign: "center" }}><h3>Please log in to make picks.</h3></div>;
 
   return (
-    <div style={{ padding: "68px 16px 120px", maxWidth: "900px", margin: "0 auto" }}>
+    <div  style={{ maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
       <Toaster position="top-center" />
 
       {/* Hero Display Panel */}

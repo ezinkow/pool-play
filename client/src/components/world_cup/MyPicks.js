@@ -18,7 +18,7 @@ const ROUND_LABELS = {
 
 export default function MyPicks() {
     const navigate = useNavigate(); // ✨ Instantiated native React router hook
-    const { user: authUser, loading: authLoading } = useAuth();
+    const { user: user, loading: authLoading } = useAuth();
     const [groupPicks, setGroupPicks] = useState([]);
     const [bracketPicks, setBracketPicks] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -34,14 +34,14 @@ export default function MyPicks() {
 
     /* ---------------- FETCH PICKS & MATCHES ---------------- */
     useEffect(() => {
-        if (!authUser) return;
+        if (!user) return;
 
         async function fetchMyPicksAndSchedule() {
             setLoading(true);
             try {
                 // Fetch all user picks from database
                 const picksRes = await axios.get("/api/worldcup/picks", {
-                    params: { user_id: authUser.id },
+                    params: { user_id: user.id },
                 });
 
                 // Fetch all matches (Group + Knockouts)
@@ -128,7 +128,7 @@ export default function MyPicks() {
         }
 
         fetchMyPicksAndSchedule();
-    }, [authUser]);
+    }, [user]);
 
     // Points Summaries Separations
     const groupTotal = useMemo(() => groupPicks.reduce((sum, item) => sum + item.points_earned, 0), [groupPicks]);
@@ -136,7 +136,7 @@ export default function MyPicks() {
     const accumulatedTotal = groupTotal + bracketTotal;
 
     if (authLoading) return <div style={{ paddingTop: 100, textAlign: "center" }}>Verifying session…</div>;
-    if (!authUser) return <div style={{ paddingTop: 100, textAlign: "center" }}><h3>Please log in to view your selections dashboard.</h3></div>;
+    if (!user) return <div style={{ paddingTop: 100, textAlign: "center" }}><h3>Please log in to view your selections dashboard.</h3></div>;
 
     const currentDisplayPicks = activeSection === "group" ? groupPicks : bracketPicks;
     const hasPicksMade = currentDisplayPicks.some(p => p.my_selection);
@@ -180,14 +180,13 @@ export default function MyPicks() {
     };
 
     return (
-        <div style={{ padding: "85px 8px 80px", maxWidth: "800px", margin: "0 auto", overflow: "hidden" }}>
+        <div  style={{ maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
             <Toaster />
-
             {/* Header Scoreboard Dashboard */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20, flexWrap: "wrap", gap: 12, paddingRight: "8px", paddingLeft: "8px" }}>
                 <div>
                     <h2 style={{ color: WORLDCUPGREEN, margin: 0, fontSize: "22px", fontWeight: 900 }}>🌎 My Prediction Center</h2>
-                    <p style={{ color: "#6b7280", margin: "2px 0 0", fontSize: 13 }}>Manager: <strong>{authUser.name}</strong></p>
+                    <p style={{ color: "#6b7280", margin: "2px 0 0", fontSize: 13 }}>Manager: <strong>{user.name}</strong></p>
                 </div>
                 <div style={{ display: "flex", gap: 16, textAlign: "right" }}>
                     <div>

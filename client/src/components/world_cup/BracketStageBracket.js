@@ -18,7 +18,7 @@ const ROUND_LABELS = {
 const TABS = ["Left Bracket", "Right Bracket", "Finals View"];
 
 export default function WorldCupBracket() {
-    const { user: authUser } = useAuth();
+    const { user: user } = useAuth();
     const [games, setGames] = useState([]);
     const [standings, setStandings] = useState([]);
     const [selectedUserId, setSelectedUserId] = useState(""); // 👈 STAGE 1: Shift to tracking User IDs instead of names
@@ -44,14 +44,14 @@ export default function WorldCupBracket() {
 
     // Sync selected user state to the logged-in user profile ID on original mount
     useEffect(() => {
-        if (authUser?.id && !selectedUserId) {
-            setSelectedUserId(authUser.id);
+        if (user?.id && !selectedUserId) {
+            setSelectedUserId(user.id);
         }
-    }, [authUser, selectedUserId]);
+    }, [user, selectedUserId]);
 
     // ⚡ STAGE 2: Lookup parameters now match your exact database index keys
     useEffect(() => {
-        const targetUserId = selectedUserId || authUser?.id;
+        const targetUserId = selectedUserId || user?.id;
         if (!targetUserId) return;
 
         axios.get("/api/worldcup/picks", {
@@ -69,7 +69,7 @@ export default function WorldCupBracket() {
                 }
                 setUserPicks(map);
             }).catch(err => console.error("Error loading user selections:", err));
-    }, [selectedUserId, authUser]);
+    }, [selectedUserId, user]);
 
     const clearDownstreamPicks = (currentPicks, removedTeam, fromRound) => {
         for (const g of games) {
@@ -100,14 +100,14 @@ export default function WorldCupBracket() {
     };
 
     const handleSaveBracket = async () => {
-        if (!authUser?.id) {
+        if (!user?.id) {
             return toast.error("You must be logged in to save your bracket.");
         }
 
         setSaving(true);
         try {
             await axios.post("/api/worldcup/picks/bracket", {
-                user_id: authUser.id,
+                user_id: user.id,
                 picks: Object.entries(userPicks).map(([game_id, pick]) => ({ game_id, pick }))
             });
             toast.success("Knockout bracket choices saved successfully!");
@@ -191,7 +191,7 @@ export default function WorldCupBracket() {
     const mobileFilteredGames = activeTab === "Left Bracket" ? getSideGames("left") : activeTab === "Right Bracket" ? getSideGames("right") : games.filter(g => g.round === 5);
 
     return (
-        <div style={{ paddingTop: 68, paddingBottom: 100, backgroundColor: "#f8fafc", minHeight: "100vh" }}>
+        <div  style={{ maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
             <Toaster position="top-center" />
 
             <div style={{ background: `linear-gradient(135deg, ${WORLDCUPGREEN} 0%, #1e5fa8 100%)`, color: "white", padding: "20px 24px", marginBottom: 24 }}>
@@ -203,7 +203,7 @@ export default function WorldCupBracket() {
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                         {/* 🛠️ Dropdown user filter selection box if you ever decide to display pool sheets by user ID rows */}
                         {/* <span style={{ fontWeight: 700, fontSize: 14, backgroundColor: "rgba(255,255,255,0.15)", padding: "6px 12px", borderRadius: 6 }}>
-                            👤 Entry ID Context: {authUser?.id}
+                            👤 Entry ID Context: {user?.id}
                         </span> */}
 
                         <button onClick={handleSaveBracket} disabled={saving} style={{ padding: "8px 20px", borderRadius: "6px", backgroundColor: "#16a34a", color: "white", border: "none", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(22,163,74,0.2)" }}>

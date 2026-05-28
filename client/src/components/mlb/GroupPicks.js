@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import useAuth from "../../hooks/useAuth";
-import MlbGatekeeper from "../../components/mlb/MlbGatekeeper";
+import PoolGatekeeper from "../../components/PoolGatekeeper";
 
 const NAVY = "#0a1628";
 const GOLD = "#c89d3c";
@@ -68,8 +68,8 @@ export default function GroupPicks() {
   const SERIES_COL_W = 90;
 
   return (
-    <MlbGatekeeper user={user}>
-      <div className="page-content" style={{ paddingBottom: 80 }}>
+    <PoolGatekeeper user={user} gameKey="mlb">
+      <div  style={{ paddingBottom: 80 }}>
         <style>{`
           @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
           .live-dot { animation: pulse 1.5s infinite; color: #ef4444; }
@@ -210,6 +210,6 @@ export default function GroupPicks() {
           </table>
         </div>
       </div>
-    </MlbGatekeeper>
+    </PoolGatekeeper>
   );
 }

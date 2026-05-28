@@ -3,14 +3,14 @@ import { Link } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import useAuth from '../../hooks/useAuth';
 import Countdown from '../../components/mlb/Countdown';
-import MlbGatekeeper from '../../components/mlb/MlbGatekeeper';
+import PoolGatekeeper from '../../components/PoolGatekeeper';
 
 const GOLD = "#c89d3c";
 const NAVY = "#0a1628";
 const RED = "#c8102e";
 
 export default function Home() {
-    const { user: authUser, loading: authLoading } = useAuth();
+    const { user: user, loading: authLoading } = useAuth();
 
     // 1. Handle the initial auth loading state
     if (authLoading) return null;
@@ -18,11 +18,15 @@ export default function Home() {
     return (
         <div>
             <Toaster />
-            <div className="page-content">
+            <div >
                 <Countdown />
                 <div className="container" style={{ textAlign: "center" }}>
                     {/* 🧠 Passing isAdmin down to let the gatekeeper know it should grant full pass-through access */}
-                    <MlbGatekeeper user={authUser} isAdmin={authUser?.is_admin === true}>
+                    <PoolGatekeeper
+                        user={user}
+                        isAdmin={user?.is_admin === true}
+                        gameKey="mlb"
+                    >
 
                         {/* Action Buttons Grid Layout Cluster */}
                         <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", marginBottom: 20 }}>
@@ -57,7 +61,7 @@ export default function Home() {
                             }}>
                             ⛹🏾‍♂️ Playoff Bracket ↗
                         </a>
-                    </MlbGatekeeper>
+                    </PoolGatekeeper>
 
                     {/* Rules card */}
                     <div style={{

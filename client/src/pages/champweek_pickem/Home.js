@@ -7,7 +7,7 @@ import Button from 'react-bootstrap/esm/Button'
 export default function Home() {
     return (
         <div>
-            <div className="page-content">   {/* ← ADD THIS */}
+            <div >   {/* ← ADD THIS */}
                 {/* <CountdownDisplay /> */}
                 <CountdownNextGameLock />
                 <div className='container'>

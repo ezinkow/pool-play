@@ -1,7 +1,7 @@
 {
   "name": "poolplay",
   "version": "1.0.0",
-  "description": "This is a full stack application template. There is a form that takes 'posts' and a name field\r # tourneypickem",
+  "description": "This is a full stack application template. There is a form that takes 'posts' and a name field",
   "main": "server.js",
   "dependencies": {
     "accepts": "^1.3.8",
@@ -11,6 +11,7 @@
     "axios": "^1.13.5",
     "babel-polyfill": "^6.26.0",
     "babel-runtime": "^6.26.0",
+    "bad-words": "^3.0.4",
     "balanced-match": "^1.0.2",
     "baseline-browser-mapping": "^2.9.14",
     "body-parser": "^1.20.4",

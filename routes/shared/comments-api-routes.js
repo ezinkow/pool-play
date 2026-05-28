@@ -1,8 +1,11 @@
 // server/routes/shared/comments-api-routes.js
 const db = require("../../models");
 const { Op } = require("sequelize"); // Import Sequelize operators
+const Filter = require("bad-words"); // 🧠 Added the profanity filter package
 
 module.exports = function (app) {
+    // Initialize the profanity engine instance
+    const filter = new Filter();
 
     // 1. FETCH FILTERED PUBLIC + OWN PRIVATE COMMENTS
     app.get("/api/comments", async (req, res) => {
@@ -30,9 +33,9 @@ module.exports = function (app) {
         }
     });
 
-    // 2. CREATE A NEW COMMENT WITH PRIVACY TOGGLE
+    // 2. CREATE A NEW COMMENT WITH PRIVACY TOGGLE + PROFANITY GUARD
     app.post("/api/comments", async (req, res) => {
-        const { user_id, message, is_private } = req.body;
+        let { user_id, message, is_private } = req.body; // 🧠 Switched const to let so we can clean the text string
 
         if (!user_id || !message?.trim()) {
             return res.status(400).json({ error: "Required parameters are missing." });
@@ -42,9 +45,15 @@ module.exports = function (app) {
             const CommentModel = db.Comments || db.comment || db.comments;
             const UserModel = db.Users || db.User || db.users;
 
+            // ✨ THE PROFANITY SHIELD: Checks and censors bad words with **** before hitting the DB
+            let sanitizedMessage = message.trim();
+            if (filter.isProfane(sanitizedMessage)) {
+                sanitizedMessage = filter.clean(sanitizedMessage);
+            }
+
             const newComment = await CommentModel.create({
                 user_id,
-                message: message.trim(),
+                message: sanitizedMessage,
                 is_private: !!is_private // Ensure strict boolean casting
             });
 

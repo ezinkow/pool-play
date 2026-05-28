@@ -54,6 +54,10 @@ module.exports = (sequelize, DataTypes) => {
         nav_bg: {
             type: DataTypes.STRING,
             allowNull: true // Stores exact hex tracking codes like "#13447a" or "#0a1628"
+        },
+        lock_date: {
+            type: DataTypes.DATE,
+            allowNull: true
         }
     }, {
         tableName: "game_settings",

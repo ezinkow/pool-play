@@ -23,7 +23,7 @@ export default function BracketRegion({
     }
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <div  style={{ maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
             <div style={{
                 textAlign: "center", fontWeight: 800, fontSize: 13, color: "#13447a",
                 textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8,

@@ -9,18 +9,18 @@ const GOLD = "#c89d3c";
 
 export default function MyAccount() {
     const navigate = useNavigate();
-    const { user: authUser, loading: authLoading } = useAuth();
+    const { user: user, loading: authLoading } = useAuth();
     const [myPools, setMyPools] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (authLoading) return;
-        if (!authUser?.id) {
+        if (!user?.id) {
             setLoading(false);
             return;
         }
 
-        axios.get("/api/users/my-pools", { params: { user_id: authUser.id } })
+        axios.get("/api/users/my-pools", { params: { user_id: user.id } })
             .then(res => {
                 setMyPools(res.data || []);
                 setLoading(false);
@@ -29,13 +29,13 @@ export default function MyAccount() {
                 console.error("❌ Failed gathering user entry sheets maps:", err);
                 setLoading(false);
             });
-    }, [authUser, authLoading]);
+    }, [user, authLoading]);
 
     if (authLoading || loading) {
         return <div style={{ padding: 100, textAlign: "center", color: NAVY, fontWeight: 700 }}>Scanning active entry sheets profiles...</div>;
     }
 
-    if (!authUser?.id) {
+    if (!user?.id) {
         return (
             <div style={{ maxWidth: 500, margin: "100px auto", padding: 32, background: "white", borderRadius: 12, textAlign: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
                 <h3>🔒 Account Dashboard Pinned</h3>
@@ -50,7 +50,7 @@ export default function MyAccount() {
             <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: 20, marginBottom: 24 }}>
                 <h2 style={{ color: NAVY, margin: 0, fontWeight: 900 }}>👤 Account Manager</h2>
                 <p style={{ color: "#64748b", fontSize: 13, marginTop: 4 }}>
-                    Signed in as: <strong style={{ color: GOLD }}>{authUser.name}</strong>
+                    Signed in as: <strong style={{ color: GOLD }}>{user.name}</strong>
                 </p>
             </div>
 

@@ -12,13 +12,13 @@ export default function PicksDisplay() {
     const [activeTab, setActiveTab] = useState("group");
 
     return (
-        <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "85px 16px 80px" }}>
+        <div style={{ maxWidth: "1000px", margin: "0 auto", paddingLeft: "16px", paddingRight: "16px" }}>
 
             {/* Header Identity Display Panel */}
             <div style={{ marginBottom: "20px", textAlign: "center" }}>
-                <h2 style={{ color: NAVY, margin: 0, fontWeight: 900 }}>🔍 Global User Picks Display</h2>
+                <h2 style={{ color: NAVY, margin: 0, fontWeight: 900 }}>🔍 User Picks Display</h2>
                 <p style={{ color: "#64748b", fontSize: 13, marginTop: 4 }}>
-                    See what predictions the rest of the pool managers locked in for each phase.
+                    See what predictions the rest of the pool participants picked for each match.
                 </p>
             </div>
 

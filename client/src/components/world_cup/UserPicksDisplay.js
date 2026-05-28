@@ -15,9 +15,7 @@ export default function PlayerPicksMatrix() {
             return s.includes("FINAL") || s.includes("PROGRESS") || s.includes("HALF");
           })
           .filter(g => parseInt(g.round) === 0)
-          // SORT: Newest first, left-to-right
           .sort((a, b) => new Date(b.match_date) - new Date(a.match_date));
-
         setGames(filtered);
       });
 
@@ -39,7 +37,6 @@ export default function PlayerPicksMatrix() {
     for (const p of picks) {
       const mId = String(p.match_id);
       const uId = String(p.user_id);
-
       if (!map[mId]) map[mId] = {};
       map[mId][uId] = p;
     }
@@ -92,14 +89,24 @@ export default function PlayerPicksMatrix() {
   };
 
   return (
-    <div style={{ padding: "10px 12px 80px" }}>
+    <div style={{ maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
+
+      {/* 🧠 THE ALIGNMENT SHIELD: Added the matching title wrapper block.
+          This gives the browser a text baseline to look at, forcing the page 
+          to match 'Make Picks' and 'Standings' down to the exact pixel! */}
+      <div style={{ marginBottom: "20px", textAlign: "center" }}>
+        <h2 style={{ color: "#13447a", margin: 0, fontWeight: 800 }}>⚽ Group Stage Matrix</h2>
+        <p style={{ color: "#6b7280", fontSize: 14, marginTop: 4 }}>
+          Cross-reference pool predictions across all participant managers.
+        </p>
+      </div>
+
       {/* Legend Block */}
       <div style={{
         backgroundColor: "#f8f7f4", padding: "12px",
         border: "1px solid #e5e7eb", borderRadius: "8px", marginBottom: "16px"
       }}>
-        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-          <h3 style={{ color: "#13447a", fontSize: 14, fontWeight: 700, margin: 0 }}>⚽ Group Stage Matrix</h3>
+        <div style={{ display: "flex", gap: 16, alignMimeTypes: "center", justifyContent: "center" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b7280" }}>
             <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#41ac618e", display: "inline-block" }} />Correct
           </span>
@@ -110,29 +117,13 @@ export default function PlayerPicksMatrix() {
       </div>
 
       {/* The Wrapper Box that handles scrolling bounds safely */}
-      <div style={{ overflow: "auto", maxHeight: "calc(100vh - 180px)", border: "1px solid #e5e7eb", borderRadius: "8px" }}>
+      <div style={{ overflow: "auto", maxHeight: "calc(100vh - 210px)", border: "1px solid #e5e7eb", borderRadius: "8px" }}>
         <table style={{ borderCollapse: "separate", borderSpacing: 0, background: "white", width: "100%", fontSize: 14 }}>
           <thead>
             <tr>
-              {/* Sticky Top-Left Player Header corner pin */}
-              <th style={{
-                position: "sticky", top: 0, left: 0, zIndex: 6,
-                backgroundColor: "#13447a", color: "white",
-                borderBottom: "2px solid #c89d3c", borderRight: "2px solid #c89d3c",
-                whiteSpace: "nowrap", textTransform: "uppercase",
-                fontSize: 12, letterSpacing: "0.5px", padding: "12px 16px",
-                minWidth: 120, textAlign: "center",
-              }}>Player</th>
-
-              {/* Sticky Row-Header Match Elements */}
+              <th style={{ position: "sticky", top: 0, left: 0, zIndex: 6, backgroundColor: "#13447a", color: "white", borderBottom: "2px solid #c89d3c", borderRight: "2px solid #c89d3c", whiteSpace: "nowrap", textTransform: "uppercase", fontSize: 12, letterSpacing: "0.5px", padding: "12px 16px", minWidth: 120, textAlign: "center" }}>Player</th>
               {games.map(g => (
-                <th key={g.match_id} style={{
-                  position: "sticky", top: 0, zIndex: 4,
-                  backgroundColor: "#13447a", color: "white",
-                  borderBottom: "2px solid #c89d3c",
-                  padding: "6px 8px", minWidth: "85px",
-                  whiteSpace: "nowrap",
-                }}>
+                <th key={g.match_id} style={{ position: "sticky", top: 0, zIndex: 4, backgroundColor: "#13447a", color: "white", borderBottom: "2px solid #c89d3c", padding: "6px 8px", minWidth: "85px", whiteSpace: "nowrap" }}>
                   <GameHeader game={g} />
                 </th>
               ))}
@@ -141,35 +132,15 @@ export default function PlayerPicksMatrix() {
           <tbody>
             {users.map((user, idx) => (
               <tr key={user.id}>
-                {/* Sticky Column Player Label Cell */}
-                <td style={{
-                  position: "sticky", left: 0, zIndex: 2,
-                  backgroundColor: "#f8fafc",
-                  borderRight: "2px solid #c89d3c",
-                  borderBottom: "1px solid #e5e7eb",
-                  padding: "10px 12px",
-                  whiteSpace: "nowrap",
-                }}>
-                  <span style={{ fontSize: 13 }}>
-                    {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`}
-                  </span>
-                  {" "}
-                  <span style={{ fontWeight: 700, fontSize: 12, color: "#13447a" }}>
-                    {user.name}
-                  </span>
-                  {" "}
+                <td style={{ position: "sticky", left: 0, zIndex: 2, backgroundColor: "#f8fafc", borderRight: "2px solid #c89d3c", borderBottom: "1px solid #e5e7eb", padding: "10px 12px", whiteSpace: "nowrap" }}>
+                  <span style={{ fontSize: 13 }}>{idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`}</span>{" "}
+                  <span style={{ fontWeight: 700, fontSize: 12, color: "#13447a" }}>{user.name}</span>{" "}
                   <span style={{ fontSize: 11, color: "#6b7280", fontWeight: "600" }}>({user.points}pts)</span>
                 </td>
-
-                {/* Matrix Selection Boxes */}
                 {games.map(game => {
                   const pickObj = pickMap?.[String(game.match_id)]?.[String(user.id)];
                   return (
-                    <td key={user.id + game.match_id} style={{
-                      padding: "6px 4px", textAlign: "center", verticalAlign: "middle",
-                      borderBottom: "1px solid #f3f4f6", borderRight: "1px solid #f3f4f6",
-                      ...getCellStyle(game, pickObj),
-                    }}>
+                    <td key={user.id + game.match_id} style={{ padding: "6px 4px", textAlign: "center", verticalAlign: "middle", borderBottom: "1px solid #f3f4f6", borderRight: "1px solid #f3f4f6", ...getCellStyle(game, pickObj) }}>
                       <PickLogo game={game} pickObj={pickObj} />
                     </td>
                   );

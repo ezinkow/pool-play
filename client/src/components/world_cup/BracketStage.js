@@ -76,8 +76,10 @@ export default function BracketStage({
         <div style={{
             background: "white", borderRadius: 8, border: `1px solid #e5e7eb`, overflow: "hidden",
             boxShadow: "0 1px 4px rgba(0,0,0,0.06)", width: 180, flexShrink: 0,
-            opacity: isThirdPlaceMatch ? 0.85 : 1 // Subtle style tint indicating it's locked info only
-        }}>
+            opacity: isThirdPlaceMatch ? 0.85 : 1, // Subtle style tint indicating it's locked info only
+            maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px"
+        }}
+            >
             {(isLive || isFinal) && (
                 <div style={{
                     background: isLive ? "#dc2626" : "#6b7280", color: "white", fontSize: 9,
@@ -90,6 +92,6 @@ export default function BracketStage({
             {renderTeam(game.away_team, game.away_logo, awayIsWinner, awayIsPick)}
             <div style={{ height: 1, backgroundColor: "#f3f4f6" }} />
             {renderTeam(game.home_team, game.home_logo, homeIsWinner, homeIsPick)}
-        </div>
+        </div >
     );
 }

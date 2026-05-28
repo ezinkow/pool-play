@@ -72,14 +72,14 @@ export default function WorldCupSignUp() {
 
     if (loading || checking) {
         return (
-            <div className="page-content" style={{ textAlign: "center", paddingTop: 80, color: "#6b7280" }}>
+            <div  style={{ textAlign: "center", paddingTop: 80, color: "#6b7280" }}>
                 Verifying entry criteria…
             </div>
         );
     }
 
     return (
-        <div className="page-content" style={{ background: SOFT_BG, minHeight: "100vh" }}>
+        <div  style={{ maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
             <div style={{ maxWidth: 480, margin: "0 auto", padding: "40px 16px" }}>
 
                 {/* Tournament Identity Header */}

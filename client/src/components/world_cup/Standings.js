@@ -30,7 +30,7 @@ export default function Standings() {
   }, []);
 
   return (
-    <div style={{ maxWidth: "900px", margin: "0 auto", padding: "85px 16px 80px" }}>
+    <div  style={{ maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
       <Toaster />
 
       <div style={{ marginBottom: "20px" }}>

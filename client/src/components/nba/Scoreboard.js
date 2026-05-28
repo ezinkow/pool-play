@@ -65,7 +65,7 @@ const Scoreboard = () => {
     };
 
     return (
-        <div style={{ paddingTop: 68, paddingBottom: 80, maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ paddingBottom: 80, maxWidth: 1200, margin: "0 auto" }}>
             <div style={{ padding: "0 12px" }}>
                 <h2 style={{ color: "var(--primary-navy)", marginBottom: 4 }}>
                     🔢 Scoreboard 🆚

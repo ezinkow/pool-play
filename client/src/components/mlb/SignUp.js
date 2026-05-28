@@ -72,14 +72,14 @@ export default function MlbSignUp() {
 
     if (loading || checking) {
         return (
-            <div className="page-content" style={{ textAlign: "center", paddingTop: 80, color: "#6b7280" }}>
+            <div  style={{ textAlign: "center", paddingTop: 80, color: "#6b7280" }}>
                 Loading…
             </div>
         );
     }
 
     return (
-        <div className="page-content" style={{ background: "#f4f7f9", minHeight: "100vh" }}>
+        <div  style={{ background: "#f4f7f9", minHeight: "100vh" }}>
             <div style={{ maxWidth: 480, margin: "0 auto", padding: "40px 16px" }}>
 
                 {/* Header */}

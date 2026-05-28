@@ -53,6 +53,7 @@ import NbaMyPicks from './pages/nba/MyPicks';
 import NbaStandings from './pages/nba/Standings';
 import NbaGroupPicks from './pages/nba/GroupPicks';
 import NbaSignUp from './pages/nba/SignUp';       // ← pool entry, not account creation
+import NbaAdminRefresh from './pages/nba/AdminRefresh';
 
 // MLB Pages
 import MlbHome from './pages/mlb/Home';
@@ -102,102 +103,104 @@ export default function App() {
   return (
     <Router>
       <Navbar />
-      <Routes>
-        {/* Landing + shared account creation */}
-        <Route path="/" element={<Home />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/changepassword" element={<ChangePassword />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/myaccount" element={<MyAccount />} />
-        <Route path="/comments" element={<Comments />} />
+      <main className="page-content">
+        <Routes>
+          {/* Landing + shared account creation */}
+          <Route path="/" element={<Home />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/changepassword" element={<ChangePassword />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/myaccount" element={<MyAccount />} />
+          <Route path="/comments" element={<Comments />} />
 
-        {/* Champ Week Pickem */}
-        <Route path="/champweekpickem/" element={<ChampWeekPickemHome />} />
-        <Route path="/champweekpickem/signup" element={<ChampWeekPickemSignUp />} />
-        <Route path="/champweekpickem/picks" element={<ChampWeekPickemPicks />} />
-        <Route path="/champweekpickem/mypicks" element={<ChampWeekPickemMyPicks />} />
-        <Route path="/champweekpickem/scoreboard" element={<ChampWeekPickemScoreboard />} />
-        <Route path="/champweekpickem/picksdisplay" element={<ChampWeekPickemUserPicksDisplay />} />
-        <Route path="/champweekpickem/standings" element={<ChampWeekPickemStandings />} />
-        <Route path="/champweekpickem/adminrefresh" element={<ChampWeekPickemAdminRefresh />} />
+          {/* Champ Week Pickem */}
+          <Route path="/champweekpickem/" element={<ChampWeekPickemHome />} />
+          <Route path="/champweekpickem/signup" element={<ChampWeekPickemSignUp />} />
+          <Route path="/champweekpickem/picks" element={<ChampWeekPickemPicks />} />
+          <Route path="/champweekpickem/mypicks" element={<ChampWeekPickemMyPicks />} />
+          <Route path="/champweekpickem/scoreboard" element={<ChampWeekPickemScoreboard />} />
+          <Route path="/champweekpickem/picksdisplay" element={<ChampWeekPickemUserPicksDisplay />} />
+          <Route path="/champweekpickem/standings" element={<ChampWeekPickemStandings />} />
+          <Route path="/champweekpickem/adminrefresh" element={<ChampWeekPickemAdminRefresh />} />
 
-        {/* Tourney Pickem */}
-        <Route path="/tourneypickem" element={<TourneyPickemHome />} />
-        <Route path="/tourneypickem/picks" element={<TourneyPickemPicks />} />
-        <Route path="/tourneypickem/mypicks" element={<TourneyPickemMyPicks />} />
-        <Route path="/tourneypickem/standings" element={<TourneyPickemStandings />} />
-        <Route path="/tourneypickem/scoreboard" element={<TourneyPickemScoreboard />} />
-        <Route path="/tourneypickem/picksdisplay" element={<TourneyPickemUserPicksDisplay />} />
-        <Route path="/tourneypickem/signup" element={<TourneyPickemSignUp />} />
-        <Route path="/tourneypickem/adminrefresh" element={<TourneyPickemAdminRefresh />} />
+          {/* Tourney Pickem */}
+          <Route path="/tourneypickem" element={<TourneyPickemHome />} />
+          <Route path="/tourneypickem/picks" element={<TourneyPickemPicks />} />
+          <Route path="/tourneypickem/mypicks" element={<TourneyPickemMyPicks />} />
+          <Route path="/tourneypickem/standings" element={<TourneyPickemStandings />} />
+          <Route path="/tourneypickem/scoreboard" element={<TourneyPickemScoreboard />} />
+          <Route path="/tourneypickem/picksdisplay" element={<TourneyPickemUserPicksDisplay />} />
+          <Route path="/tourneypickem/signup" element={<TourneyPickemSignUp />} />
+          <Route path="/tourneypickem/adminrefresh" element={<TourneyPickemAdminRefresh />} />
 
-        {/* Tourney Bracket */}
-        <Route path="/bracket" element={<BracketHome />} />
-        <Route path="/bracket/bracket" element={<BracketChallenge />} />
-        <Route path="/bracket/mybracket" element={<BracketMyBracket />} />
-        <Route path="/bracket/standings" element={<BracketStandings />} />
-        <Route path="/bracket/signup" element={<BracketSignUp />} />
+          {/* Tourney Bracket */}
+          <Route path="/bracket" element={<BracketHome />} />
+          <Route path="/bracket/bracket" element={<BracketChallenge />} />
+          <Route path="/bracket/mybracket" element={<BracketMyBracket />} />
+          <Route path="/bracket/standings" element={<BracketStandings />} />
+          <Route path="/bracket/signup" element={<BracketSignUp />} />
 
-        {/* Tourney Squares */}
-        <Route path="/tourneysquares" element={<TourneySquaresHome />} />
-        <Route path="/tourneysquares/grid" element={<TourneySquaresGrid />} />
-        <Route path="/tourneysquares/results" element={<TourneySquaresResults />} />
-        <Route path="/tourneysquares/signup" element={<TourneySquaresSignUp />} />
-        <Route path="/tourneysquares/numbers" element={<TourneySquaresNumbers />} />
-        <Route path="/tourneysquares/admin" element={<TourneySquaresAdmin />} />
+          {/* Tourney Squares */}
+          <Route path="/tourneysquares" element={<TourneySquaresHome />} />
+          <Route path="/tourneysquares/grid" element={<TourneySquaresGrid />} />
+          <Route path="/tourneysquares/results" element={<TourneySquaresResults />} />
+          <Route path="/tourneysquares/signup" element={<TourneySquaresSignUp />} />
+          <Route path="/tourneysquares/numbers" element={<TourneySquaresNumbers />} />
+          <Route path="/tourneysquares/admin" element={<TourneySquaresAdmin />} />
 
-        {/* NBA */}
-        <Route path="/nba" element={<NbaHome />} />
-        <Route path="/nba/picks" element={<NbaPicks />} />
-        <Route path="/nba/mypicks" element={<NbaMyPicks />} />
-        <Route path="/nba/standings" element={<NbaStandings />} />
-        <Route path="/nba/grouppicks" element={<NbaGroupPicks />} />
-        <Route path="/nba/signup" element={<NbaSignUp />} />
+          {/* NBA */}
+          <Route path="/nba" element={<NbaHome />} />
+          <Route path="/nba/picks" element={<NbaPicks />} />
+          <Route path="/nba/mypicks" element={<NbaMyPicks />} />
+          <Route path="/nba/standings" element={<NbaStandings />} />
+          <Route path="/nba/grouppicks" element={<NbaGroupPicks />} />
+          <Route path="/nba/signup" element={<NbaSignUp />} />
+          <Route path="/nba/adminrefresh" element={<NbaAdminRefresh />} />
 
-        {/* MLB */}
-        <Route path="/mlb" element={<MlbHome />} />
-        <Route path="/mlb/signup" element={<MlbSignUp />} />
-        <Route path="/mlb/picks" element={<MlbPicks />} />
-        <Route path="/mlb/picksdisplay" element={<MlbPicksDisplay />} />
-        <Route path="/mlb/standings" element={<MlbStandings />} />
+          {/* MLB */}
+          <Route path="/mlb" element={<MlbHome />} />
+          <Route path="/mlb/signup" element={<MlbSignUp />} />
+          <Route path="/mlb/picks" element={<MlbPicks />} />
+          <Route path="/mlb/picksdisplay" element={<MlbPicksDisplay />} />
+          <Route path="/mlb/standings" element={<MlbStandings />} />
 
-        {/* NFL */}
-        <Route path="/nfl" element={<NflHome />} />
-        <Route path="/nfl/signup" element={<NflSignUp />} />
-        <Route path="/nfl/rosterpicks" element={<NflRosterPicks />} />
-        <Route path="/nfl/scoreboard" element={<NflScoreboard />} />
-        <Route path="/nfl/myroster" element={<NflMyRoster />} />
-        <Route path="/nfl/standings" element={<NflStandings />} />
-        <Route path="/nfl/playerstats" element={<NflPlayerPoolsTable />} />
+          {/* NFL */}
+          <Route path="/nfl" element={<NflHome />} />
+          <Route path="/nfl/signup" element={<NflSignUp />} />
+          <Route path="/nfl/rosterpicks" element={<NflRosterPicks />} />
+          <Route path="/nfl/scoreboard" element={<NflScoreboard />} />
+          <Route path="/nfl/myroster" element={<NflMyRoster />} />
+          <Route path="/nfl/standings" element={<NflStandings />} />
+          <Route path="/nfl/playerstats" element={<NflPlayerPoolsTable />} />
 
-        {/* Super Bowl Squares */}
-        <Route path="/superbowlsquares" element={<SuperBowlSquaresHome />} />
-        <Route path="/superbowlsquares/grid" element={<SuperBowlSquaresGrid />} />
-        <Route path="/superbowlsquares/results" element={<SuperBowlSquaresResults />} />
-        <Route path="/superbowlsquares/signup" element={<SuperBowlSquaresSignUp />} />
-        <Route path="/superbowlsquares/numbers" element={<SuperBowlSquaresNumbers />} />
-        <Route path="/superbowlsquares/admin" element={<SuperBowlSquaresAdmin />} />
+          {/* Super Bowl Squares */}
+          <Route path="/superbowlsquares" element={<SuperBowlSquaresHome />} />
+          <Route path="/superbowlsquares/grid" element={<SuperBowlSquaresGrid />} />
+          <Route path="/superbowlsquares/results" element={<SuperBowlSquaresResults />} />
+          <Route path="/superbowlsquares/signup" element={<SuperBowlSquaresSignUp />} />
+          <Route path="/superbowlsquares/numbers" element={<SuperBowlSquaresNumbers />} />
+          <Route path="/superbowlsquares/admin" element={<SuperBowlSquaresAdmin />} />
 
-        {/* Olympics */}
-        <Route path="/olympics" element={<OlympicsHome />} />
-        <Route path="/olympics/signup" element={<OlympicsSignUp />} />
-        <Route path="/olympics/countrypicks" element={<OlympicsCountryPicks />} />
-        <Route path="/olympics/scoreboard" element={<OlympicsScoreboard />} />
-        <Route path="/olympics/standings" element={<OlympicsStandings />} />
-        <Route path="/olympics/medaltable" element={<OlympicsMedalTable />} />
-        <Route path="/olympics/myroster" element={<OlympicsMyRoster />} />
+          {/* Olympics */}
+          <Route path="/olympics" element={<OlympicsHome />} />
+          <Route path="/olympics/signup" element={<OlympicsSignUp />} />
+          <Route path="/olympics/countrypicks" element={<OlympicsCountryPicks />} />
+          <Route path="/olympics/scoreboard" element={<OlympicsScoreboard />} />
+          <Route path="/olympics/standings" element={<OlympicsStandings />} />
+          <Route path="/olympics/medaltable" element={<OlympicsMedalTable />} />
+          <Route path="/olympics/myroster" element={<OlympicsMyRoster />} />
 
-        {/* World Cup */}
-        <Route path="/worldcup" element={<WorldCupHome />} />
-        <Route path="/worldcup/signup" element={<WorldCupSignUp />} />
-        <Route path="/worldcup/picks" element={<WorldCupPicks />} />
-        <Route path="/worldcup/grouppicks" element={<WorldCupGroupPicks />} />
-        <Route path="/worldcup/scoreboard" element={<WorldCupScoreboard />} />
-        <Route path="/worldcup/mypicks" element={<WorldCupMyPicks />} />
-        <Route path="/worldcup/standings" element={<WorldCupStandings />} />
-        {/* <Route path="/worldcup/" element={<WorldCupCountryPoolsTable />} /> */}
-
-      </Routes>
-    </Router>
+          {/* World Cup */}
+          <Route path="/worldcup" element={<WorldCupHome />} />
+          <Route path="/worldcup/signup" element={<WorldCupSignUp />} />
+          <Route path="/worldcup/picks" element={<WorldCupPicks />} />
+          <Route path="/worldcup/grouppicks" element={<WorldCupGroupPicks />} />
+          <Route path="/worldcup/scoreboard" element={<WorldCupScoreboard />} />
+          <Route path="/worldcup/mypicks" element={<WorldCupMyPicks />} />
+          <Route path="/worldcup/standings" element={<WorldCupStandings />} />
+          {/* <Route path="/worldcup/" element={<WorldCupCountryPoolsTable />} /> */}
+        </Routes>
+      </main>
+    </Router >
   );
 }

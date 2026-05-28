@@ -58,7 +58,7 @@ export default function Scoreboard() {
   const currentDisplayMatches = activeSection === "group" ? groupMatches : bracketMatches;
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "85px 8px 80px", overflow: "hidden" }}>
+    <div  style={{ maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
       <Toaster />
 
       {/* Header Profile Dashboard */}

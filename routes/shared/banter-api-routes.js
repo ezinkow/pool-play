@@ -1,6 +1,10 @@
 const db = require("../../models");
+const Filter = require("bad-words"); // 🧠 NO curly braces for v3 compatibility!
 
 module.exports = function (app) {
+    // Initialize the library engine instance globally for this route file
+    const filter = new Filter();
+
     // 1. GET ALL SMACK TALK FOR A SPECIFIC GAME POOL
     app.get("/api/banter/:gameKey", async (req, res) => {
         try {
@@ -14,7 +18,7 @@ module.exports = function (app) {
                     as: "author",
                     attributes: ["id", "name"]
                 }],
-                order: [["createdAt", "ASC"]], // Oldest to newest so it reads like a standard chat thread
+                order: [["createdAt", "ASC"]],
                 limit: 100
             });
 
@@ -25,7 +29,7 @@ module.exports = function (app) {
         }
     });
 
-    // 2. SUBMIT A NEW SMACK TALK MESSAGE LINE
+    // 2. SUBMIT A NEW SMACK TALK MESSAGE LINE WITH EXTERNAL DICTIONARY GUARD
     app.post("/api/banter", async (req, res) => {
         const { user_id, game_key, message } = req.body;
 
@@ -37,10 +41,17 @@ module.exports = function (app) {
             const BanterModel = db.Banter || db.banter || db.pool_banter;
             const UserModel = db.Users || db.User || db.users;
 
+            let sanitizedMessage = message.trim();
+
+            // 🧼 The Package Shield: Checks the string and swaps out any hidden matches
+            if (filter.isProfane(sanitizedMessage)) {
+                sanitizedMessage = filter.clean(sanitizedMessage);
+            }
+
             const entry = await BanterModel.create({
                 user_id,
                 game_key,
-                message: message.trim()
+                message: sanitizedMessage
             });
 
             const enriched = await BanterModel.findOne({

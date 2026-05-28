@@ -11,7 +11,7 @@ export default function Home() {
     const gameLocked = new Date() >= GAME_LOCK_SWITCHOVER;
     return (
         <div>
-            <div className="page-content">
+            <div >
                 {gameLocked ? '' : <CountdownDisplay />}
                 <div className='container'>
                     <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap", marginBottom: 8 }}>

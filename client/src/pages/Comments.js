@@ -7,7 +7,7 @@ const NAVY = "#13447a";
 const GOLD = "#c89d3c";
 
 export default function Comments() {
-    const { user: authUser, loading: authLoading } = useAuth();
+    const { user: user, loading: authLoading } = useAuth();
     const [comments, setComments] = useState([]);
     const [message, setMessage] = useState("");
     const [isPrivate, setIsPrivate] = useState(false); // ✨ Added privacy state tracker
@@ -17,18 +17,18 @@ export default function Comments() {
     useEffect(() => {
         setLoading(true);
         // Pass user_id query param so backend can verify ownership of private rows if needed
-        const url = authUser ? `/api/comments?user_id=${authUser.id}` : "/api/comments";
+        const url = user ? `/api/comments?user_id=${user.id}` : "/api/comments";
 
         axios.get(url)
             .then(res => setComments(res.data || []))
             .catch(err => console.error("Error retrieving contact submission logs:", err))
             .finally(() => setLoading(false));
-    }, [authUser]);
+    }, [user]);
 
     const handleSubmitComment = async (e) => {
         e.preventDefault();
         if (!message.trim() || submitting) return;
-        if (!authUser?.id) {
+        if (!user?.id) {
             toast.error("Please log in to send a message!");
             return;
         }
@@ -36,7 +36,7 @@ export default function Comments() {
         setSubmitting(true);
         try {
             const res = await axios.post("/api/comments", {
-                user_id: authUser.id,
+                user_id: user.id,
                 message: message,
                 is_private: isPrivate // ✨ Pass state flag value down to database engine
             });
@@ -69,7 +69,7 @@ export default function Comments() {
             <div style={{ background: "white", padding: 24, borderRadius: 12, border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.01)", marginBottom: 24, textAlign: "left" }}>
                 <h3 style={{ margin: "0 0 12px", fontSize: "15px", fontWeight: 800, color: "#1e293b" }}>Send a Message</h3>
 
-                {authUser ? (
+                {user ? (
                     <form onSubmit={handleSubmitComment}>
                         <textarea
                             value={message}
@@ -86,7 +86,7 @@ export default function Comments() {
                         />
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
                             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                                <span style={{ fontSize: 11, color: "#94a3b8" }}>Sending as: <strong style={{ color: GOLD }}>@{authUser.name}</strong></span>
+                                <span style={{ fontSize: 11, color: "#94a3b8" }}>Sending as: <strong style={{ color: GOLD }}>@{user.name}</strong></span>
 
                                 {/* ✨ PRIVACY INTERFACE FOOTER TOGGLE */}
                                 <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#475569", cursor: "pointer", userSelect: "none" }}>

@@ -2,33 +2,33 @@ import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
-import NbaGatekeeper from "../../components/nba/NbaGatekeeper";
+import PoolGatekeeper from "../../components/PoolGatekeeper";
 
 const NAVY = "#0a1628";
 const GOLD = "#c89d3c";
 
 export default function MyPicks() {
-    const { user: authUser, logout, loading: authLoading } = useAuth();
+    const { user: user, logout, loading: authLoading } = useAuth();
     const [picks, setPicks] = useState([]);
     const [standings, setStandings] = useState([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (!authUser) return;
+        if (!user) return;
         setLoading(true);
         Promise.all([
-            axios.get("/api/nba/picks", { params: { name: authUser.name } }),
+            axios.get("/api/nba/picks", { params: { name: user.name } }),
             axios.get("/api/nba/standings"),
         ]).then(([picksRes, standingsRes]) => {
             setPicks(picksRes.data || []);
             setStandings(standingsRes.data || []);
         }).catch(() => toast.error("Failed to load your data"))
             .finally(() => setLoading(false));
-    }, [authUser]);
+    }, [user]);
 
     const myStanding = useMemo(() =>
-        standings.find(s => s.entry_name === authUser?.name || s.name === authUser?.name),
-        [standings, authUser]
+        standings.find(s => s.entry_name === user?.name || s.name === user?.name),
+        [standings, user]
     );
 
     const totalConfidence = useMemo(() =>
@@ -61,12 +61,12 @@ export default function MyPicks() {
         return `${leader} leads ${Math.max(s.away_wins, s.home_wins)}–${Math.min(s.away_wins, s.home_wins)}`;
     };
 
-    if (authLoading) return <div style={{ paddingTop: 100, textAlign: "center" }}>Verifying session…</div>;
-    if (!authUser) return <div style={{ paddingTop: 100, textAlign: "center" }}><h3>Please log in.</h3></div>;
+    if (authLoading) return <div style={{ textAlign: "center" }}>Verifying session…</div>;
+    if (!user) return <div style={{ textAlign: "center" }}><h3>Please log in.</h3></div>;
 
     return (
-        <NbaGatekeeper user={authUser}>
-            <div style={{ maxWidth: 900, margin: "0 auto", padding: "68px 16px 80px" }}>
+        <PoolGatekeeper user={user} gameKey="nba">
+            <div style={{ maxWidth: 900, margin: "0 auto", padding: "0px 16px 80px" }}>
                 <Toaster />
 
                 {/* Header */}
@@ -77,7 +77,7 @@ export default function MyPicks() {
                     <div>
                         <h2 style={{ color: NAVY, margin: 0 }}>🏀 My Picks</h2>
                         <p style={{ color: "#6b7280", margin: "4px 0 0", fontSize: 13 }}>
-                            {authUser.name}
+                            {user.name}
                         </p>
                         <div style={{ fontSize: 13, color: NAVY, fontWeight: 600, marginTop: 4 }}>
                             Confidence assigned: {totalConfidence} pts
@@ -266,7 +266,7 @@ export default function MyPicks() {
                     </>
                 )}
             </div>
-        </NbaGatekeeper>
+        </PoolGatekeeper>
     );
 }
 

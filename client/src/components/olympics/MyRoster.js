@@ -7,19 +7,19 @@ const NAVY = "#13447a";
 const GOLD = "#c89d3c";
 
 export default function MyRoster() {
-    const { user: authUser, loading: authLoading } = useAuth();
+    const { user: user, loading: authLoading } = useAuth();
     const [roster, setRoster] = useState([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (!authUser) return;
+        if (!user) return;
 
         const fetchRoster = async () => {
             setLoading(true);
             try {
                 // Querying the olympic roster endpoint using the global auth name
                 const res = await axios.get("/api/olympicteams/getmyroster", {
-                    params: { name: authUser.name },
+                    params: { name: user.name },
                 });
                 setRoster(res.data || []);
             } catch (err) {
@@ -31,10 +31,10 @@ export default function MyRoster() {
         };
 
         fetchRoster();
-    }, [authUser]);
+    }, [user]);
 
     if (authLoading) return <div style={{ paddingTop: 100, textAlign: "center" }}>Verifying session…</div>;
-    if (!authUser) return <div style={{ paddingTop: 100, textAlign: "center" }}><h3>Please log in to view your roster.</h3></div>;
+    if (!user) return <div style={{ paddingTop: 100, textAlign: "center" }}><h3>Please log in to view your roster.</h3></div>;
 
     const totalValue = roster.reduce((sum, c) => sum + (Number(c.price) || 0), 0);
 
@@ -46,7 +46,7 @@ export default function MyRoster() {
                 <div>
                     <h2 style={{ margin: 0, color: NAVY }}>🏅 My Olympic Roster</h2>
                     <p style={{ color: "#6b7280", margin: "4px 0 0", fontSize: 13 }}>
-                        User: <strong>{authUser.name}</strong>
+                        User: <strong>{user.name}</strong>
                     </p>
                 </div>
                 <div style={{ textAlign: "right" }}>

@@ -21,7 +21,7 @@ module.exports = function (app) {
     // ------------------------------------------------------------------
     // 2. POST Create/Initialize Profile Entry (Matches: /api/worldcup/entries)
     // ------------------------------------------------------------------
-    app.post("/api/worldcup/entries", requireAuth, async (req, res) => {
+    app.post("/api/worldcup/entries/create", requireAuth, async (req, res) => {
         try {
             const entry_name = (req.body.entry_name || req.user.name).trim();
 

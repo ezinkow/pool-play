@@ -12,7 +12,7 @@ export default function Home() {
 
     return (
         <div>
-            <div className="page-content">
+            <div >
                 {gameLocked ? <CountdownNextGameLock /> : <CountdownDisplay />}
                 <div className='container'>
                     <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>

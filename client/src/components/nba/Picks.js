@@ -3,7 +3,7 @@ import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import Instructions from "./Instructions";
-import NbaGatekeeper from "./NbaGatekeeper";
+import PoolGatekeeper from "../PoolGatekeeper";
 
 const GOLD = "#c89d3c";
 const NAVY = "#13447a";
@@ -28,7 +28,7 @@ const formatDateTime = (iso) => {
 };
 
 export default function Picks() {
-  const { user: authUser, loading: authLoading } = useAuth();
+  const { user: user, loading: authLoading } = useAuth();
   const [series, setSeries] = useState([]);
   const [picks, setPicks] = useState([]);
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -42,11 +42,11 @@ export default function Picks() {
   }, []);
 
   useEffect(() => {
-    if (authUser && series.length > 0) {
+    if (user && series.length > 0) {
       const token = localStorage.getItem("token");
       const config = { headers: { Authorization: `Bearer ${token}` } };
 
-      axios.get("/api/nba/picks", { params: { name: authUser.name }, ...config })
+      axios.get("/api/nba/picks", { params: { name: user.name }, ...config })
         .then(res => {
           if (res.data && Array.isArray(res.data)) {
             const mappedPicks = res.data.map(p => ({
@@ -61,7 +61,7 @@ export default function Picks() {
         })
         .catch(() => setDataLoaded(true));
 
-      axios.get("/api/nba/tiebreaker", { params: { name: authUser.name }, ...config })
+      axios.get("/api/nba/tiebreaker", { params: { name: user.name }, ...config })
         .then(res => {
           if (res.data) {
             setTiebreakerWin(res.data.win_score || "");
@@ -69,7 +69,7 @@ export default function Picks() {
           }
         }).catch(() => { });
     }
-  }, [authUser, series]);
+  }, [user, series]);
 
   // --- LOGIC HOOKS ---
 
@@ -140,7 +140,7 @@ export default function Picks() {
     const token = localStorage.getItem("token");
     try {
       await axios.post("/api/nba/picks/bulk", {
-        name: authUser.name,
+        name: user.name,
         picks: picks.map(p => ({
           series_id: p.series,
           pick: p.pick,
@@ -156,20 +156,20 @@ export default function Picks() {
     }
   };
 
-  if (authLoading) return <div style={{ paddingTop: 100, textAlign: "center" }}>Verifying Session...</div>;
-  if (!authUser) return <div style={{ paddingTop: 100, textAlign: "center" }}>Please log in to make picks.</div>;
-  if (!dataLoaded && series.length > 0) return <div style={{ paddingTop: 100, textAlign: "center" }}>Loading your saved picks...</div>;
+  if (authLoading) return <div style={{ textAlign: "center" }}>Verifying Session...</div>;
+  if (!user) return <div style={{ textAlign: "center" }}>Please log in to make picks.</div>;
+  if (!dataLoaded && series.length > 0) return <div style={{ textAlign: "center" }}>Loading your saved picks...</div>;
 
   return (
-    <NbaGatekeeper user={authUser}>
-      <div style={{ paddingTop: 68, paddingBottom: 80, maxWidth: 1200, margin: "0 auto", paddingLeft: 12, paddingRight: 12 }}>
+    <PoolGatekeeper user={user} gameKey="nba">
+      <div style={{ paddingBottom: 80, maxWidth: 1200, margin: "0 auto", paddingLeft: 12, paddingRight: 12 }}>
         <Toaster />
         <Instructions />
 
         <div style={{ position: "sticky", top: 70, zIndex: 10, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, background: "#fff", padding: "15px", borderRadius: "10px", border: `2px solid ${GOLD}`, boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}>
           <div>
             <h4 style={{ margin: 0 }}>
-              {authUser.name} - {visibleGames[0]?.round_label || `Round ${activeRound} Selections`}
+              {user.name} - {visibleGames[0]?.round_label || `Round ${activeRound} Selections`}
             </h4>
             <div style={{ fontSize: "14px", marginTop: "4px" }}>
               Points: <span style={{ fontWeight: 700, color: currentPointsUsed > roundMax ? "red" : "#16a34a" }}>{currentPointsUsed}</span> / {roundMax}
@@ -309,6 +309,6 @@ export default function Picks() {
           }
         `}</style>
       </div>
-    </NbaGatekeeper>
+    </PoolGatekeeper>
   );
 }

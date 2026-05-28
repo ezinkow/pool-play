@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import useAuth from "../../hooks/useAuth";
-import NbaGatekeeper from "../../components/nba/NbaGatekeeper";
+import PoolGatekeeper from "../../components/PoolGatekeeper";
 
 const Standings = () => {
     const { user, loading: authLoading } = useAuth();
@@ -14,8 +14,8 @@ const Standings = () => {
     if (authLoading) return null;
 
     return (
-        <NbaGatekeeper user={user}>
-            <div style={{ paddingTop: 68, paddingBottom: 80, paddingLeft: 12, paddingRight: 12 }} className="standings-table">
+        <PoolGatekeeper user={user} gameKey="nba">
+            <div style={{paddingBottom: 80, paddingLeft: 12, paddingRight: 12 }} className="standings-table">
                 <h2 style={{ color: "#0a1628", paddingBottom: 6, fontSize: 24, fontWeight: 800 }}>Standings</h2>
 
                 <table style={{ borderCollapse: "collapse", background: "white", width: "100%", fontSize: 14 }} className="standings-table">
@@ -102,7 +102,7 @@ const Standings = () => {
                     </div>
                 </div>
             </div>
-        </NbaGatekeeper>
+        </PoolGatekeeper>
     );
 };
 

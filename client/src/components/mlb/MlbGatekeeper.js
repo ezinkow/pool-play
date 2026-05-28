@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 const NAVY = "#0a1628";
 const RED = "#c8102e";
 
-export default function MlbGatekeeper({ user, children, isAdmin }) {
+export default function PoolGatekeeper({ user, children, isAdmin }) {
     const [showModal, setShowModal] = useState(false);
     const [entryName, setEntryName] = useState("");
     const [loading, setLoading] = useState(false);

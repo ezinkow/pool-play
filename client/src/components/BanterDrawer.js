@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 const NAVY = "#13447a";
 const GOLD = "#c89d3c";
 
-export default function BanterDrawer({ isOpen, onClose, gameKey, authUser }) {
+export default function BanterDrawer({ isOpen, onClose, gameKey, user }) {
     const [messages, setMessages] = useState([]);
     const [newMsg, setNewMsg] = useState("");
     const [submitting, setSubmitting] = useState(false);
@@ -28,7 +28,7 @@ export default function BanterDrawer({ isOpen, onClose, gameKey, authUser }) {
     const handleSendMessage = async (e) => {
         e.preventDefault();
         if (!newMsg.trim() || submitting) return;
-        if (!authUser?.id) {
+        if (!user?.id) {
             toast.error("Please log in to talk smack!");
             return;
         }
@@ -36,7 +36,7 @@ export default function BanterDrawer({ isOpen, onClose, gameKey, authUser }) {
         setSubmitting(true);
         try {
             const res = await axios.post("/api/banter", {
-                user_id: authUser.id,
+                user_id: user.id,
                 game_key: gameKey,
                 message: newMsg
             });
@@ -74,7 +74,7 @@ export default function BanterDrawer({ isOpen, onClose, gameKey, authUser }) {
                         <p style={{ color: "#94a3b8", fontSize: "13px", textAlign: "center", marginTop: "40px" }}>No smack talked yet. Fire the first shot!</p>
                     ) : (
                         messages.map(msg => {
-                            const isMe = msg.user_id === authUser?.id;
+                            const isMe = msg.user_id === user?.id;
                             return (
                                 <div key={msg.id} style={{ display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" }}>
                                     <span style={{ fontSize: "11px", fontWeight: 700, color: isMe ? GOLD : NAVY, marginBottom: "3px", padding: "0 4px" }}>
@@ -99,7 +99,7 @@ export default function BanterDrawer({ isOpen, onClose, gameKey, authUser }) {
 
                 {/* Input Text Form Row Footer */}
                 <div style={{ padding: "14px", borderTop: "1px solid #e2e8f0", background: "#ffffff" }}>
-                    {authUser ? (
+                    {user ? (
                         <form onSubmit={handleSendMessage} style={{ display: "flex", gap: "8px" }}>
                             <input
                                 type="text"

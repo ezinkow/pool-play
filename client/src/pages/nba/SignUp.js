@@ -6,7 +6,7 @@ export default function UserSignUp() {
 
 
     return (
-        <div className='container page-content'>
+        <div>
             <SignUp />
         </div>
     )
