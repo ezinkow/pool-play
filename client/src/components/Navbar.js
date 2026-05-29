@@ -151,6 +151,45 @@ export default function Navbar() {
         navigate(destination);
     };
 
+    // 🧠 SORTED & CATEGORIZED POOL DATA ENGINE
+    const categorizedGames = useMemo(() => {
+        const active = [];
+        const inactive = [];
+
+        // Sort alphabetically first
+        const sorted = [...rawGameSettings].sort((a, b) =>
+            a.game_label.localeCompare(b.game_label)
+        );
+
+        sorted.forEach(game => {
+            if (game.is_active === true) active.push(game);
+            else inactive.push(game);
+        });
+
+        return { active, inactive };
+    }, [rawGameSettings]);
+
+    const renderGameLink = (game) => {
+        const isLinkActive = game.is_active === true || user?.is_admin === true;
+        const isSelected = currentGame?.game_key === game.game_key;
+        return (
+            <Link
+                key={game.game_key}
+                to={game.prefix}
+                onClick={(e) => handleDropdownLinkClick(e, isLinkActive, game.prefix)}
+                style={{
+                    display: "block", padding: "10px 16px", fontSize: "13px",
+                    color: !isLinkActive ? "#9ca3af" : (isSelected ? GOLD : "#334155"),
+                    textDecoration: "none", fontWeight: isSelected ? "700" : "500",
+                    backgroundColor: isSelected ? "#f8fafc" : "transparent",
+                    cursor: isLinkActive ? "pointer" : "default"
+                }}
+            >
+                <span>{game.emoji}</span> {game.game_label.toUpperCase()}
+            </Link>
+        );
+    };
+
     return (
         <>
             <header className="navbar-header" style={{ backgroundColor: navBg, position: "fixed", top: 0, left: 0, right: 0, zIndex: 2100, transition: "background-color 0.2s" }}>
@@ -184,16 +223,17 @@ export default function Navbar() {
                                     {isHome ? <>🚀 Go to Pool</> : <>🎮 Switch Pool</>} {dropdownOpen ? "▲" : "▼"}
                                 </button>
                                 {dropdownOpen && (
-                                    <div style={{ position: "absolute", top: "110%", right: 0, backgroundColor: "white", minWidth: "240px", borderRadius: "8px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", border: "1px solid #e2e8f0", padding: "6px 0", zIndex: 2500 }}>
-                                        {rawGameSettings.map((game) => {
-                                            const isLinkActive = game.is_active === true || user?.is_admin === true;
-                                            const isSelected = currentGame?.game_key === game.game_key;
-                                            return (
-                                                <Link key={game.game_key} to={game.prefix} onClick={(e) => handleDropdownLinkClick(e, isLinkActive, game.prefix)} style={{ display: "block", padding: "10px 16px", fontSize: "13px", color: !isLinkActive ? "#cbd5e1" : (isSelected ? GOLD : "#334155"), textDecoration: "none", fontWeight: isSelected ? "700" : "500", backgroundColor: isSelected ? "#f8fafc" : "transparent", cursor: isLinkActive ? "pointer" : "not-allowed" }}>
-                                                    <span>{game.emoji}</span> {game.game_label.toUpperCase()}
-                                                </Link>
-                                            );
-                                        })}
+                                    <div style={{ position: "absolute", top: "110%", right: 0, backgroundColor: "white", minWidth: "240px", borderRadius: "8px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", border: "1px solid #e2e8f0", padding: "6px 0", zIndex: 2500, maxHeight: "70vh", overflowY: "auto" }}>
+
+                                        {/* ACTIVE SECTION */}
+                                        <div style={{ padding: "6px 16px 4px", fontSize: "10px", fontWeight: 800, color: "#64748b", textTransform: "uppercase" }}>Active Pools</div>
+                                        {categorizedGames.active.map(game => renderGameLink(game))}
+
+                                        <div style={{ height: "1px", background: "#e2e8f0", margin: "6px 0" }} />
+
+                                        {/* INACTIVE SECTION */}
+                                        <div style={{ padding: "6px 16px 4px", fontSize: "10px", fontWeight: 800, color: "#9ca3af", textTransform: "uppercase" }}>Inactive Pools</div>
+                                        {categorizedGames.inactive.map(game => renderGameLink(game))}
                                     </div>
                                 )}
                             </div>

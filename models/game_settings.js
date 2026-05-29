@@ -55,6 +55,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: true // Stores exact hex tracking codes like "#13447a" or "#0a1628"
         },
+        open_date: {
+            type: DataTypes.DATE,
+            allowNull: true
+        },
         lock_date: {
             type: DataTypes.DATE,
             allowNull: true
