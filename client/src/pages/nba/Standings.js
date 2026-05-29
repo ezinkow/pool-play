@@ -5,8 +5,8 @@ export default function StandingsPage() {
 
 
     return (
-        <>
+        <div className='page-content'>
             <Standings />
-        </>
+        </div>
     )
 }

@@ -5,8 +5,8 @@ export default function AdminRefresh() {
 
 
     return (
-        <>
+        <div className='page-content'>
             <RefreshGamesButton />
-        </>
+        </div>
     )
 }

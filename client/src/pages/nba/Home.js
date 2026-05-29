@@ -17,7 +17,7 @@ export default function Home() {
 
     return (
         /* 🧠 THE RESPONSIVE BOUNDARY TRACK: Enforces structural limits to shut down breaking window blowouts */
-        <div style={{ width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative" }}>
+        <div style={{ width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative" }} className='page-content'>
             <Toaster />
 
             {/* 🧠 COUNTDOWN SCALING WRAPPER: Ensures fluid, elastic adjustments on smaller viewports */}

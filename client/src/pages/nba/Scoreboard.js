@@ -5,8 +5,8 @@ export default function Scores() {
 
 
     return (
-        <>
+        <div className='page-content'>
             <Scoreboard />
-        </>
+        </div>
     )
 }
