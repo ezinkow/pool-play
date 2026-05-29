@@ -14,9 +14,14 @@ export default function BracketStagePicksDisplay({ currentGame }) {
 
     // Show personal group play picker match cards BEFORE the switchover date
     if (!isKnockoutPhaseActive) {
-        return <Picks />;
+        return <div className='page-content'>
+            <Picks />
+        </div>;
     }
 
     // Show the personal bracket builder AFTER the switchover date
-    return <BracketStageBracket />;
+    return
+    <div className='page-content'>
+        <BracketStageBracket />
+    </div>
 }

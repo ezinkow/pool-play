@@ -62,6 +62,10 @@ module.exports = (sequelize, DataTypes) => {
         lock_date: {
             type: DataTypes.DATE,
             allowNull: true
+        },
+        end_date: {
+            type: DataTypes.DATE,
+            allowNull: true
         }
     }, {
         tableName: "game_settings",

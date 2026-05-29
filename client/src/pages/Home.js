@@ -6,51 +6,42 @@ const BLUE = "#13447a";
 const DARK_BLUE = "#030831";
 const GOLD = "#c89d3c";
 const GRAY = "#9ca3af";
+const GREEN = "#0a7a00"
 
-const CountdownDisplay = ({ open_date }) => {
-    const [time, setTime] = useState({ d: "00", h: "00", m: "00" });
+// Reuseable Countdown component with added seconds
+const Countdown = ({ targetDate, label }) => {
+    const [timeLeft, setTimeLeft] = useState({ d: "00", h: "00", m: "00", s: "00" });
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            const diff = new Date(open_date) - new Date();
+        const update = () => {
+            const diff = new Date(targetDate) - new Date();
             if (diff <= 0) {
-                setTime({ d: "00", h: "00", m: "00" });
-                clearInterval(interval);
+                setTimeLeft({ d: "00", h: "00", m: "00", s: "00" });
             } else {
-                setTime({
+                setTimeLeft({
                     d: Math.floor(diff / (1000 * 60 * 60 * 24)).toString().padStart(2, '0'),
                     h: Math.floor((diff / (1000 * 60 * 60)) % 24).toString().padStart(2, '0'),
-                    m: Math.floor((diff / 1000 / 60) % 60).toString().padStart(2, '0')
+                    m: Math.floor((diff / 1000 / 60) % 60).toString().padStart(2, '0'),
+                    s: Math.floor((diff / 1000) % 60).toString().padStart(2, '0')
                 });
             }
-        }, 1000);
+        };
+        update();
+        const interval = setInterval(update, 1000);
         return () => clearInterval(interval);
-    }, [open_date]);
-
-    const data = [
-        { val: time.d, lbl: "DAYS" },
-        { val: time.h, lbl: "HRS" },
-        { val: time.m, lbl: "MINS" }
-    ];
+    }, [targetDate]);
 
     return (
-        <div style={{
-            display: "inline-flex", alignItems: "center", backgroundColor: "#111",
-            padding: "6px 12px", borderRadius: "4px", border: "1px solid #333",
-            fontFamily: "'Courier New', Courier, monospace"
-        }}>
-            <span style={{ color: "#ffffff", fontSize: "10px", fontWeight: "bold", marginRight: "5px", textTransform: "uppercase" }}>OPENS:</span>
-            <div style={{ display: "flex", alignItems: "center" }}>
-                {data.map((item, i) => (
+        <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: "#111", padding: "6px 10px", borderRadius: "4px", border: "1px solid #333", fontFamily: "'Courier New', monospace" }}>
+            <span style={{ color: "#ffffff", fontSize: "15px", fontWeight: "bold", marginRight: "8px", textTransform: "uppercase" }}>{label}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                {[{ val: timeLeft.d, lbl: "Days" }, { val: timeLeft.h, lbl: "Hours" }, { val: timeLeft.m, lbl: "Min" }, { val: timeLeft.s, lbl: "Sec" }].map((item, i) => (
                     <React.Fragment key={item.lbl}>
                         <div style={{ textAlign: "center" }}>
-                            <div style={{ color: "#00ff00", fontSize: "20px", fontWeight: "bold", lineHeight: 1 }}>{item.val}</div>
-                            <div style={{ color: "#ffffff", fontSize: "12px", textTransform: "uppercase", fontWeight: 700, marginTop: "2px" }}>{item.lbl}</div>
+                            <div style={{ color: "#00ff00", fontSize: "18px", fontWeight: "bold", lineHeight: 1 }}>{item.val}</div>
+                            <div style={{ color: "#ffffff", fontSize: "12px", fontWeight: 700 }}>{item.lbl}</div>
                         </div>
-                        {/* Add colon only between items, not after the last one */}
-                        {i < data.length - 1 && (
-                            <div style={{ color: "#00ff00", fontSize: "18px", fontWeight: "bold", padding: "0 6px", marginTop: "-17px" }}>:</div>
-                        )}
+                        {i < 3 && <div style={{ color: "#00ff00", fontSize: "16px", fontWeight: "bold", marginTop: "-15px" }}>:</div>}
                     </React.Fragment>
                 ))}
             </div>
@@ -65,113 +56,86 @@ export default function Home() {
     const [expandedCards, setExpandedCards] = useState({});
 
     useEffect(() => {
-        axios.get("/api/settings/active-states")
-            .then(res => {
-                const rawData = res.data || [];
-                const sortedData = [...rawData].sort((a, b) => (a.game_label || "").localeCompare(b.game_label || ""));
-
-                const initialExpansionState = {};
-                const dynamicCards = sortedData.map(row => {
-                    const cardKey = row.game_key || row.route;
-                    initialExpansionState[cardKey] = !!row.is_active;
-
-                    return {
-                        key: cardKey,
-                        emoji: row.emoji,
-                        title: row.title,
-                        description: row.description,
-                        route: row.route,
-                        accent: row.accent,
-                        ctaBg: row.cta_bg,
-                        open_date: row.open_date,
-                        isActive: row.is_active,
-                        cta: row.is_active ? "Play →" : "Game ended, come back next year"
-                    };
-                });
-
-                setExpandedCards(initialExpansionState);
-                setCards(dynamicCards);
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error("❌ Home dynamic cards loading failure:", err);
-                setLoading(false);
-            });
+        axios.get("/api/settings/active-states").then(res => {
+            const dynamicCards = (res.data || []).map(row => ({
+                key: row.game_key || row.route,
+                ...row,
+                open_date: new Date(row.open_date),
+                lock_date: new Date(row.lock_date),
+                end_date: row.end_date ? new Date(row.end_date) : new Date("2100-01-01"),
+                isActive: row.is_active,
+                cta: row.is_active ? "Play →" : "Game ended, come back next year"
+            }));
+            setCards(dynamicCards);
+            setLoading(false);
+        }).catch(err => { console.error(err); setLoading(false); });
     }, []);
 
-    const toggleExpand = (cardKey, e) => {
-        e.stopPropagation();
-        setExpandedCards(prev => ({ ...prev, [cardKey]: !prev[cardKey] }));
-    };
-
-    const { activeCards, inactiveCards } = useMemo(() => {
-        // 1. Separate cards
-        const active = cards.filter(c => c.isActive);
-
-        // 2. Separate and sort inactive cards by open_date ascending
-        const inactive = cards
-            .filter(c => !c.isActive)
-            .sort((a, b) => {
-                const dateA = a.open_date ? new Date(a.open_date) : new Date(8640000000000000); // Push nulls to end
-                const dateB = b.open_date ? new Date(b.open_date) : new Date(8640000000000000);
-                return dateA - dateB;
-            });
-
-        return { activeCards: active, inactiveCards: inactive };
+    const { live, upcoming, inactive } = useMemo(() => {
+        const now = new Date();
+        const buckets = { live: [], upcoming: [], inactive: [] };
+        cards.forEach(c => {
+            if (!c.isActive) buckets.inactive.push(c);
+            else if (now >= c.lock_date && now <= c.end_date) buckets.live.push(c);
+            else if (now >= c.open_date && now < c.lock_date) buckets.upcoming.push(c);
+            else buckets.inactive.push(c);
+        });
+        buckets.inactive.sort((a, b) => a.open_date - b.open_date);
+        return buckets;
     }, [cards]);
 
-    const renderCard = (card) => {
-        const { key, emoji, title, description, cta, route, accent, ctaBg, isActive, open_date } = card;
-        const isExpanded = !!expandedCards[key];
+    const renderCard = (card, group) => {
+        const isExpanded = !!expandedCards[card.key];
 
         return (
-            <div key={key} onClick={() => isActive && isExpanded && navigate(route)} style={{
-                background: isActive ? "white" : "rgba(255, 255, 255, 0.15)",
-                backdropFilter: isActive ? "none" : "blur(8px)", borderRadius: 12,
-                borderLeft: `6px solid ${isActive ? accent : GRAY}`,
-                boxShadow: isActive ? "0 4px 20px rgba(0,0,0,0.15)" : "none",
-                transition: "all 0.2s ease-in-out", cursor: isActive && isExpanded ? "pointer" : "default",
-                overflow: "hidden", color: isActive ? "#1e293b" : "rgba(255,255,255,0.6)",
+            <div key={card.key} style={{
+                background: card.isActive ? "white" : "rgba(255, 255, 255, 0.15)",
+                borderRadius: 12,
+                borderLeft: `6px solid ${card.isActive ? card.accent : GRAY}`,
+                marginBottom: 16,
+                overflow: "hidden"
             }}>
-                <div
-                    onClick={(e) => toggleExpand(key, e)}
-                    style={{
-                        padding: "18px 24px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        cursor: "pointer",
-                        userSelect: "none"
-                    }}
-                >
-                    {/* Left Side: Emoji + Title */}
+                <div onClick={() => setExpandedCards(p => ({ ...p, [card.key]: !p[card.key] }))} style={{ padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 16, flex: 1 }}>
-                        <span style={{ fontSize: 28, filter: isActive ? "none" : "grayscale(50%)" }}>{emoji}</span>
+                        <span style={{ fontSize: 28 }}>{card.emoji}</span>
+                        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "15px" }}>
+                            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: card.isActive ? DARK_BLUE : "white" }}>{card.title}</h2>
 
-                        {/* WRAPPER FOR MOBILE STACKING */}
-                        <div style={{ display: "flex", flexDirection: window.innerWidth < 600 ? "column" : "row", alignItems: window.innerWidth < 600 ? "flex-start" : "center", gap: "15px", flex: 1 }}>
-                            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: isActive ? DARK_BLUE : "rgba(255, 255, 255, 0.9)" }}>
-                                {title}
-                            </h2>
+                            {/* ONLY Upcoming pools get the countdown to lock_date */}
+                            {group === 'upcoming' && <Countdown label="LOCKS:" targetDate={card.lock_date} />}
 
-                            {/* SCOREBOARD / STATUS */}
-                            {!isActive && open_date && <CountdownDisplay open_date={open_date} />}
-                            {isActive && !isExpanded && (
-                                <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: 12, fontWeight: 600, color: "#16a34a" }}>
-                                    <span>●</span> <span>Active Now</span>
-                                </div>
-                            )}
+                            {/* Only Live pools get the active badge */}
+                            {group === 'live' && <span style={{ color: "#16a34a", fontSize: 12, fontWeight: 700 }}>● Active Now</span>}
+
+                            {/* Only Inactive pools get the countdown to open_date */}
+                            {group === 'inactive' && card.open_date > new Date() && <Countdown label="OPENS:" targetDate={card.open_date} />}
                         </div>
                     </div>
-
-                    {/* Right Side: Chevron */}
-                    <span style={{ fontSize: 12, transition: "transform 0.2s ease", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", color: isActive ? "#64748b" : "rgba(255,255,255,0.4)", marginLeft: "10px" }}>▼</span>
+                    <span style={{ color: card.isActive ? "#64748b00" : "white" }}>▼</span>
                 </div>
 
-                <div style={{ maxHeight: isExpanded ? "250px" : "0px", opacity: isExpanded ? 1 : 0, transition: "all 0.25s ease-in-out", visibility: isExpanded ? "visible" : "hidden" }}>
-                    <div style={{ padding: "0 24px 24px 68px", borderTop: isActive ? "1px solid #f1f5f9" : "1px solid rgba(255,255,255,0.1)", paddingTop: 16 }}>
-                        <p style={{ margin: "0 0 20px 0", fontSize: 14, lineHeight: 1.6, color: isActive ? "#475569" : "rgba(255,255,255,0.7)" }}>{description}</p>
-                        <div style={{ display: "inline-block", padding: "10px 24px", backgroundColor: isActive ? ctaBg : "rgba(255,255,255,0.1)", color: isActive ? "white" : "rgba(255,255,255,0.3)", borderRadius: 6, fontWeight: 700, fontSize: 14, cursor: isActive ? "pointer" : "not-allowed", border: isActive ? "none" : "1px solid rgba(255,255,255,0.15)" }}>{cta}</div>
+                {/* Drawer Content */}
+                <div style={{ maxHeight: isExpanded ? "250px" : "0px", opacity: isExpanded ? 1 : 0, transition: "all 0.25s ease-in-out", overflow: "hidden" }}>
+                    <div style={{ padding: "0 24px 24px 68px" }}>
+                        <p style={{ marginBottom: 20, color: card.isActive ? "#694747" : "white" }}>{card.description}</p>
+                        <button
+                            onClick={() => card.isActive && navigate(card.route)}
+                            disabled={!card.isActive} // 👈 Disables the button visually and functionally
+                            style={{
+                                padding: "10px 24px",
+                                // Disable cursor if not active
+                                cursor: card.isActive ? "pointer" : "not-allowed",
+                                // Dim the button if not active
+                                opacity: card.isActive ? 1 : 0.5,
+                                background: card.isActive ? GREEN : "#444",
+                                color: "white",
+                                border: "none",
+                                borderRadius: 6,
+                                fontWeight: "bold"
+                            }}
+                        >
+                            {card.cta}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -179,24 +143,13 @@ export default function Home() {
     };
 
     return (
-        <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, ${DARK_BLUE} 25%, ${GOLD} 50%, ${BLUE} 75%)`, display: "flex", flexDirection: "column", alignItems: "center", padding: "60px 16px 80px 16px", fontFamily: "system-ui, -apple-system, sans-serif" }}>
-            <div style={{ textAlign: "center", marginBottom: 40 }}>
-                <h1 style={{ color: GOLD, fontSize: "clamp(28px, 5vw, 48px)", fontWeight: 900, margin: "0 0 12px 0", letterSpacing: "3px", textTransform: "uppercase", textShadow: "0 4px 12px rgba(0,0,0,0.3)" }}>🏆 POOL PLAY 🏊</h1>
-                <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 16, margin: 0, fontWeight: 500 }}>Come on in, the water's warm!</p>
+        <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, ${DARK_BLUE} 25%, ${GOLD} 50%, ${BLUE} 75%)`, padding: "80px 16px" }}>
+            <div style={{ textAlign: "center", color: "white", marginBottom: 40 }}><h1>🏆 POOL PLAY 🏊</h1></div>
+            <div style={{ maxWidth: 850, margin: "0 auto" }}>
+                {live.length > 0 && <><h3 style={{ color: GOLD, marginBottom: 10 }}>Live</h3>{live.map(c => renderCard(c, 'live'))}</>}
+                {upcoming.length > 0 && <><h3 style={{ color: GOLD, marginBottom: 10 }}>Open / Accepting Entries</h3>{upcoming.map(c => renderCard(c, 'upcoming'))}</>}
+                {inactive.length > 0 && <><h3 style={{ color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>Inactive</h3>{inactive.map(c => renderCard(c, 'inactive'))}</>}
             </div>
-
-            {loading ? <div style={{ color: "white", fontWeight: 700, padding: 40, fontSize: 16 }}>Loading tournament dashboards...</div> : (
-                <div style={{ width: "100%", maxWidth: 850, display: "flex", flexDirection: "column", gap: 24 }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                        <h3 style={{ color: GOLD, fontSize: 14, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 0 }}>Active Pools</h3>
-                        {activeCards.map(renderCard)}
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                        <h3 style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 0 }}>Inactive Pools</h3>
-                        {inactiveCards.map(renderCard)}
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

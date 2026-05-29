@@ -5,7 +5,7 @@ export default function PicksDisplay() {
 
 
     return (
-        <div>
+        <div className='page-content'>
             <MyPicks />
         </div>
     )

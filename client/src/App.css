@@ -38,30 +38,10 @@ body {
    2. APPARATUS LAYOUT TRACKS (DESKTOP VS MOBILE VIEWPORTS)
    ========================================================================== */
 
-/* 🖥️ DESKTOP-ONLY VIEWPORT APPARATUS (993px and above) */
-@media (min-width: 993px) {
-
-  .main-content,
-  main,
-  .page-content {
-    /* Instead of just padding, set the hero color here to fill the gap */
-    background: linear-gradient(135deg, #0f172a, #020617);
-    padding-top: 80px !important;
-  }
-}
-
-/* 📱 MOBILE & TABLET VIEWPORT APPARATUS (992px and below) */
-@media (max-width: 992px) {
-
-  .page-content,
-  .main-content,
-  main,
-  #root>div {
-    /* Sync background to match your hero section */
-    background: linear-gradient(135deg, #0f172a, #020617);
-    padding-top: 56px !important;
-    margin-top: 0 !important;
-  }
+.page-content {
+  padding-top: 50px;
+  /* Matches --navbar-height */
+  min-height: 100vh;
 }
 
 /* 🧼 STRUCTURAL ANTI-COLLISION SHIELDS */

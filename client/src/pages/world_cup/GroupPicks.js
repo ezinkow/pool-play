@@ -12,7 +12,7 @@ export default function PicksDisplay() {
     const [activeTab, setActiveTab] = useState("group");
 
     return (
-        <div style={{ maxWidth: "1000px", margin: "0 auto", paddingLeft: "16px", paddingRight: "16px" }}>
+        <div style={{ maxWidth: "1000px", margin: "0 auto", paddingLeft: "16px", paddingRight: "16px" }} className='page-content'>
 
             {/* Header Identity Display Panel */}
             <div style={{ marginBottom: "20px", textAlign: "center" }}>

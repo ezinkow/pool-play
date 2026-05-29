@@ -6,7 +6,7 @@ export default function PicksContainer() {
 
     return (
         <div>
-            <div className='=container'>
+            <div className='page-content'>
                 <Scoreboard />
             </div>
         </div>

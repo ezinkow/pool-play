@@ -10,7 +10,7 @@ export default function Home() {
 
   return (
     <div style={{ paddingLeft: 0, paddingRight: 0 }}>
-      <div className="home-hero" style={{ padding: "40px 16px" }}>
+      <div className="home-hero page-content" style={{ padding: "40px 16px" }}>
         <div className="hero-content">
           <h1>⚽ World Cup Pick 'em</h1>
           <p>
