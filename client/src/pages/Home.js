@@ -111,7 +111,10 @@ export default function Home() {
                             {group === 'inactive' && card.open_date > new Date() && <Countdown label="OPENS:" targetDate={card.open_date} />}
                         </div>
                     </div>
-                    <span style={{ color: card.isActive ? "#64748b00" : "white" }}>▼</span>
+                    <span style={{
+                        color: card.isActive ? "#64748b" : "white",
+                        transition: "transform 0.2s"
+                    }}>▼</span>
                 </div>
 
                 {/* Drawer Content */}
