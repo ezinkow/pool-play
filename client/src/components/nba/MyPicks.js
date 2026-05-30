@@ -26,6 +26,8 @@ export default function MyPicks() {
             .finally(() => setLoading(false));
     }, [user]);
 
+
+
     const myStanding = useMemo(() =>
         standings.find(s => s.entry_name === user?.name || s.name === user?.name),
         [standings, user]
@@ -37,6 +39,21 @@ export default function MyPicks() {
     );
 
     const getSeries = p => p.series || p.NbaSeries;
+    const sortedPicks = useMemo(() => {
+        // We sort the array based on the linked series' game_date
+        return [...picks].sort((a, b) => {
+            const seriesA = getSeries(a);
+            const seriesB = getSeries(b);
+
+            // Convert dates to timestamps for comparison
+            // Defaulting to 0 if date is missing to push them to the end
+            const dateA = seriesA?.game_date ? new Date(seriesA.game_date).getTime() : 0;
+            const dateB = seriesB?.game_date ? new Date(seriesB.game_date).getTime() : 0;
+
+            // Descending order: b - a
+            return dateB - dateA;
+        });
+    }, [picks]); // getSeries is stable, but adding it to dependencies is good practice
     const getPickLogo = p => {
         const s = getSeries(p);
         if (!s) return null;
@@ -72,32 +89,16 @@ export default function MyPicks() {
                 {/* Header */}
                 <div style={{
                     display: "flex", justifyContent: "space-between",
-                    alignItems: "flex-start", marginBottom: 24, flexWrap: "wrap", gap: 12,
+                    alignItems: "flex-start", marginBottom: 10, flexWrap: "wrap", gap: 12,
                 }}>
                     <div>
                         <h2 style={{ color: NAVY, margin: 0 }}>🏀 My Picks</h2>
                         <p style={{ color: "#6b7280", margin: "4px 0 0", fontSize: 13 }}>
                             {user.name}
                         </p>
-                        <div style={{ fontSize: 13, color: NAVY, fontWeight: 600, marginTop: 4 }}>
-                            Confidence assigned: {totalConfidence} pts
-                        </div>
                     </div>
-                    <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: 18, fontWeight: 700, color: NAVY }}>
-                            {myStanding?.points || 0} pts
-                        </div>
-                        <div style={{ fontSize: 12, color: "#6b7280" }}>standing score</div>
-                        <button
-                            onClick={logout}
-                            style={{
-                                marginTop: 8, fontSize: 12, padding: "4px 12px",
-                                borderRadius: 6, border: "1px solid #d1d5db",
-                                cursor: "pointer", background: "white",
-                            }}
-                        >
-                            Log out
-                        </button>
+                    <div style={{ textAlign: "right", paddingTop: "25px", fontSize: 18, fontWeight: 700, color: NAVY }}>
+                        {myStanding?.points || 0} pts
                     </div>
                 </div>
 
@@ -141,7 +142,7 @@ export default function MyPicks() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {picks.map((p, i) => {
+                                    {sortedPicks.map((p, i) => {
                                         const s = getSeries(p);
                                         const result = getResult(p);
                                         return (
@@ -187,7 +188,7 @@ export default function MyPicks() {
 
                         {/* ── Mobile cards ── */}
                         <div className="mypicks-mobile">
-                            {picks.map((p, i) => {
+                            {sortedPicks.map((p, i) => {
                                 const s = getSeries(p);
                                 const result = getResult(p);
                                 return (
