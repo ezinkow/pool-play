@@ -266,7 +266,7 @@ export default function Navbar() {
             </header>
 
             {/* 🧠 FLOATING CHAT BALLOON ELEMENT */}
-            {isMobile && user && !isHome && (
+            {isMobile && user && currentGame && (
                 <button
                     onClick={() => setChatOpen(true)}
                     style={{
@@ -289,6 +289,7 @@ export default function Navbar() {
                 >
                     💬
                 </button>
+            )}
             )}
 
             {!isMobile && !isHome && activeLinks.length > 0 && (
@@ -377,14 +378,18 @@ export default function Navbar() {
                                 </>
                             ) : (
                                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                                    <button onClick={() => { setMenuOpen(false); navigate("/comments"); }} style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #4b5563", background: "transparent", color: "white", fontWeight: 700, fontSize: "13px" }}>📩 Contact Support</button>
-                                    <button onClick={() => { setMenuOpen(false); setShowLogin(true); }} style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "none", background: GOLD, color: "#0a1628", fontWeight: 700, fontSize: "13px" }}>Log In Platform</button>
+                                    <button onClick={() => { setMenuOpen(false); setShowLogin(true); }} style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "none", background: GOLD, color: "#0a1628", fontWeight: 700, fontSize: "13px" }}>Log In</button>
                                 </div>
+
                             )}
+                            <div style={{ paddingTop: "10px" }}>
+                                <button onClick={() => { setMenuOpen(false); navigate("/comments"); }} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #4b5563", background: "transparent", color: "white", fontWeight: 700, fontSize: "13px" }}>📩 Contact Support</button>
+                            </div>
                         </div>
                     </nav>
                 </>
-            )}
+            )
+            }
 
             {/* 🧠 RE-MOUNTED AUTHENTICATION STEP PANEL PORTAL LINK */}
             <AuthModal show={showLogin} onClose={() => setShowLogin(false)} />
