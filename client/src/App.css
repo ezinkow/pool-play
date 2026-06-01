@@ -683,8 +683,7 @@ body {
    11. LEGACY APP PANELS
    ========================================================================== */
 .home-hero {
-  background: linear-gradient(135deg, #0f172a, #020617);
-  color: white;
+  color: #002366;
   padding: 80px 16px;
   text-align: center;
 }

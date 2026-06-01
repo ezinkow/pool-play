@@ -122,7 +122,7 @@ async function syncWorldCup() {
                 home_logo: isHomePlaceholder ? null : homeObj.team.logo,
                 away_logo: isAwayPlaceholder ? null : awayObj.team.logo,
                 stage: roundCfg.label.toUpperCase(),
-                match_date: event.date,
+                game_date: event.date,
                 locked: new Date() >= new Date(event.date),
                 round: roundNum,
                 round_label: roundCfg.label,

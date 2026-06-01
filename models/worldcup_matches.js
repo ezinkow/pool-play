@@ -11,7 +11,7 @@ module.exports = function (sequelize, DataTypes) {
             allowNull: false,
             defaultValue: "TBD"
         },
-        match_date: { type: DataTypes.DATE, allowNull: false },
+        game_date: { type: DataTypes.DATE, allowNull: false },
         round: { type: DataTypes.INTEGER, defaultValue: 0 },
         round_label: { type: DataTypes.STRING, allowNull: true },
         points_value: { type: DataTypes.INTEGER, defaultValue: 1 },

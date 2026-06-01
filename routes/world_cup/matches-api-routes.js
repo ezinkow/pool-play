@@ -7,7 +7,7 @@ module.exports = function (app) {
   app.get("/api/worldcup/matches", async (req, res) => {
     try {
       const matches = await WorldCupMatches.findAll({
-        order: [["match_date", "ASC"]]
+        order: [["game_date", "ASC"]]
       });
       res.json(matches);
     } catch (err) {

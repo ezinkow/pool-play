@@ -84,7 +84,7 @@ export default function MyPicks() {
                         outcome_status: pickStatus
                     };
                 });
-                enrichedGroup.sort((a, b) => new Date(a.match_date) - new Date(b.match_date));
+                enrichedGroup.sort((a, b) => new Date(a.game_date) - new Date(b.game_date));
                 setGroupPicks(enrichedGroup);
 
                 // 2. COMPILE KNOCKOUT BRACKET TRACKER (ROUNDS 1-5)
@@ -288,7 +288,7 @@ export default function MyPicks() {
                                         <td style={{ ...tdStyle, textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>
                                             {p.status === "STATUS_SCHEDULED" ? (
                                                 <span style={{ color: "#9ca3af", fontSize: "11px", fontWeight: 400 }}>
-                                                    {new Date(p.match_date).toLocaleDateString([], { month: "short", day: "numeric" })}
+                                                    {new Date(p.game_date).toLocaleDateString([], { month: "short", day: "numeric" })}
                                                 </span>
                                             ) : (
                                                 `${p.away_score} - ${p.home_score}`

@@ -15,7 +15,7 @@ export default function PlayerPicksMatrix() {
             return s.includes("FINAL") || s.includes("PROGRESS") || s.includes("HALF");
           })
           .filter(g => parseInt(g.round) === 0)
-          .sort((a, b) => new Date(b.match_date) - new Date(a.match_date));
+          .sort((a, b) => new Date(b.game_date) - new Date(a.game_date));
         setGames(filtered);
       });
 

@@ -66,6 +66,10 @@ module.exports = (sequelize, DataTypes) => {
         end_date: {
             type: DataTypes.DATE,
             allowNull: true
+        },
+        games_api_path: {
+            type: DataTypes.STRING,
+            allowNull: true
         }
     }, {
         tableName: "game_settings",

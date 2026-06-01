@@ -94,13 +94,13 @@ export default function Picks() {
     const sorted = [...matches];
 
     if (sortBy === "date") {
-      sorted.sort((a, b) => new Date(a.match_date) - new Date(b.match_date));
+      sorted.sort((a, b) => new Date(a.game_date) - new Date(b.game_date));
     } else if (sortBy === "group") {
       sorted.sort((a, b) => {
         const grpA = a.group || "Z";
         const grpB = b.group || "Z";
         if (grpA !== grpB) return grpA.localeCompare(grpB);
-        return new Date(a.match_date) - new Date(b.match_date);
+        return new Date(a.game_date) - new Date(b.game_date);
       });
     } else if (sortBy === "home") {
       sorted.sort((a, b) => a.home_team.localeCompare(b.home_team));
@@ -112,7 +112,7 @@ export default function Picks() {
     sorted.forEach((match) => {
       let key = "";
       if (sortBy === "date") {
-        key = `📅 ${new Date(match.match_date).toLocaleDateString(undefined, {
+        key = `📅 ${new Date(match.game_date).toLocaleDateString(undefined, {
           weekday: "long", month: "short", day: "numeric"
         })}`;
       } else if (sortBy === "group") {
@@ -191,7 +191,7 @@ export default function Picks() {
                   {/* Top Header Row Inside Cards */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
                     <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "700" }}>
-                      {formatMatchTime(match.match_date)}
+                      {formatMatchTime(match.game_date)}
                     </div>
                     {match.group && (
                       <span style={{ fontSize: "10px", backgroundColor: "#e2e8f0", color: "#334155", padding: "2px 6px", borderRadius: "4px", fontWeight: 800, textTransform: "uppercase" }}>

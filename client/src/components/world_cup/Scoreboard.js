@@ -47,7 +47,7 @@ export default function Scoreboard() {
   /* ---------------- SPLIT MATCHES BY TOURNAMENT FORMAT ---------------- */
   const groupMatches = useMemo(() => {
     const filtered = matches.filter(m => parseInt(m.round) === 0);
-    return [...filtered].sort((a, b) => new Date(a.match_date) - new Date(b.match_date));
+    return [...filtered].sort((a, b) => new Date(a.game_date) - new Date(b.game_date));
   }, [matches]);
 
   const bracketMatches = useMemo(() => {
@@ -180,7 +180,7 @@ export default function Scoreboard() {
                     <td style={{ ...tdStyle, fontFamily: "monospace", fontWeight: 800, fontSize: "14px", color: "#1e293b" }}>
                       {m.status === "STATUS_SCHEDULED" ? (
                         <span style={{ color: "#64748b", fontSize: "11px", fontWeight: 400, fontFamily: "sans-serif" }}>
-                          {new Date(m.match_date).toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          {new Date(m.game_date).toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                         </span>
                       ) : activeSection === "bracket" && (!m.home_team || !m.away_team) ? (
                         <span style={{ color: "#94a3b8", fontSize: "11px", fontWeight: 400, fontFamily: "sans-serif" }}>TBD Roadmap</span>
