@@ -290,7 +290,6 @@ export default function Navbar() {
                     💬
                 </button>
             )}
-            )}
 
             {!isMobile && !isHome && activeLinks.length > 0 && (
                 <>
