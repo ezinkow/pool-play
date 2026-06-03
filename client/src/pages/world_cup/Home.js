@@ -23,7 +23,6 @@ export default function Home() {
       })
       .catch(err => console.error("Failed to load pool data", err));
   }, []);
-  console.log(poolData)
 
   // 2. Calculate inside the component body
   const isPoolStarted = useMemo(() => {

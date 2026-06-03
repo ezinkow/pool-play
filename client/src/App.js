@@ -10,6 +10,7 @@ import ChangePassword from './pages/ChangePassword';
 import LoginPage from "./pages/LogIn";
 import MyAccount from "./pages/MyAccount";
 import Comments from "./pages/Comments";
+import NotFound from "./pages/NotFound";
 
 // ChampWeekPickem pages
 import ChampWeekPickemHome from './pages/champweek_pickem/Home';
@@ -112,6 +113,7 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/myaccount" element={<MyAccount />} />
           <Route path="/comments" element={<Comments />} />
+          <Route path="*" element={<NotFound />} />
 
           {/* Champ Week Pickem */}
           <Route path="/champweekpickem/" element={<ChampWeekPickemHome />} />
