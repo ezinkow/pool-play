@@ -15,12 +15,13 @@ module.exports = function (sequelize, DataTypes) {
             type: DataTypes.STRING(100),
             allowNull: false
         }
-    }, { tableName: "world_cup_match_picks", timestamps: true });
+    }, { tableName: "world_cup_picks", timestamps: true });
 
     WorldCupPicks.associate = function (models) {
         // 🧠 FIXED: Points cleanly back to the unique entry row primary key ID
         WorldCupPicks.belongsTo(models.WorldCupEntries, {
-            foreignKey: "user_id"
+            foreignKey: 'user_id',
+            targetKey: 'user_id'
         });
 
         WorldCupPicks.belongsTo(models.WorldCupMatches, {

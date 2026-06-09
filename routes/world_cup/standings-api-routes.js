@@ -4,7 +4,7 @@ module.exports = function (app) {
     app.get("/api/worldcup/standings", async (req, res) => {
         try {
             const EntryModel = db.WorldCupEntries || db.world_cup_entries;
-            const PicksModel = db.WorldCupPicks || db.world_cup_match_picks;
+            const PicksModel = db.WorldCupPicks || db.world_cup_picks;
             const MatchesModel = db.WorldCupMatches || db.world_cup_matches;
 
             // 1. Fetch from Entries instead of base users table
