@@ -26,7 +26,7 @@ export default function Standings() {
   }, []);
 
   return (
-    <div style={{ maxWidth: "800px", margin: "0 auto", padding: "8px" }}>
+    <div style={{ maxWidth: "800px", margin: "0 auto", padding: "8px", paddingBottom: '100px' }}>
       <Toaster />
       <style>{`
         .desktop-only { display: block; }

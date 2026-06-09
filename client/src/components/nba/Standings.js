@@ -18,7 +18,7 @@ const Standings = () => {
             <div style={{paddingBottom: 80, paddingLeft: 12, paddingRight: 12 }} className="standings-table">
                 <h2 style={{ color: "#0a1628", paddingBottom: 6, fontSize: 24, fontWeight: 800 }}>Standings</h2>
 
-                <table style={{ borderCollapse: "collapse", background: "white", width: "100%", fontSize: 14 }} className="standings-table">
+                <table style={{ borderCollapse: "collapse", background: "white", width: "100%", fontSize: 14, paddingBottom: '300px'}} className="standings-table">
                     <thead>
                         <tr>
                             {[
