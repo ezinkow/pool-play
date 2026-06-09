@@ -60,6 +60,7 @@
     "fresh": "^0.5.2",
     "from": "^0.1.7",
     "function-bind": "^1.1.2",
+    "fuse.js": "^7.4.1",
     "generate-function": "^2.3.1",
     "gensync": "^1.0.0-beta.2",
     "get-intrinsic": "^1.2.7",
