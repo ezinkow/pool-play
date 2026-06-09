@@ -89,7 +89,7 @@ export default function PlayerPicksMatrix() {
   };
 
   return (
-    <div style={{ maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
+    <div style={{ maxWidth: "800px", margin: "0 auto", padding: '0px 8px 100px 8px' }}>
 
       {/* 🧠 THE ALIGNMENT SHIELD: Added the matching title wrapper block.
           This gives the browser a text baseline to look at, forcing the page 
