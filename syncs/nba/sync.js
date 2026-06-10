@@ -73,8 +73,8 @@ function extractSeries(data) {
             });
         } else {
             const existing = seriesMap.get(seriesId);
-            existing.homeWins = Math.max(existing.homeWins, hWins);
-            existing.awayWins = Math.max(existing.awayWins, aWins);
+            existing.homeWins = hWins;
+            existing.awayWins = aWins;
         }
     });
     return Array.from(seriesMap.values());
@@ -84,8 +84,10 @@ async function processSeries(s) {
     const { NbaSeries } = db;
     try {
         const roundCfg = ROUND_CONFIG[s.roundNum];
+        const hasWinner = s.homeWins === 4 || s.awayWins === 4;
         const totalWins = s.homeWins + s.awayWins;
-        const seriesOver = totalWins >= 4;
+        const homeSeed = s.home.seed || TEAM_TO_SEED[s.home.team.displayName] || null;
+        const awaySeed = s.away.seed || TEAM_TO_SEED[s.away.team.displayName] || null;
         
         const isLocked = new Date() >= new Date(s.startDate) || totalWins > 0;
 
@@ -96,12 +98,16 @@ async function processSeries(s) {
             round_points_max: roundCfg.maxPoints,
             home_team: s.home.team.displayName,
             away_team: s.away.team.displayName,
-            status: seriesOver ? "STATUS_FINAL" : (totalWins > 0 ? "STATUS_IN_PROGRESS" : "STATUS_SCHEDULED"),
+            home_logo: s.home.team.logo,
+            away_logo: s.away.team.logo,
+            home_seed: homeSeed,
+            away_seed: awaySeed,
+            status: hasWinner ? "STATUS_FINAL" : (totalWins > 0 ? "STATUS_IN_PROGRESS" : "STATUS_SCHEDULED"),
             game_date: s.startDate,
             home_wins: s.homeWins,
             away_wins: s.awayWins,
             locked: isLocked,
-            winner: seriesOver ? (s.homeWins === 4 ? s.home.team.displayName : s.away.team.displayName) : null
+            winner: hasWinner ? (s.homeWins === 4 ? s.home.team.displayName : s.away.team.displayName) : null
         });
     } catch (err) {
         console.error(`[NBA sync] Error on ${s.id}:`, err.message);
