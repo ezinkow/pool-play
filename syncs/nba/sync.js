@@ -10,13 +10,6 @@ const ROUND_CONFIG = {
     4: { label: "Finals", maxPoints: 8 },
 };
 
-const TEAM_TO_SEED = {
-    "Detroit Pistons": 1, "Boston Celtics": 2, "New York Knicks": 3, "Cleveland Cavaliers": 4,
-    "Toronto Raptors": 5, "Atlanta Hawks": 6, "Philadelphia 76ers": 7, "Orlando Magic": 7,
-    "Oklahoma City Thunder": 1, "San Antonio Spurs": 2, "Denver Nuggets": 3, "Los Angeles Lakers": 4,
-    "Houston Rockets": 5, "Minnesota Timberwolves": 6, "Phoenix Suns": 7, "Portland Trail Blazers": 7,
-};
-
 function getRound(headline) {
     if (headline && headline.includes("Finals") && !headline.includes("West") && !headline.includes("East")) return 4;
     if (headline && (headline.includes("West Finals") || headline.includes("East Finals"))) return 3;
@@ -31,51 +24,43 @@ function getConference(headline) {
     return "";
 }
 
-// 🧠 STABLE ID GENERATOR: Prevents duplicates when Home/Away swaps venue
-function makeSeriesId(roundNum, conf, homeName, awayName) {
-    const teams = [homeName, awayName].sort();
-    const teamString = teams.join("-vs-").replace(/\s+/g, '');
-    return `R${roundNum}-${conf}-${teamString}`;
-}
-
 function extractSeries(data) {
     if (!data?.events) return [];
     const seriesMap = new Map();
 
     data.events.forEach(event => {
         const comp = event.competitions?.[0];
-        if (!comp) return;
+        if (!comp || !comp.series) return;
 
-        const homeComp = comp.competitors.find(c => c.homeAway === "home");
-        const awayComp = comp.competitors.find(c => c.homeAway === "away");
-
-        if (!homeComp || !awayComp) return;
+        // 🧠 NORMALIZE TEAMS: Sort alphabetically so "Home" vs "Away" never flips ID
+        const teams = comp.competitors.map(c => ({
+            id: c.id,
+            name: c.team.displayName,
+            logo: c.team.logo,
+            seed: c.seed,
+            wins: comp.series.competitors.find(s => String(s.id) === String(c.id))?.wins || 0
+        })).sort((a, b) => a.name.localeCompare(b.name));
 
         const headline = comp.notes?.[0]?.headline || "";
         const roundNum = getRound(headline);
         const conf = getConference(headline);
 
-        const seriesId = makeSeriesId(roundNum, conf, homeComp.team.displayName, awayComp.team.displayName);
-        const espnSeries = comp.series;
+        // Use normalized team names for a stable ID
+        const seriesId = `R${roundNum}-${conf}-${teams[0].name.replace(/\s+/g, '')}-vs-${teams[1].name.replace(/\s+/g, '')}`;
 
-        // Track wins
-        const hWins = espnSeries?.competitors?.find(c => String(c.id) === String(homeComp.team.id))?.wins || 0;
-        const aWins = espnSeries?.competitors?.find(c => String(c.id) === String(awayComp.team.id))?.wins || 0;
+        const existing = seriesMap.get(seriesId) || {
+            id: seriesId,
+            roundNum, conf,
+            t1: teams[0], t2: teams[1],
+            t1Wins: 0, t2Wins: 0,
+            startDate: event.date
+        };
 
-        if (!seriesMap.has(seriesId)) {
-            seriesMap.set(seriesId, {
-                id: seriesId,
-                roundNum, conf,
-                home: homeComp, away: awayComp,
-                startDate: event.date,
-                homeWins: hWins, awayWins: aWins,
-                roundLabel: headline || roundNum
-            });
-        } else {
-            const existing = seriesMap.get(seriesId);
-            existing.homeWins = hWins;
-            existing.awayWins = aWins;
-        }
+        // Always take the latest win data
+        existing.t1Wins = Math.max(existing.t1Wins, teams[0].wins);
+        existing.t2Wins = Math.max(existing.t2Wins, teams[1].wins);
+
+        seriesMap.set(seriesId, existing);
     });
     return Array.from(seriesMap.values());
 }
@@ -84,30 +69,28 @@ async function processSeries(s) {
     const { NbaSeries } = db;
     try {
         const roundCfg = ROUND_CONFIG[s.roundNum];
-        const hasWinner = s.homeWins === 4 || s.awayWins === 4;
-        const totalWins = s.homeWins + s.awayWins;
-        const homeSeed = s.home.seed || TEAM_TO_SEED[s.home.team.displayName] || null;
-        const awaySeed = s.away.seed || TEAM_TO_SEED[s.away.team.displayName] || null;
-        
-        const isLocked = new Date() >= new Date(s.startDate) || totalWins > 0;
+        const hasWinner = s.t1Wins === 4 || s.t2Wins === 4;
+
+        const winner = hasWinner ? (s.t1Wins === 4 ? s.t1.name : s.t2.name) : null;
+        const isLocked = new Date() >= new Date(s.startDate) || (s.t1Wins + s.t2Wins) > 0;
 
         await NbaSeries.upsert({
             id: s.id,
             round: s.roundNum,
             round_label: roundCfg.label,
             round_points_max: roundCfg.maxPoints,
-            home_team: s.home.team.displayName,
-            away_team: s.away.team.displayName,
-            home_logo: s.home.team.logo,
-            away_logo: s.away.team.logo,
-            home_seed: homeSeed,
-            away_seed: awaySeed,
-            status: hasWinner ? "STATUS_FINAL" : (totalWins > 0 ? "STATUS_IN_PROGRESS" : "STATUS_SCHEDULED"),
+            home_team: s.t1.name, // Logic: Store as t1/t2 to avoid confusion
+            away_team: s.t2.name,
+            home_logo: s.t1.logo,
+            away_logo: s.t2.logo,
+            home_seed: s.t1.seed || null,
+            away_seed: s.t2.seed || null,
+            status: hasWinner ? "STATUS_FINAL" : "STATUS_IN_PROGRESS",
             game_date: s.startDate,
-            home_wins: s.homeWins,
-            away_wins: s.awayWins,
+            home_wins: s.t1Wins,
+            away_wins: s.t2Wins,
             locked: isLocked,
-            winner: hasWinner ? (s.homeWins === 4 ? s.home.team.displayName : s.away.team.displayName) : null
+            winner: winner
         });
     } catch (err) {
         console.error(`[NBA sync] Error on ${s.id}:`, err.message);
@@ -125,40 +108,3 @@ async function syncNba() {
 }
 
 module.exports = syncNba;
-
-
-
-
-
-
-
-
-
-
-
-
-
-// function makeSeriesId(roundNum, conf, s) {
-//     // let hSeed = TEAM_TO_SEED[s.home.team.displayName] || s.home.seed;
-//     // let aSeed = TEAM_TO_SEED[s.away.team.displayName] || s.away.seed;
-//     const teams = [s.home.team.displayName, s.away.team.displayName].sort();
-//     const teamString = teams.join("-vs-").replace(/\s+/g, '');
-    
-//     // if (roundNum === 2) {
-//     //     if ([1, 8, 4, 5].includes(Number(hSeed))) hSeed = [1, 8].includes(Number(hSeed)) ? 1 : 4;
-//     //     if ([1, 8, 4, 5].includes(Number(aSeed))) aSeed = [1, 8].includes(Number(aSeed)) ? 1 : 4;
-    
-//     //     if ([2, 7, 3, 6].includes(Number(hSeed))) hSeed = [2, 7].includes(Number(hSeed)) ? 2 : 3;
-//     //     if ([2, 7, 3, 6].includes(Number(aSeed))) aSeed = [2, 7].includes(Number(aSeed)) ? 2 : 3;
-//     // }
-
-//     // hSeed = hSeed || "TBD";
-//     // aSeed = aSeed || "TBD";
-    
-//     // const pair = [hSeed, aSeed].sort((a, b) =>
-//         //     String(a).localeCompare(String(b), undefined, { numeric: true })
-//     // );
-
-//     return `R${roundNum}-${conf}-${teamString}`;
-//     // return `R${roundNum}-${conf}-${pair[0]}-${pair[1]}`;
-// }
