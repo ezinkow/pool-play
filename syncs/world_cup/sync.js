@@ -3,8 +3,8 @@ const db = require("../../models");
 
 // Split-Window URL Configurations
 const URL_WINDOWS = [
-    "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260611-20260710", 
-    "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260711-20260720"  
+    "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260611-20260710",
+    "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260711-20260720"
 ];
 
 const ROUND_POINTS = {
@@ -44,7 +44,7 @@ const GROUP_STAGE_DATA = {
 function isPlaceholder(teamName) {
     if (!teamName) return true;
     const nameLower = teamName.toLowerCase();
-    
+
     return (
         nameLower === "tbd" ||
         nameLower.includes("winner") ||
@@ -73,7 +73,7 @@ async function syncWorldCup() {
     const { WorldCupMatches } = db;
     try {
         const responses = await Promise.all(URL_WINDOWS.map(url => axios.get(url)));
-        
+
         const allEvents = responses.reduce((acc, currentRes) => {
             if (currentRes.data && currentRes.data.events) {
                 return acc.concat(currentRes.data.events);
@@ -131,11 +131,11 @@ async function syncWorldCup() {
                 status: event.status?.type?.name,
                 home_score: isHomePlaceholder ? 0 : parseInt(homeObj.score || 0),
                 away_score: isAwayPlaceholder ? 0 : parseInt(awayObj.score || 0),
-                group: assignedGroup, 
+                group: assignedGroup,
                 result: (() => {
+                    if (homeObj.winner === true) return "Home";
+                    if (awayObj.winner === true) return "Away";
                     if (event.status?.type?.name !== "STATUS_FINAL" || isHomePlaceholder || isAwayPlaceholder) return "Pending";
-                    if (homeObj.winner) return "Home";
-                    if (awayObj.winner) return "Away";
                     return "Draw";
                 })()
             };

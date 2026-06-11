@@ -12,7 +12,7 @@ export default function PlayerPicksMatrix() {
         const filtered = r.data
           .filter(g => {
             const s = g.status || "";
-            return s.includes("FINAL") || s.includes("PROGRESS") || s.includes("HALF");
+            return s.includes("FULL_TIME") || s.includes("PROGRESS") || s.includes("HALF");
           })
           .filter(g => parseInt(g.round) === 0)
           .sort((a, b) => new Date(b.game_date) - new Date(a.game_date));
@@ -78,7 +78,7 @@ export default function PlayerPicksMatrix() {
           <img src={game.home_logo} alt="" height={18} style={{ flexShrink: 0 }} />
         </div>
         <div style={{ fontSize: 10, fontWeight: 700, color: "#ffffff", whiteSpace: "nowrap", marginTop: "2px" }}>
-          {game.status === "STATUS_FINAL" || game.status === "STATUS_IN_PROGRESS"
+          {game.status === "STATUS_FULL_TIME" || game.status === "STATUS_IN_PROGRESS"
             ? `${game.away_score}-${game.home_score}` : "VS"}
         </div>
         <div style={{ fontSize: 8, fontWeight: 600, color: "#93c5fd", marginTop: "1px" }}>

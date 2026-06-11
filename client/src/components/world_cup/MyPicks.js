@@ -63,7 +63,7 @@ export default function MyPicks() {
 
                     if (userSelection) {
                         const s = match.status || "";
-                        if (s.includes("FINAL")) {
+                        if (s.includes("FULL_TIME")) {
                             if (userSelection === match.result) {
                                 pickStatus = "Correct";
                                 calculatedPoints = match.result === "Draw"
