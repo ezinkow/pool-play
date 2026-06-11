@@ -195,7 +195,7 @@ export default function Picks() {
                     </div>
                     {match.group && (
                       <span style={{ fontSize: "10px", backgroundColor: "#e2e8f0", color: "#334155", padding: "2px 6px", borderRadius: "4px", fontWeight: 800, textTransform: "uppercase" }}>
-                        Group {match.group}
+                        {match.group}
                       </span>
                     )}
                   </div>
