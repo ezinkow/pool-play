@@ -80,6 +80,24 @@ export default function AuthModal({ show, onClose }) {
                     >
                         Create one
                     </button>
+                    <br />
+                    <a
+                        href="#/changepassword"
+                        style={{ color: "#13447a", textDecoration: "none", fontWeight: 600 }}
+                        onClick={() => onClose()} // Ensure the modal closes on click
+                    >
+                        Forgot Password?
+                    </a>
+
+                    <span style={{ margin: "0 8px", color: "#d1d5db" }}>|</span>
+
+                    <a
+                        href="#/comments"
+                        style={{ color: "#13447a", textDecoration: "none", fontWeight: 600 }}
+                        onClick={() => onClose()}
+                    >
+                        Forgot Username?
+                    </a>
                 </div>
             </div>
         </div>

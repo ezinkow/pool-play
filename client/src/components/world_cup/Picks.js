@@ -31,9 +31,14 @@ export default function Picks() {
       setLoading(true);
       try {
         const res = await axios.get("/api/worldcup/matches");
-        const groupStageMatches = res.data.filter(
-          m => m.round_label === "Group Stage" || parseInt(m.round) === 0
-        );
+        const groupStageMatches = res.data.filter(m => {
+          const isGroupStage = m.round_label === "Group Stage" || parseInt(m.round) === 0;
+
+          // Explicitly check for true boolean
+          const isLocked = m.locked === true;
+
+          return isGroupStage && !isLocked;
+        });
         setMatches(groupStageMatches);
 
         const picksRes = await axios.get(`/api/worldcup/picks?user_id=${user.id}`);
@@ -132,7 +137,7 @@ export default function Picks() {
   if (!user) return <div style={{ paddingTop: 100, textAlign: "center" }}><h3>Please log in to make picks.</h3></div>;
 
   return (
-    <div  style={{ maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
+    <div style={{ maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
       <Toaster position="top-center" />
 
       {/* Hero Display Panel */}
