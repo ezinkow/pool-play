@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -15,8 +15,9 @@ export default function Standings() {
     const fetchStandings = async () => {
       try {
         const { data } = await axios.get("/api/worldcup/standings");
-        console.log("STANDINGS_DATA_DEBUG:", data);
-        setStandings(data);
+        // Ensure data is sorted by points before processing ranks
+        const sortedData = [...data].sort((a, b) => b.points - a.points);
+        setStandings(sortedData);
       } catch (err) {
         toast.error("Failed to load leaderboard.");
       } finally {
@@ -25,13 +26,20 @@ export default function Standings() {
     };
     fetchStandings();
   }, []);
-  { console.log("STANDINGS_DEBUG:", standings) }
-  {
-    standings.map((u, i) => {
-      if (u.id === 2) console.log("ZINK_DEBUG:", u);
-      return null;
-    })
-  }
+
+  // Handle ranking logic including ties
+  const rankedStandings = useMemo(() => {
+    let currentRank = 1;
+    return standings.map((u, i) => {
+      if (i > 0 && u.points === standings[i - 1].points) {
+        // Tie: keep the previous rank
+      } else {
+        currentRank = i + 1;
+      }
+      return { ...u, rank: currentRank };
+    });
+  }, [standings]);
+
   return (
     <div style={{ maxWidth: "800px", margin: "0 auto", padding: "8px", paddingBottom: '100px' }}>
       <Toaster />
@@ -46,7 +54,7 @@ export default function Standings() {
 
       <h2 style={{ color: NAVY, fontWeight: 900 }}>🏆 World Cup Standings</h2>
 
-      {loading ? <p>Calculating...</p> : (
+      {loading ? <p>Calculating rankings...</p> : (
         <>
           {/* DESKTOP TABLE */}
           <div className="desktop-only" style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.05)", borderRadius: "12px", overflow: "hidden", border: "1px solid #e5e7eb" }}>
@@ -62,9 +70,9 @@ export default function Standings() {
                 </tr>
               </thead>
               <tbody>
-                {standings.map((u, i) => (
-                  <tr key={i} style={{ borderBottom: "1px solid #edf2f7" }}>
-                    <td style={tdStyle}>{i + 1}</td>
+                {rankedStandings.map((u) => (
+                  <tr key={u.id} style={{ borderBottom: "1px solid #edf2f7" }}>
+                    <td style={tdStyle}>{u.rank}</td>
                     <td style={tdStyle}>{u.name}</td>
                     <td style={tdStyle}>{u.group_points || 0}</td>
                     <td style={tdStyle}>{u.bracket_points || 0}</td>
@@ -78,10 +86,10 @@ export default function Standings() {
 
           {/* MOBILE CARDS */}
           <div className="mobile-only">
-            {standings.map((u, i) => (
-              <div key={i} style={{ background: "white", padding: "12px", borderRadius: "10px", border: "1px solid #e5e7eb", marginBottom: "8px" }}>
+            {rankedStandings.map((u) => (
+              <div key={u.id} style={{ background: "white", padding: "12px", borderRadius: "10px", border: "1px solid #e5e7eb", marginBottom: "8px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                  <span style={{ fontWeight: 800 }}>#{i + 1} {u.name}</span>
+                  <span style={{ fontWeight: 800 }}>#{u.rank} {u.name}</span>
                   <span style={{ fontWeight: 900, color: WORLDCUPGREEN, fontSize: "18px" }}>{u.points || 0}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #f1f5f9", paddingTop: "8px" }}>
