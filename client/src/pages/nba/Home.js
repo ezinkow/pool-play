@@ -11,7 +11,6 @@ const RED = "#c8102e";
 
 export default function Home() {
     const { user, loading: authLoading } = useAuth();
-    console.log(user);
 
     if (authLoading) return null;
 

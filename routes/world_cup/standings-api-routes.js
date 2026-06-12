@@ -7,54 +7,45 @@ module.exports = function (app) {
             const PicksModel = db.WorldCupPicks || db.world_cup_picks;
             const MatchesModel = db.WorldCupMatches || db.world_cup_matches;
 
-            // 1. Fetch from Entries instead of base users table
-            const entriesWithPicks = await EntryModel.findAll({
-                attributes: ["user_id", "entry_name"],
-                include: [{
-                    model: PicksModel,
-                    as: "WorldCupPicks",
-                    include: [{
-                        model: MatchesModel,
-                        as: "match"
-                    }]
-                }]
-            });
+            // 1. Fetch Entries and Picks separately
+            const entries = await EntryModel.findAll({ attributes: ["user_id", "entry_name"] });
+            const allPicks = await PicksModel.findAll({ include: [{ model: MatchesModel, as: "match" }] });
 
-            // 2. Score entries
-            const standings = entriesWithPicks.map(entry => {
-                let totalPoints = 0;
+            const standingsMap = new Map();
 
-                if (entry.WorldCupPicks && Array.isArray(entry.WorldCupPicks)) {
-                    entry.WorldCupPicks.forEach(pick => {
-                        const match = pick.match;
+            // 2. Pre-map picks by user_id for instant lookup
+            const picksByUser = allPicks.reduce((acc, pick) => {
+                if (!acc[pick.user_id]) acc[pick.user_id] = [];
+                acc[pick.user_id].push(pick);
+                return acc;
+            }, {});
 
-                        if (match && match.status === "STATUS_FINAL") {
-                            const isCorrect = pick.selection === match.result;
+            // 3. Build standings
+            entries.forEach(entry => {
+                const uid = entry.user_id;
+                standingsMap.set(uid, { id: uid, name: entry.entry_name, group_points: 0, bracket_points: 0, points: 0 });
+                const stats = standingsMap.get(uid);
 
-                            if (isCorrect) {
-                                if (match.result === "Draw" && parseInt(match.round) === 0) {
-                                    totalPoints += match.draw_points_value || 2;
-                                } else {
-                                    totalPoints += match.points_value || 1;
-                                }
-                            }
+                const userPicks = picksByUser[uid] || [];
+                userPicks.forEach(pick => {
+                    const match = pick.match;
+                    if (match && ["STATUS_FULL_TIME", "STATUS_FINAL", "FINAL"].includes(match.status)) {
+                        if (pick.selection?.trim().toLowerCase() === match.result?.trim().toLowerCase()) {
+                            const pts = (match.result?.toLowerCase() === "draw" && parseInt(match.round) === 0)
+                                ? (match.draw_points_value || 2) : (match.points_value || 1);
+
+                            if (parseInt(match.round) === 0) stats.group_points += pts;
+                            else stats.bracket_points += pts;
+                            stats.points += pts;
                         }
-                    });
-                }
-
-                return {
-                    id: entry.user_id,
-                    name: entry.entry_name, // Maps custom display name down safely to the matrix
-                    points: totalPoints
-                };
+                    }
+                });
             });
 
-            standings.sort((a, b) => b.points - a.points);
-            res.json(standings);
-
+            res.json(Array.from(standingsMap.values()).sort((a, b) => b.points - a.points));
         } catch (err) {
-            console.error("❌ Standings Compilation Error:", err);
-            res.status(500).json({ error: "Failed to compile live standings calculations" });
+            console.error(err);
+            res.status(500).json({ error: "Failed" });
         }
     });
 };

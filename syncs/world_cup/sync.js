@@ -135,11 +135,10 @@ async function syncWorldCup() {
                 result: (() => {
                     if (homeObj.winner === true) return "Home";
                     if (awayObj.winner === true) return "Away";
-                    if (event.status?.type?.name !== "STATUS_FINAL" || isHomePlaceholder || isAwayPlaceholder) return "Pending";
+                    if (event.status?.type?.name !== "STATUS_FULL_TIME" || isHomePlaceholder || isAwayPlaceholder) return "Pending";
                     return "Draw";
                 })()
             };
-
             await WorldCupMatches.upsert(payload);
             processedCount++;
         }

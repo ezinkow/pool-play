@@ -9,7 +9,7 @@ export default function BracketStage({
     onPick,         // fn(gameId, teamName) — null if locked/readonly
     readonly,       // bool — tournament has started
 }) {
-    const isFinal = game?.status === "STATUS_FINAL";
+    const isFinal = game?.status === "STATUS_FULL_TIME";
     const isLive = game?.status === "STATUS_IN_PROGRESS" || game?.status === "STATUS_HALFTIME";
     const isTBD = (team) => !team || team === "TBD";
 
@@ -69,8 +69,8 @@ export default function BracketStage({
     const awayIsPick = userPick === game.away_team;
 
     // REFIX: Align target calculations to use your database model's absolute relative ENUM states
-    const homeIsWinner = game.status === "STATUS_FINAL" && game.result === "Home";
-    const awayIsWinner = game.status === "STATUS_FINAL" && game.result === "Away";
+    const homeIsWinner = game.status === "STATUS_FULL_TIME" && game.result === "Home";
+    const awayIsWinner = game.status === "STATUS_FULL_TIME" && game.result === "Away";
 
     return (
         <div style={{

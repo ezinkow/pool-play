@@ -48,7 +48,7 @@ module.exports = function (app) {
         initCountry(m.home_team, m.home_logo);
         initCountry(m.away_team, m.away_logo);
 
-        if (m.status === "STATUS_FINAL") {
+        if (m.status === "STATUS_FULL_TIME") {
           if (m.result === "Home") {
             countryStats[m.home_team].gs_wins += 1;
             countryStats[m.home_team].total_points += 2; // 2pts for a win

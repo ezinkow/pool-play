@@ -15,6 +15,7 @@ export default function Standings() {
     const fetchStandings = async () => {
       try {
         const { data } = await axios.get("/api/worldcup/standings");
+        console.log("STANDINGS_DATA_DEBUG:", data);
         setStandings(data);
       } catch (err) {
         toast.error("Failed to load leaderboard.");
@@ -24,7 +25,13 @@ export default function Standings() {
     };
     fetchStandings();
   }, []);
-
+  { console.log("STANDINGS_DEBUG:", standings) }
+  {
+    standings.map((u, i) => {
+      if (u.id === 2) console.log("ZINK_DEBUG:", u);
+      return null;
+    })
+  }
   return (
     <div style={{ maxWidth: "800px", margin: "0 auto", padding: "8px", paddingBottom: '100px' }}>
       <Toaster />
@@ -61,7 +68,7 @@ export default function Standings() {
                     <td style={tdStyle}>{u.name}</td>
                     <td style={tdStyle}>{u.group_points || 0}</td>
                     <td style={tdStyle}>{u.bracket_points || 0}</td>
-                    <td style={{ ...tdStyle, fontWeight: 900, color: WORLDCUPGREEN }}>{u.total_points || 0}</td>
+                    <td style={{ ...tdStyle, fontWeight: 900, color: WORLDCUPGREEN }}>{u.points || 0}</td>
                     <td style={tdStyle}>{BRACKET_LOCKED ? (u.champion_pick || "TBD") : "🔒"}</td>
                   </tr>
                 ))}
@@ -75,7 +82,7 @@ export default function Standings() {
               <div key={i} style={{ background: "white", padding: "12px", borderRadius: "10px", border: "1px solid #e5e7eb", marginBottom: "8px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                   <span style={{ fontWeight: 800 }}>#{i + 1} {u.name}</span>
-                  <span style={{ fontWeight: 900, color: WORLDCUPGREEN, fontSize: "18px" }}>{u.total_points || 0}</span>
+                  <span style={{ fontWeight: 900, color: WORLDCUPGREEN, fontSize: "18px" }}>{u.points || 0}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #f1f5f9", paddingTop: "8px" }}>
                   <div style={{ fontSize: "11px", color: "#6b7280" }}>
