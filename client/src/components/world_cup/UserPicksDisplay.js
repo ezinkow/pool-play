@@ -117,8 +117,16 @@ export default function PlayerPicksMatrix() {
       </div>
 
       {/* The Wrapper Box that handles scrolling bounds safely */}
-      <div style={{ overflow: "auto", maxHeight: "calc(100vh - 210px)", border: "1px solid #e5e7eb", borderRadius: "8px" }}>
-        <table style={{ borderCollapse: "separate", borderSpacing: 0, background: "white", width: "100%", fontSize: 14 }}>
+      <div style={{
+        overflowX: "auto",
+        overflowY: "auto",
+        maxHeight: "calc(100vh - 210px)",
+        border: "1px solid #e5e7eb",
+        borderRadius: "8px",
+        // This allows the table to take full width and scroll horizontally
+        WebkitOverflowScrolling: "touch",
+      }}>
+        <table style={{ borderCollapse: "separate", borderSpacing: 0, background: "white", width: "max-content", fontSize: 14, minWidth: "100%" }}>
           <thead>
             <tr>
               <th style={{ position: "sticky", top: 0, left: 0, zIndex: 6, backgroundColor: "#13447a", color: "white", borderBottom: "2px solid #c89d3c", borderRight: "2px solid #c89d3c", whiteSpace: "nowrap", textTransform: "uppercase", fontSize: 12, letterSpacing: "0.5px", padding: "12px 16px", minWidth: 120, textAlign: "center" }}>Player</th>
