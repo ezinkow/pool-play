@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
+// ✨ Slow flashing green dot for live matches
+const PULSE_STYLE = {
+  width: "8px", height: "8px", backgroundColor: "#22c55e", borderRadius: "50%",
+  display: "inline-block", boxShadow: "0 0 0 rgba(34, 197, 94, 0.4)",
+  animation: "pulse 2s infinite"
+};
+
 export default function PlayerPicksMatrix() {
   const [games, setGames] = useState([]);
   const [picks, setPicks] = useState([]);
@@ -12,126 +19,108 @@ export default function PlayerPicksMatrix() {
         const filtered = r.data
           .filter(g => {
             const s = g.status || "";
-            return s.includes("FULL_TIME") || s.includes("PROGRESS") || s.includes("HALF");
+            // Updated to include your new half-time/in-game statuses
+            return s.includes("FULL_TIME") || s.includes("HALF") || s.includes("PROGRESS");
           })
           .filter(g => parseInt(g.round) === 0)
           .sort((a, b) => new Date(b.game_date) - new Date(a.game_date));
         setGames(filtered);
       });
-
       axios.get("/api/worldcup/picks/all").then(r => setPicks(r.data));
       axios.get("/api/worldcup/standings").then(r => setStandings(r.data));
     };
-
     fetchAll();
     const interval = setInterval(fetchAll, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const users = useMemo(() =>
-    [...standings].sort((a, b) => b.points - a.points),
-    [standings]);
+  const users = useMemo(() => [...standings].sort((a, b) => b.points - a.points), [standings]);
 
   const pickMap = useMemo(() => {
     const map = {};
     for (const p of picks) {
-      const mId = String(p.match_id);
-      const uId = String(p.user_id);
-      if (!map[mId]) map[mId] = {};
-      map[mId][uId] = p;
+      if (!map[p.match_id]) map[p.match_id] = {};
+      map[p.match_id][p.user_id] = p;
     }
     return map;
   }, [picks]);
 
   const getCellStyle = (game, pickObj) => {
     if (!pickObj || game.result === "Pending") return {};
-    const correct = pickObj.selection === game.result;
-    if (correct) return { backgroundColor: "#41ac618e" };
+
+    const isCorrect = pickObj.selection === game.result;
+
+    if (isCorrect) {
+      // If it's a correct Draw, use a slightly darker green; otherwise use standard correct green
+      const isDraw = pickObj.selection === "Draw";
+      return {
+        backgroundColor: isDraw ? "#23a3498e" : "#28bd558e",
+        transition: "background-color 0.3s ease"
+      };
+    }
+
     return { backgroundColor: "#d646464b" };
   };
-
   const PickLogo = ({ game, pickObj }) => {
     if (!pickObj) return <span style={{ color: "#9ca3af" }}>–</span>;
-    if (pickObj.selection === "Draw") {
-      return <span style={{ fontSize: 10, fontWeight: 800, color: "#b45309" }}>DRAW</span>;
-    }
+    if (pickObj.selection === "Draw") return <span style={{ fontSize: 9, fontWeight: 800, color: "#f50b0b" }}>Draw</span>;
     const logo = pickObj.selection === "Home" ? game.home_logo : game.away_logo;
-    const displayName = pickObj.selection === "Home" ? game.home_team : game.away_team;
-
-    if (!logo) return <span style={{ fontSize: 11 }}>{displayName}</span>;
-    return (
-      <img
-        src={logo}
-        alt={displayName}
-        title={displayName}
-        style={{ height: 22, width: 22, objectFit: "contain", display: "block", margin: "auto" }}
-      />
-    );
+    return <img src={logo} alt="" style={{ height: 20, width: 20, objectFit: "contain" }} />;
   };
 
   const GameHeader = ({ game }) => {
+    const isLive = game.status.includes("HALF") || game.status.includes("PROGRESS");
+
     return (
-      <div style={{ textAlign: "center", width: "100%", overflow: "hidden", backgroundColor: "rgba(255,255,255,0.15)", borderRadius: "4px", padding: "4px 0" }}>
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 3, padding: "1px 2px" }}>
-          <img src={game.away_logo} alt="" height={18} style={{ flexShrink: 0 }} />
-          <span style={{ fontSize: 9, color: "#cbd5e1" }}>@</span>
-          <img src={game.home_logo} alt="" height={18} style={{ flexShrink: 0 }} />
+      <div style={{ textAlign: "center", width: "100%", padding: "4px 0" }}>
+        {/* Restored the flag-based VS view */}
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6 }}>
+          <img src={game.away_logo} alt="" height={20} />
+          <span style={{ fontSize: 10, color: "#cbd5e1" }}>VS</span>
+          <img src={game.home_logo} alt="" height={20} />
         </div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: "#ffffff", whiteSpace: "nowrap", marginTop: "2px" }}>
-          {game.status === "STATUS_FULL_TIME" || game.status === "STATUS_IN_PROGRESS"
-            ? `${game.away_score}-${game.home_score}` : "VS"}
+
+        {/* Status and Score */}
+        <div style={{ fontSize: 10, fontWeight: 700, marginTop: "4px" }}>
+          {isLive && <span style={PULSE_STYLE} />}
+          <span style={{ color: "white", marginLeft: isLive ? 4 : 0 }}>
+            {game.away_score}-{game.home_score}
+          </span>
         </div>
-        <div style={{ fontSize: 8, fontWeight: 600, color: "#93c5fd", marginTop: "1px" }}>
-          {game.status === "STATUS_IN_PROGRESS" ? "LIVE" : game.result === "Draw" ? "DRAW" : game.result !== "Pending" ? `${game.result} Win` : "PRE"}
-        </div>
+
+        {/* Winner Flag / Draw Indicator */}
+        {game.result !== "Pending" && (
+          <div style={{ marginTop: 2, height: 20 }}>
+            {game.result === "Draw" ? (
+              <span style={{ fontSize: 10, fontWeight: 800, color: "#f50b0b", lineHeight: "20px" }}>
+                DRAW
+              </span>
+            ) : (
+              <img
+                src={game.result === "Home" ? game.home_logo : game.away_logo}
+                alt="Winner"
+                style={{ height: 20, width: 20, objectFit: "contain" }}
+              />
+            )}
+          </div>
+        )}
       </div>
     );
   };
 
   return (
-    <div style={{ maxWidth: "800px", margin: "0 auto", padding: '0px 8px 100px 8px' }}>
+    <div style={{ maxWidth: "800px", margin: "0 auto", padding: "0 8px 100px 8px" }}>
+      <style>{`@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }`}</style>
 
-      {/* 🧠 THE ALIGNMENT SHIELD: Added the matching title wrapper block.
-          This gives the browser a text baseline to look at, forcing the page 
-          to match 'Make Picks' and 'Standings' down to the exact pixel! */}
-      <div style={{ marginBottom: "20px", textAlign: "center" }}>
-        <h2 style={{ color: "#13447a", margin: 0, fontWeight: 800 }}>⚽ Group Stage Matrix</h2>
-        <p style={{ color: "#6b7280", fontSize: 14, marginTop: 4 }}>
-          Cross-reference pool predictions across all participant managers.
-        </p>
-      </div>
+      <h2 style={{ color: "#13447a", textAlign: "center", fontWeight: 800 }}>⚽ Group Stage Matrix</h2>
 
-      {/* Legend Block */}
-      <div style={{
-        backgroundColor: "#f8f7f4", padding: "12px",
-        border: "1px solid #e5e7eb", borderRadius: "8px", marginBottom: "16px"
-      }}>
-        <div style={{ display: "flex", gap: 16, alignMimeTypes: "center", justifyContent: "center" }}>
-          <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b7280" }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#41ac618e", display: "inline-block" }} />Correct
-          </span>
-          <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b7280" }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#d646464b", display: "inline-block" }} />Incorrect
-          </span>
-        </div>
-      </div>
-
-      {/* The Wrapper Box that handles scrolling bounds safely */}
-      <div style={{
-        overflowX: "auto",
-        overflowY: "auto",
-        maxHeight: "calc(100vh - 210px)",
-        border: "1px solid #e5e7eb",
-        borderRadius: "8px",
-        // This allows the table to take full width and scroll horizontally
-        WebkitOverflowScrolling: "touch",
-      }}>
-        <table style={{ borderCollapse: "separate", borderSpacing: 0, background: "white", width: "max-content", fontSize: 14, minWidth: "100%" }}>
+      <div style={{ overflowX: "auto", border: "1px solid #e5e7eb", borderRadius: "8px", WebkitOverflowScrolling: "touch" }}>
+        <table style={{ borderCollapse: "separate", borderSpacing: 0, background: "white", width: "max-content", minWidth: "100%", fontSize: 13 }}>
           <thead>
             <tr>
-              <th style={{ position: "sticky", top: 0, left: 0, zIndex: 6, backgroundColor: "#13447a", color: "white", borderBottom: "2px solid #c89d3c", borderRight: "2px solid #c89d3c", whiteSpace: "nowrap", textTransform: "uppercase", fontSize: 12, letterSpacing: "0.5px", padding: "12px 16px", minWidth: 120, textAlign: "center" }}>Player</th>
+              <th style={{ position: "sticky", left: 0, zIndex: 6, backgroundColor: "#13447a", color: "white", padding: "12px", minWidth: 120 }}>PLAYER</th>
               {games.map(g => (
-                <th key={g.match_id} style={{ position: "sticky", top: 0, zIndex: 4, backgroundColor: "#13447a", color: "white", borderBottom: "2px solid #c89d3c", padding: "6px 8px", minWidth: "85px", whiteSpace: "nowrap" }}>
+                <th key={g.match_id} style={{ backgroundColor: "#13447a", color: "white", padding: "6px", minWidth: 90 }}>
                   <GameHeader game={g} />
                 </th>
               ))}
@@ -140,19 +129,14 @@ export default function PlayerPicksMatrix() {
           <tbody>
             {users.map((user, idx) => (
               <tr key={user.id}>
-                <td style={{ position: "sticky", left: 0, zIndex: 2, backgroundColor: "#f8fafc", borderRight: "2px solid #c89d3c", borderBottom: "1px solid #e5e7eb", padding: "10px 12px", whiteSpace: "nowrap" }}>
-                  <span style={{ fontSize: 13 }}>{idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`}</span>{" "}
-                  <span style={{ fontWeight: 700, fontSize: 12, color: "#13447a" }}>{user.name}</span>{" "}
-                  <span style={{ fontSize: 11, color: "#6b7280", fontWeight: "600" }}>({user.points}pts)</span>
+                <td style={{ position: "sticky", left: 0, zIndex: 2, backgroundColor: "#f8fafc", padding: "10px", borderBottom: "1px solid #eee", borderRight: "2px solid #c89d3c" }}>
+                  <strong style={{ color: "#13447a" }}>{idx + 1}. {user.name}</strong> <span style={{ fontSize: 11, color: "#666" }}>({user.points}pts)</span>
                 </td>
-                {games.map(game => {
-                  const pickObj = pickMap?.[String(game.match_id)]?.[String(user.id)];
-                  return (
-                    <td key={user.id + game.match_id} style={{ padding: "6px 4px", textAlign: "center", verticalAlign: "middle", borderBottom: "1px solid #f3f4f6", borderRight: "1px solid #f3f4f6", ...getCellStyle(game, pickObj) }}>
-                      <PickLogo game={game} pickObj={pickObj} />
-                    </td>
-                  );
-                })}
+                {games.map(game => (
+                  <td key={game.match_id} style={{ textAlign: "center", borderBottom: "1px solid #eee", borderRight: "1px solid #f3f4f6", ...getCellStyle(game, pickMap[game.match_id]?.[user.id]) }}>
+                    <PickLogo game={game} pickObj={pickMap[game.match_id]?.[user.id]} />
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>
