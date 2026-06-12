@@ -11,13 +11,20 @@ export default function Standings() {
   const [standings, setStandings] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Helper returns only medal if rank 1-3, else returns the rank number
+  const renderRank = (rank) => {
+    if (rank === 1) return "🥇";
+    if (rank === 2) return "🥈";
+    if (rank === 3) return "🥉";
+    return rank;
+  };
+
   useEffect(() => {
     const fetchStandings = async () => {
       try {
         const { data } = await axios.get("/api/worldcup/standings");
-        // Ensure data is sorted by points before processing ranks
-        const sortedData = [...data].sort((a, b) => b.points - a.points);
-        setStandings(sortedData);
+        // Sort by points DESC, then by name ASC as a secondary tie-break
+        setStandings([...data].sort((a, b) => b.points - a.points || a.name.localeCompare(b.name)));
       } catch (err) {
         toast.error("Failed to load leaderboard.");
       } finally {
@@ -27,12 +34,11 @@ export default function Standings() {
     fetchStandings();
   }, []);
 
-  // Handle ranking logic including ties
   const rankedStandings = useMemo(() => {
     let currentRank = 1;
     return standings.map((u, i) => {
       if (i > 0 && u.points === standings[i - 1].points) {
-        // Tie: keep the previous rank
+        // Keep same rank for tied scores
       } else {
         currentRank = i + 1;
       }
@@ -72,7 +78,7 @@ export default function Standings() {
               <tbody>
                 {rankedStandings.map((u) => (
                   <tr key={u.id} style={{ borderBottom: "1px solid #edf2f7" }}>
-                    <td style={tdStyle}>{u.rank}</td>
+                    <td style={{ ...tdStyle, fontWeight: 800, fontSize: u.rank <= 3 ? "16px" : "14px" }}>{renderRank(u.rank)}</td>
                     <td style={tdStyle}>{u.name}</td>
                     <td style={tdStyle}>{u.group_points || 0}</td>
                     <td style={tdStyle}>{u.bracket_points || 0}</td>
@@ -89,7 +95,7 @@ export default function Standings() {
             {rankedStandings.map((u) => (
               <div key={u.id} style={{ background: "white", padding: "12px", borderRadius: "10px", border: "1px solid #e5e7eb", marginBottom: "8px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                  <span style={{ fontWeight: 800 }}>#{u.rank} {u.name}</span>
+                  <span style={{ fontWeight: 800 }}>{renderRank(u.rank)} {u.name}</span>
                   <span style={{ fontWeight: 900, color: WORLDCUPGREEN, fontSize: "18px" }}>{u.points || 0}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #f1f5f9", paddingTop: "8px" }}>
