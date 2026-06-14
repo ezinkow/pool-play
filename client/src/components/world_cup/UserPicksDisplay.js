@@ -101,10 +101,25 @@ export default function PlayerPicksMatrix() {
           </span>
         </div>
 
-        {/* Dynamic Result Flag */}
+        {/* Winner Flag / Draw Indicator */}
         {game.result !== "Pending" && (
-          <div style={{ marginTop: 2 }}>
-            <img src={game.result === "Home" ? game.home_logo : game.away_logo} style={{ height: 20, width: 20 }} />
+          <div style={{ marginTop: 2, height: 20 }}>
+            {game.result === "Draw" ? (
+              <span style={{
+                fontSize: 9,
+                fontWeight: 800,
+                color: "#f50b0b",
+                lineHeight: "20px"
+              }}>
+                DRAW
+              </span>
+            ) : (
+              <img
+                src={game.result === "Home" ? game.home_logo : game.away_logo}
+                alt="Winner"
+                style={{ height: 20, width: 20, objectFit: "contain" }}
+              />
+            )}
           </div>
         )}
       </div>
