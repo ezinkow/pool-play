@@ -4,6 +4,7 @@ import useAuth from "../hooks/useAuth";
 import axios from "axios";
 import BanterDrawer from './BanterDrawer';
 import AuthModal from "./AuthModal";
+import logo from '../../src/images/logo.jpg'
 
 const GOLD = "#c89d3c";
 
@@ -196,6 +197,19 @@ export default function Navbar() {
                 <div className="navbar-inner" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: "50px", padding: "0 16px", width: "100%" }}>
 
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0, flex: "0 1 auto" }}>
+                        <Link to="/" style={{ display: "flex", alignItems: "center" }}>
+                            <img
+                                src={logo} // Replace with your actual file path
+                                alt="POOL PLAY"
+                                style={{
+                                    width: "32px",
+                                    height: "32px",
+                                    borderRadius: "50%",
+                                    border: `1px solid ${GOLD}`,
+                                    objectFit: "cover"
+                                }}
+                            />
+                        </Link>
                         {!isHome && (
                             <Link to="/" style={{ color: "white", fontSize: 12, textDecoration: "none", fontWeight: 700, whiteSpace: "nowrap", flexShrink: 0 }}>
                                 ← Home

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import logo from '../../src/images/logo.jpg'
 
 const BLUE = "#13447a";
 const DARK_BLUE = "#030831";
@@ -146,8 +147,29 @@ export default function Home() {
     };
 
     return (
-        <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, ${DARK_BLUE} 25%, ${GOLD} 50%, ${BLUE} 75%)`, padding: "80px 16px" }}>
-            <div style={{ textAlign: "center", color: "white", marginBottom: 40 }}><h1>🏆 POOL PLAY 🏊</h1></div>
+        <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, ${DARK_BLUE} 25%, ${GOLD} 50%, ${BLUE} 75%)`, padding: "20px 16px" }}>
+            <div style={{
+                textAlign: "center",
+                color: "white",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "10px"
+            }}>
+                <img
+                    src={logo}
+                    alt="POOL PLAY"
+                    style={{
+                        width: "220px",
+                        height: "220px",
+                        borderRadius: "50%",
+                        border: `4px solid ${GOLD}`,
+                        boxShadow: "0 4px 15px rgba(0,0,0,0.3)"
+                    }}
+                />
+                <div style={{ textAlign: "center", color: "white", marginBottom: 10 }}><h1>🏆 POOL PLAY 🏊</h1></div>
+            </div>
+            <div style={{ textAlign: "center", color: GOLD, marginBottom: 10, textShadow: '2px 2px BLUE' }}><h2>Come on in, the water's fine!</h2></div>
             <div style={{ maxWidth: 850, margin: "0 auto" }}>
                 {live.length > 0 && <><h3 style={{ color: GOLD, marginBottom: 10 }}>Live</h3>{live.map(c => renderCard(c, 'live'))}</>}
                 {upcoming.length > 0 && <><h3 style={{ color: GOLD, marginBottom: 10 }}>Open / Accepting Entries</h3>{upcoming.map(c => renderCard(c, 'upcoming'))}</>}
