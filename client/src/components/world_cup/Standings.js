@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
+import useAuth from "../../hooks/useAuth";
 
 const NAVY = "#13447a";
 const GOLD = "#c89d3c";
@@ -8,6 +9,7 @@ const WORLDCUPGREEN = "#226750";
 const BRACKET_LOCKED = Date.now() >= new Date("2026-06-28T15:00:00Z").getTime();
 
 export default function Standings() {
+  const { user: currentUser } = useAuth();
   const [standings, setStandings] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -76,16 +78,26 @@ export default function Standings() {
                 </tr>
               </thead>
               <tbody>
-                {rankedStandings.map((u) => (
-                  <tr key={u.id} style={{ borderBottom: "1px solid #edf2f7" }}>
-                    <td style={{ ...tdStyle, fontWeight: 800, fontSize: u.rank <= 3 ? "16px" : "14px" }}>{renderRank(u.rank)}</td>
-                    <td style={tdStyle}>{u.name}</td>
-                    <td style={tdStyle}>{u.group_points || 0}</td>
-                    <td style={tdStyle}>{u.bracket_points || 0}</td>
-                    <td style={{ ...tdStyle, fontWeight: 900, color: WORLDCUPGREEN }}>{u.points || 0}</td>
-                    <td style={tdStyle}>{BRACKET_LOCKED ? (u.champion_pick || "TBD") : "🔒"}</td>
-                  </tr>
-                ))}
+                {rankedStandings.map((u) => {
+                  const isMe = currentUser?.id === u.id;
+                  return (
+                    <tr key={u.id} style={{
+                      borderBottom: "1px solid #edf2f7",
+                      backgroundColor: isMe ? "#fffbeb" : "transparent"
+                    }}>
+                      <td style={{ ...tdStyle, fontWeight: 800, fontSize: u.rank <= 3 ? "16px" : "14px" }}>
+                        {renderRank(u.rank)}
+                      </td>
+                      <td style={{ ...tdStyle, fontWeight: isMe ? "bold" : "normal" }}>
+                        {u.name}
+                      </td>
+                      <td style={tdStyle}>{u.group_points || 0}</td>
+                      <td style={tdStyle}>{u.bracket_points || 0}</td>
+                      <td style={{ ...tdStyle, fontWeight: 900, color: WORLDCUPGREEN }}>{u.points || 0}</td>
+                      <td style={tdStyle}>{BRACKET_LOCKED ? (u.champion_pick || "TBD") : "🔒"}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

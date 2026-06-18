@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import useAuth from "../../hooks/useAuth";
 
 // ✨ Condensation-optimized pulsing live indicator
 const PULSE_STYLE = {
@@ -13,6 +14,7 @@ const PULSE_STYLE = {
 };
 
 export default function PlayerPicksMatrix() {
+  const { user: currentUser } = useAuth();
   const [games, setGames] = useState([]);
   const [picks, setPicks] = useState([]);
   const [standings, setStandings] = useState([]);
@@ -159,31 +161,33 @@ export default function PlayerPicksMatrix() {
               </tr>
             </thead>
             <tbody>
-              {rankedUsers.map((user) => (
-                <tr key={user.id}>
-                  {/* Fixed Sticky Player Column with Clamped Width */}
-                  <td style={{
-                    position: "sticky", left: 0, zIndex: 2, backgroundColor: "#f8fafc",
-                    padding: "6px 8px", borderBottom: "1px solid #edf2f7", borderRight: "2px solid #c89d3c",
-                    width: "100px", minWidth: "100px", maxWidth: "100px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
-                  }}>
-                    <span style={{ fontWeight: 700, color: "#13447a", fontSize: user.rank <= 3 ? 12 : 11 }}>
-                      {renderRank(user.rank)}{user.rank > 3 ? '.' : ''} {user.name}
-                    </span>
-                    <span style={{ fontSize: 9, color: "#64748b", display: "block" }}>{user.points} pts</span>
-                  </td>
-
-                  {/* Condensed Picks Columns */}
-                  {games.map(game => (
-                    <td key={game.match_id} style={{
-                      textAlign: "center", padding: "4px 0", borderBottom: "1px solid #edf2f7", borderRight: "1px solid #f1f5f9",
-                      ...getCellStyle(game, pickMap[game.match_id]?.[user.id])
+              {rankedUsers.map((user) => {
+                const isMe = currentUser?.id === user.id; // Identification logic
+                return (
+                  <tr key={user.id} style={{ backgroundColor: isMe ? "#fffbeb" : "transparent" }}>
+                    <td style={{
+                      position: "sticky", left: 0, zIndex: 2,
+                      backgroundColor: isMe ? "#fef3c7" : "#f8fafc",
+                      padding: "6px 8px", borderBottom: "1px solid #edf2f7", borderRight: "2px solid #c89d3c",
+                      borderLeft: isMe ? "4px solid #c89d3c" : "none",
+                      width: "100px", minWidth: "100px", maxWidth: "100px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
                     }}>
-                      <PickLogo game={game} pickObj={pickMap[game.match_id]?.[user.id]} />
+                      <span style={{ fontWeight: 800, color: "#13447a", fontSize: user.rank <= 3 ? 12 : 11 }}>
+                        {renderRank(user.rank)}{user.rank > 3 ? '.' : ''} {user.name}
+                      </span>
+                      <span style={{ fontSize: 9, color: "#64748b", display: "block" }}>{user.points} pts</span>
                     </td>
-                  ))}
-                </tr>
-              ))}
+                    {games.map(game => (
+                      <td key={game.match_id} style={{
+                        textAlign: "center", padding: "4px 0", borderBottom: "1px solid #edf2f7", borderRight: "1px solid #f1f5f9",
+                        ...getCellStyle(game, pickMap[game.match_id]?.[user.id])
+                      }}>
+                        <PickLogo game={game} pickObj={pickMap[game.match_id]?.[user.id]} />
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
