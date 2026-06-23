@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const bodyParser = require("body-parser");
+const cron = require('node-cron');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -114,6 +115,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   const tourneyPickemLockLines = require("./jobs/tourney_pickem/lockLines.js");
 
   async function runSync() {
+    // console.log(`[${new Date().toLocaleTimeString()}] 🔄 Triggering Sync...`);
     try {
       // await syncTourneyPickem();
       // await syncBracket();
@@ -126,8 +128,9 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
     }
   }
 
-  runSync();
-  setInterval(runSync, 10 * 60 * 1000);
+  cron.schedule('0,10,20,30,40,50 * * * *', () => {
+    runSync();
+  });
 
   if (process.env.NODE_ENV === "production") {
     app.get("*", (req, res) => {
