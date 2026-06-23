@@ -59,7 +59,8 @@ module.exports = function (app) {
                             emoji: game.emoji || "🏆",
                             route: game.route || game.prefix || `/${gameKey}`,
                             accent: game.accent || "#13447a",
-                            title: game.title || ""
+                            title: game.title || "",
+                            is_active: game.is_active
                         });
                     }
                 } catch (scanErr) {
