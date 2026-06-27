@@ -2,26 +2,26 @@ import React from 'react';
 import Picks from '../../components/world_cup/Picks';
 import BracketStageBracket from '../../components/world_cup/BracketStageBracket';
 
-// 🧠 EXPECTS: `currentGame` object passed down from your master pool/route container
 export default function BracketStagePicksDisplay({ currentGame }) {
 
-    // 🧠 DYNAMIC SWITCH ENGINE: 
-    // If your database profile has a specific lock date assigned, evaluate against that timestamp.
-    // If no lock date exists yet (or it hasn't loaded), safely fall back to group stage pick sheets.
-    const isKnockoutPhaseActive = currentGame?.lock_date
-        ? new Date() >= new Date(currentGame.lock_date)
-        : false;
+    // Logic updated: We are forcing this to true to make everything available.
+    // If you want to revert later, just change this back to the Date() check.
+    const forceShowAll = true; 
 
-    // Show personal group play picker match cards BEFORE the switchover date
-    if (!isKnockoutPhaseActive) {
-        return <div className='page-content'>
-            <Picks />
-        </div>;
-    }
-
-    // Show the personal bracket builder AFTER the switchover date
-    return
-    <div className='page-content'>
-        <BracketStageBracket />
-    </div>
+    return (
+        <div className='page-content'>
+            {/* Displaying both components to ensure maximum availability */}
+            <div style={{ marginBottom: "40px" }}>
+                <h3 style={{ color: "#13447a" }}>Group Stage Picks</h3>
+                <Picks />
+            </div>
+            
+            <hr style={{ margin: "40px 0", border: "0", borderTop: "2px solid #e2e8f0" }} />
+            
+            <div>
+                <h3 style={{ color: "#13447a" }}>Knockout Bracket</h3>
+                <BracketStageBracket />
+            </div>
+        </div>
+    );
 }
