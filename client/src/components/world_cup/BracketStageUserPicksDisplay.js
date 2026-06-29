@@ -136,14 +136,14 @@ function WorldCupGroupBrackets() {
             {/* THE HORIZONTAL SCROLL CANVAS - ORIGINAL CSS */}
             <div style={{ width: "100%", overflowX: "auto", paddingBottom: "20px", WebkitOverflowScrolling: "touch" }}>
                 <div style={{ display: "flex", gap: 16, alignItems: "center", width: "max-content", margin: "0 auto", padding: "10px" }}>
-                    <BracketStageRegion sideLabel="Left Side Path" games={getSideGames("left")} userPicks={showPicks ? userPicks : {}} readonly={true} flipped={false} getDisplayGame={getDisplayGame} onPick={null} />
+                    <BracketStageRegion sideLabel="Left Side Path" games={getSideGames("left")} userPicks={showPicks ? userPicks : {}} readonly={false} flipped={false} getDisplayGame={getDisplayGame} onPick={null} />
 
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 24, width: 220, flexShrink: 0 }}>
                         <div style={{ fontSize: 12, fontWeight: 800, color: WORLDCUPGREEN, borderBottom: `2px solid ${GOLD}`, paddingBottom: 4, width: "100%", textAlign: "center" }}>🏆 CHAMPIONSHIP</div>
-                        {champGame && <BracketStage game={getDisplayGame(champGame)} userPick={showPicks ? userPicks[champGame.match_id] : null} readonly={true} />}
+                        {champGame && <BracketStage game={getDisplayGame(champGame)} userPick={showPicks ? userPicks[champGame.match_id] : null} readonly={false} />}
                     </div>
 
-                    <BracketStageRegion sideLabel="Right Side Path" games={getSideGames("right")} userPicks={showPicks ? userPicks : {}} readonly={true} flipped={true} getDisplayGame={getDisplayGame} onPick={null} />
+                    <BracketStageRegion sideLabel="Right Side Path" games={getSideGames("right")} userPicks={showPicks ? userPicks : {}} readonly={false} flipped={true} getDisplayGame={getDisplayGame} onPick={null} />
                 </div>
             </div>
         </div>

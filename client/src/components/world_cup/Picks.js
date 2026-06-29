@@ -94,6 +94,8 @@ export default function Picks() {
     });
   };
 
+  const GROUP_STAGE_CUTOFF = new Date("2026-06-28T05:00:00").getTime();
+
   /* ---------------- DYNAMIC SORTING & GROUPING LOGIC ---------------- */
   const arrangedGroups = useMemo(() => {
     const sorted = [...matches];
@@ -150,7 +152,7 @@ export default function Picks() {
       </div>
 
       {/* Sorting Navigation Toolbar */}
-      <div style={{
+      {/* <div style={{
         display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap",
         backgroundColor: "#f8fafc", padding: "10px 14px", borderRadius: "8px",
         border: "1px solid #e2e8f0", marginBottom: "28px"
@@ -179,7 +181,7 @@ export default function Picks() {
             </button>
           ))}
         </div>
-      </div>
+      </div> */}
 
       {loading ? (
         <p style={{ textAlign: "center", color: "#6b7280", marginTop: 40 }}>Loading schedule workspace...</p>
@@ -252,9 +254,9 @@ export default function Picks() {
         bottom: isMobile ? "76px" : "20px", // Pushes button above the 56px navbar + 20px padding buffer
         zIndex: 90 // Float cleanly over the inner layout blocks
       }}>
-        <button onClick={handleSubmit} style={submitButtonStyle}>
+        {/* <button onClick={handleSubmit} style={submitButtonStyle}>
           💾 Save Picks
-        </button>
+        </button> */}
       </div>
 
       <style>{`

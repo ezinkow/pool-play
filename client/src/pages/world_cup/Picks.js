@@ -12,7 +12,7 @@ export default function BracketStagePicksDisplay({ currentGame }) {
         <div className='page-content'>
             {/* Displaying both components to ensure maximum availability */}
             <div style={{ marginBottom: "40px" }}>
-                <h3 style={{ color: "#13447a" }}>Group Stage Picks</h3>
+                {/* <h3 style={{ color: "#13447a" }}>Group Stage Picks</h3> */}
                 <Picks />
             </div>
             
