@@ -7,33 +7,65 @@ module.exports = function (app) {
             const PicksModel = db.WorldCupPicks || db.world_cup_picks;
             const MatchesModel = db.WorldCupMatches || db.world_cup_matches;
 
-            // 1. Fetch Entries and Picks separately
             const entries = await EntryModel.findAll({ attributes: ["user_id", "entry_name"] });
             const allPicks = await PicksModel.findAll({ include: [{ model: MatchesModel, as: "match" }] });
 
-            const standingsMap = new Map();
-
-            // 2. Pre-map picks by user_id for instant lookup
             const picksByUser = allPicks.reduce((acc, pick) => {
                 if (!acc[pick.user_id]) acc[pick.user_id] = [];
                 acc[pick.user_id].push(pick);
                 return acc;
             }, {});
 
-            // 3. Build standings
+            const standingsMap = new Map();
+            const CHAMP_MATCH_ID = "760517"; // The ID you specified
+
             entries.forEach(entry => {
                 const uid = entry.user_id;
-                standingsMap.set(uid, { id: uid, name: entry.entry_name, group_points: 0, bracket_points: 0, points: 0 });
-                const stats = standingsMap.get(uid);
+                standingsMap.set(uid, {
+                    id: uid,
+                    name: entry.entry_name,
+                    group_points: 0,
+                    bracket_points: 0,
+                    points: 0,
+                    champion_pick: "TBD",
+                    champion_logo: null
+                });
 
+                const stats = standingsMap.get(uid);
                 const userPicks = picksByUser[uid] || [];
+                const matchedMatchIds = new Set(); // Prevent double counting
+
                 userPicks.forEach(pick => {
                     const match = pick.match;
-                    if (match && ["STATUS_FULL_TIME", "STATUS_FINAL", "FINAL"].includes(match.status)) {
-                        if (pick.selection?.trim().toLowerCase() === match.result?.trim().toLowerCase()) {
-                            const pts = (match.result?.toLowerCase() === "draw" && parseInt(match.round) === 0)
-                                ? (match.draw_points_value || 2) : (match.points_value || 1);
+                    if (!match) return;
 
+                    // 1. Identify Champion Pick
+                    if (String(pick.match_id) === CHAMP_MATCH_ID) {
+                        stats.champion_pick = pick.selection;
+                        if (pick.selection === match.home_team) stats.champion_logo = match.home_logo;
+                        else if (pick.selection === match.away_team) stats.champion_logo = match.away_logo;
+                    }
+
+                    // 2. Points Logic
+                    if (["STATUS_FULL_TIME", "STATUS_FINAL", "FINAL"].includes(match.status)) {
+                        if (matchedMatchIds.has(match.match_id)) return;
+
+                        let isCorrect = false;
+                        let pts = 0;
+
+                        if (parseInt(match.round) === 0) {
+                            // Group Stage: Compare Position (Home/Away/Draw)
+                            isCorrect = pick.selection?.trim().toLowerCase() === match.result?.trim().toLowerCase();
+                            pts = (match.result?.toLowerCase() === "draw") ? (match.draw_points_value || 2) : (match.points_value || 1);
+                        } else {
+                            // Knockout: Compare Team Name
+                            const winnerName = (match.result === "Home" ? match.home_team : match.away_team)?.trim().toLowerCase();
+                            isCorrect = pick.selection?.trim().toLowerCase() === winnerName;
+                            pts = match.points_value || 2;
+                        }
+
+                        if (isCorrect) {
+                            matchedMatchIds.add(match.match_id);
                             if (parseInt(match.round) === 0) stats.group_points += pts;
                             else stats.bracket_points += pts;
                             stats.points += pts;
@@ -44,8 +76,8 @@ module.exports = function (app) {
 
             res.json(Array.from(standingsMap.values()).sort((a, b) => b.points - a.points));
         } catch (err) {
-            console.error(err);
-            res.status(500).json({ error: "Failed" });
+            console.error("❌ Standings Error:", err);
+            res.status(500).json({ error: "Failed to calculate standings" });
         }
     });
 };

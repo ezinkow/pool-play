@@ -24,11 +24,15 @@ export default function Standings() {
   useEffect(() => {
     const fetchStandings = async () => {
       try {
-        const { data } = await axios.get("/api/worldcup/standings");
-        // Sort by points DESC, then by name ASC as a secondary tie-break
+        const header = { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } };
+        const { data } = await axios.get("/api/worldcup/standings", header);
         setStandings([...data].sort((a, b) => b.points - a.points || a.name.localeCompare(b.name)));
       } catch (err) {
-        toast.error("Failed to load leaderboard.");
+        if (err.response?.status === 403) {
+          window.location.href = "/access-denied";
+        } else {
+          toast.error("Failed to load leaderboard.");
+        }
       } finally {
         setLoading(false);
       }
@@ -94,7 +98,20 @@ export default function Standings() {
                       <td style={tdStyle}>{u.group_points || 0}</td>
                       <td style={tdStyle}>{u.bracket_points || 0}</td>
                       <td style={{ ...tdStyle, fontWeight: 900, color: WORLDCUPGREEN }}>{u.points || 0}</td>
-                      <td style={tdStyle}>{BRACKET_LOCKED ? (u.champion_pick || "TBD") : "🔒"}</td>
+                      <td style={tdStyle}>
+                        {BRACKET_LOCKED ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            {u.champion_logo && (
+                              <img
+                                src={u.champion_logo}
+                                alt={u.champion_pick}
+                                style={{ width: "20px", height: "14px", objectFit: "contain", borderRadius: "2px" }}
+                              />
+                            )}
+                            <span style={{ color: GOLD, fontWeight: 700 }}>{u.champion_pick || "TBD"}</span>
+                          </div>
+                        ) : "🔒"}
+                      </td>
                     </tr>
                   );
                 })}
@@ -115,7 +132,18 @@ export default function Standings() {
                     Group: {u.group_points || 0} | Bracket: {u.bracket_points || 0}
                   </div>
                   <div style={{ fontWeight: 700, color: GOLD, fontSize: "12px" }}>
-                    {BRACKET_LOCKED ? (u.champion_pick || "TBD") : "🔒"}
+                    {BRACKET_LOCKED ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        {u.champion_logo && (
+                          <img
+                            src={u.champion_logo}
+                            alt={u.champion_pick}
+                            style={{ width: "20px", height: "14px", objectFit: "contain", borderRadius: "2px" }}
+                          />
+                        )}
+                        <span style={{ color: GOLD, fontWeight: 700 }}>{u.champion_pick || "TBD"}</span>
+                      </div>
+                    ) : "🔒"}
                   </div>
                 </div>
               </div>
