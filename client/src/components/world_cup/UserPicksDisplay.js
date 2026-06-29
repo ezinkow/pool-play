@@ -29,13 +29,14 @@ export default function PlayerPicksMatrix() {
   useEffect(() => {
     const fetchAll = () => {
       axios.get("/api/worldcup/matches").then(r => {
+        // ✨ UPDATED: Removed round === 0 filter to show ALL matches
         const filtered = r.data
           .filter(g => {
             const s = g.status || "";
-            return s.includes("FULL_TIME") || s.includes("HALF") || s.includes("PROGRESS");
+            return s.includes("FINAL") || s.includes("HALF") || s.includes("PROGRESS") || s.includes("FULL_TIME");
           })
-          .filter(g => parseInt(g.round) === 0)
-          .sort((a, b) => new Date(b.game_date) - new Date(a.game_date));
+          // Sort by round, then by date so it flows logically
+          .sort((b, a) => parseInt(a.round) - parseInt(b.round) || new Date(a.game_date) - new Date(b.game_date));
         setGames(filtered);
       });
       axios.get("/api/worldcup/picks/all").then(r => setPicks(r.data));
@@ -136,21 +137,22 @@ export default function PlayerPicksMatrix() {
           70% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0); } 
           100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } 
         }
-        /* Mobile-first scrollbar optimization */
         .matrix-container::-webkit-scrollbar { height: 5px; }
         .matrix-container::-webkit-scrollbar-track { background: #f1f5f9; }
         .matrix-container::-webkit-scrollbar-thumb { background: #cbd5e1; borderRadius: 4px; }
       `}</style>
 
+      {/* ✨ UPDATED TITLE */}
       <h2 style={{ color: "#13447a", textAlign: "center", fontWeight: 800, fontSize: "1.2rem", margin: "8px 0" }}>
-        ⚽ Group Stage Matrix
+        ⚽ Tournament Prediction Matrix
       </h2>
+
       <div style={{ paddingBottom: "100px" }}>
-        <div className="matrix-container" style={{ overflowX: "auto", border: "1px solid #e5e7eb", borderRadius: "8px", WebkitOverflowScrolling: "touch", background: "white" }}>
+        <div className="matrix-container" style={{ overflowX: "auto", border: "1px solid #e5e7eb", borderRadius: "8px", background: "white" }}>
           <table style={{ borderCollapse: "separate", borderSpacing: 0, width: "max-content", minWidth: "100%", fontSize: 11 }}>
             <thead>
               <tr>
-                <th style={{ position: "sticky", left: 0, zIndex: 6, backgroundColor: "#13447a", color: "white", padding: "6px 8px", minWidth: "100px", maxWidth: "100px", textAlign: "left", fontSize: 10 }}>
+                <th style={{ position: "sticky", left: 0, zIndex: 6, backgroundColor: "#13447a", color: "white", padding: "6px 8px", minWidth: "100px", textAlign: "left" }}>
                   PLAYER
                 </th>
                 {games.map(g => (
@@ -162,26 +164,19 @@ export default function PlayerPicksMatrix() {
             </thead>
             <tbody>
               {rankedUsers.map((user) => {
-                const isMe = currentUser?.id === user.id; // Identification logic
+                const isMe = currentUser?.id === user.id;
                 return (
                   <tr key={user.id} style={{ backgroundColor: isMe ? "#fffbeb" : "transparent" }}>
                     <td style={{
-                      position: "sticky", left: 0, zIndex: 2,
-                      backgroundColor: isMe ? "#fef3c7" : "#f8fafc",
+                      position: "sticky", left: 0, zIndex: 2, backgroundColor: isMe ? "#fef3c7" : "#f8fafc",
                       padding: "6px 8px", borderBottom: "1px solid #edf2f7", borderRight: "2px solid #c89d3c",
-                      borderLeft: isMe ? "4px solid #c89d3c" : "none",
-                      width: "100px", minWidth: "100px", maxWidth: "100px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
+                      width: "100px"
                     }}>
-                      <span style={{ fontWeight: 800, color: "#13447a", fontSize: user.rank <= 3 ? 12 : 11 }}>
-                        {renderRank(user.rank)}{user.rank > 3 ? '.' : ''} {user.name}
-                      </span>
+                      <span style={{ fontWeight: 800, color: "#13447a" }}>{renderRank(user.rank)} {user.name}</span>
                       <span style={{ fontSize: 9, color: "#64748b", display: "block" }}>{user.points} pts</span>
                     </td>
                     {games.map(game => (
-                      <td key={game.match_id} style={{
-                        textAlign: "center", padding: "4px 0", borderBottom: "1px solid #edf2f7", borderRight: "1px solid #f1f5f9",
-                        ...getCellStyle(game, pickMap[game.match_id]?.[user.id])
-                      }}>
+                      <td key={game.match_id} style={{ textAlign: "center", padding: "4px 0", borderBottom: "1px solid #edf2f7", ...getCellStyle(game, pickMap[game.match_id]?.[user.id]) }}>
                         <PickLogo game={game} pickObj={pickMap[game.match_id]?.[user.id]} />
                       </td>
                     ))}

@@ -47,7 +47,7 @@ export default function PicksDisplay() {
                         transition: "all 0.15s ease"
                     }}
                 >
-                    📊 Group Stage Matches
+                    📊 All Matches
                 </button>
                 <button
                     onClick={() => setActiveTab("knockout")}
@@ -65,7 +65,7 @@ export default function PicksDisplay() {
                         transition: "all 0.15s ease"
                     }}
                 >
-                    🏆 Knockout Bracket
+                    🏆 Bracket
                 </button>
             </div>
 
