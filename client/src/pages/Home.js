@@ -169,7 +169,7 @@ export default function Home() {
                 />
                 <div style={{ textAlign: "center", color: "white", marginBottom: 10 }}><h1>🏆 POOL PLAY 🏊</h1></div>
             </div>
-            <div style={{ textAlign: "center", color: GOLD, marginBottom: 10, textShadow: '2px 2px BLUE' }}><h2>Come on in, the water's fine!</h2></div>
+            <div style={{ textAlign: "center", color: GOLD, marginBottom: 10, textShadow: '2px 2px BLUE' }}><h2>JUMP ON IN, THE WATER'S FINE!</h2></div>
             <div style={{ maxWidth: 850, margin: "0 auto" }}>
                 {live.length > 0 && <><h3 style={{ color: GOLD, marginBottom: 10 }}>Live</h3>{live.map(c => renderCard(c, 'live'))}</>}
                 {upcoming.length > 0 && <><h3 style={{ color: GOLD, marginBottom: 10 }}>Open / Accepting Entries</h3>{upcoming.map(c => renderCard(c, 'upcoming'))}</>}

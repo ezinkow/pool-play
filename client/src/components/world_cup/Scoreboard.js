@@ -102,8 +102,22 @@ export default function Scoreboard() {
                           {!isMobile && <span>{m.home_team}</span>}
                         </div>
                       ) : (
-                        <div style={{ fontWeight: 700, color: WORLDCUPGREEN, fontSize: "11px" }}>
-                          {ROUND_LABELS[m.round]} <span style={{ color: "#64748b" }}>(Slot {m.bracket_slot})</span>
+                        <div style={{ fontWeight: 700, fontSize: "11px" }}>
+                          {m.home_team !== "TBD" && m.away_team !== "TBD" ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              {/* Away Flag */}
+                              <img src={m.away_logo} alt="" style={{ height: 14, width: 20, objectFit: "contain" }} />
+                              {m.away_team}
+                              <span style={{ color: "#9ca3af", margin: "0 4px" }}>v</span>
+                              {/* Home Flag */}
+                              <img src={m.home_logo} alt="" style={{ height: 14, width: 20, objectFit: "contain" }} />
+                              {m.home_team}
+                            </div>
+                          ) : (
+                            <div>
+                              {ROUND_LABELS[m.round]} <span style={{ color: "#64748b" }}>(Slot {m.bracket_slot})</span>
+                            </div>
+                          )}
                         </div>
                       )}
                     </td>

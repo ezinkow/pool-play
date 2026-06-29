@@ -20,7 +20,7 @@ module.exports = function (sequelize, DataTypes) {
         locked: { type: DataTypes.BOOLEAN, defaultValue: false },
         home_score: { type: DataTypes.INTEGER, defaultValue: 0 },
         away_score: { type: DataTypes.INTEGER, defaultValue: 0 },
-        group: { type: DataTypes.STRING, allowNull: true },
+        group_name: { type: DataTypes.STRING, allowNull: true },
         bracket_slot: { type: DataTypes.INTEGER, allowNull: true },
         result: {
             type: DataTypes.ENUM("Home", "Away", "Draw", "Pending"),

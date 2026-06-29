@@ -71,19 +71,40 @@ export default function PlayerPicksMatrix() {
 
   const getCellStyle = (game, pickObj) => {
     if (!pickObj || game.result === "Pending") return {};
-    const isCorrect = pickObj.selection === game.result;
-    if (isCorrect) {
-      return { backgroundColor: pickObj.selection === "Draw" ? "#23a34966" : "#28bd5566" };
+    let isCorrect = false;
+    if (parseInt(game.round) === 0) {
+      isCorrect = pickObj.selection === game.result;
+    } else {
+      const winner = game.result === "Home" ? game.home_team : game.away_team;
+      isCorrect = pickObj.selection === winner;
     }
-    return { backgroundColor: "#d646462b" };
+
+    if (isCorrect) {
+      return { backgroundColor: "#28bd5566" }; // Consistent green for correct
+    }
+    return { backgroundColor: "#d646462b" }; // Red for incorrect
   };
 
   const PickLogo = ({ game, pickObj }) => {
-    if (!pickObj) return <span style={{ color: "#9ca3af", fontSize: 11 }}>–</span>;
+    if (!pickObj?.selection) return <span style={{ color: "#9ca3af", fontSize: 11 }}>–</span>;
+
+    // 1. Handle Group Stage (Position-based)
+    if (parseInt(game.round) === 0) {
+      if (pickObj.selection === "Draw") return <span style={{ fontSize: 9, fontWeight: 800, color: "#dc2626" }}>DRAW</span>;
+      const logo = pickObj.selection === "Home" ? game.home_logo : game.away_logo;
+      return logo ? <img src={logo} alt="" style={logoStyle} /> : <span style={{ fontSize: 9, fontWeight: 700 }}>{pickObj.selection}</span>;
+    }
+
+    // 2. Handle Knockout Stage (Team Name-based)
     if (pickObj.selection === "Draw") return <span style={{ fontSize: 9, fontWeight: 800, color: "#dc2626" }}>DRAW</span>;
-    const logo = pickObj.selection === "Home" ? game.home_logo : game.away_logo;
-    return <img src={logo} alt="" style={{ height: 16, width: 16, objectFit: "contain", verticalAlign: "middle" }} />;
+
+    const logo = pickObj.selection === game.home_team ? game.home_logo
+      : pickObj.selection === game.away_team ? game.away_logo
+        : null;
+
+    return logo ? <img src={logo} alt="" style={logoStyle} /> : <span style={{ fontSize: 9, fontWeight: 700 }}>{pickObj.selection.substring(0, 3)}</span>;
   };
+  const logoStyle = { height: 16, width: 16, objectFit: "contain", verticalAlign: "middle" };
 
   const GameHeader = ({ game }) => {
     const isLive = game.status.includes("HALF") || game.status.includes("PROGRESS");

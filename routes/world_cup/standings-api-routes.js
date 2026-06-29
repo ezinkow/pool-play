@@ -6,9 +6,14 @@ module.exports = function (app) {
             const EntryModel = db.WorldCupEntries || db.world_cup_entries;
             const PicksModel = db.WorldCupPicks || db.world_cup_picks;
             const MatchesModel = db.WorldCupMatches || db.world_cup_matches;
+            const CountryModel = db.WorldCupCountryInfo;
 
             const entries = await EntryModel.findAll({ attributes: ["user_id", "entry_name"] });
             const allPicks = await PicksModel.findAll({ include: [{ model: MatchesModel, as: "match" }] });
+
+            // Fetch all countries once to map names to flags efficiently
+            const countries = await CountryModel.findAll();
+            const countryMap = new Map(countries.map(c => [c.name.trim().toLowerCase(), c.flag_url]));
 
             const picksByUser = allPicks.reduce((acc, pick) => {
                 if (!acc[pick.user_id]) acc[pick.user_id] = [];
@@ -17,7 +22,7 @@ module.exports = function (app) {
             }, {});
 
             const standingsMap = new Map();
-            const CHAMP_MATCH_ID = "760517"; // The ID you specified
+            const CHAMP_MATCH_ID = "760517";
 
             entries.forEach(entry => {
                 const uid = entry.user_id;
@@ -33,17 +38,17 @@ module.exports = function (app) {
 
                 const stats = standingsMap.get(uid);
                 const userPicks = picksByUser[uid] || [];
-                const matchedMatchIds = new Set(); // Prevent double counting
+                const matchedMatchIds = new Set();
 
                 userPicks.forEach(pick => {
                     const match = pick.match;
                     if (!match) return;
 
-                    // 1. Identify Champion Pick
+                    // 1. Identify Champion Pick using the new CountryModel
                     if (String(pick.match_id) === CHAMP_MATCH_ID) {
                         stats.champion_pick = pick.selection;
-                        if (pick.selection === match.home_team) stats.champion_logo = match.home_logo;
-                        else if (pick.selection === match.away_team) stats.champion_logo = match.away_logo;
+                        // Look up the flag from our new table
+                        stats.champion_logo = countryMap.get(pick.selection?.trim().toLowerCase()) || null;
                     }
 
                     // 2. Points Logic
@@ -54,11 +59,9 @@ module.exports = function (app) {
                         let pts = 0;
 
                         if (parseInt(match.round) === 0) {
-                            // Group Stage: Compare Position (Home/Away/Draw)
                             isCorrect = pick.selection?.trim().toLowerCase() === match.result?.trim().toLowerCase();
                             pts = (match.result?.toLowerCase() === "draw") ? (match.draw_points_value || 2) : (match.points_value || 1);
                         } else {
-                            // Knockout: Compare Team Name
                             const winnerName = (match.result === "Home" ? match.home_team : match.away_team)?.trim().toLowerCase();
                             isCorrect = pick.selection?.trim().toLowerCase() === winnerName;
                             pts = match.points_value || 2;
