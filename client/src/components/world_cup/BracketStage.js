@@ -10,7 +10,7 @@ export default function BracketStage({
     readonly,       // bool — tournament has started
 }) {
     const isFinal = game?.status === "STATUS_FULL_TIME";
-    const isLive = game?.status === "STATUS_IN_PROGRESS" || game?.status === "STATUS_HALFTIME";
+    const isLive = game?.status === "STATUS_IN_PROGRESS" || game?.status === "STATUS_HALFTIME" || game?.status === "STATUS_FIRST_HALF" || game?.status === "STATUS_SECOND_HALF";
     const isTBD = (team) => !team || team === "TBD";
 
     // EXPLICIT RULE: Prevent picking if this card belongs to the 3rd Place Match (Round 6)

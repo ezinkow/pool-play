@@ -105,6 +105,10 @@ export default function WorldCupBracket() {
         }
 
         setSaving(true);
+        if (new Date() >= new Date("2026-06-28T14:00:00-05:00")) {
+            toast.error("Bracket is officially locked!");
+            return;
+        }
         try {
             await axios.post("/api/worldcup/picks/bracket", {
                 user_id: user.id,
@@ -191,7 +195,7 @@ export default function WorldCupBracket() {
     const mobileFilteredGames = activeTab === "Left Bracket" ? getSideGames("left") : activeTab === "Right Bracket" ? getSideGames("right") : games.filter(g => g.round === 5);
 
     return (
-        <div  style={{ maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
+        <div style={{ maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
             <Toaster position="top-center" />
 
             <div style={{ background: `linear-gradient(135deg, ${WORLDCUPGREEN} 0%, #1e5fa8 100%)`, color: "white", padding: "20px 24px", marginBottom: 24 }}>
