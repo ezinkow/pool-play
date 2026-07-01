@@ -60,11 +60,17 @@ function getWorldCupRound(event) {
     const desc = (event.status?.type?.description || "").toLowerCase();
     const combined = `${slug} ${desc}`;
 
-    if (combined.includes("final") && !combined.includes("semi") && !combined.includes("quarter")) return 5;
-    if (combined.includes("semifinals")) return 4;
-    if (combined.includes("quarterfinals")) return 3;
-    if (combined.includes("round-of-16") || combined.includes("round of 16")) return 2;
     if (combined.includes("round-of-32") || combined.includes("round of 32")) return 1;
+    if (combined.includes("round-of-16") || combined.includes("round of 16")) return 2;
+    if (combined.includes("quarterfinals")) return 3;
+    if (combined.includes("semifinals")) return 4;
+    if (combined.includes("final") &&
+        !combined.includes("semi") &&
+        !combined.includes("quarter") &&
+        !combined.includes("round-of-32") &&
+        !combined.includes("round-of-16")) {
+        return 5;
+    }
 
     return 0;
 }
@@ -133,10 +139,23 @@ async function syncWorldCup() {
                 away_score: isAwayPlaceholder ? 0 : parseInt(awayObj.score || 0),
                 group: assignedGroup,
                 result: (() => {
+                    // 1. If someone won, return Home or Away
                     if (homeObj.winner === true) return "Home";
                     if (awayObj.winner === true) return "Away";
-                    if (event.status?.type?.name !== "STATUS_FULL_TIME" || isHomePlaceholder || isAwayPlaceholder) return "Pending";
-                    return "Draw";
+
+                    // 2. Define completed statuses explicitly
+                    const COMPLETED = ["STATUS_FULL_TIME", "STATUS_FINAL", "FINAL", "STATUS_FINAL_PEN"];
+                    const status = event.status?.type?.name;
+
+                    // 3. If it's finished and no winner (and not a placeholder), it's a draw
+                    if (COMPLETED.includes(status)) {
+                        if (!isHomePlaceholder && !isAwayPlaceholder) {
+                            return "Draw";
+                        }
+                    }
+
+                    // 4. Otherwise, it's still pending
+                    return "Pending";
                 })()
             };
             await WorldCupMatches.upsert(payload);

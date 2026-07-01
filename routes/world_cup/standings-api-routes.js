@@ -52,19 +52,26 @@ module.exports = function (app) {
                     }
 
                     // 2. Points Logic
-                    if (["STATUS_FULL_TIME", "STATUS_FINAL", "FINAL"].includes(match.status)) {
+                    // Replace your existing Points Logic block with this:
+                    if (["STATUS_FULL_TIME", "STATUS_FINAL", "FINAL", "STATUS_FINAL_PEN"].includes(match.status)) {
                         if (matchedMatchIds.has(match.match_id)) return;
 
                         let isCorrect = false;
                         let pts = 0;
 
                         if (parseInt(match.round) === 0) {
+                            // GROUP STAGE: Selection is "Home", "Away", or "Draw"
                             isCorrect = pick.selection?.trim().toLowerCase() === match.result?.trim().toLowerCase();
                             pts = (match.result?.toLowerCase() === "draw") ? (match.draw_points_value || 2) : (match.points_value || 1);
                         } else {
-                            const winnerName = (match.result === "Home" ? match.home_team : match.away_team)?.trim().toLowerCase();
+                            // KNOCKOUT: Selection is "Spain", "Brazil", etc.
+                            // We resolve the actual winner name from the database match record
+                            const winnerName = (match.result?.trim().toLowerCase() === "home")
+                                ? match.home_team?.trim().toLowerCase()
+                                : match.away_team?.trim().toLowerCase();
+
                             isCorrect = pick.selection?.trim().toLowerCase() === winnerName;
-                            pts = match.points_value || 2;
+                            pts = match.points_value || 2; // Bracket point value
                         }
 
                         if (isCorrect) {

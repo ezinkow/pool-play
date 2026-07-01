@@ -83,12 +83,15 @@ export default function Scoreboard() {
             </thead>
             <tbody>
               {currentDisplayMatches.map((m, i) => {
-                // Status logic defined inside the map scope for proper referencing
                 const s = (m.status || "").toUpperCase();
                 const isFinal = s.includes("FINAL") || s.includes("FULL_TIME");
                 const isLive = s.includes("PROGRESS") || s.includes("LIVE") || s.includes("HALF");
                 const isScheduled = !isFinal && !isLive;
                 const badgeBg = isFinal ? "#166534" : isLive ? "#1e40af" : "#475569";
+
+                // RESOLUTION LOGIC: If TBD, try to find the actual names
+                const home = m.home_team === "TBD" ? "TBD" : m.home_team;
+                const away = m.away_team === "TBD" ? "TBD" : m.away_team;
 
                 return (
                   <tr key={m.match_id || i} style={{ backgroundColor: isFinal ? "#f9fafb" : "white" }}>
@@ -102,16 +105,12 @@ export default function Scoreboard() {
                           {!isMobile && <span>{m.home_team}</span>}
                         </div>
                       ) : (
-                        <div style={{ fontWeight: 700, fontSize: "11px" }}>
-                          {m.home_team !== "TBD" && m.away_team !== "TBD" ? (
+                        <div style={{ fontWeight: 700, color: WORLDCUPGREEN, fontSize: "11px" }}>
+                          {home !== "TBD" && away !== "TBD" ? (
                             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              {/* Away Flag */}
                               <img src={m.away_logo} alt="" style={{ height: 14, width: 20, objectFit: "contain" }} />
-                              {m.away_team}
-                              <span style={{ color: "#9ca3af", margin: "0 4px" }}>v</span>
-                              {/* Home Flag */}
+                              {away} <span style={{ color: "#9ca3af" }}>v</span> {home}
                               <img src={m.home_logo} alt="" style={{ height: 14, width: 20, objectFit: "contain" }} />
-                              {m.home_team}
                             </div>
                           ) : (
                             <div>

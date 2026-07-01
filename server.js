@@ -128,6 +128,9 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
     }
   }
 
+  //run on startup
+  // runSync();
+
   cron.schedule('0,02,05,10,20,30,40,50 * * * *', () => {
     runSync();
   });

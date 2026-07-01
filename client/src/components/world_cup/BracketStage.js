@@ -9,7 +9,10 @@ export default function BracketStage({
     onPick,         // fn(gameId, teamName) — null if locked/readonly
     readonly,       // bool — tournament has started
 }) {
-    const isFinal = game?.status === "STATUS_FULL_TIME";
+    const COMPLETED_STATUSES = ["STATUS_FULL_TIME", "STATUS_FINAL", "FINAL", "STATUS_FINAL_PEN"];
+    // Helper to check if a game is finished
+    const isGameFinal = (status) => COMPLETED_STATUSES.includes(status);
+    const isFinal = isGameFinal(game?.status);
     const isLive = game?.status === "STATUS_IN_PROGRESS" || game?.status === "STATUS_HALFTIME" || game?.status === "STATUS_FIRST_HALF" || game?.status === "STATUS_SECOND_HALF";
     const isTBD = (team) => !team || team === "TBD";
 
@@ -79,7 +82,7 @@ export default function BracketStage({
             opacity: isThirdPlaceMatch ? 0.85 : 1, // Subtle style tint indicating it's locked info only
             maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px"
         }}
-            >
+        >
             {(isLive || isFinal) && (
                 <div style={{
                     background: isLive ? "#dc2626" : "#6b7280", color: "white", fontSize: 9,
