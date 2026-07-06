@@ -75,6 +75,11 @@ function getWorldCupRound(event) {
     return 0;
 }
 
+function parseDependency(name) {
+    const match = name.match(/(?:Round of \d+ )?(\d+) Winner/i);
+    return match ? `W${match[1]}` : null;
+}
+
 async function syncWorldCup() {
     const { WorldCupMatches } = db;
     try {
@@ -127,6 +132,8 @@ async function syncWorldCup() {
                 away_team: isAwayPlaceholder ? null : rawAwayName,
                 home_logo: isHomePlaceholder ? null : homeObj.team.logo,
                 away_logo: isAwayPlaceholder ? null : awayObj.team.logo,
+                home_dependency: isHomePlaceholder ? parseDependency(event.name) : null,
+                away_dependency: isAwayPlaceholder ? parseDependency(event.name) : null,
                 stage: roundCfg.label.toUpperCase(),
                 game_date: event.date,
                 locked: new Date() >= new Date(event.date),
@@ -144,14 +151,12 @@ async function syncWorldCup() {
                     if (awayObj.winner === true) return "Away";
 
                     // 2. Define completed statuses explicitly
-                    const COMPLETED = ["STATUS_FULL_TIME", "STATUS_FINAL", "FINAL", "STATUS_FINAL_PEN"];
+                    const isFinished = event.status?.type?.completed === true;
                     const status = event.status?.type?.name;
 
                     // 3. If it's finished and no winner (and not a placeholder), it's a draw
-                    if (COMPLETED.includes(status)) {
-                        if (!isHomePlaceholder && !isAwayPlaceholder) {
-                            return "Draw";
-                        }
+                    if (isFinished && !isHomePlaceholder && !isAwayPlaceholder) {
+                        return "Draw";
                     }
 
                     // 4. Otherwise, it's still pending

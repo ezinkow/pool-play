@@ -105,6 +105,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/world_cup/gamestates-api-routes.js")(app);
   require("./routes/world_cup/picks-api-routes.js")(app);
   require("./routes/world_cup/standings-api-routes.js")(app);
+  require("./routes/world_cup/countries-api-routes.js")(app);
 
   // ── 4. MOVED INSIDE: Background jobs can safely execute query sets ────────
   const syncTourneyPickem = require("./syncs/tourney_pickem/sync.js");
@@ -129,7 +130,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   }
 
   //run on startup
-  // runSync();
+  runSync();
 
   cron.schedule('0,02,05,10,20,30,40,50 * * * *', () => {
     runSync();

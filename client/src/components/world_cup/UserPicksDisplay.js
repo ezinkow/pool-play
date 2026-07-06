@@ -18,6 +18,7 @@ export default function PlayerPicksMatrix() {
   const [games, setGames] = useState([]);
   const [picks, setPicks] = useState([]);
   const [standings, setStandings] = useState([]);
+  const [countryMap, setCountryMap] = useState({});
 
   const renderRank = (rank) => {
     if (rank === 1) return "🥇";
@@ -41,6 +42,12 @@ export default function PlayerPicksMatrix() {
       });
       axios.get("/api/worldcup/picks/all").then(r => setPicks(r.data));
       axios.get("/api/worldcup/standings").then(r => setStandings(r.data));
+      axios.get("/api/worldcup/countries").then(r => {
+        // Create a map: { "spain": "url_to_flag" }
+        const map = {};
+        r.data.forEach(c => map[c.name.trim().toLowerCase()] = c.flag_url);
+        setCountryMap(map);
+      });
     };
     fetchAll();
     const interval = setInterval(fetchAll, 10 * 60 * 1000);
@@ -96,11 +103,14 @@ export default function PlayerPicksMatrix() {
     }
 
     // 2. Handle Knockout Stage (Team Name-based)
-    if (pickObj.selection === "Draw") return <span style={{ fontSize: 9, fontWeight: 800, color: "#dc2626" }}>DRAW</span>;
-
-    const logo = pickObj.selection === game.home_team ? game.home_logo
+    let logo = pickObj.selection === game.home_team ? game.home_logo
       : pickObj.selection === game.away_team ? game.away_logo
         : null;
+
+    // FALLBACK: If not playing in this game, pull flag from CountryMap
+    if (!logo) {
+      logo = countryMap[pickObj.selection.trim().toLowerCase()];
+    }
 
     return logo ? <img src={logo} alt="" style={logoStyle} /> : <span style={{ fontSize: 9, fontWeight: 700 }}>{pickObj.selection.substring(0, 3)}</span>;
   };

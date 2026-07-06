@@ -25,7 +25,9 @@ module.exports = function (sequelize, DataTypes) {
         result: {
             type: DataTypes.ENUM("Home", "Away", "Draw", "Pending"),
             defaultValue: "Pending"
-        }
+        },
+        home_dependency: { type: DataTypes.STRING, allowNull: true },
+        away_dependency: { type: DataTypes.STRING, allowNull: true },
     }, { tableName: "world_cup_matches", timestamps: false });
 
     return WorldCupMatches;

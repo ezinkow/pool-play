@@ -11,9 +11,8 @@ export default function BracketStage({
 }) {
     const COMPLETED_STATUSES = ["STATUS_FULL_TIME", "STATUS_FINAL", "FINAL", "STATUS_FINAL_PEN"];
     // Helper to check if a game is finished
-    const isGameFinal = (status) => COMPLETED_STATUSES.includes(status);
-    const isFinal = isGameFinal(game?.status);
-    const isLive = game?.status === "STATUS_IN_PROGRESS" || game?.status === "STATUS_HALFTIME" || game?.status === "STATUS_FIRST_HALF" || game?.status === "STATUS_SECOND_HALF";
+    const isFinal = event.status?.type?.completed === true;
+    const isLive = event.status?.type?.completed === false;
     const isTBD = (team) => !team || team === "TBD";
 
     // EXPLICIT RULE: Prevent picking if this card belongs to the 3rd Place Match (Round 6)
@@ -88,7 +87,7 @@ export default function BracketStage({
                     background: isLive ? "#dc2626" : "#6b7280", color: "white", fontSize: 9,
                     fontWeight: 700, textAlign: "center", padding: "2px 0", letterSpacing: "0.5px",
                 }}>
-                    {isLive ? `🔴 LIVE — ${game.game_clock || "MIN"}` : "FINAL"}
+                    {isLive ? `🔴 LIVE` : "FINAL"}
                 </div>
             )}
 
