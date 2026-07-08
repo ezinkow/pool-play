@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom"; // ✨ Imported for optimized routing paths
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
@@ -47,6 +47,7 @@ export default function MyPicks() {
                 // Fetch all matches (Group + Knockouts)
                 const matchesRes = await axios.get("/api/worldcup/matches");
                 const allMatches = matchesRes.data;
+                console.log(allMatches)
 
                 // Create lookups from user selections
                 const userPicksMap = picksRes.data.reduce((acc, p) => {
@@ -96,7 +97,7 @@ export default function MyPicks() {
 
                     if (userSelection) {
                         const s = match.status || "";
-                        if (s.includes("FINAL")) {
+                        if (s.includes("FINAL") || s.includes("FULL_TIME")) {
                             const realWinner = match.home_score > match.away_score ? match.home_team : match.away_team;
                             if (userSelection === realWinner) {
                                 pickStatus = "Correct";
@@ -180,7 +181,7 @@ export default function MyPicks() {
     };
 
     return (
-        <div  style={{ maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
+        <div style={{ maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
             <Toaster />
             {/* Header Scoreboard Dashboard */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20, flexWrap: "wrap", gap: 12, paddingRight: "8px", paddingLeft: "8px" }}>
@@ -243,8 +244,8 @@ export default function MyPicks() {
                     <table style={{ borderCollapse: "separate", borderSpacing: 0, background: "white", width: "100%", fontSize: 13 }}>
                         <thead>
                             <tr>
-                                <th style={{ position: "sticky", top: 0, left: 0, zIndex: 10, backgroundColor: "#13447a", color: "white", borderBottom: `2px solid ${GOLD}`, borderRight: `2px solid ${GOLD}`, whiteSpace: "nowrap", textTransform: "uppercase", fontSize: 11, letterSpacing: "0.5px", padding: "12px 8px", minWidth: isMobile ? "75px" : "150px" }}>
-                                    {activeSection === "group" ? "Matchup" : "Stage Node"}
+                                <th style={{ ...thStyle, textAlign: "center" }}>
+                                    Matchup
                                 </th>
                                 <th style={thStyle}>Real Status/Score</th>
                                 <th style={{ ...thStyle, minWidth: isMobile ? "60px" : "130px" }}>My Choice</th>
@@ -277,11 +278,16 @@ export default function MyPicks() {
                                                     <span style={{ color: "#9ca3af", fontWeight: 400 }}>@</span>
                                                     <img src={p.home_logo} alt="" style={{ height: 14, width: 20, objectFit: "contain" }} />
                                                     {!isMobile && <span>{p.home_team}</span>}
-                                                    <span style={{ fontSize: 10, color: "#475569", backgroundColor: "#e2e8f0", padding: "1px 4px", borderRadius: 4, marginLeft: 4 }}>{p.group}</span>
+                                                    <span style={{ fontSize: 10, color: "#475569", backgroundColor: "#e2e8f0", padding: "1px 4px", borderRadius: 4, marginLeft: 4 }}>{p.group_name}</span>
                                                 </div>
                                             ) : (
-                                                <div style={{ fontWeight: 700, color: WORLDCUPGREEN, fontSize: "11px" }}>
-                                                    {ROUND_LABELS[p.round]} <span style={{ color: "#64748b", fontWeight: 500 }}>(Slot {p.bracket_slot})</span>
+                                                <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, fontSize: "11px" }}>
+                                                    <img src={p.away_logo} alt="" style={{ height: 14, width: 20, objectFit: "contain" }} />
+                                                    {!isMobile && <span>{p.away_team}</span>}
+                                                    <span style={{ color: "#9ca3af", fontWeight: 400 }}>@</span>
+                                                    <img src={p.home_logo} alt="" style={{ height: 14, width: 20, objectFit: "contain" }} />
+                                                    {!isMobile && <span>{p.home_team}</span>}
+                                                    <span style={{ fontSize: 10, color: "#475569", backgroundColor: "#e2e8f0", padding: "1px 4px", borderRadius: 4, marginLeft: 4 }}>{ROUND_LABELS[p.round]}</span>
                                                 </div>
                                             )}
                                         </td>

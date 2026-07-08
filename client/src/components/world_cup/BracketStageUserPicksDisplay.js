@@ -105,7 +105,17 @@ function WorldCupGroupBrackets() {
                 al = resolveTeam(f, away).logo || null;
             }
         }
-        return { ...game, home_team: home, away_team: away, home_logo: hl, away_logo: al };
+        return {
+            ...game,
+            home_team: home,
+            away_team: away,
+            home_logo: hl,
+            away_logo: al,
+            result: game.result,
+            home_score: game.home_score,
+            away_score: game.away_score,
+            status: game.status
+        };
     };
 
     if (loading) return <div style={{ padding: 80, textAlign: "center", color: WORLDCUPGREEN }}>Loading Group Matrix Standings...</div>;
