@@ -123,6 +123,7 @@ export default function MyPicks() {
                 });
                 enrichedBracket.sort((a, b) => a.round - b.round || a.bracket_slot - b.bracket_slot);
                 setBracketPicks(enrichedBracket);
+                console.log("Bracket Picks Total:", bracketPicks.reduce((acc, p) => acc + (p.points_earned || 0), 0));
 
             } catch (err) {
                 console.error("❌ Error compiling user picks dashboard data tree:", err);

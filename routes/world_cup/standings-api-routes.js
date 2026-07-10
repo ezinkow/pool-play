@@ -53,7 +53,7 @@ module.exports = function (app) {
 
                     // 2. Points Logic
                     // Replace your existing Points Logic block with this:
-                    if (["STATUS_FULL_TIME", "STATUS_FINAL", "FINAL", "STATUS_FINAL_PEN"].includes(match.status)) {
+                    if (["STATUS_FULL_TIME", "STATUS_FINAL", "FINAL", "STATUS_FINAL_PEN", "STATUS_FINAL_AET"].includes(match.status)) {
                         if (matchedMatchIds.has(match.match_id)) return;
 
                         let isCorrect = false;
