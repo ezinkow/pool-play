@@ -97,12 +97,16 @@ export default function MyPicks() {
 
                     if (userSelection) {
                         const s = match.status || "";
+
+
                         if (s.includes("FINAL") || s.includes("FULL_TIME")) {
-                            const realWinner = match.home_score > match.away_score ? match.home_team : match.away_team;
-                            if (userSelection === realWinner) {
+                            const realWinner = match.result === "Home" ? match.home_team :
+                                match.result === "Away" ? match.away_team : null;
+
+                            if (realWinner && userSelection === realWinner) {
                                 pickStatus = "Correct";
-                                calculatedPoints = match.points_value || 2;
-                            } else {
+                                calculatedPoints = match.points_value;
+                            } else if (realWinner) {
                                 pickStatus = "Incorrect";
                             }
                         } else if (s.includes("PROGRESS") || s.includes("HALF")) {
@@ -270,26 +274,30 @@ export default function MyPicks() {
 
                                 return (
                                     <tr key={p.match_id || i} style={{ backgroundColor: isFinal ? "#f9fafb" : "white" }}>
-                                        <td style={{ position: "sticky", left: 0, zIndex: 2, backgroundColor: isFinal ? "#f1f5f9" : "#f8fafc", borderRight: `2px solid ${GOLD}`, borderBottom: "1px solid #e5e7eb", padding: "10px 8px", whiteSpace: "nowrap" }}>
-                                            {activeSection === "group" ? (
-                                                <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, fontSize: "11px" }}>
+                                        <td style={{ position: "sticky", left: 0, zIndex: 2, backgroundColor: isFinal ? "#f1f5f9" : "#f8fafc", borderRight: `2px solid ${GOLD}`, borderBottom: "1px solid #e5e7eb", padding: "10px 8px" }}>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: "11px" }}>
+                                                    {/* Away Team */}
                                                     <img src={p.away_logo} alt="" style={{ height: 14, width: 20, objectFit: "contain" }} />
-                                                    {!isMobile && <span>{p.away_team}</span>}
+                                                    {p.away_team || "TBD"}
                                                     <span style={{ color: "#9ca3af", fontWeight: 400 }}>@</span>
+                                                    {/* Home Team */}
                                                     <img src={p.home_logo} alt="" style={{ height: 14, width: 20, objectFit: "contain" }} />
-                                                    {!isMobile && <span>{p.home_team}</span>}
-                                                    <span style={{ fontSize: 10, color: "#475569", backgroundColor: "#e2e8f0", padding: "1px 4px", borderRadius: 4, marginLeft: 4 }}>{p.group_name}</span>
+                                                    {p.home_team || "TBD"}
                                                 </div>
-                                            ) : (
-                                                <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, fontSize: "11px" }}>
-                                                    <img src={p.away_logo} alt="" style={{ height: 14, width: 20, objectFit: "contain" }} />
-                                                    {!isMobile && <span>{p.away_team}</span>}
-                                                    <span style={{ color: "#9ca3af", fontWeight: 400 }}>@</span>
-                                                    <img src={p.home_logo} alt="" style={{ height: 14, width: 20, objectFit: "contain" }} />
-                                                    {!isMobile && <span>{p.home_team}</span>}
-                                                    <span style={{ fontSize: 10, color: "#475569", backgroundColor: "#e2e8f0", padding: "1px 4px", borderRadius: 4, marginLeft: 4 }}>{ROUND_LABELS[p.round]}</span>
+
+                                                {/* Real Winner Label */}
+                                                {p.outcome_status !== "Pending" && p.result !== "Draw" && (
+                                                    <div style={{ fontSize: 9, color: WORLDCUPGREEN, fontWeight: 800 }}>
+                                                        Winner: {p.result === "Home" ? p.home_team : p.away_team}
+                                                    </div>
+                                                )}
+
+                                                {/* Stage Label */}
+                                                <div style={{ fontSize: 9, color: "#64748b", fontWeight: 500 }}>
+                                                    {activeSection === "group" ? p.group_name : ROUND_LABELS[p.round]}
                                                 </div>
-                                            )}
+                                            </div>
                                         </td>
                                         <td style={{ ...tdStyle, textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>
                                             {p.status === "STATUS_SCHEDULED" ? (

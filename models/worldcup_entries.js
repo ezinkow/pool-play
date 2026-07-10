@@ -1,15 +1,11 @@
 module.exports = function (sequelize, DataTypes) {
     const WorldCupEntries = sequelize.define("WorldCupEntries", {
-        id: {
-            type: DataTypes.INTEGER,
-            primaryKey: true,
-            autoIncrement: true,
-        },
         user_id: {
             type: DataTypes.INTEGER,
             allowNull: false,
             unique: true,
             references: { model: "users", key: "id" },
+            primaryKey: true,
         },
         entry_name: {
             type: DataTypes.STRING(255),
