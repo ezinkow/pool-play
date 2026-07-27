@@ -50,7 +50,9 @@ export default function FootballMatrix() {
                     <h2 style={{ color: NFL_BLUE, fontSize: "28px", margin: 0 }}>Weekly Group Matrix</h2>
                     <p style={{ color: "#666", marginTop: 8 }}>Picks are hidden until individual game kickoff.</p>
                 </div>
-
+                <div style={{ textAlign: "center", marginBottom: 1}}>
+                    <h3 style={{ color: NFL_BLUE, fontSize: "15px", margin: 0 }}>Select Week:</h3>
+                </div>
                 {/* Week Selector Tabs */}
                 <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 24, flexWrap: "wrap" }}>
                     {[...Array(18)].map((_, i) => (
@@ -68,7 +70,7 @@ export default function FootballMatrix() {
                                 transition: "all 0.2s"
                             }}
                         >
-                            Wk {i + 1}
+                        {i + 1}
                         </button>
                     ))}
                 </div>

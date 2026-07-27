@@ -6,6 +6,7 @@ import PoolGatekeeper from "../PoolGatekeeper";
 
 const FALLBACK_BLUE = "#013369";
 const GOLD = "#c89d3c";
+const NFL_BLUE = "#013369";
 
 export default function NflBtsPicks() {
     const { user, loading: authLoading } = useAuth();
@@ -152,7 +153,7 @@ export default function NflBtsPicks() {
                         </div>
                     </div>
                 </div>
-
+                <h3 style={{ color: NFL_BLUE, fontSize: "15px", margin: 0 }}>Select Week:</h3>
                 {/* Week Selector Tabs */}
                 <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
                     {[...Array(18)].map((_, i) => (
@@ -169,7 +170,7 @@ export default function NflBtsPicks() {
                                 fontWeight: 600
                             }}
                         >
-                            Wk {i + 1}
+                            {i + 1}
                         </button>
                     ))}
                 </div>
@@ -252,7 +253,7 @@ export default function NflBtsPicks() {
 
                             {/* Over/Under Selection */}
                             <div style={{ marginBottom: 24 }}>
-                                <label style={{ display: "block", fontWeight: 700, marginBottom: 8, color: "#374151" }}>Over / Under Total ({matchup.over_under}) — Tiebreaker:</label>
+                                <label style={{ display: "block", fontWeight: 700, marginBottom: 8, color: "#374151" }}>Over / Under Total ({matchup.over_under}) - Tiebreaker:</label>
                                 <div style={{ display: "flex", gap: 12 }}>
                                     {['Over', 'Under'].map(val => (
                                         <button
@@ -267,7 +268,7 @@ export default function NflBtsPicks() {
                                             }}
                                             disabled={isKickoffPassed}
                                         >
-                                            {val} {val === 'Over' ? '📈' : '📉'}
+                                            {val} {val === 'Over' ? '⬆️' : '⬇️'}
                                         </button>
                                     ))}
                                 </div>
