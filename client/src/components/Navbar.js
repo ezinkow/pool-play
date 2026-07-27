@@ -63,7 +63,9 @@ export default function Navbar() {
 
     const currentGame = useMemo(() => {
         if (isHome) return null;
-        return rawGameSettings.find(g => g.prefix && location.pathname.startsWith(g.prefix));
+        // Sort by prefix length descending so longer prefixes (/nflbts) match before shorter ones (/nfl)
+        const sortedGames = [...rawGameSettings].sort((a, b) => (b.prefix?.length || 0) - (a.prefix?.length || 0));
+        return sortedGames.find(g => g.prefix && location.pathname.startsWith(g.prefix));
     }, [rawGameSettings, location.pathname, isHome]);
 
     const activeLinks = useMemo(() => {
@@ -111,6 +113,13 @@ export default function Navbar() {
                 { to: "/tourneysquares/results", label: "Prizes & Wins", emoji: "💵" },
                 { to: "/tourneysquares/signup", label: "Buy Squares", emoji: "🎟️" }
             ];
+        } else if (pfx === "/nflbts") {
+            templateLinks = [
+                { to: pfx, label: "Home", emoji: "🏠" },
+                { to: `${pfx}/picks`, label: "Make Picks", emoji: "🏈" },
+                { to: `${pfx}/grouppicks`, label: "Weekly Matrix", emoji: "📊" },
+                { to: `${pfx}/standings`, label: "Standings", emoji: "🏆" }
+            ];
         } else if (pfx === "/nfl" || pfx === "/olympics") {
             const sport = pfx === "/nfl" ? "🏈" : "🌍";
             const labelStr = pfx === "/nfl" ? "Pick Roster" : "Country Draft";
@@ -138,7 +147,8 @@ export default function Navbar() {
         const lower = label.toLowerCase();
         if (lower.includes("make picks") || lower.includes("submit")) return "Picks";
         if (lower.includes("my picks") || lower.includes("my sheet")) return "My Picks";
-        if (lower.includes("group picks") || lower.includes("user picks")) return "Matrix";
+        // ✨ MODIFIED: Added "weekly matrix" to cleanly map to "Matrix" on mobile
+        if (lower.includes("group picks") || lower.includes("user picks") || lower.includes("weekly matrix")) return "Matrix";
         if (lower.includes("bracket board")) return "Bracket";
         return label;
     };

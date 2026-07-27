@@ -82,6 +82,9 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/nfl/startingrosters-api-routes.js")(app);
   require("./routes/nfl/gamestates-api-routes.js")(app);
 
+  // NFL BTS
+  require("./routes/nfl_bts_api_routes.js")(app);
+  
   // MLB
   require("./routes/mlb/entries-api-routes.js")(app);
   require("./routes/mlb/series-api-routes.js")(app);
@@ -91,27 +94,17 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/mlb/admin-api-routes.js")(app);
 
   // Olympics
-  require("./routes/olympics/countrypools-api-routes")(app);
-  require("./routes/olympics/entries-api-routes.js")(app);
-  require("./routes/olympics/rosterpicks-api-routes.js")(app);
-  require("./routes/olympics/standings-api-routes")(app);
-  require("./routes/olympics/scoreboard-api-routes")(app);
-  require("./routes/olympics/news-api-routes")(app);
-  require("./routes/olympics/medaltable-api-routes")(app);
+  require("./routes/olympics_api_routes.js")(app);
 
   // World Cup
-  require("./routes/world_cup/matches-api-routes.js")(app);
-  require("./routes/world_cup/entries-api-routes.js")(app);
-  require("./routes/world_cup/gamestates-api-routes.js")(app);
-  require("./routes/world_cup/picks-api-routes.js")(app);
-  require("./routes/world_cup/standings-api-routes.js")(app);
-  require("./routes/world_cup/countries-api-routes.js")(app);
+  require("./routes/world_cup_api_routes.js")
 
   // ── 4. MOVED INSIDE: Background jobs can safely execute query sets ────────
   const syncTourneyPickem = require("./syncs/tourney_pickem/sync.js");
   const syncBracket = require("./syncs/bracket/sync.js");
   const syncNba = require("./syncs/nba/sync.js");
   const syncMlb = require("./syncs/mlb/sync.js");
+  const syncNflBts = require("./syncs/nfl_bts/sync.js");
   const syncWorldCup = require("./syncs/world_cup/sync.js");
   const tourneyPickemLockLines = require("./jobs/tourney_pickem/lockLines.js");
 
@@ -122,7 +115,8 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
       // await syncBracket();
       // await syncNba();
       // await syncMlb();
-      await syncWorldCup();
+      await syncNflBts();
+      // await syncWorldCup();
       // await tourneyPickemLockLines();
     } catch (err) {
       console.error("Background job failed:", err);

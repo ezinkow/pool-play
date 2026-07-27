@@ -72,6 +72,13 @@ import NflMyRoster from './pages/nfl/MyRoster';
 import NflSignUp from './pages/nfl/SignUp';
 import NflPlayerPoolsTable from './pages/nfl/PlayerStats';
 
+// NFL BTS pages
+import NflBtsHome from './pages/nfl_bts/Home';
+import NflBtsStandings from './pages/nfl_bts/Standings';
+import NflBtsPicks from './pages/nfl_bts/Picks';
+import NflBtsSignUp from './pages/nfl_bts/SignUp';
+import NflBtsGroupPicks from './pages/nfl_bts/GroupPicks';
+
 // Super Bowl Squares pages
 import SuperBowlSquaresGrid from "./pages/superbowl_squares/Grid";
 import SuperBowlSquaresResults from "./pages/superbowl_squares/Results";
@@ -150,6 +157,13 @@ export default function App() {
           <Route path="/tourneysquares/numbers" element={<TourneySquaresNumbers />} />
           <Route path="/tourneysquares/admin" element={<TourneySquaresAdmin />} />
 
+          {/* MLB */}
+          <Route path="/mlb" element={<MlbHome />} />
+          <Route path="/mlb/signup" element={<MlbSignUp />} />
+          <Route path="/mlb/picks" element={<MlbPicks />} />
+          <Route path="/mlb/picksdisplay" element={<MlbPicksDisplay />} />
+          <Route path="/mlb/standings" element={<MlbStandings />} />
+
           {/* NBA */}
           <Route path="/nba" element={<NbaHome />} />
           <Route path="/nba/picks" element={<NbaPicks />} />
@@ -159,13 +173,6 @@ export default function App() {
           <Route path="/nba/signup" element={<NbaSignUp />} />
           <Route path="/nba/adminrefresh" element={<NbaAdminRefresh />} />
 
-          {/* MLB */}
-          <Route path="/mlb" element={<MlbHome />} />
-          <Route path="/mlb/signup" element={<MlbSignUp />} />
-          <Route path="/mlb/picks" element={<MlbPicks />} />
-          <Route path="/mlb/picksdisplay" element={<MlbPicksDisplay />} />
-          <Route path="/mlb/standings" element={<MlbStandings />} />
-
           {/* NFL */}
           <Route path="/nfl" element={<NflHome />} />
           <Route path="/nfl/signup" element={<NflSignUp />} />
@@ -174,6 +181,13 @@ export default function App() {
           <Route path="/nfl/myroster" element={<NflMyRoster />} />
           <Route path="/nfl/standings" element={<NflStandings />} />
           <Route path="/nfl/playerstats" element={<NflPlayerPoolsTable />} />
+
+          {/* NFL BTS*/}
+          <Route path="/nflbts" element={<NflBtsHome />} />
+          <Route path="/nflbts/signup" element={<NflBtsSignUp />} />
+          <Route path="/nflbts/picks" element={<NflBtsPicks />} />
+          <Route path="/nflbts/standings" element={<NflBtsStandings />} />
+          <Route path="/nflbts/grouppicks" element={<NflBtsGroupPicks />} />
 
           {/* Super Bowl Squares */}
           <Route path="/superbowlsquares" element={<SuperBowlSquaresHome />} />

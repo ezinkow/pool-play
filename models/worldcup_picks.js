@@ -3,8 +3,10 @@ module.exports = function (sequelize, DataTypes) {
         user_id: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            // 🧠 This references world_cup_entries primary auto-incrementing key 'id'
-            references: { model: "world_cup_entries", key: "id" }
+            references: {
+                model: "world_cup_entries",
+                key: "user_id" // Change 'id' to 'user_id' here
+            }
         },
         match_id: {
             type: DataTypes.STRING,
@@ -18,10 +20,10 @@ module.exports = function (sequelize, DataTypes) {
     }, { tableName: "world_cup_picks", timestamps: true });
 
     WorldCupPicks.associate = function (models) {
-        // 🧠 FIXED: Points cleanly back to the unique entry row primary key ID
         WorldCupPicks.belongsTo(models.WorldCupEntries, {
             foreignKey: 'user_id',
-            targetKey: 'user_id'
+            targetKey: 'user_id', // Must match the primary key column name in WorldCupEntries
+            constraints: true   // Ensures database-level foreign key is generated correctly
         });
 
         WorldCupPicks.belongsTo(models.WorldCupMatches, {
