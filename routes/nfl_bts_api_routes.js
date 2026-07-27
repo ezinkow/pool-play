@@ -196,7 +196,7 @@ module.exports = function (app) {
         }
     });
 
-    // --------------------------------------------------------
+// --------------------------------------------------------
     // GET /api/nfl_bts/matrix
     // --------------------------------------------------------
     app.get("/api/nfl_bts/matrix", requireAuth, async (req, res) => {
@@ -208,6 +208,7 @@ module.exports = function (app) {
                     u.user_id as user_id,
                     u.entry_name as user_name,
                     fa.team_name,
+                    ft.logo as team_logo,
                     fm.home_team,
                     fm.away_team,
                     fm.adjusted_spread,
@@ -215,9 +216,12 @@ module.exports = function (app) {
                     fm.game_date,
                     fp.ats_pick,
                     fp.ou_pick,
-                    fp.ats_status as status
+                    fp.ats_status as status,
+                    fm.home_logo,
+                    fm.away_logo
                 FROM nfl_bts_team_assignments fa
                 JOIN nfl_bts_entries u ON fa.user_id = u.user_id
+                LEFT JOIN nfl_bts_teams ft ON ft.name = fa.team_name
                 LEFT JOIN nfl_bts_games fm 
                     ON fm.week = :week 
                     AND (fm.home_team = fa.team_name OR fm.away_team = fa.team_name)
