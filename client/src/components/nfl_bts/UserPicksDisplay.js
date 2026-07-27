@@ -88,7 +88,8 @@ export default function FootballMatrix() {
                             <tbody>
                                 {matrixData.map((row, idx) => {
                                     const isRevealed = canRevealPick(row.game_date);
-                                    const isCurrentUser = row.user_id === user.id;
+                                    // Strictly evaluate against user.id
+                                    const isCurrentUser = Number(row.user_id) === Number(user.id);
 
                                     return (
                                         <tr key={row.user_id} style={{
@@ -96,7 +97,7 @@ export default function FootballMatrix() {
                                             backgroundColor: isCurrentUser ? "#fef08a" : (idx % 2 === 0 ? "#fafafa" : "white")
                                         }}>
                                             <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: 14 }}>
-                                                {row.real_name || row.user_name}
+                                                {row.user_name} {isCurrentUser && "(You)"}
                                             </td>
                                             <td style={{ padding: "12px 16px", fontSize: 14, fontWeight: 500 }}>
                                                 {row.team_name}

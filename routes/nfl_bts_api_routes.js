@@ -94,8 +94,8 @@ module.exports = function (app) {
             }
 
             // Fetch official branding from NflBtsTeams table using the assigned team name
-            const teamMeta = await db.NflBtsTeams.findOne({ 
-                where: { name: assignment.team_name } 
+            const teamMeta = await db.NflBtsTeams.findOne({
+                where: { name: assignment.team_name }
             });
 
             res.json({
@@ -205,7 +205,7 @@ module.exports = function (app) {
 
             const query = `
                 SELECT 
-                    u.id as user_id,
+                    u.user_id as user_id,
                     u.entry_name as user_name,
                     fa.team_name,
                     fm.home_team,
@@ -217,28 +217,27 @@ module.exports = function (app) {
                     fp.ou_pick,
                     fp.ats_status as status
                 FROM nfl_bts_team_assignments fa
-                JOIN nfl_bts_entries u ON fa.user_id = u.id
+                JOIN nfl_bts_entries u ON fa.user_id = u.user_id
                 LEFT JOIN nfl_bts_games fm 
                     ON fm.week = :week 
                     AND (fm.home_team = fa.team_name OR fm.away_team = fa.team_name)
                 LEFT JOIN nfl_bts_picks fp 
                     ON fp.user_id = fa.user_id 
                     AND fp.week = :week
-                ORDER BY fa.team_name ASC;
+                ORDER BY u.entry_name ASC;
             `;
 
-            // ✅ Fixed: using imported sequelize instance directly
             const [results] = await db.sequelize.query(query, {
                 replacements: { week: parseInt(week) }
             });
 
             res.json(results);
         } catch (err) {
-            console.error(err);
+            console.error("Matrix route error:", err);
             res.status(500).json({ error: "Failed to fetch matrix" });
         }
     });
-
+    
     // --------------------------------------------------------
     // GET /api/nfl_bts/standings
     // --------------------------------------------------------
