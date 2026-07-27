@@ -1,7 +1,7 @@
 const axios = require("axios");
 const db = require("../../models");
 
-const SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard";
+const SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=20260909-20270112";
 
 /**
  * 🧠 HOOK RULE LOGIC:
