@@ -92,14 +92,14 @@ export default function FootballHome() {
           maxWidth: "850px",
           margin: "24px auto 80px auto"
         }}>
-          <h3 style={{ color: NFL_BLUE, marginTop: 0, marginBottom: 16, fontSize: "1.2rem" }}>
-            📋 Football Survivor / Pick'em Rules
+          <h3 style={{ color: NFL_BLUE, marginTop: 0, marginBottom: 16, fontSize: "1.2rem", textAlign: 'center' }}>
+            📋 Beat The Spread: <br />Assigned Team
           </h3>
           <ol style={{ paddingLeft: 20, lineHeight: "1.7", fontSize: "14px" }}>
             <li><strong>Assigned Team:</strong> You are randomly assigned one NFL team for the entire season once the 32-player room fills up.</li>
             <li><strong>Weekly Commitment:</strong> Every week, you must pick your assigned team's game Against The Spread (ATS) and make an Over/Under guess (used for tiebreakers).</li>
             <li><strong>The Hook Rule:</strong> Whole number spreads are adjusted up or down based on their juice. -110 and lower moves down (ex. -3 to -2.5), while anything above -110 moves up (ex. -3 to -3.5)</li>
-            <li><strong>Divisions:</strong> Compete directly within your assigned NFL division based on ATS record (W-L-P).</li>
+            <li><strong>Divisions:</strong> Compete directly within your assigned NFL division based on ATS record (W-L).</li>
             <li><strong>Privacy:</strong> Group picks on the matrix remain hidden until that specific team's game kicks off.</li>
           </ol>
         </div>

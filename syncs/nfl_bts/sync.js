@@ -1,13 +1,37 @@
 const axios = require("axios");
 const db = require("../../models");
 
-const SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=20260909-20270112";
-
 /**
- * 🧠 HOOK RULE LOGIC:
- * Adjusts spreads close to key numbers (like 3) depending on juice/odds thresholds.
- * For example, a -3 with heavy juice (-115 or higher) can be adjusted to -3.5.
+ * 🧠 DYNAMIC DATE CALCULATOR (Wednesday to Tuesday NFL Windows)
+ * Automatically generates the ESPN scoreboard date range string for the current week and next week.
  */
+function getDynamicDateRange() {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 3 = Wednesday, etc.
+
+    // Calculate days to the most recent Wednesday
+    // If today is Monday (1) or Tuesday (2), the "current" football week started last Wednesday.
+    // If today is Wednesday (3) through Saturday (6) or Sunday (0), it started this past Wednesday.
+    let distanceToWednesday = (dayOfWeek >= 3) ? (dayOfWeek - 3) : (dayOfWeek + 4);
+
+    const currentWednesday = new Date(now);
+    currentWednesday.setDate(now.getDate() - distanceToWednesday);
+
+    // We want a 2-week window ending 14 days later (covering this week + next week)
+    const twoWeeksOut = new Date(currentWednesday);
+    twoWeeksOut.setDate(currentWednesday.getDate() + 50); // Covers Wednesday through Tuesday 2 weeks later
+
+    const formatDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}${month}${day}`;
+    };
+    console.log(currentWednesday, twoWeeksOut)
+
+    return `${formatDate(currentWednesday)}-${formatDate(twoWeeksOut)}`;
+}
+
 /**
  * 🧠 UNIVERSAL HOOK RULE LOGIC:
  * Automatically detects any whole number spread (e.g., 3.0, 6.0, 7.0) 
@@ -22,14 +46,14 @@ function applyHookRule(spread, odds) {
 
     // Check if the number is a whole number (e.g., 3.0, 6.0, 10.0)
     const isWholeNumber = Number.isInteger(absVal);
-    // console.log(isWholeNumber)
     if (isWholeNumber) {
         // If it's a whole number and juice meets your threshold, bump by 0.5
         if (odds !== null && odds !== undefined && odds >= -110) {
             adjustedAbs = absVal - 0.5;
-        } else { adjustedAbs = absVal + 0.5 }
+        } else {
+            adjustedAbs = absVal + 0.5;
+        }
     }
-    // console.log(spread, odds)
     // Always return as a negative number for the favorite's adjusted spread
     return -adjustedAbs;
 }
@@ -39,6 +63,11 @@ function extractMatchups(data) {
     const matchups = [];
 
     data.events.forEach(event => {
+        // 🧠 CONDITION: Only look for regular season games (season.type === 2)
+        const seasonType = event.season?.type;
+        if (seasonType !== 2) {
+            return; // Skip preseason (1), postseason (3), etc.
+        }
         const comp = event.competitions?.[0];
         if (!comp) return;
 
@@ -119,6 +148,7 @@ function extractMatchups(data) {
 
     return matchups;
 }
+
 async function processMatchup(m) {
     const { NflBtsGames } = db;
     try {
@@ -137,13 +167,17 @@ async function processMatchup(m) {
 
 async function syncNflBts() {
     try {
-        // console.log("[NFL BTS sync] Starting scoreboard sync with extended odds and point spread fallbacks...");
-        const { data } = await axios.get(SCOREBOARD_URL, { timeout: 15000 });
+        const dateRange = getDynamicDateRange();
+        const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=20260909-20260922`;
+
+        console.log(`[NFL BTS sync] Fetching scoreboard data for range: ${dateRange}`);
+        const { data } = await axios.get(scoreboardUrl, { timeout: 15000 });
+
         const matchups = extractMatchups(data);
         for (const m of matchups) {
             await processMatchup(m);
         }
-        // console.log(`[NFL BTS sync] Successfully synced ${matchups.length} matchups.`);
+        console.log(`[NFL BTS sync] Successfully synced ${matchups.length} matchups.`);
     } catch (err) {
         console.error("[NFL BTS sync] Fatal Error:", err.message);
     }

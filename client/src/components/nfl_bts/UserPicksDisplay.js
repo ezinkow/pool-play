@@ -123,8 +123,8 @@ export default function FootballMatrix() {
                                             {/* Assigned Team Column with Logo from nfl_bts_teams */}
                                             <td style={{ padding: "12px 16px", fontSize: 14, fontWeight: 500 }}>
                                                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                                    {row.team_logo && (
-                                                        <img src={row.team_logo} alt={row.team_name} style={{ width: 24, height: 24, objectFit: "contain" }} />
+                                                    {row.logo && (
+                                                        <img src={row.logo} alt={row.team_name} style={{ width: 24, height: 24, objectFit: "contain" }} />
                                                     )}
                                                     <span>{row.team_name || "Unassigned"}</span>
                                                 </div>

@@ -40,8 +40,16 @@ body {
 
 .page-content {
   padding-top: 50px;
-  /* Matches --navbar-height */
   min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Mobile responsive override */
+@media (max-width: 768px) {
+  .page-content {
+    padding-top: 20px;
+    padding-bottom: 5px;
+  }
 }
 
 /* 🧼 STRUCTURAL ANTI-COLLISION SHIELDS */

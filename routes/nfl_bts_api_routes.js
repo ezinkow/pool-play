@@ -196,7 +196,7 @@ module.exports = function (app) {
         }
     });
 
-// --------------------------------------------------------
+    // --------------------------------------------------------
     // GET /api/nfl_bts/matrix
     // --------------------------------------------------------
     app.get("/api/nfl_bts/matrix", requireAuth, async (req, res) => {
@@ -208,7 +208,7 @@ module.exports = function (app) {
                     u.user_id as user_id,
                     u.entry_name as user_name,
                     fa.team_name,
-                    ft.logo as team_logo,
+                    ft.logo,
                     fm.home_team,
                     fm.away_team,
                     fm.adjusted_spread,
@@ -241,32 +241,33 @@ module.exports = function (app) {
             res.status(500).json({ error: "Failed to fetch matrix" });
         }
     });
-    
+
     // --------------------------------------------------------
     // GET /api/nfl_bts/standings
     // --------------------------------------------------------
     app.get("/api/nfl_bts/standings", requireAuth, async (req, res) => {
         try {
             const query = `
-                SELECT 
-                    fa.user_id,
-                    u.entry_name as user_name,
-                    fa.team_name,
-                    fa.division,
-                    SUM(CASE WHEN fp.ats_status = 'win' THEN 1 ELSE 0 END) as ats_wins,
-                    SUM(CASE WHEN fp.ats_status = 'loss' THEN 1 ELSE 0 END) as ats_losses,
-                    SUM(CASE WHEN fp.ats_status = 'push' THEN 1 ELSE 0 END) as ats_pushes,
-                    SUM(CASE WHEN fp.ou_status = 'win' THEN 1 ELSE 0 END) as ou_wins,
-                    SUM(CASE WHEN fp.ou_status = 'loss' THEN 1 ELSE 0 END) as ou_losses,
-                    SUM(CASE WHEN fp.ou_status = 'push' THEN 1 ELSE 0 END) as ou_pushes
-                FROM nfl_bts_team_assignments fa
-                JOIN nfl_bts_entries u ON fa.user_id = u.id
-                LEFT JOIN nfl_bts_picks fp ON fa.user_id = fp.user_id
-                GROUP BY fa.user_id, u.entry_name, fa.team_name, fa.division
-                ORDER BY fa.division ASC, ats_wins DESC, ou_wins DESC;
-            `;
+            SELECT 
+                fa.user_id,
+                u.entry_name as user_name,
+                fa.team_name,
+                fa.division,
+                t.logo,
+                SUM(CASE WHEN fp.ats_status = 'win' THEN 1 ELSE 0 END) as ats_wins,
+                SUM(CASE WHEN fp.ats_status = 'loss' THEN 1 ELSE 0 END) as ats_losses,
+                SUM(CASE WHEN fp.ats_status = 'push' THEN 1 ELSE 0 END) as ats_pushes,
+                SUM(CASE WHEN fp.ou_status = 'win' THEN 1 ELSE 0 END) as ou_wins,
+                SUM(CASE WHEN fp.ou_status = 'loss' THEN 1 ELSE 0 END) as ou_losses,
+                SUM(CASE WHEN fp.ou_status = 'push' THEN 1 ELSE 0 END) as ou_pushes
+            FROM nfl_bts_team_assignments fa
+            JOIN nfl_bts_entries u ON fa.user_id = u.user_id
+            LEFT JOIN nfl_bts_teams t ON fa.team_name = t.name
+            LEFT JOIN nfl_bts_picks fp ON fa.user_id = fp.user_id
+            GROUP BY fa.user_id, u.entry_name, fa.team_name, fa.division, t.logo
+            ORDER BY fa.division ASC, ats_wins DESC, ou_wins DESC;
+        `;
 
-            // ✅ Fixed: using imported sequelize instance directly
             const [results] = await db.sequelize.query(query);
             res.json(results);
         } catch (err) {

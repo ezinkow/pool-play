@@ -19,7 +19,7 @@ export default function PoolCountdown({ poolData, mode }) {
           clearInterval(timer);
         } else {
           setTimeLeft(formatTime(diff));
-          setSubText(`${poolData.game_label} Pool Locks In`);
+          setSubText(`Until ${poolData.game_label} Pool Entries Close`);
         }
       }, 1000);
 
