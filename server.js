@@ -22,7 +22,7 @@ const db = require("./models");
 
 // ── 2. INITIALIZE SYNCHRONIZATION MATRIX ─────────────────────────────────────
 // NOTE: Turn force: false and alter: false once your tables create so you don't drop data!
-db.sequelize.sync({ force: false, alter: false }).then(() => {
+db.sequelize.sync({ force: false, alter: true }).then(() => {
   // ── 3. MOVED INSIDE: Routes only load AFTER tables exist ────────────────────
 
   // Shared auth (single login for all games)
