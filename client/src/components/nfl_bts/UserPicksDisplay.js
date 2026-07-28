@@ -22,8 +22,24 @@ export default function FootballMatrix() {
             params: { week: currentWeek },
             headers: { Authorization: `Bearer ${token}` }
         })
-            .then(res => setMatrixData(res.data))
-            .catch(err => console.error("Failed to load user picks", err))
+            .then(res => {
+                // Safely handle whether the API returns a direct array or an object containing an array
+                const data = res.data;
+                if (Array.isArray(data)) {
+                    setMatrixData(data);
+                } else if (data && Array.isArray(data.data)) {
+                    setMatrixData(data.data);
+                } else if (data && Array.isArray(data.matrix)) {
+                    setMatrixData(data.matrix);
+                } else {
+                    setMatrixData([]);
+                }
+                console.log(matrixData)
+            })
+            .catch(err => {
+                console.error("Failed to load user picks", err);
+                setMatrixData([]); // Fallback to an empty array on error
+            })
             .finally(() => setLoading(false));
     }, [user, currentWeek]);
 
@@ -50,7 +66,7 @@ export default function FootballMatrix() {
                     <h2 style={{ color: NFL_BLUE, fontSize: "28px", margin: 0 }}>Weekly Group Matrix</h2>
                     <p style={{ color: "#666", marginTop: 8 }}>Picks are hidden until individual game kickoff.</p>
                 </div>
-                <div style={{ textAlign: "center", marginBottom: 1}}>
+                <div style={{ textAlign: "center", marginBottom: 1 }}>
                     <h3 style={{ color: NFL_BLUE, fontSize: "15px", margin: 0 }}>Select Week:</h3>
                 </div>
                 {/* Week Selector Tabs */}
@@ -70,7 +86,7 @@ export default function FootballMatrix() {
                                 transition: "all 0.2s"
                             }}
                         >
-                        {i + 1}
+                            {i + 1}
                         </button>
                     ))}
                 </div>
@@ -131,6 +147,7 @@ export default function FootballMatrix() {
                                             </td>
 
                                             {/* Matchup Column */}
+                                            {/* Matchup Column */}
                                             <td style={{ padding: "12px 16px", fontSize: 13 }}>
                                                 <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
                                                     {row.away_logo && (
@@ -141,13 +158,27 @@ export default function FootballMatrix() {
                                                         <img src={row.home_logo} alt={row.home_team} style={{ width: 24, height: 24, objectFit: "contain" }} />
                                                     )}
                                                 </div>
-                                                <div style={{ color: "#666", fontSize: 11, marginTop: 2 }}>
-                                                    {row.game_date ? new Date(row.game_date).toLocaleString([], {
-                                                        month: 'short',
-                                                        day: 'numeric',
-                                                        hour: '2-digit',
-                                                        minute: '2-digit'
-                                                    }) : "TBD"} CT | Line: {row.adjusted_spread} | O/U: {row.over_under}
+
+                                                {/* Subtext with Inline Favorite Logo */}
+                                                <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#666", fontSize: 11, marginTop: 4, flexWrap: "wrap" }}>
+                                                    <span>
+                                                        {row.game_date ? new Date(row.game_date).toLocaleString([], {
+                                                            month: 'short',
+                                                            day: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        }) : "TBD"} CT
+                                                    </span>
+                                                    <span>|</span>
+                                                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                                        <span>Line:</span>
+                                                        {row.favorite_logo ? (
+                                                            <img src={row.favorite_logo} alt={row.favorite_team || "Favorite"} style={{ width: 16, height: 16, objectFit: "contain" }} />
+                                                        ) : null}
+                                                        <span>{row.adjusted_spread}</span>
+                                                    </div>
+                                                    <span>|</span>
+                                                    <span>O/U: {row.over_under}</span>
                                                 </div>
                                             </td>
 

@@ -28,7 +28,7 @@ module.exports = function (app) {
             const room_id = parseInt(req.body.room_id || req.body.room_number) || 1;
             const entry_name = (req.body.entry_name || req.user.name).trim();
 
-            if (![1, 2].includes(room_id)) {
+            if (![1, 2, 3].includes(room_id)) {
                 return res.status(400).json({ error: "Invalid room selection" });
             }
 
@@ -76,7 +76,7 @@ module.exports = function (app) {
         try {
             const room_id = parseInt(req.body.room_id || req.body.room_number);
 
-            if (![1, 2].includes(room_id)) {
+            if (![1, 2, 3].includes(room_id)) {
                 return res.status(400).json({ error: "Invalid room selection" });
             }
 
@@ -236,6 +236,108 @@ module.exports = function (app) {
         } catch (err) {
             console.error(err);
             res.status(500).json({ error: "Failed to save pick" });
+        }
+    });
+
+
+    //  --------------------------------------------------------
+    // GET /api/nfl_bts/matrix
+    // --------------------------------------------------------
+    app.get("/api/nfl_bts/matrix", requireAuth, async (req, res) => {
+        try {
+            const { week, room_id, room_number } = req.query;
+            const targetRoom = parseInt(room_id || room_number) || 1;
+            const targetWeek = parseInt(week) || 1;
+
+            // Fetch all entries for this room
+            const entries = await NflBtsEntries.findAll({
+                where: { room_id: targetRoom },
+                include: [{ model: Users, attributes: ["id", "name"] }],
+                raw: true,
+                nest: true
+            });
+
+            const matrix = [];
+
+            for (const entry of entries) {
+                const userId = entry.user_id;
+                const userName = entry.entry_name || (entry.User ? entry.User.name : "Unknown");
+
+                // Get user's assigned team for this room
+                const assignment = await NflBtsTeamAssignments.findOne({
+                    where: { user_id: userId, room_id: targetRoom }
+                });
+
+                const teamName = assignment ? assignment.team_name : null;
+
+                // Get team logo metadata
+                let teamLogo = null;
+                if (teamName) {
+                    const teamMeta = await NflBtsTeams.findOne({ where: { name: teamName } });
+                    if (teamMeta) teamLogo = teamMeta.logo;
+                }
+
+                // Get game details for their assigned team this week
+                let game = null;
+                if (teamName) {
+                    game = await NflBtsGames.findOne({
+                        where: {
+                            week: targetWeek,
+                            [Op.or]: [{ home_team: teamName }, { away_team: teamName }]
+                        }
+                    });
+                }
+
+                // Get user's pick for this week
+                const pick = await NflBtsPicks.findOne({
+                    where: { user_id: userId, week: targetWeek, room_id: targetRoom }
+                });
+
+                // Get logos for teams in the matchup
+                let awayLogo = null;
+                let homeLogo = null;
+                let favoriteLogo = null;
+                let favoriteTeam = null;
+
+                if (game) {
+                    favoriteTeam = game.favorite || null;
+
+                    const awayMeta = await NflBtsTeams.findOne({ where: { name: game.away_team } });
+                    const homeMeta = await NflBtsTeams.findOne({ where: { name: game.home_team } });
+                    if (awayMeta) awayLogo = awayMeta.logo;
+                    if (homeMeta) homeLogo = homeMeta.logo;
+
+                    if (favoriteTeam) {
+                        const favMeta = await NflBtsTeams.findOne({ where: { name: favoriteTeam } });
+                        if (favMeta) favoriteLogo = favMeta.logo;
+                    }
+                }
+
+
+                matrix.push({
+                    user_id: userId,
+                    user_name: userName,
+                    team_name: teamName,
+                    logo: teamLogo,
+                    game_date: game ? game.game_date : null,
+                    away_team: game ? game.away_team : null,
+                    home_team: game ? game.home_team : null,
+                    away_logo: awayLogo,
+                    home_logo: homeLogo,
+                    favorite_team: favoriteTeam,
+                    favorite_logo: favoriteLogo,
+                    adjusted_spread: game ? game.adjusted_spread : null,
+                    over_under: game ? game.over_under : null,
+                    ats_pick: pick ? pick.ats_pick : null,
+                    ou_pick: pick ? pick.ou_pick : null,
+                    status: pick ? pick.status : null
+                });
+            }
+
+            res.json(matrix);
+        } catch (err) {
+            console.error("Error fetching matrix data:", err);
+            res.status(500).json({ error: "Failed to load group matrix" });
         }
     });
 

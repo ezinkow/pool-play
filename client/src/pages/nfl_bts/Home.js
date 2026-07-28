@@ -15,7 +15,7 @@ export default function FootballHome() {
   const [poolData, setPoolData] = useState(null);
   const [userEntries, setUserEntries] = useState([]);
   const [confirmLeaveRoom, setConfirmLeaveRoom] = useState(null);
-  const [customEntryNames, setCustomEntryNames] = useState({ 1: "", 2: "" });
+  const [customEntryNames, setCustomEntryNames] = useState({ 1: "", 2: "", 3: "" });
 
   const loadData = () => {
     axios.get("/api/settings/active-states")
@@ -54,7 +54,7 @@ export default function FootballHome() {
       }, {
         headers: { Authorization: `Bearer ${token || localStorage.getItem("token")}` }
       });
-      toast.success(`Successfully joined the ${creditAmount}-credit pool!`);
+      toast.success(`Successfully joined Room ${roomId} (${creditAmount}-credit pool)!`);
       loadData();
     } catch (err) {
       toast.error(err.response?.data?.error || "Failed to join pool");
@@ -66,7 +66,7 @@ export default function FootballHome() {
       await axios.post("/api/nfl_bts/entries/leave", { room_id: roomId }, {
         headers: { Authorization: `Bearer ${token || localStorage.getItem("token")}` }
       });
-      toast.success("Successfully left the pool.");
+      toast.success(`Successfully left Room ${roomId}.`);
       setConfirmLeaveRoom(null);
       loadData();
     } catch (err) {
@@ -76,9 +76,9 @@ export default function FootballHome() {
 
   if (authLoading) return null;
 
-  // Use Number() conversion to reliably match room_id regardless of string/number DB typing
   const entryRoom1 = userEntries.find(e => Number(e.room_id) === 1);
   const entryRoom2 = userEntries.find(e => Number(e.room_id) === 2);
+  const entryRoom3 = userEntries.find(e => Number(e.room_id) === 3);
   const hasAnyEntry = userEntries.length > 0;
 
   return (
@@ -102,16 +102,17 @@ export default function FootballHome() {
           boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
           marginBottom: 24,
           borderTop: `4px solid ${NFL_BLUE}`,
-          maxWidth: "850px",
+          maxWidth: "950px",
           margin: "0 auto 24px auto"
         }}>
           <h3 style={{ color: NFL_BLUE, marginTop: 0, marginBottom: 16, fontSize: "1.2rem" }}>
             🏟️ Pool Rooms Selection
           </h3>
-          <div style={{ display: "flex", justifyContent: "center", gap: "24px", flexWrap: "wrap" }}>
+          <p>No need to choose! Join multiple pools, guaranteed not to get the same team.</p>
+          <div style={{ display: "flex", justifyContent: "center", gap: "20px", flexWrap: "wrap" }}>
 
             {/* Room 1 (50 Credits) */}
-            <div style={{ flex: "1 1 300px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
+            <div style={{ flex: "1 1 260px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
               <h4 style={{ margin: "0 0 8px 0", color: NFL_BLUE, textAlign: "center" }}>Room 1: 50 Credit Pool</h4>
               {entryRoom1 ? (
                 <div style={{ textAlign: "center" }}>
@@ -135,7 +136,6 @@ export default function FootballHome() {
                 </div>
               ) : (
                 <div>
-                  <p style={{ fontSize: "13px", color: "#64748b", textAlign: "center", marginBottom: 12 }}>Standard entry level competition.</p>
                   <div style={{ marginBottom: 12 }}>
                     <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE, display: "block", marginBottom: 4 }}>Entry / Display Name:</label>
                     <input
@@ -154,8 +154,8 @@ export default function FootballHome() {
             </div>
 
             {/* Room 2 (100 Credits) */}
-            <div style={{ flex: "1 1 300px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
-              <h4 style={{ margin: "0 0 8px 0", color: NFL_BLUE, textAlign: "center" }}>Room 2: 100 Credit Pool</h4>
+            <div style={{ flex: "1 1 260px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
+              <h4 style={{ margin: "0 0 8px 0", color: NFL_BLUE, textAlign: "center" }}>Room 2: 100 Credit Pool A</h4>
               {entryRoom2 ? (
                 <div style={{ textAlign: "center" }}>
                   <p style={{ fontSize: "14px", color: "#16a34a", fontWeight: "bold" }}>✓ You are in Room 2</p>
@@ -178,7 +178,6 @@ export default function FootballHome() {
                 </div>
               ) : (
                 <div>
-                  <p style={{ fontSize: "13px", color: "#64748b", textAlign: "center", marginBottom: 12 }}>High roller stake competition.</p>
                   <div style={{ marginBottom: 12 }}>
                     <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE, display: "block", marginBottom: 4 }}>Entry / Display Name:</label>
                     <input
@@ -190,7 +189,49 @@ export default function FootballHome() {
                     />
                   </div>
                   <button onClick={() => handleJoinPool(2, 100)} className="btn-fb-secondary" style={{ width: "100%", padding: "10px 20px", fontSize: "14px" }}>
-                    Join 100 Credit Pool
+                    Join 100-Credit Pool A
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Room 3 (100 Credits - Second Room) */}
+            <div style={{ flex: "1 1 260px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
+              <h4 style={{ margin: "0 0 8px 0", color: NFL_BLUE, textAlign: "center" }}>Room 3: 100 Credit Pool B</h4>
+              {entryRoom3 ? (
+                <div style={{ textAlign: "center" }}>
+                  <p style={{ fontSize: "14px", color: "#16a34a", fontWeight: "bold" }}>✓ You are in Room 3</p>
+                  <p style={{ fontSize: "13px", color: "#475569", margin: "4px 0 12px 0" }}>Display Name: <strong>{entryRoom3.entry_name}</strong></p>
+                  {!isPoolStarted && (
+                    <div>
+                      {confirmLeaveRoom === 3 ? (
+                        <div style={{ marginTop: 12, background: "#fee2e2", padding: 10, borderRadius: 8, textAlign: "center" }}>
+                          <p style={{ fontSize: "13px", margin: "0 0 8px 0", color: "#b91c1c", fontWeight: "bold" }}>Are you sure you want to leave?</p>
+                          <button onClick={() => handleLeavePool(3)} style={{ background: NFL_RED, color: WHITE, border: "none", padding: "6px 12px", borderRadius: 6, marginRight: 8, cursor: "pointer", fontWeight: "bold" }}>Yes, Leave</button>
+                          <button onClick={() => setConfirmLeaveRoom(null)} style={{ background: "#cbd5e1", border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>Cancel</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setConfirmLeaveRoom(3)} style={{ background: "transparent", color: NFL_RED, border: `1px solid ${NFL_RED}`, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: "13px", fontWeight: "bold", display: "block", margin: "0 auto" }}>
+                          Leave Pool
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE, display: "block", marginBottom: 4 }}>Entry / Display Name:</label>
+                    <input
+                      type="text"
+                      value={customEntryNames[3] !== undefined ? customEntryNames[3] : (user?.name || "")}
+                      onChange={(e) => setCustomEntryNames({ ...customEntryNames, 3: e.target.value })}
+                      placeholder="Enter display name"
+                      style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #cbd5e1", boxSizing: "border-box" }}
+                    />
+                  </div>
+                  <button onClick={() => handleJoinPool(3, 100)} className="btn-fb-secondary" style={{ width: "100%", padding: "10px 20px", fontSize: "14px" }}>
+                    Join 100-Credit Pool B
                   </button>
                 </div>
               )}
@@ -249,7 +290,7 @@ export default function FootballHome() {
           margin: "24px auto 80px auto"
         }}>
           <h3 style={{ color: NFL_BLUE, marginTop: 0, marginBottom: 16, fontSize: "1.2rem", textAlign: 'center' }}>
-            📋 Beat The Spread: <br />Assigned Team
+            📋 Beat The Spread:
           </h3>
           <ol style={{ paddingLeft: 20, lineHeight: "1.7", fontSize: "14px" }}>
             <li><strong>Assigned Team:</strong> You are randomly assigned one NFL team for the entire season once the 32-player room fills up.</li>
