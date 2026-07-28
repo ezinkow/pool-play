@@ -16,7 +16,13 @@ module.exports = function (sequelize, DataTypes) {
         division: {
             type: DataTypes.STRING, // e.g., "NFC North", "AFC East"
             allowNull: false
-        }
+        },
+        room_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 1
+        },
+
     }, {
         tableName: "nfl_bts_team_assignments",
         timestamps: true

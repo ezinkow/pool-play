@@ -27,6 +27,11 @@ module.exports = function (sequelize, DataTypes) {
         ou_status: {
             type: DataTypes.STRING, // "win", "loss", "push", or null
             allowNull: true
+        },
+        room_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 1
         }
     }, {
         tableName: "nfl_bts_picks",

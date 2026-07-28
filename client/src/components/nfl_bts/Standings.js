@@ -24,7 +24,6 @@ export default function FootballStandings() {
             .then(res => {
                 const grouped = res.data.reduce((acc, player) => {
                     if (!acc[player.division]) acc[player.division] = [];
-                    console.log(player)
                     acc[player.division].push(player);
                     return acc;
                 }, {});

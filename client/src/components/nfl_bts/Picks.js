@@ -10,6 +10,8 @@ const NFL_BLUE = "#013369";
 
 export default function NflBtsPicks() {
     const { user, loading: authLoading } = useAuth();
+    const [userEntries, setUserEntries] = useState([]);
+    const [selectedRoomId, setSelectedRoomId] = useState(1);
     const [assignedTeam, setAssignedTeam] = useState(null);
     const [currentWeek, setCurrentWeek] = useState(1);
     const [matchup, setMatchup] = useState(null);
@@ -18,23 +20,45 @@ export default function NflBtsPicks() {
     const [teamMeta, setTeamMeta] = useState({ logo: null, primary_color: "", secondary_color: "" });
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-    // Track window resize for mobile-specific layout switches
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 768);
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    // Fetch user's assigned team and current week's matchup
+    // 1. Fetch user entries to see which rooms they belong to
+    useEffect(() => {
+        if (!user) return;
+        const token = localStorage.getItem("token");
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+
+        axios.get("/api/nfl_bts/entries/me", config)
+            .then(res => {
+                const entries = res.data.entries || [];
+                setUserEntries(entries);
+                if (entries.length > 0) {
+                    // Default to first available room if current selection isn't joined
+                    if (!entries.some(e => e.room_id === selectedRoomId)) {
+                        setSelectedRoomId(entries[0].room_id);
+                    }
+                }
+            })
+            .catch(err => console.error("Error loading user entries", err));
+    }, [user]);
+
+    // 2. Fetch assignment, matchup, and picks for the selected room & week
     useEffect(() => {
         if (!user) return;
         const token = localStorage.getItem("token");
         const config = { headers: { Authorization: `Bearer ${token}` } };
 
         async function fetchData() {
+            setLoading(true);
             try {
-                // 1. Fetch assignment with auth headers attached
-                const assignmentRes = await axios.get("/api/nfl_bts/assignment", config);
+                const assignmentRes = await axios.get("/api/nfl_bts/assignment", {
+                    ...config,
+                    params: { room_id: selectedRoomId }
+                });
                 const teamName = assignmentRes.data.team_name;
                 setAssignedTeam(teamName);
                 setTeamMeta({
@@ -43,17 +67,19 @@ export default function NflBtsPicks() {
                     secondary_color: assignmentRes.data.secondary_color || GOLD
                 });
 
-                // 2. Fetch matchup with auth headers attached
-                const matchupRes = await axios.get("/api/nfl_bts/matchup", {
-                    ...config,
-                    params: { week: currentWeek, team: teamName }
-                });
-                setMatchup(matchupRes.data);
+                if (teamName) {
+                    const matchupRes = await axios.get("/api/nfl_bts/matchup", {
+                        ...config,
+                        params: { week: currentWeek, team: teamName }
+                    });
+                    setMatchup(matchupRes.data);
+                } else {
+                    setMatchup(null);
+                }
 
-                // 3. Fetch user's existing picks with auth headers attached
                 const pickRes = await axios.get("/api/nfl_bts/picks", {
                     ...config,
-                    params: { week: currentWeek }
+                    params: { week: currentWeek, room_id: selectedRoomId }
                 });
                 if (pickRes.data) {
                     setPick({
@@ -70,15 +96,13 @@ export default function NflBtsPicks() {
             }
         }
         fetchData();
-    }, [user, currentWeek]);
+    }, [user, currentWeek, selectedRoomId]);
 
-    // Check if kickoff has passed
     const isKickoffPassed = useMemo(() => {
         if (!matchup?.game_date) return false;
         return new Date() >= new Date(matchup.game_date);
     }, [matchup]);
 
-    // 🧠 SPREAD & FAVORITE LOGIC
     const spreadInfo = useMemo(() => {
         if (!matchup) return null;
         const absSpread = Math.abs(matchup.adjusted_spread ?? matchup.spread ?? 3.0);
@@ -110,24 +134,26 @@ export default function NflBtsPicks() {
 
     const handleSubmit = async () => {
         if (isKickoffPassed) return toast.error("Kickoff has passed. Cannot submit changes.");
+        if (!assignedTeam) return toast.error("No assigned team found for this room yet.");
 
         const token = localStorage.getItem("token");
         try {
             await axios.post("/api/nfl_bts/picks", {
                 name: user.name,
                 week: currentWeek,
+                room_id: selectedRoomId,
                 team_name: assignedTeam,
                 ats_pick: pick.ats_pick,
                 ou_pick: pick.ou_pick
             }, { headers: { Authorization: `Bearer ${token}` } });
 
-            toast.success("Weekly pick saved successfully!");
+            toast.success(`Room ${selectedRoomId} weekly pick saved successfully!`);
         } catch (err) {
             toast.error(err.response?.data?.error || "Failed to save pick");
         }
     };
 
-    if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50 }}>Loading your team assignment...</div>;
+    if (authLoading || (loading && !assignedTeam)) return <div style={{ textAlign: "center", padding: 50 }}>Loading your team assignment...</div>;
 
     const awayColor = matchup?.away_color || "#333333";
     const homeColor = matchup?.home_color || FALLBACK_BLUE;
@@ -137,7 +163,6 @@ export default function NflBtsPicks() {
 
     return (
         <PoolGatekeeper user={user} gameKey="nfl_bts">
-            {/* Sleek mobile-friendly 3-Column Grid Layout Wrapper */}
             <div style={{
                 display: "grid",
                 gridTemplateColumns: "10px 1fr 10px",
@@ -150,14 +175,40 @@ export default function NflBtsPicks() {
                 overflow: "hidden",
                 boxSizing: "border-box"
             }}>
-                {/* Left Edge Banner */}
                 <div style={{ backgroundColor: leftBannerColor, width: "100%", height: "100%" }} />
 
-                {/* Center Content Area */}
                 <div style={{ padding: "16px 8px", minWidth: 0, overflow: "hidden" }}>
                     <Toaster />
 
-                    {/* Header Banner */}
+                    {/* Room Selector Tab Bar (Only shown if user joined both rooms) */}
+                    {userEntries.length > 1 && (
+                        <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 16 }}>
+                            {[1, 2].map(rId => {
+                                const isJoined = userEntries.some(e => e.room_id === rId);
+                                if (!isJoined) return null;
+                                const isSelected = selectedRoomId === rId;
+                                return (
+                                    <button
+                                        key={rId}
+                                        onClick={() => setSelectedRoomId(rId)}
+                                        style={{
+                                            padding: "8px 16px",
+                                            borderRadius: 8,
+                                            border: `2px solid ${NFL_BLUE}`,
+                                            background: isSelected ? NFL_BLUE : "white",
+                                            color: isSelected ? "white" : NFL_BLUE,
+                                            fontWeight: 700,
+                                            cursor: "pointer",
+                                            fontSize: "13px"
+                                        }}
+                                    >
+                                        {rId === 1 ? "Room 1 (50 Credits)" : "Room 2 (100 Credits)"}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+
                     <div style={{
                         background: `linear-gradient(135deg, ${teamMeta.primary_color} 0%, ${teamMeta.secondary_color} 100%)`,
                         padding: "16px 12px",
@@ -169,17 +220,15 @@ export default function NflBtsPicks() {
                         color: "white"
                     }}>
                         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                            <h2 style={{ fontSize: "16px", margin: 0, textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>Team Assignment:</h2>
-
-                            {/* Logo: Always shown if available */}
+                            <h2 style={{ fontSize: "16px", margin: 0, textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>
+                                Room {selectedRoomId} Assignment:
+                            </h2>
                             {teamMeta.logo && (
                                 <img src={teamMeta.logo} alt={assignedTeam} style={{ width: isMobile ? 44 : 38, height: isMobile ? 44 : 38, objectFit: "contain", filter: "drop-shadow(0 2px 10px rgb(0, 0, 0))" }} />
                             )}
-
-                            {/* Team Name: Hidden on mobile, shown on desktop */}
                             {!isMobile && (
                                 <div style={{ fontSize: "16px", fontWeight: 800, textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>
-                                    {assignedTeam || "Waiting for room assignment..."}
+                                    {assignedTeam || "Waiting for team assignment..."}
                                 </div>
                             )}
                         </div>
@@ -187,7 +236,6 @@ export default function NflBtsPicks() {
 
                     <h3 style={{ color: NFL_BLUE, fontSize: "14px", margin: "0 0 6px 0" }}>Select Week:</h3>
 
-                    {/* Horizontal Scrollable Week Selector Tabs */}
                     <div style={{
                         display: "flex",
                         gap: 6,
@@ -220,7 +268,6 @@ export default function NflBtsPicks() {
                         ))}
                     </div>
 
-                    {/* Matchup or Bye Week Card */}
                     {matchup ? (
                         <div style={{
                             background: "white",
@@ -229,7 +276,6 @@ export default function NflBtsPicks() {
                             overflow: "hidden",
                             border: `2px solid ${homeColor}`
                         }}>
-                            {/* Split Team Colors Banner */}
                             <div style={{
                                 background: `linear-gradient(135deg, ${awayColor} 0%, ${awayColor} 48%, ${homeColor} 52%, ${homeColor} 100%)`,
                                 padding: "12px 14px",
@@ -261,7 +307,6 @@ export default function NflBtsPicks() {
                                     <strong style={{ color: "#1e293b" }}>{spreadInfo?.favoriteTeam}</strong> (-{spreadInfo?.absSpread})
                                 </div>
 
-                                {/* ATS Selection Buttons */}
                                 <div style={{ marginBottom: 14 }}>
                                     <label style={{ display: "block", fontWeight: 700, fontSize: "12px", marginBottom: 6, color: "#374151" }}>Against The Spread (ATS) Pick:</label>
                                     <div style={{ display: "flex", gap: 8 }}>
@@ -296,7 +341,6 @@ export default function NflBtsPicks() {
                                     </div>
                                 </div>
 
-                                {/* Over/Under Selection */}
                                 <div style={{ marginBottom: 20 }}>
                                     <label style={{ display: "block", fontWeight: 700, fontSize: "12px", marginBottom: 6, color: "#374151" }}>Over / Under Total ({matchup.over_under}) - Tiebreaker:</label>
                                     <div style={{ display: "flex", gap: 8 }}>
@@ -319,14 +363,13 @@ export default function NflBtsPicks() {
                                     </div>
                                 </div>
 
-                                {/* Submit Button with safe clearance spacing */}
                                 <div style={{ marginBottom: "10px" }}>
                                     {!isKickoffPassed ? (
                                         <button
                                             onClick={handleSubmit}
                                             style={{ width: "100%", padding: 12, backgroundColor: "#16a34a", color: "white", borderRadius: 8, border: "none", fontWeight: 700, fontSize: 14, cursor: "pointer", boxShadow: "0 4px 10px rgba(22,163,74,0.3)" }}
                                         >
-                                            Submit Week {currentWeek} Pick
+                                            Submit Week {currentWeek} Pick (Room {selectedRoomId})
                                         </button>
                                     ) : (
                                         <div style={{ textAlign: "center", color: "#D50A0A", fontWeight: 700, padding: 8, fontSize: "12px" }}>
@@ -338,33 +381,16 @@ export default function NflBtsPicks() {
                         </div>
                     ) : (
                         <div style={{ textAlign: "center", padding: 30, background: "white", borderRadius: 12, border: "1px solid #e2e8f0" }}>
-                            {currentWeek === 1 || currentWeek === 2 ? (
-                                <>
-                                    {teamMeta.logo && (
-                                        <img src={teamMeta.logo} alt={assignedTeam} style={{ width: 48, height: 48, objectFit: "contain", marginBottom: 10 }} />
-                                    )}
-                                    <h3 style={{ margin: "0 0 6px 0", color: teamMeta.primary_color || FALLBACK_BLUE, fontSize: "18px" }}>
-                                        {assignedTeam ? `${assignedTeam} Bye Week` : "Bye Week"}
-                                    </h3>
-                                    <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>
-                                        No active game found for your assigned team this week. (No pick required)
-                                    </p>
-                                </>
-                            ) : (
-                                <>
-                                    <h3 style={{ margin: "0 0 6px 0", color: FALLBACK_BLUE, fontSize: "18px" }}>
-                                        Week {currentWeek} Schedule Pending
-                                    </h3>
-                                    <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>
-                                        Matchups and lines for this week have not been published here yet.<br/>Lines lock in 48 hours before scheduled kickoff barring major line-changing news.
-                                    </p>
-                                </>
-                            )}
+                            <h3 style={{ margin: "0 0 6px 0", color: FALLBACK_BLUE, fontSize: "18px" }}>
+                                Team Assignment Pending
+                            </h3>
+                            <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>
+                                Once teams are assigned to Room {selectedRoomId}, matchups will appear here.
+                            </p>
                         </div>
                     )}
                 </div>
 
-                {/* Right Edge Banner */}
                 <div style={{ backgroundColor: rightBannerColor, width: "100%", height: "100%" }} />
             </div>
         </PoolGatekeeper>

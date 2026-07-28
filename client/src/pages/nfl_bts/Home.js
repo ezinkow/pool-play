@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import axios from "axios";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
@@ -11,24 +11,75 @@ const NFL_RED = "#D50A0A";
 const WHITE = "#FFFFFF";
 
 export default function FootballHome() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, token } = useAuth();
   const [poolData, setPoolData] = useState(null);
+  const [userEntries, setUserEntries] = useState([]);
+  const [confirmLeaveRoom, setConfirmLeaveRoom] = useState(null);
+  const [customEntryNames, setCustomEntryNames] = useState({ 1: "", 2: "" });
 
-  useEffect(() => {
+  const loadData = () => {
     axios.get("/api/settings/active-states")
       .then(res => {
         const NflBtsPool = res.data.find(p => p.game_key === "nfl_bts");
         setPoolData(NflBtsPool);
       })
       .catch(err => console.error("Failed to load NFL Beat The Spread pool data", err));
-  }, []);
+
+    if (token || localStorage.getItem("token")) {
+      axios.get("/api/nfl_bts/entries/me", {
+        headers: { Authorization: `Bearer ${token || localStorage.getItem("token")}` }
+      })
+        .then(res => {
+          setUserEntries(res.data.entries || []);
+        })
+        .catch(err => console.error("Failed to fetch user entries", err));
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [token]);
 
   const isPoolStarted = useMemo(() => {
     if (!poolData?.lock_date) return false;
     return new Date() >= new Date(poolData.lock_date);
   }, [poolData]);
 
+  const handleJoinPool = async (roomId, creditAmount) => {
+    try {
+      const entryNameInput = customEntryNames[roomId]?.trim() || user?.name;
+      await axios.post("/api/nfl_bts/entries/create", {
+        room_id: roomId,
+        entry_name: entryNameInput
+      }, {
+        headers: { Authorization: `Bearer ${token || localStorage.getItem("token")}` }
+      });
+      toast.success(`Successfully joined the ${creditAmount}-credit pool!`);
+      loadData();
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to join pool");
+    }
+  };
+
+  const handleLeavePool = async (roomId) => {
+    try {
+      await axios.post("/api/nfl_bts/entries/leave", { room_id: roomId }, {
+        headers: { Authorization: `Bearer ${token || localStorage.getItem("token")}` }
+      });
+      toast.success("Successfully left the pool.");
+      setConfirmLeaveRoom(null);
+      loadData();
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to leave pool");
+    }
+  };
+
   if (authLoading) return null;
+
+  // Use Number() conversion to reliably match room_id regardless of string/number DB typing
+  const entryRoom1 = userEntries.find(e => Number(e.room_id) === 1);
+  const entryRoom2 = userEntries.find(e => Number(e.room_id) === 2);
+  const hasAnyEntry = userEntries.length > 0;
 
   return (
     <div style={{ width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative" }} className='page-content'>
@@ -42,44 +93,149 @@ export default function FootballHome() {
       )}
 
       <div className="container" style={{ textAlign: "center", padding: "20px 16px", boxSizing: "border-box" }}>
-        <PoolGatekeeper user={user} isAdmin={user?.is_admin === true} gameKey="nfl_bts">
 
-          {/* Action Buttons Grid Cluster */}
-          <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", marginBottom: 20 }}>
-            <Link to="/nflbts/picks" style={{ textDecoration: 'none' }}>
-              <button className="btn-fb-secondary">🏈 Make Weekly Picks</button>
-            </Link>
-            <Link to="/nflbts/grouppicks" style={{ textDecoration: 'none' }}>
-              <button className="btn-fb-secondary">📊 Weekly Matrix</button>
-            </Link>
-            <Link to="/nflbts/standings" style={{ textDecoration: 'none' }}>
-              <button className="btn-fb-secondary">🏆 Division Standings</button>
-            </Link>
+        {/* Split Rooms / Join & Leave Pool Options Section */}
+        <div style={{
+          background: WHITE,
+          borderRadius: 16,
+          padding: "24px 20px",
+          boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+          marginBottom: 24,
+          borderTop: `4px solid ${NFL_BLUE}`,
+          maxWidth: "850px",
+          margin: "0 auto 24px auto"
+        }}>
+          <h3 style={{ color: NFL_BLUE, marginTop: 0, marginBottom: 16, fontSize: "1.2rem" }}>
+            🏟️ Pool Rooms Selection
+          </h3>
+          <div style={{ display: "flex", justifyContent: "center", gap: "24px", flexWrap: "wrap" }}>
+
+            {/* Room 1 (50 Credits) */}
+            <div style={{ flex: "1 1 300px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
+              <h4 style={{ margin: "0 0 8px 0", color: NFL_BLUE, textAlign: "center" }}>Room 1: 50 Credit Pool</h4>
+              {entryRoom1 ? (
+                <div style={{ textAlign: "center" }}>
+                  <p style={{ fontSize: "14px", color: "#16a34a", fontWeight: "bold" }}>✓ You are in Room 1</p>
+                  <p style={{ fontSize: "13px", color: "#475569", margin: "4px 0 12px 0" }}>Display Name: <strong>{entryRoom1.entry_name}</strong></p>
+                  {!isPoolStarted && (
+                    <div>
+                      {confirmLeaveRoom === 1 ? (
+                        <div style={{ marginTop: 12, background: "#fee2e2", padding: 10, borderRadius: 8, textAlign: "center" }}>
+                          <p style={{ fontSize: "13px", margin: "0 0 8px 0", color: "#b91c1c", fontWeight: "bold" }}>Are you sure you want to leave?</p>
+                          <button onClick={() => handleLeavePool(1)} style={{ background: NFL_RED, color: WHITE, border: "none", padding: "6px 12px", borderRadius: 6, marginRight: 8, cursor: "pointer", fontWeight: "bold" }}>Yes, Leave</button>
+                          <button onClick={() => setConfirmLeaveRoom(null)} style={{ background: "#cbd5e1", border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>Cancel</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setConfirmLeaveRoom(1)} style={{ background: "transparent", color: NFL_RED, border: `1px solid ${NFL_RED}`, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: "13px", fontWeight: "bold", display: "block", margin: "0 auto" }}>
+                          Leave Pool
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <p style={{ fontSize: "13px", color: "#64748b", textAlign: "center", marginBottom: 12 }}>Standard entry level competition.</p>
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE, display: "block", marginBottom: 4 }}>Entry / Display Name:</label>
+                    <input
+                      type="text"
+                      value={customEntryNames[1] !== undefined ? customEntryNames[1] : (user?.name || "")}
+                      onChange={(e) => setCustomEntryNames({ ...customEntryNames, 1: e.target.value })}
+                      placeholder="Enter display name"
+                      style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #cbd5e1", boxSizing: "border-box" }}
+                    />
+                  </div>
+                  <button onClick={() => handleJoinPool(1, 50)} className="btn-fb-secondary" style={{ width: "100%", padding: "10px 20px", fontSize: "14px" }}>
+                    Join 50 Credit Pool
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Room 2 (100 Credits) */}
+            <div style={{ flex: "1 1 300px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
+              <h4 style={{ margin: "0 0 8px 0", color: NFL_BLUE, textAlign: "center" }}>Room 2: 100 Credit Pool</h4>
+              {entryRoom2 ? (
+                <div style={{ textAlign: "center" }}>
+                  <p style={{ fontSize: "14px", color: "#16a34a", fontWeight: "bold" }}>✓ You are in Room 2</p>
+                  <p style={{ fontSize: "13px", color: "#475569", margin: "4px 0 12px 0" }}>Display Name: <strong>{entryRoom2.entry_name}</strong></p>
+                  {!isPoolStarted && (
+                    <div>
+                      {confirmLeaveRoom === 2 ? (
+                        <div style={{ marginTop: 12, background: "#fee2e2", padding: 10, borderRadius: 8, textAlign: "center" }}>
+                          <p style={{ fontSize: "13px", margin: "0 0 8px 0", color: "#b91c1c", fontWeight: "bold" }}>Are you sure you want to leave?</p>
+                          <button onClick={() => handleLeavePool(2)} style={{ background: NFL_RED, color: WHITE, border: "none", padding: "6px 12px", borderRadius: 6, marginRight: 8, cursor: "pointer", fontWeight: "bold" }}>Yes, Leave</button>
+                          <button onClick={() => setConfirmLeaveRoom(null)} style={{ background: "#cbd5e1", border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>Cancel</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setConfirmLeaveRoom(2)} style={{ background: "transparent", color: NFL_RED, border: `1px solid ${NFL_RED}`, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: "13px", fontWeight: "bold", display: "block", margin: "0 auto" }}>
+                          Leave Pool
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <p style={{ fontSize: "13px", color: "#64748b", textAlign: "center", marginBottom: 12 }}>High roller stake competition.</p>
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE, display: "block", marginBottom: 4 }}>Entry / Display Name:</label>
+                    <input
+                      type="text"
+                      value={customEntryNames[2] !== undefined ? customEntryNames[2] : (user?.name || "")}
+                      onChange={(e) => setCustomEntryNames({ ...customEntryNames, 2: e.target.value })}
+                      placeholder="Enter display name"
+                      style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #cbd5e1", boxSizing: "border-box" }}
+                    />
+                  </div>
+                  <button onClick={() => handleJoinPool(2, 100)} className="btn-fb-secondary" style={{ width: "100%", padding: "10px 20px", fontSize: "14px" }}>
+                    Join 100 Credit Pool
+                  </button>
+                </div>
+              )}
+            </div>
+
           </div>
+        </div>
 
-          <a href="https://www.nfl.com/scores"
-            target="_blank"
-            rel="noreferrer"
-            className="btn-fb-live"
-            style={{
-              display: "inline-block",
-              padding: "12px 24px",
-              backgroundColor: NFL_BLUE,
-              color: "white",
-              border: "none",
-              borderRadius: 8,
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: "pointer",
-              textTransform: "uppercase",
-              letterSpacing: "0.5px",
-              textDecoration: "none"
-            }}>
-            Live NFL Scores ↗
-          </a>
-        </PoolGatekeeper>
+        {hasAnyEntry && (
+          <PoolGatekeeper user={user} isAdmin={user?.is_admin === true} gameKey="nfl_bts">
+            <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", marginBottom: 20 }}>
+              <Link to="/nflbts/picks" style={{ textDecoration: 'none' }}>
+                <button className="btn-fb-secondary">🏈 Make Weekly Picks</button>
+              </Link>
+              <Link to="/nflbts/grouppicks" style={{ textDecoration: 'none' }}>
+                <button className="btn-fb-secondary">📊 Weekly Matrix</button>
+              </Link>
+              <Link to="/nflbts/standings" style={{ textDecoration: 'none' }}>
+                <button className="btn-fb-secondary">🏆 Division Standings</button>
+              </Link>
+            </div>
 
-        {/* Rules Card matching the spreadsheet layout concept */}
+            <a href="https://www.nfl.com/scores"
+              target="_blank"
+              rel="noreferrer"
+              className="btn-fb-live"
+              style={{
+                display: "inline-block",
+                padding: "12px 24px",
+                backgroundColor: NFL_BLUE,
+                color: "white",
+                border: "none",
+                borderRadius: 8,
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: "pointer",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+                textDecoration: "none"
+              }}>
+              Live NFL Scores ↗
+            </a>
+          </PoolGatekeeper>
+        )}
+
         <div style={{
           background: "white",
           borderRadius: 16,

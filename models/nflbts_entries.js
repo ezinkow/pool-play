@@ -8,24 +8,38 @@ module.exports = function (sequelize, DataTypes) {
         user_id: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            unique: true,
             references: { model: "users", key: "id" },
         },
         entry_name: {
-            type: DataTypes.STRING(255), // 🧠 Explicit bounds added for clean unique indexing
+            type: DataTypes.STRING(255), // Explicit bounds for clean indexing
             allowNull: false,
-            unique: true,
+        },
+        room_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 1
         },
     }, {
         tableName: "nfl_bts_entries",
         timestamps: true,
         createdAt: "createdAt",
         updatedAt: false,
+        indexes: [
+            // Ensure a user can only have one entry per room
+            {
+                unique: true,
+                fields: ["user_id", "room_id"]
+            },
+            // Ensure display names are unique within the same room
+            {
+                unique: true,
+                fields: ["entry_name", "room_id"]
+            }
+        ]
     });
 
-    // 🧠 Standard association mapping block
+    // Standard association mapping block
     NflBtsEntries.associate = function (models) {
-        // Lets you easily do NflBtsEntries.findAll({ include: [models.Users] }) later
         NflBtsEntries.belongsTo(models.Users, { foreignKey: "user_id" });
     };
 
