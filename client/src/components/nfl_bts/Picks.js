@@ -37,9 +37,8 @@ export default function NflBtsPicks() {
                 const entries = res.data.entries || [];
                 setUserEntries(entries);
                 if (entries.length > 0) {
-                    // Default to first available room if current selection isn't joined
-                    if (!entries.some(e => e.room_id === selectedRoomId)) {
-                        setSelectedRoomId(entries[0].room_id);
+                    if (!entries.some(e => Number(e.room_id) === selectedRoomId)) {
+                        setSelectedRoomId(Number(entries[0].room_id));
                     }
                 }
             })
@@ -180,29 +179,30 @@ export default function NflBtsPicks() {
                 <div style={{ padding: "16px 8px", minWidth: 0, overflow: "hidden" }}>
                     <Toaster />
 
-                    {/* Room Selector Tab Bar (Only shown if user joined both rooms) */}
+                    {/* Room Selector Tab Bar (Only shown if user joined multiple rooms) */}
                     {userEntries.length > 1 && (
-                        <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 16 }}>
-                            {[1, 2].map(rId => {
-                                const isJoined = userEntries.some(e => e.room_id === rId);
+                        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+                            {[1, 2, 3].map(rId => {
+                                const isJoined = userEntries.some(e => Number(e.room_id) === rId);
                                 if (!isJoined) return null;
                                 const isSelected = selectedRoomId === rId;
+                                const label = rId === 1 ? "Room 1 (50 Cr)" : rId === 2 ? "Room 2 (100 Cr A)" : "Room 3 (100 Cr B)";
                                 return (
                                     <button
                                         key={rId}
                                         onClick={() => setSelectedRoomId(rId)}
                                         style={{
-                                            padding: "8px 16px",
+                                            padding: "8px 12px",
                                             borderRadius: 8,
                                             border: `2px solid ${NFL_BLUE}`,
                                             background: isSelected ? NFL_BLUE : "white",
                                             color: isSelected ? "white" : NFL_BLUE,
                                             fontWeight: 700,
                                             cursor: "pointer",
-                                            fontSize: "13px"
+                                            fontSize: "12px"
                                         }}
                                     >
-                                        {rId === 1 ? "Room 1 (50 Credits)" : "Room 2 (100 Credits)"}
+                                        {label}
                                     </button>
                                 );
                             })}
