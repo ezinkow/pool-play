@@ -88,7 +88,17 @@ export default function NflBtsMatrix() {
 
                 {/* Room Selector Tab Bar (Shown if user joined multiple rooms) */}
                 {userEntries.length > 1 && (
-                    <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+                    <div style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: 8,
+                        marginBottom: 20,
+                        flexWrap: "nowrap",
+                        overflowX: "auto",
+                        WebkitOverflowScrolling: "touch",
+                        paddingBottom: 4,
+                        width: "100%"
+                    }}>
                         {[1, 2, 3].map(rId => {
                             const isJoined = userEntries.some(e => Number(e.room_id) === rId);
                             if (!isJoined) return null;
@@ -106,7 +116,9 @@ export default function NflBtsMatrix() {
                                         color: isSelected ? "white" : NFL_BLUE,
                                         fontWeight: 700,
                                         cursor: "pointer",
-                                        fontSize: "13px"
+                                        fontSize: "13px",
+                                        flexShrink: 0,
+                                        whiteSpace: "nowrap"
                                     }}
                                 >
                                     {label}
@@ -121,25 +133,43 @@ export default function NflBtsMatrix() {
                 </div>
 
                 {/* Week Selector Tabs */}
-                <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 24, flexWrap: "wrap" }}>
-                    {[...Array(18)].map((_, i) => (
-                        <button
-                            key={i + 1}
-                            onClick={() => setCurrentWeek(i + 1)}
-                            style={{
-                                padding: "8px 14px",
-                                borderRadius: 6,
-                                border: "1px solid #ddd",
-                                backgroundColor: currentWeek === i + 1 ? NFL_BLUE : "white",
-                                color: currentWeek === i + 1 ? "white" : "#333",
-                                cursor: "pointer",
-                                fontWeight: 600,
-                                transition: "all 0.2s"
-                            }}
-                        >
-                            {i + 1}
-                        </button>
-                    ))}
+                <div style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    width: "100%",
+                    marginBottom: 16,
+                    marginTop: 4
+                }}>
+                    <div style={{
+                        display: "flex",
+                        gap: 6,
+                        flexWrap: "nowrap",
+                        overflowX: "auto",
+                        WebkitOverflowScrolling: "touch",
+                        paddingBottom: 6,
+                        maxWidth: "100%"
+                    }}>
+                        {[...Array(18)].map((_, i) => (
+                            <button
+                                key={i + 1}
+                                onClick={() => setCurrentWeek(i + 1)}
+                                style={{
+                                    padding: "6px 12px",
+                                    borderRadius: 6,
+                                    border: "1px solid #ddd",
+                                    backgroundColor: currentWeek === i + 1 ? NFL_BLUE : "white",
+                                    color: currentWeek === i + 1 ? "white" : "#333",
+                                    cursor: "pointer",
+                                    fontWeight: 600,
+                                    flexShrink: 0,
+                                    fontSize: "14px",
+                                    transition: "all 0.2s"
+                                }}
+                            >
+                                {i + 1}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Matrix Table */}

@@ -108,6 +108,9 @@ export default function FootballHome() {
           <h3 style={{ color: NFL_BLUE, marginTop: 0, marginBottom: 16, fontSize: "1.2rem" }}>
             🏟️ Pool Rooms Selection
           </h3>
+          <p>Choose one or multiple!</p>
+          <p>Guaranteed to not have the same team!</p>
+          <br></br>
           <div style={{ display: "flex", justifyContent: "center", gap: "20px", flexWrap: "wrap" }}>
             
             {/* Room 1 (50 Credits) */}

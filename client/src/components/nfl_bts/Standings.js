@@ -80,7 +80,17 @@ export default function NflBtsStandings() {
 
                 {/* Room Selector Tab Bar (Shown if user joined multiple rooms) */}
                 {userEntries.length > 1 && (
-                    <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
+                    <div style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: 8,
+                        marginBottom: 20,
+                        flexWrap: "nowrap",
+                        overflowX: "auto",
+                        WebkitOverflowScrolling: "touch",
+                        paddingBottom: 4,
+                        width: "100%"
+                    }}>
                         {[1, 2, 3].map(rId => {
                             const isJoined = userEntries.some(e => Number(e.room_id) === rId);
                             if (!isJoined) return null;
@@ -98,7 +108,9 @@ export default function NflBtsStandings() {
                                         color: isSelected ? "white" : NFL_BLUE,
                                         fontWeight: 700,
                                         cursor: "pointer",
-                                        fontSize: "13px"
+                                        fontSize: "13px",
+                                        flexShrink: 0,
+                                        whiteSpace: "nowrap"
                                     }}
                                 >
                                     {label}

@@ -12,7 +12,7 @@ export default function NflBtsPicks() {
     const { user, loading: authLoading } = useAuth();
     const [userEntries, setUserEntries] = useState([]);
     const [selectedRoomId, setSelectedRoomId] = useState(1);
-    const [assignedTeam, setAssignedTeam] = useState(null);
+    const [assignedTeam, setAssignedTeam] = useState('TBD');
     const [currentWeek, setCurrentWeek] = useState(1);
     const [matchup, setMatchup] = useState(null);
     const [pick, setPick] = useState({ ats_pick: "", ou_pick: "" });
@@ -223,8 +223,12 @@ export default function NflBtsPicks() {
                             <h2 style={{ fontSize: "16px", margin: 0, textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>
                                 Room {selectedRoomId} Assignment:
                             </h2>
-                            {teamMeta.logo && (
+                            {teamMeta.logo ? (
                                 <img src={teamMeta.logo} alt={assignedTeam} style={{ width: isMobile ? 44 : 38, height: isMobile ? 44 : 38, objectFit: "contain", filter: "drop-shadow(0 2px 10px rgb(0, 0, 0))" }} />
+                            ) : (
+                                <span style={{ fontSize: "14px", fontWeight: 700, background: "rgba(0,0,0,0.25)", padding: "2px 8px", borderRadius: "4px", letterSpacing: "0.5px" }}>
+                                    TBD
+                                </span>
                             )}
                             {!isMobile && (
                                 <div style={{ fontSize: "16px", fontWeight: 800, textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>
