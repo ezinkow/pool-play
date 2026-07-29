@@ -76,8 +76,8 @@ import NflPlayerPoolsTable from './pages/nfl/PlayerStats';
 import NflBtsHome from './pages/nfl_bts/Home';
 import NflBtsStandings from './pages/nfl_bts/Standings';
 import NflBtsPicks from './pages/nfl_bts/Picks';
-import NflBtsSignUp from './pages/nfl_bts/SignUp';
 import NflBtsGroupPicks from './pages/nfl_bts/GroupPicks';
+import AdminTeamAssignment from './pages/nfl_bts/AdminTeamAssignment';
 
 // Super Bowl Squares pages
 import SuperBowlSquaresGrid from "./pages/superbowl_squares/Grid";
@@ -184,10 +184,10 @@ export default function App() {
 
           {/* NFL BTS*/}
           <Route path="/nflbts" element={<NflBtsHome />} />
-          <Route path="/nflbts/signup" element={<NflBtsSignUp />} />
           <Route path="/nflbts/picks" element={<NflBtsPicks />} />
           <Route path="/nflbts/standings" element={<NflBtsStandings />} />
           <Route path="/nflbts/grouppicks" element={<NflBtsGroupPicks />} />
+          <Route path="/nflbts/admin/teamassignments" element={<AdminTeamAssignment />} />
 
           {/* Super Bowl Squares */}
           <Route path="/superbowlsquares" element={<SuperBowlSquaresHome />} />

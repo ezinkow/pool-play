@@ -93,7 +93,7 @@ export default function FootballHome() {
       )}
 
       <div className="container" style={{ textAlign: "center", padding: "20px 16px", boxSizing: "border-box" }}>
-
+        
         {/* Split Rooms / Join & Leave Pool Options Section */}
         <div style={{
           background: WHITE,
@@ -108,9 +108,8 @@ export default function FootballHome() {
           <h3 style={{ color: NFL_BLUE, marginTop: 0, marginBottom: 16, fontSize: "1.2rem" }}>
             🏟️ Pool Rooms Selection
           </h3>
-          <p>No need to choose! Join multiple pools, guaranteed not to get the same team.</p>
           <div style={{ display: "flex", justifyContent: "center", gap: "20px", flexWrap: "wrap" }}>
-
+            
             {/* Room 1 (50 Credits) */}
             <div style={{ flex: "1 1 260px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
               <h4 style={{ margin: "0 0 8px 0", color: NFL_BLUE, textAlign: "center" }}>Room 1: 50 Credit Pool</h4>
@@ -136,13 +135,25 @@ export default function FootballHome() {
                 </div>
               ) : (
                 <div>
+                  <p style={{ fontSize: "13px", color: "#64748b", textAlign: "center", marginBottom: 12 }}>Standard entry level competition.</p>
                   <div style={{ marginBottom: 12 }}>
-                    <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE, display: "block", marginBottom: 4 }}>Entry / Display Name:</label>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE }}>Entry / Display Name:</label>
+                      {user?.name && (
+                        <button
+                          type="button"
+                          onClick={() => setCustomEntryNames({ ...customEntryNames, 1: user.name })}
+                          style={{ background: "none", border: "none", color: "#2563eb", fontSize: "11px", cursor: "pointer", padding: 0, fontWeight: 600 }}
+                        >
+                          Use Username ({user.name})
+                        </button>
+                      )}
+                    </div>
                     <input
                       type="text"
-                      value={customEntryNames[1] !== undefined ? customEntryNames[1] : (user?.name || "")}
+                      value={customEntryNames[1] !== undefined ? customEntryNames[1] : ""}
                       onChange={(e) => setCustomEntryNames({ ...customEntryNames, 1: e.target.value })}
-                      placeholder="Enter display name"
+                      placeholder={user?.name || "Enter display name"}
                       style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #cbd5e1", boxSizing: "border-box" }}
                     />
                   </div>
@@ -153,7 +164,7 @@ export default function FootballHome() {
               )}
             </div>
 
-            {/* Room 2 (100 Credits) */}
+            {/* Room 2 (100 Credits A) */}
             <div style={{ flex: "1 1 260px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
               <h4 style={{ margin: "0 0 8px 0", color: NFL_BLUE, textAlign: "center" }}>Room 2: 100 Credit Pool A</h4>
               {entryRoom2 ? (
@@ -178,13 +189,25 @@ export default function FootballHome() {
                 </div>
               ) : (
                 <div>
+                  <p style={{ fontSize: "13px", color: "#64748b", textAlign: "center", marginBottom: 12 }}>High roller stake competition.</p>
                   <div style={{ marginBottom: 12 }}>
-                    <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE, display: "block", marginBottom: 4 }}>Entry / Display Name:</label>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE }}>Entry / Display Name:</label>
+                      {user?.name && (
+                        <button
+                          type="button"
+                          onClick={() => setCustomEntryNames({ ...customEntryNames, 2: user.name })}
+                          style={{ background: "none", border: "none", color: "#2563eb", fontSize: "11px", cursor: "pointer", padding: 0, fontWeight: 600 }}
+                        >
+                          Use Username ({user.name})
+                        </button>
+                      )}
+                    </div>
                     <input
                       type="text"
-                      value={customEntryNames[2] !== undefined ? customEntryNames[2] : (user?.name || "")}
+                      value={customEntryNames[2] !== undefined ? customEntryNames[2] : ""}
                       onChange={(e) => setCustomEntryNames({ ...customEntryNames, 2: e.target.value })}
-                      placeholder="Enter display name"
+                      placeholder={user?.name || "Enter display name"}
                       style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #cbd5e1", boxSizing: "border-box" }}
                     />
                   </div>
@@ -195,7 +218,7 @@ export default function FootballHome() {
               )}
             </div>
 
-            {/* Room 3 (100 Credits - Second Room) */}
+            {/* Room 3 (100 Credits B) */}
             <div style={{ flex: "1 1 260px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
               <h4 style={{ margin: "0 0 8px 0", color: NFL_BLUE, textAlign: "center" }}>Room 3: 100 Credit Pool B</h4>
               {entryRoom3 ? (
@@ -220,13 +243,25 @@ export default function FootballHome() {
                 </div>
               ) : (
                 <div>
+                  <p style={{ fontSize: "13px", color: "#64748b", textAlign: "center", marginBottom: 12 }}>Second high roller stake room.</p>
                   <div style={{ marginBottom: 12 }}>
-                    <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE, display: "block", marginBottom: 4 }}>Entry / Display Name:</label>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE }}>Entry / Display Name:</label>
+                      {user?.name && (
+                        <button
+                          type="button"
+                          onClick={() => setCustomEntryNames({ ...customEntryNames, 3: user.name })}
+                          style={{ background: "none", border: "none", color: "#2563eb", fontSize: "11px", cursor: "pointer", padding: 0, fontWeight: 600 }}
+                        >
+                          Use Username ({user.name})
+                        </button>
+                      )}
+                    </div>
                     <input
                       type="text"
-                      value={customEntryNames[3] !== undefined ? customEntryNames[3] : (user?.name || "")}
+                      value={customEntryNames[3] !== undefined ? customEntryNames[3] : ""}
                       onChange={(e) => setCustomEntryNames({ ...customEntryNames, 3: e.target.value })}
-                      placeholder="Enter display name"
+                      placeholder={user?.name || "Enter display name"}
                       style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #cbd5e1", boxSizing: "border-box" }}
                     />
                   </div>
@@ -290,7 +325,7 @@ export default function FootballHome() {
           margin: "24px auto 80px auto"
         }}>
           <h3 style={{ color: NFL_BLUE, marginTop: 0, marginBottom: 16, fontSize: "1.2rem", textAlign: 'center' }}>
-            📋 Beat The Spread:
+            📋 Beat The Spread: <br />Assigned Team
           </h3>
           <ol style={{ paddingLeft: 20, lineHeight: "1.7", fontSize: "14px" }}>
             <li><strong>Assigned Team:</strong> You are randomly assigned one NFL team for the entire season once the 32-player room fills up.</li>

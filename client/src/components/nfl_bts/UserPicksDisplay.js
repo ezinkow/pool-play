@@ -7,23 +7,44 @@ const NFL_BLUE = "#013369";
 const NFL_RED = "#D50A0A";
 const GOLD = "#c89d3c";
 
-export default function FootballMatrix() {
+export default function NflBtsMatrix() {
     const { user, loading: authLoading } = useAuth();
+    const [userEntries, setUserEntries] = useState([]);
+    const [selectedRoomId, setSelectedRoomId] = useState(1);
     const [currentWeek, setCurrentWeek] = useState(1);
     const [matrixData, setMatrixData] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // 1. Fetch user entries to check room memberships
+    useEffect(() => {
+        if (!user) return;
+        const token = localStorage.getItem("token");
+        axios.get("/api/nfl_bts/entries/me", {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => {
+                const entries = res.data.entries || [];
+                setUserEntries(entries);
+                if (entries.length > 0) {
+                    if (!entries.some(e => Number(e.room_id) === selectedRoomId)) {
+                        setSelectedRoomId(Number(entries[0].room_id));
+                    }
+                }
+            })
+            .catch(err => console.error("Error loading user entries", err));
+    }, [user]);
+
+    // 2. Fetch matrix data for the selected room and week
     useEffect(() => {
         if (!user) return;
         const token = localStorage.getItem("token");
         setLoading(true);
 
         axios.get("/api/nfl_bts/matrix", {
-            params: { week: currentWeek },
+            params: { week: currentWeek, room_id: selectedRoomId },
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => {
-                // Safely handle whether the API returns a direct array or an object containing an array
                 const data = res.data;
                 if (Array.isArray(data)) {
                     setMatrixData(data);
@@ -34,21 +55,19 @@ export default function FootballMatrix() {
                 } else {
                     setMatrixData([]);
                 }
-                console.log(matrixData)
             })
             .catch(err => {
                 console.error("Failed to load user picks", err);
-                setMatrixData([]); // Fallback to an empty array on error
+                setMatrixData([]);
             })
             .finally(() => setLoading(false));
-    }, [user, currentWeek]);
+    }, [user, currentWeek, selectedRoomId]);
 
     const canRevealPick = (gameDate) => {
         if (!gameDate) return false;
         return new Date() >= new Date(gameDate);
     };
 
-    // Helper to find the correct logo for an ATS team pick
     const getLogoForTeam = (teamName, row) => {
         if (!teamName) return null;
         if (teamName.toLowerCase() === row.away_team?.toLowerCase()) return row.away_logo;
@@ -62,13 +81,45 @@ export default function FootballMatrix() {
         <PoolGatekeeper user={user} gameKey="nfl_bts">
             <div style={{ maxWidth: 1200, margin: "0 auto", padding: "20px 12px", paddingBottom: 80 }}>
 
-                <div style={{ textAlign: "center", marginBottom: 24 }}>
+                <div style={{ textAlign: "center", marginBottom: 20 }}>
                     <h2 style={{ color: NFL_BLUE, fontSize: "28px", margin: 0 }}>Weekly Group Matrix</h2>
                     <p style={{ color: "#666", marginTop: 8 }}>Picks are hidden until individual game kickoff.</p>
                 </div>
+
+                {/* Room Selector Tab Bar (Shown if user joined multiple rooms) */}
+                {userEntries.length > 1 && (
+                    <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+                        {[1, 2, 3].map(rId => {
+                            const isJoined = userEntries.some(e => Number(e.room_id) === rId);
+                            if (!isJoined) return null;
+                            const isSelected = selectedRoomId === rId;
+                            const label = rId === 1 ? "Room 1 (50 Cr)" : rId === 2 ? "Room 2 (100 Cr A)" : "Room 3 (100 Cr B)";
+                            return (
+                                <button
+                                    key={rId}
+                                    onClick={() => setSelectedRoomId(rId)}
+                                    style={{
+                                        padding: "8px 14px",
+                                        borderRadius: 8,
+                                        border: `2px solid ${NFL_BLUE}`,
+                                        background: isSelected ? NFL_BLUE : "white",
+                                        color: isSelected ? "white" : NFL_BLUE,
+                                        fontWeight: 700,
+                                        cursor: "pointer",
+                                        fontSize: "13px"
+                                    }}
+                                >
+                                    {label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
+
                 <div style={{ textAlign: "center", marginBottom: 1 }}>
                     <h3 style={{ color: NFL_BLUE, fontSize: "15px", margin: 0 }}>Select Week:</h3>
                 </div>
+
                 {/* Week Selector Tabs */}
                 <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 24, flexWrap: "wrap" }}>
                     {[...Array(18)].map((_, i) => (
@@ -94,9 +145,9 @@ export default function FootballMatrix() {
                 {/* Matrix Table */}
                 <div style={{ background: "white", borderRadius: 12, boxShadow: "0 2px 10px rgba(0,0,0,0.05)", overflowX: "auto" }}>
                     {loading ? (
-                        <div style={{ padding: 40, textAlign: "center", color: "#666" }}>Loading Week {currentWeek} picks...</div>
+                        <div style={{ padding: 40, textAlign: "center", color: "#666" }}>Loading Week {currentWeek} picks for Room {selectedRoomId}...</div>
                     ) : matrixData.length === 0 ? (
-                        <div style={{ padding: 40, textAlign: "center", color: "#666" }}>No data available for Week {currentWeek}.</div>
+                        <div style={{ padding: 40, textAlign: "center", color: "#666" }}>No data available for Week {currentWeek} in Room {selectedRoomId}.</div>
                     ) : (
                         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700 }}>
                             <thead style={{ backgroundColor: NFL_BLUE, color: "white" }}>
@@ -115,7 +166,6 @@ export default function FootballMatrix() {
                                     const isCurrentUser = Number(row.user_id) === Number(user.id);
                                     const atsLogo = getLogoForTeam(row.ats_pick, row);
 
-                                    // Determine Over/Under Emoji
                                     let ouDisplay = row.ou_pick;
                                     if (ouDisplay) {
                                         const lowerOu = ouDisplay.toLowerCase();
@@ -127,16 +177,14 @@ export default function FootballMatrix() {
                                     }
 
                                     return (
-                                        <tr key={row.user_id} style={{
+                                        <tr key={`${row.user_id}-${row.team_name}`} style={{
                                             borderBottom: "1px solid #eee",
                                             backgroundColor: isCurrentUser ? "#fef08a" : (idx % 2 === 0 ? "#fafafa" : "white")
                                         }}>
-                                            {/* Player Column */}
                                             <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: 14 }}>
                                                 {row.user_name} {isCurrentUser && "(You)"}
                                             </td>
 
-                                            {/* Assigned Team Column with Logo from nfl_bts_teams */}
                                             <td style={{ padding: "12px 16px", fontSize: 14, fontWeight: 500 }}>
                                                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                                     {row.logo && (
@@ -146,8 +194,6 @@ export default function FootballMatrix() {
                                                 </div>
                                             </td>
 
-                                            {/* Matchup Column */}
-                                            {/* Matchup Column */}
                                             <td style={{ padding: "12px 16px", fontSize: 13 }}>
                                                 <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
                                                     {row.away_logo && (
@@ -159,7 +205,6 @@ export default function FootballMatrix() {
                                                     )}
                                                 </div>
 
-                                                {/* Subtext with Inline Favorite Logo */}
                                                 <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#666", fontSize: 11, marginTop: 4, flexWrap: "wrap" }}>
                                                     <span>
                                                         {row.game_date ? new Date(row.game_date).toLocaleString([], {
@@ -182,7 +227,6 @@ export default function FootballMatrix() {
                                                 </div>
                                             </td>
 
-                                            {/* ATS Pick Column */}
                                             <td style={{ padding: "12px 16px", textAlign: "center", fontSize: 14, fontWeight: 600 }}>
                                                 {isRevealed || isCurrentUser ? (
                                                     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
@@ -198,7 +242,6 @@ export default function FootballMatrix() {
                                                 )}
                                             </td>
 
-                                            {/* O/U Pick Column */}
                                             <td style={{ padding: "12px 16px", textAlign: "center", fontSize: 14, fontWeight: 600 }}>
                                                 {isRevealed || isCurrentUser ? (
                                                     <span style={{ color: row.ou_pick ? NFL_BLUE : "#9ca3af" }}>
@@ -209,7 +252,6 @@ export default function FootballMatrix() {
                                                 )}
                                             </td>
 
-                                            {/* Result Column */}
                                             <td style={{ padding: "12px 16px", textAlign: "center", fontSize: 14, fontWeight: 700 }}>
                                                 {row.status === "win" && <span style={{ color: "#16a34a" }}>Win</span>}
                                                 {row.status === "loss" && <span style={{ color: NFL_RED }}>Loss</span>}

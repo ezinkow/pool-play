@@ -341,4 +341,137 @@ module.exports = function (app) {
         }
     });
 
+    // --------------------------------------------------------
+    // GET /api/nfl_bts/standings
+    // --------------------------------------------------------
+    app.get("/api/nfl_bts/standings", requireAuth, async (req, res) => {
+        try {
+            const room_id = parseInt(req.query.room_id) || 1;
+            const query = `
+            SELECT 
+                fa.user_id,
+                u.entry_name as user_name,
+                fa.team_name,
+                fa.division,
+                t.logo,
+                SUM(CASE WHEN fp.ats_status = 'win' THEN 1 ELSE 0 END) as ats_wins,
+                SUM(CASE WHEN fp.ats_status = 'loss' THEN 1 ELSE 0 END) as ats_losses,
+                SUM(CASE WHEN fp.ats_status = 'push' THEN 1 ELSE 0 END) as ats_pushes,
+                SUM(CASE WHEN fp.ou_status = 'win' THEN 1 ELSE 0 END) as ou_wins,
+                SUM(CASE WHEN fp.ou_status = 'loss' THEN 1 ELSE 0 END) as ou_losses,
+                SUM(CASE WHEN fp.ou_status = 'push' THEN 1 ELSE 0 END) as ou_pushes
+            FROM nfl_bts_team_assignments fa
+            JOIN nfl_bts_entries u ON fa.user_id = u.user_id AND fa.room_id = u.room_id
+            LEFT JOIN nfl_bts_teams t ON fa.team_name = t.name
+            LEFT JOIN nfl_bts_picks fp ON fa.user_id = fp.user_id AND fa.room_id = fp.room_id
+            WHERE fa.room_id = :room_id
+            GROUP BY fa.user_id, u.entry_name, fa.team_name, fa.division, t.logo
+            ORDER BY fa.division ASC, ats_wins DESC, ou_wins DESC;
+        `;
+
+            const [results] = await db.sequelize.query(query, {
+                replacements: { room_id }
+            });
+            res.json(results);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: "Failed to fetch standings" });
+        }
+    });
+
+    // --------------------------------------------------------
+    // POST /api/nfl_bts/admin/randomize-room-teams
+    // --------------------------------------------------------
+    app.post("/api/nfl_bts/admin/randomize-room-teams", requireAuth, async (req, res) => {
+        try {
+            const dbUser = await Users.findByPk(req.user.id);
+            const isAdmin = dbUser && (dbUser.is_admin === true || dbUser.is_admin === 1 || dbUser.isAdmin === true || dbUser.role === 'admin');
+
+            if (!isAdmin) {
+                return res.status(403).json({ error: "Unauthorized. Admin access required." });
+            }
+
+            const { room_id } = req.body;
+            if (!room_id) {
+                return res.status(400).json({ error: "Room ID is required." });
+            }
+
+            const allTeams = await NflBtsTeams.findAll();
+            if (!allTeams || allTeams.length === 0) {
+                return res.status(400).json({ error: "No teams found in the database." });
+            }
+
+            // Fetch entries for this specific room
+            const entries = await NflBtsEntries.findAll({ where: { room_id } });
+
+            if (entries.length === 0) {
+                return res.status(400).json({ error: `Room ${room_id} has no entries yet. At least one player must join before randomizing.` });
+            }
+
+            if (allTeams.length < entries.length) {
+                return res.status(400).json({ error: `Not enough teams in the database (${allTeams.length}) to cover all entries (${entries.length}).` });
+            }
+
+            // Fetch existing assignments in OTHER rooms to prevent duplicate team assignments for multi-room users
+            const otherAssignments = await NflBtsTeamAssignments.findAll({
+                where: {
+                    room_id: { [db.Sequelize.Op.ne]: room_id }
+                }
+            });
+
+            const userBlockedTeams = {};
+            otherAssignments.forEach(a => {
+                if (!userBlockedTeams[a.user_id]) {
+                    userBlockedTeams[a.user_id] = new Set();
+                }
+                userBlockedTeams[a.user_id].add(a.team_name);
+            });
+
+            const teamNames = allTeams.map(t => t.name);
+            let shuffledTeams = [...teamNames].sort(() => Math.random() - 0.5);
+
+            // Clear existing team assignments for this room before re-assigning
+            await NflBtsTeamAssignments.destroy({ where: { room_id } });
+
+            for (const entry of entries) {
+                const userId = entry.user_id;
+                if (!userBlockedTeams[userId]) {
+                    userBlockedTeams[userId] = new Set();
+                }
+
+                let assignedTeam = null;
+                let teamIndex = -1;
+
+                for (let i = 0; i < shuffledTeams.length; i++) {
+                    if (!userBlockedTeams[userId].has(shuffledTeams[i])) {
+                        assignedTeam = shuffledTeams[i];
+                        teamIndex = i;
+                        break;
+                    }
+                }
+
+                if (!assignedTeam) {
+                    assignedTeam = shuffledTeams[0];
+                    teamIndex = 0;
+                }
+
+                shuffledTeams.splice(teamIndex, 1);
+                userBlockedTeams[userId].add(assignedTeam);
+
+                const teamMeta = allTeams.find(t => t.name === assignedTeam);
+
+                await NflBtsTeamAssignments.create({
+                    user_id: userId,
+                    room_id: room_id,
+                    team_name: assignedTeam,
+                    division: teamMeta ? teamMeta.division : "NFC North"
+                });
+            }
+
+            res.json({ success: true, message: `Teams successfully randomized for Room ${room_id} (${entries.length} users assigned)!` });
+        } catch (err) {
+            console.error("Error randomizing room teams:", err);
+            res.status(500).json({ error: "Failed to randomize room teams" });
+        }
+    });
 };
