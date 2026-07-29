@@ -90,14 +90,17 @@ export default function NflBtsMatrix() {
                 {userEntries.length > 1 && (
                     <div style={{
                         display: "flex",
-                        justifyContent: "center",
+                        justifyContent: "flex-start", // Allows proper scrolling room starting from the left edge
                         gap: 8,
                         marginBottom: 20,
                         flexWrap: "nowrap",
                         overflowX: "auto",
                         WebkitOverflowScrolling: "touch",
-                        paddingBottom: 4,
-                        width: "100%"
+                        paddingLeft: "16px",
+                        paddingRight: "16px",
+                        paddingBottom: 6,
+                        width: "100%",
+                        boxSizing: "border-box"
                     }}>
                         {[1, 2, 3].map(rId => {
                             const isJoined = userEntries.some(e => Number(e.room_id) === rId);
