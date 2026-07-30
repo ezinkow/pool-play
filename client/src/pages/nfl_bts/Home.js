@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Toaster, toast } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import axios from "axios";
@@ -12,6 +12,7 @@ const WHITE = "#FFFFFF";
 
 export default function NflBtsHome() {
   const { user, loading: authLoading, token } = useAuth();
+  const navigate = useNavigate();
   const [poolData, setPoolData] = useState(null);
   const [userEntries, setUserEntries] = useState([]);
   const [roomCounts, setRoomCounts] = useState({ 1: 0, 2: 0, 3: 0 });
@@ -21,7 +22,6 @@ export default function NflBtsHome() {
   const activeToken = token || localStorage.getItem("token");
 
   const loadData = () => {
-    // Load pool active states / countdown info
     axios.get("/api/settings/active-states")
       .then(res => {
         const NflBtsPool = res.data.find(p => p.game_key === "nfl_bts");
@@ -29,7 +29,6 @@ export default function NflBtsHome() {
       })
       .catch(err => console.error("Failed to load NFL Beat The Spread pool data", err));
 
-    // Fetch all entries using the public /api/nfl_bts/entries endpoint to reliably count rooms
     axios.get("/api/nfl_bts/entries")
       .then(res => {
         const allEntries = res.data || [];
@@ -44,7 +43,6 @@ export default function NflBtsHome() {
       })
       .catch(err => console.error("Failed to fetch room entry counts", err));
 
-    // Fetch current user's personal room memberships
     if (activeToken) {
       axios.get("/api/nfl_bts/entries/me", {
         headers: { Authorization: `Bearer ${activeToken}` }
@@ -71,6 +69,12 @@ export default function NflBtsHome() {
   }, [poolData]);
 
   const handleJoinPool = async (roomId, creditAmount) => {
+    if (!activeToken) {
+      toast.error("Please log in or create an account to join a pool.");
+      navigate("/login");
+      return;
+    }
+
     try {
       const entryNameInput = customEntryNames[roomId]?.trim() || user?.name;
       await axios.post("/api/nfl_bts/entries/create", {
@@ -82,11 +86,21 @@ export default function NflBtsHome() {
       toast.success(`Successfully joined Room ${roomId} (${creditAmount}-credit pool)!`);
       loadData();
     } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to join pool");
+      if (err.response?.status === 401) {
+        toast.error("Session expired. Please log in again.");
+      } else {
+        toast.error(err.response?.data?.error || "Failed to join pool");
+      }
     }
   };
 
   const handleLeavePool = async (roomId) => {
+    if (!activeToken) {
+      toast.error("Please log in first.");
+      navigate("/login");
+      return;
+    }
+
     try {
       await axios.post("/api/nfl_bts/entries/leave", { room_id: roomId }, {
         headers: { Authorization: `Bearer ${activeToken}` }
@@ -118,6 +132,39 @@ export default function NflBtsHome() {
       )}
 
       <div className="container" style={{ textAlign: "center", padding: "20px 16px", boxSizing: "border-box" }}>
+
+        {!activeToken && (
+          <div style={{
+            background: "#fffbeb",
+            border: "1px solid #fde68a",
+            borderRadius: 16,
+            padding: "20px 24px",
+            marginBottom: 24,
+            maxWidth: "950px",
+            margin: "0 auto 24px auto",
+            textAlign: "center",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.05)"
+          }}>
+            <h4 style={{ color: "#92400e", margin: "0 0 8px 0", fontSize: "1.1rem" }}>
+              🔒 Account Required to Join Pools
+            </h4>
+            <p style={{ margin: "0 0 16px 0", color: "#78350f", fontSize: "14px", lineHeight: "1.5" }}>
+              You must be logged in or create an account before you can select a display name and join a room.
+            </p>
+            <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap" }}>
+              <Link to="/login" style={{ textDecoration: "none" }}>
+                <button style={{ backgroundColor: NFL_BLUE, color: WHITE, border: "none", padding: "10px 20px", borderRadius: 8, fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}>
+                  Log In
+                </button>
+              </Link>
+              <Link to="/register" style={{ textDecoration: "none" }}>
+                <button style={{ backgroundColor: WHITE, color: NFL_BLUE, border: `2px solid ${NFL_BLUE}`, padding: "10px 20px", borderRadius: 8, fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}>
+                  Create Account
+                </button>
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Split Rooms / Join & Leave Pool Options Section */}
         <div style={{
