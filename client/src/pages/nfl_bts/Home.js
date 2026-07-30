@@ -214,7 +214,6 @@ export default function NflBtsHome() {
                 </div>
               ) : (
                 <div>
-                  <p style={{ fontSize: "13px", color: "#64748b", textAlign: "center", marginBottom: 12 }}>Standard entry level competition.</p>
                   <div style={{ marginBottom: 12 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
                       <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE }}>Entry / Display Name:</label>
