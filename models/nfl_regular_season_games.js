@@ -1,5 +1,5 @@
 module.exports = function (sequelize, DataTypes) {
-    const NflBtsGames = sequelize.define("NflBtsGames", {
+    const NflRegularSeasonGames = sequelize.define("NflRegularSeasonGames", {
         week: { type: DataTypes.INTEGER, allowNull: false },
         home_team: { type: DataTypes.STRING, allowNull: false },
         away_team: { type: DataTypes.STRING, allowNull: false },
@@ -13,11 +13,16 @@ module.exports = function (sequelize, DataTypes) {
         over_under: { type: DataTypes.FLOAT, allowNull: true },
         favorite: { type: DataTypes.STRING, allowNull: true },
         game_date: { type: DataTypes.DATE, allowNull: true },
-        status: { type: DataTypes.STRING, allowNull: true }
+        status: { type: DataTypes.STRING, allowNull: true },
+        home_score: { type: DataTypes.INTEGER, allowNull: true },
+        away_score: { type: DataTypes.INTEGER, allowNull: true },
+        winner: { type: DataTypes.STRING, allowNull: true },
+        ats_winner: { type: DataTypes.STRING, allowNull: true },
+        ou_result: { type: DataTypes.STRING, allowNull: true }
     }, {
-        tableName: "nfl_bts_games",
+        tableName: "nfl_regular_season_games",
         timestamps: true
     });
 
-    return NflBtsGames;
+    return NflRegularSeasonGames;
 };

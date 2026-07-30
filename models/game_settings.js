@@ -70,6 +70,10 @@ module.exports = (sequelize, DataTypes) => {
         games_api_path: {
             type: DataTypes.STRING,
             allowNull: true
+        },
+        nav_links: {
+            type: DataTypes.JSON,
+            allowNull: true
         }
     }, {
         tableName: "game_settings",

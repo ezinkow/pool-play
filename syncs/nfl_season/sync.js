@@ -149,9 +149,9 @@ function extractMatchups(data) {
 }
 
 async function processMatchup(m) {
-    const { NflBtsGames } = db;
+    const { NflRegularSeasonGames } = db;
     try {
-        const [game, created] = await NflBtsGames.findOrCreate({
+        const [game, created] = await NflRegularSeasonGames.findOrCreate({
             where: { week: m.week, home_team: m.home_team, away_team: m.away_team },
             defaults: m
         });
@@ -164,22 +164,74 @@ async function processMatchup(m) {
     }
 }
 
-async function syncNflBts() {
+async function syncNflSeason() {
     try {
         const dateRange = getDynamicDateRange();
         const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=20260909-20260922`;
 
-        console.log(`[NFL BTS sync] Fetching scoreboard data for range: ${dateRange}`);
+        console.log(`[NFL Regular Season sync] Fetching scoreboard data for range: ${dateRange}`);
         const { data } = await axios.get(scoreboardUrl, { timeout: 15000 });
 
         const matchups = extractMatchups(data);
         for (const m of matchups) {
             await processMatchup(m);
         }
-        console.log(`[NFL BTS sync] Successfully synced ${matchups.length} matchups.`);
+        console.log(`[NFL Regular Season sync] Successfully synced ${matchups.length} matchups.`);
     } catch (err) {
-        console.error("[NFL BTS sync] Fatal Error:", err.message);
+        console.error("[NFL Regular Season sync] Fatal Error:", err.message);
     }
 }
 
-module.exports = syncNflBts;
+function calculateGameOutcomes(m, homeScore, awayScore) {
+    if (homeScore === undefined || awayScore === undefined || homeScore === null || awayScore === null) {
+        return { home_score: null, away_score: null, winner: null, ats_winner: null, ou_result: null };
+    }
+
+    // 1. Outright Winner
+    let winner = "PUSH";
+    if (homeScore > awayScore) winner = m.home_team;
+    else if (awayScore > homeScore) winner = m.away_team;
+
+    // 2. ATS Cover Calculation (using adjusted_spread or spread, relative to favorite)
+    // Spread is negative for the favorite (e.g. -3.5). 
+    // Favorite margin = favorite score - underdog score
+    const spreadVal = m.adjusted_spread !== undefined ? m.adjusted_spread : m.spread;
+    let ats_winner = "PUSH";
+
+    if (spreadVal !== null && spreadVal !== undefined) {
+        const isHomeFav = m.favorite === m.home_team;
+        const favScore = isHomeFav ? homeScore : awayScore;
+        const dogScore = isHomeFav ? awayScore : homeScore;
+        const favTeam = isHomeFav ? m.home_team : m.away_team;
+        const dogTeam = isHomeFav ? m.away_team : m.home_team;
+
+        // spreadVal is negative (e.g. -3.5). Favorite covers if (favScore + spreadVal) > dogScore
+        const margin = favScore + spreadVal;
+        if (margin > dogScore) {
+            ats_winner = favTeam;
+        } else if (margin < dogScore) {
+            ats_winner = dogTeam;
+        } else {
+            ats_winner = "PUSH";
+        }
+    }
+
+    // 3. Over / Under Result
+    let ou_result = "PUSH";
+    if (m.over_under) {
+        const totalPoints = homeScore + awayScore;
+        if (totalPoints > m.over_under) ou_result = "OVER";
+        else if (totalPoints < m.over_under) ou_result = "UNDER";
+        else ou_result = "PUSH";
+    }
+
+    return {
+        home_score: homeScore,
+        away_score: awayScore,
+        winner,
+        ats_winner,
+        ou_result
+    };
+}
+
+module.exports = syncNflSeason;

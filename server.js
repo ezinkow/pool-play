@@ -82,6 +82,12 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/nfl/startingrosters-api-routes.js")(app);
   require("./routes/nfl/gamestates-api-routes.js")(app);
 
+  // NFL Regular Season Games
+  require("./routes/nfl_regular_season_api_routes.js")(app);
+
+  // NFL ATS
+  require("./routes/nfl_ats_api_routes.js")(app);
+
   // NFL BTS
   require("./routes/nfl_bts_api_routes.js")(app);
   
@@ -104,7 +110,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   const syncBracket = require("./syncs/bracket/sync.js");
   const syncNba = require("./syncs/nba/sync.js");
   const syncMlb = require("./syncs/mlb/sync.js");
-  const syncNflBts = require("./syncs/nfl_bts/sync.js");
+  const syncNflBts = require("./syncs/nfl_season/sync.js");
   const syncWorldCup = require("./syncs/world_cup/sync.js");
   const tourneyPickemLockLines = require("./jobs/tourney_pickem/lockLines.js");
 

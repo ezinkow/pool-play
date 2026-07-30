@@ -1,8 +1,7 @@
-// 🛠️ FIX 1: Require the global models loader folder directly to prevent destructuring undefined errors
 const db = require("../../models");
 
 module.exports = function (app) {
-    // 🛠️ FIX 2: Explicitly declare the path prefix your frontend is hitting
+
     app.get("/api/settings/active-states", async (req, res) => {
         try {
             // Robust Fallback Check: Resolves if your model exports as singular, camelCase, or plural variations
@@ -13,7 +12,7 @@ module.exports = function (app) {
                 return res.status(500).json({ error: "GameSettings model was not registered correctly by the database engine." });
             }
 
-            // Pull every row and all metadata attributes straight out of your database
+            // Pull every row and all metadata attributes straight out of database
             const records = await SettingsModel.findAll({
                 order: [['createdAt', 'ASC']]
             });

@@ -1,4 +1,4 @@
-const { NflBtsTeamAssignments, NflBtsGames, NflBtsPicks, NflBtsEntries, NflBtsTeams, Users, Settings } = require("../models");
+const { NflBtsTeamAssignments, NflRegularSeasonGames, NflBtsPicks, NflBtsEntries, NflTeams, Users, Settings } = require("../models");
 const db = require("../models");
 const requireAuth = require("../middleware/Requireauth");
 const { Op } = require("sequelize");
@@ -134,7 +134,7 @@ module.exports = function (app) {
                 return res.json({ team_name: null, logo: null, primary_color: null, secondary_color: null });
             }
 
-            const teamMeta = await db.NflBtsTeams.findOne({
+            const teamMeta = await db.NflTeams.findOne({
                 where: { name: assignment.team_name }
             });
 
@@ -150,28 +150,7 @@ module.exports = function (app) {
         }
     });
 
-    // --------------------------------------------------------
-    // GET /api/nfl_bts/matchup (Guarded against undefined team)
-    // --------------------------------------------------------
-    app.get("/api/nfl_bts/matchup", requireAuth, async (req, res) => {
-        try {
-            const { week, team } = req.query;
-            if (!team || team === "undefined" || team === "null") {
-                return res.json(null);
-            }
-
-            const matchup = await NflBtsGames.findOne({
-                where: {
-                    week: parseInt(week),
-                    [Op.or]: [{ home_team: team }, { away_team: team }]
-                }
-            });
-            res.json(matchup || null);
-        } catch (err) {
-            console.error(err);
-            res.status(500).json({ error: "Failed to fetch matchup" });
-        }
-    });
+ 
 
     // --------------------------------------------------------
     // GET /api/nfl_bts/picks
@@ -202,7 +181,7 @@ module.exports = function (app) {
                 return res.status(400).json({ error: "No team assigned for this room." });
             }
 
-            const matchup = await NflBtsGames.findOne({
+            const matchup = await NflRegularSeasonGames.findOne({
                 where: {
                     week: parseInt(week),
                     [Op.or]: [{ home_team: team_name }, { away_team: team_name }]
@@ -273,14 +252,14 @@ module.exports = function (app) {
                 // Get team logo metadata
                 let teamLogo = null;
                 if (teamName) {
-                    const teamMeta = await NflBtsTeams.findOne({ where: { name: teamName } });
+                    const teamMeta = await NflTeams.findOne({ where: { name: teamName } });
                     if (teamMeta) teamLogo = teamMeta.logo;
                 }
 
                 // Get game details for their assigned team this week
                 let game = null;
                 if (teamName) {
-                    game = await NflBtsGames.findOne({
+                    game = await NflRegularSeasonGames.findOne({
                         where: {
                             week: targetWeek,
                             [Op.or]: [{ home_team: teamName }, { away_team: teamName }]
@@ -302,13 +281,13 @@ module.exports = function (app) {
                 if (game) {
                     favoriteTeam = game.favorite || null;
 
-                    const awayMeta = await NflBtsTeams.findOne({ where: { name: game.away_team } });
-                    const homeMeta = await NflBtsTeams.findOne({ where: { name: game.home_team } });
+                    const awayMeta = await NflTeams.findOne({ where: { name: game.away_team } });
+                    const homeMeta = await NflTeams.findOne({ where: { name: game.home_team } });
                     if (awayMeta) awayLogo = awayMeta.logo;
                     if (homeMeta) homeLogo = homeMeta.logo;
 
                     if (favoriteTeam) {
-                        const favMeta = await NflBtsTeams.findOne({ where: { name: favoriteTeam } });
+                        const favMeta = await NflTeams.findOne({ where: { name: favoriteTeam } });
                         if (favMeta) favoriteLogo = favMeta.logo;
                     }
                 }
@@ -356,13 +335,12 @@ module.exports = function (app) {
                 t.logo,
                 SUM(CASE WHEN fp.ats_status = 'win' THEN 1 ELSE 0 END) as ats_wins,
                 SUM(CASE WHEN fp.ats_status = 'loss' THEN 1 ELSE 0 END) as ats_losses,
-                SUM(CASE WHEN fp.ats_status = 'push' THEN 1 ELSE 0 END) as ats_pushes,
                 SUM(CASE WHEN fp.ou_status = 'win' THEN 1 ELSE 0 END) as ou_wins,
                 SUM(CASE WHEN fp.ou_status = 'loss' THEN 1 ELSE 0 END) as ou_losses,
                 SUM(CASE WHEN fp.ou_status = 'push' THEN 1 ELSE 0 END) as ou_pushes
             FROM nfl_bts_team_assignments fa
             JOIN nfl_bts_entries u ON fa.user_id = u.user_id AND fa.room_id = u.room_id
-            LEFT JOIN nfl_bts_teams t ON fa.team_name = t.name
+            LEFT JOIN nfl_teams t ON fa.team_name = t.name
             LEFT JOIN nfl_bts_picks fp ON fa.user_id = fp.user_id AND fa.room_id = fp.room_id
             WHERE fa.room_id = :room_id
             GROUP BY fa.user_id, u.entry_name, fa.team_name, fa.division, t.logo
@@ -396,7 +374,7 @@ module.exports = function (app) {
                 return res.status(400).json({ error: "Room ID is required." });
             }
 
-            const allTeams = await NflBtsTeams.findAll();
+            const allTeams = await NflTeams.findAll();
             if (!allTeams || allTeams.length === 0) {
                 return res.status(400).json({ error: "No teams found in the database." });
             }

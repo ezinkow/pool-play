@@ -63,14 +63,21 @@ import MlbPicksDisplay from './pages/mlb/GroupPicks';
 import MlbStandings from './pages/mlb/Standings';
 import MlbSignUp from './pages/mlb/SignUp';
 
-// NFL pages
-import NflHome from './pages/nfl/Home';
-import NflScoreboard from './pages/nfl/Scoreboard';
-import NflStandings from './pages/nfl/Standings';
-import NflRosterPicks from './pages/nfl/RosterPicks';
-import NflMyRoster from './pages/nfl/MyRoster';
-import NflSignUp from './pages/nfl/SignUp';
-import NflPlayerPoolsTable from './pages/nfl/PlayerStats';
+// NFL Playoffs pages
+import NflHome from './pages/nfl_playoffs/Home';
+import NflScoreboard from './pages/nfl_playoffs/Scoreboard';
+import NflStandings from './pages/nfl_playoffs/Standings';
+import NflRosterPicks from './pages/nfl_playoffs/RosterPicks';
+import NflMyRoster from './pages/nfl_playoffs/MyRoster';
+import NflSignUp from './pages/nfl_playoffs/SignUp';
+import NflPlayerPoolsTable from './pages/nfl_playoffs/PlayerStats';
+
+// NFL Pickem ATS pages
+import NflPickemAtsHome from './pages/nfl_pickem_ats/Home';
+import NflPickemAtsStandings from './pages/nfl_pickem_ats/Standings';
+import NflPickemAtsPicks from './pages/nfl_pickem_ats/Picks';
+import NflPickemAtsMyPicks from './pages/nfl_pickem_ats/MyPicks';
+import NflPickemAtsGroupPicks from './pages/nfl_pickem_ats/GroupPicks';
 
 // NFL BTS pages
 import NflBtsHome from './pages/nfl_bts/Home';
@@ -173,7 +180,7 @@ export default function App() {
           <Route path="/nba/signup" element={<NbaSignUp />} />
           <Route path="/nba/adminrefresh" element={<NbaAdminRefresh />} />
 
-          {/* NFL */}
+          {/* NFL Playoffs*/}
           <Route path="/nfl" element={<NflHome />} />
           <Route path="/nfl/signup" element={<NflSignUp />} />
           <Route path="/nfl/rosterpicks" element={<NflRosterPicks />} />
@@ -181,6 +188,13 @@ export default function App() {
           <Route path="/nfl/myroster" element={<NflMyRoster />} />
           <Route path="/nfl/standings" element={<NflStandings />} />
           <Route path="/nfl/playerstats" element={<NflPlayerPoolsTable />} />
+
+          {/* NFL Pickem ATS*/}
+          <Route path="/nflpickemats" element={<NflPickemAtsHome />} />
+          <Route path="/nflpickemats/picks" element={<NflPickemAtsPicks />} />
+          <Route path="/nflpickemats/mypicks" element={<NflPickemAtsMyPicks />} />
+          <Route path="/nflpickemats/standings" element={<NflPickemAtsStandings />} />
+          <Route path="/nflpickemats/grouppicks" element={<NflPickemAtsGroupPicks />} />
 
           {/* NFL BTS*/}
           <Route path="/nflbts" element={<NflBtsHome />} />

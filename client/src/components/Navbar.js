@@ -77,65 +77,20 @@ export default function Navbar() {
             ? new Date() >= new Date(currentGame.lock_date)
             : false;
 
-        let templateLinks = [
-            { to: `${pfx}`, label: "Home", emoji: "🏠" },
-            { to: `${pfx}/picks`, label: "Make Picks", emoji: "🌎" },
-            { to: `${pfx}/mypicks`, label: "My Picks", emoji: "📋" },
-            { to: `${pfx}/standings`, label: "Standings", emoji: "🏆" }
-        ];
-
-        if (pfx === "/worldcup") {
-            templateLinks.splice(3, 0, { to: "/worldcup/grouppicks", label: "Group Picks", emoji: "⚽" });
-            templateLinks.push({ to: "/worldcup/scoreboard", label: "Scoreboard", emoji: "📋" });
-        } else if (pfx === "/nba") {
-            templateLinks.splice(1, 1, { to: "/nba/picks", label: "Picks", emoji: "📝" });
-            templateLinks.push({ to: "/nba/grouppicks", label: "Group Picks", emoji: "🏀" });
-            templateLinks.push({ to: "/nba/signup", label: "Join Pool", emoji: "▶️" });
-        } else if (pfx === "/tourneypickem" || pfx === "/champweekpickem") {
-            templateLinks.splice(1, 2,
-                { to: `${pfx}/picks`, label: "Submit Picks", emoji: "📝" },
-                { to: `${pfx}/mypicks`, label: "My Sheet", emoji: "📋" }
-            );
-            templateLinks.push({ to: `${pfx}/scoreboard`, label: "Scores", emoji: "🏀" });
-            templateLinks.push({ to: `${pfx}/picksdisplay`, label: "User Picks", emoji: "🔍" });
-            templateLinks.push({ to: `${pfx}/signup`, label: "Join Pool", emoji: "▶️" });
-        } else if (pfx === "/bracket") {
-            templateLinks.splice(1, 2,
-                { to: "/bracket/bracket", label: "Bracket Board", emoji: "🔱" },
-                { to: "/bracket/mybracket", label: "My Bracket", emoji: "📋" }
-            );
-            templateLinks.push({ to: "/bracket/signup", label: "Join Pool", emoji: "▶️" });
-        } else if (pfx === "/tourneysquares") {
-            templateLinks = [
-                { to: "/tourneysquares", label: "Home", emoji: "🏠" },
-                { to: "/tourneysquares/grid", label: "Squares Grid", emoji: "⬛" },
-                { to: "/tourneysquares/numbers", label: "My Numbers", emoji: "🔢" },
-                { to: "/tourneysquares/results", label: "Prizes & Wins", emoji: "💵" },
-                { to: "/tourneysquares/signup", label: "Buy Squares", emoji: "🎟️" }
-            ];
-        } else if (pfx === "/nflbts") {
-            templateLinks = [
-                { to: pfx, label: "Home", emoji: "🏠" },
-                { to: `${pfx}/picks`, label: "Make Picks", emoji: "🏈" },
-                { to: `${pfx}/grouppicks`, label: "Weekly Matrix", emoji: "📊" },
+        // 🚀 DYNAMIC ENGINE: Use custom nav links from settings if defined, 
+        // otherwise fall back to standard default pool links (Home, Picks, My Picks, Standings)
+        let templateLinks = currentGame.nav_links && Array.isArray(currentGame.nav_links)
+            ? currentGame.nav_links.map(link => ({
+                ...link,
+                to: link.to.startsWith("http") ? link.to : `${pfx}${link.to === "/" ? "" : link.to}`
+            }))
+            : [
+                { to: `${pfx}`, label: "Home", emoji: "🏠" },
+                { to: `${pfx}/picks`, label: "Make Picks", emoji: "🌎" },
+                { to: `${pfx}/mypicks`, label: "My Picks", emoji: "📋" },
+                { to: `${pfx}/grouppicks`, label: "Group Picks", emoji: "📊" },
                 { to: `${pfx}/standings`, label: "Standings", emoji: "🏆" }
             ];
-        } else if (pfx === "/nfl" || pfx === "/olympics") {
-            const sport = pfx === "/nfl" ? "🏈" : "🌍";
-            const labelStr = pfx === "/nfl" ? "Pick Roster" : "Country Draft";
-            const thirdStr = pfx === "/nfl" ? "My Team" : "My Countries";
-            const liveStr = pfx === "/nfl" ? "Scoreboard" : "Live Events";
-            templateLinks = [
-                { to: pfx, label: "Home", emoji: "🏠" },
-                { to: `${pfx}/${pfx === "/nfl" ? "rosterpicks" : "countrypicks"}`, label: labelStr, emoji: sport },
-                { to: `${pfx}/myroster`, label: thirdStr, emoji: "📋" },
-                { to: `${pfx}/scoreboard`, label: liveStr, emoji: pfx === "/nfl" ? "📋" : "⏱️" },
-                { to: `${pfx}/standings`, label: "Standings", emoji: "🏆" }
-            ];
-            if (pfx === "/nfl") templateLinks.push({ to: "/nfl/playerstats", label: "Player Pools", emoji: "📊" });
-            else templateLinks.push({ to: "/olympics/medaltable", label: "Medal Count", emoji: "🏅" });
-            templateLinks.push({ to: `${pfx}/signup`, label: "Join Pool", emoji: "▶️" });
-        }
 
         return templateLinks.filter(({ to }) => isAdmin || !signupLocked || !to.endsWith("/signup"));
     }, [currentGame, user]);
@@ -147,8 +102,7 @@ export default function Navbar() {
         const lower = label.toLowerCase();
         if (lower.includes("make picks") || lower.includes("submit")) return "Picks";
         if (lower.includes("my picks") || lower.includes("my sheet")) return "My Picks";
-        // ✨ MODIFIED: Added "weekly matrix" to cleanly map to "Matrix" on mobile
-        if (lower.includes("group picks") || lower.includes("user picks") || lower.includes("weekly matrix")) return "Matrix";
+        if (lower.includes("group picks") || lower.includes("user picks") || lower.includes("weekly matrix") || lower.includes("matrix")) return "Matrix";
         if (lower.includes("bracket board")) return "Bracket";
         return label;
     };

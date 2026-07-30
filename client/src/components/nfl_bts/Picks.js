@@ -67,7 +67,7 @@ export default function NflBtsPicks() {
                 });
 
                 if (teamName) {
-                    const matchupRes = await axios.get("/api/nfl_bts/matchup", {
+                    const matchupRes = await axios.get("/api/nfl_regular_season_games", {
                         ...config,
                         params: { week: currentWeek, team: teamName }
                     });

@@ -10,7 +10,7 @@ const NFL_BLUE = "#013369";
 const NFL_RED = "#D50A0A";
 const WHITE = "#FFFFFF";
 
-export default function FootballHome() {
+export default function NflBtsHome() {
   const { user, loading: authLoading, token } = useAuth();
   const [poolData, setPoolData] = useState(null);
   const [userEntries, setUserEntries] = useState([]);
