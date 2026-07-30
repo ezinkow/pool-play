@@ -14,10 +14,14 @@ export default function NflBtsHome() {
   const { user, loading: authLoading, token } = useAuth();
   const [poolData, setPoolData] = useState(null);
   const [userEntries, setUserEntries] = useState([]);
+  const [roomCounts, setRoomCounts] = useState({ 1: 0, 2: 0, 3: 0 });
   const [confirmLeaveRoom, setConfirmLeaveRoom] = useState(null);
   const [customEntryNames, setCustomEntryNames] = useState({ 1: "", 2: "", 3: "" });
 
+  const activeToken = token || localStorage.getItem("token");
+
   const loadData = () => {
+    // Load pool active states / countdown info
     axios.get("/api/settings/active-states")
       .then(res => {
         const NflBtsPool = res.data.find(p => p.game_key === "nfl_bts");
@@ -25,20 +29,41 @@ export default function NflBtsHome() {
       })
       .catch(err => console.error("Failed to load NFL Beat The Spread pool data", err));
 
-    if (token || localStorage.getItem("token")) {
+    // Fetch all entries using the public /api/nfl_bts/entries endpoint to reliably count rooms
+    axios.get("/api/nfl_bts/entries")
+      .then(res => {
+        const allEntries = res.data || [];
+        const counts = { 1: 0, 2: 0, 3: 0 };
+        allEntries.forEach(entry => {
+          const rId = Number(entry.room_id);
+          if (counts[rId] !== undefined) {
+            counts[rId]++;
+          }
+        });
+        setRoomCounts(counts);
+      })
+      .catch(err => console.error("Failed to fetch room entry counts", err));
+
+    // Fetch current user's personal room memberships
+    if (activeToken) {
       axios.get("/api/nfl_bts/entries/me", {
-        headers: { Authorization: `Bearer ${token || localStorage.getItem("token")}` }
+        headers: { Authorization: `Bearer ${activeToken}` }
       })
         .then(res => {
           setUserEntries(res.data.entries || []);
         })
-        .catch(err => console.error("Failed to fetch user entries", err));
+        .catch(err => {
+          console.error("Failed to fetch user entries", err);
+          if (err.response?.status === 401) {
+            toast.error("Session expired. Please log in again.");
+          }
+        });
     }
   };
 
   useEffect(() => {
     loadData();
-  }, [token]);
+  }, [activeToken]);
 
   const isPoolStarted = useMemo(() => {
     if (!poolData?.lock_date) return false;
@@ -52,7 +77,7 @@ export default function NflBtsHome() {
         room_id: roomId,
         entry_name: entryNameInput
       }, {
-        headers: { Authorization: `Bearer ${token || localStorage.getItem("token")}` }
+        headers: { Authorization: `Bearer ${activeToken}` }
       });
       toast.success(`Successfully joined Room ${roomId} (${creditAmount}-credit pool)!`);
       loadData();
@@ -64,7 +89,7 @@ export default function NflBtsHome() {
   const handleLeavePool = async (roomId) => {
     try {
       await axios.post("/api/nfl_bts/entries/leave", { room_id: roomId }, {
-        headers: { Authorization: `Bearer ${token || localStorage.getItem("token")}` }
+        headers: { Authorization: `Bearer ${activeToken}` }
       });
       toast.success(`Successfully left Room ${roomId}.`);
       setConfirmLeaveRoom(null);
@@ -93,7 +118,7 @@ export default function NflBtsHome() {
       )}
 
       <div className="container" style={{ textAlign: "center", padding: "20px 16px", boxSizing: "border-box" }}>
-        
+
         {/* Split Rooms / Join & Leave Pool Options Section */}
         <div style={{
           background: WHITE,
@@ -105,17 +130,21 @@ export default function NflBtsHome() {
           maxWidth: "950px",
           margin: "0 auto 24px auto"
         }}>
-          <h3 style={{ color: NFL_BLUE, marginTop: 0, marginBottom: 16, fontSize: "1.2rem" }}>
+          <h3 style={{ color: NFL_BLUE, marginTop: 0, marginBottom: 8, fontSize: "1.2rem" }}>
             🏟️ Pool Rooms Selection
           </h3>
-          <p>Choose one or multiple!</p>
-          <p>Guaranteed to not have the same team!</p>
-          <br></br>
+          <p style={{ margin: "0 0 4px 0" }}>Choose one or multiple!</p>
+          <p style={{ margin: "0 0 16px 0" }}>Guaranteed to not have the same team!</p>
+
           <div style={{ display: "flex", justifyContent: "center", gap: "20px", flexWrap: "wrap" }}>
-            
+
             {/* Room 1 (50 Credits) */}
             <div style={{ flex: "1 1 260px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
-              <h4 style={{ margin: "0 0 8px 0", color: NFL_BLUE, textAlign: "center" }}>Room 1: 50 Credit Pool</h4>
+              <h4 style={{ margin: "0 0 4px 0", color: NFL_BLUE, textAlign: "center" }}>Room 1: 50 Credit Pool</h4>
+              <p style={{ textAlign: "center", fontSize: "12px", color: "#64748b", margin: "0 0 12px 0" }}>
+                Current Count: <strong style={{ color: NFL_BLUE }}>{roomCounts[1]} / 32</strong>
+              </p>
+
               {entryRoom1 ? (
                 <div style={{ textAlign: "center" }}>
                   <p style={{ fontSize: "14px", color: "#16a34a", fontWeight: "bold" }}>✓ You are in Room 1</p>
@@ -169,7 +198,11 @@ export default function NflBtsHome() {
 
             {/* Room 2 (100 Credits A) */}
             <div style={{ flex: "1 1 260px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
-              <h4 style={{ margin: "0 0 8px 0", color: NFL_BLUE, textAlign: "center" }}>Room 2: 100 Credit Pool A</h4>
+              <h4 style={{ margin: "0 0 4px 0", color: NFL_BLUE, textAlign: "center" }}>Room 2: 100 Credit Pool A</h4>
+              <p style={{ textAlign: "center", fontSize: "12px", color: "#64748b", margin: "0 0 12px 0" }}>
+                Current Count: <strong style={{ color: NFL_BLUE }}>{roomCounts[2]} / 32</strong>
+              </p>
+
               {entryRoom2 ? (
                 <div style={{ textAlign: "center" }}>
                   <p style={{ fontSize: "14px", color: "#16a34a", fontWeight: "bold" }}>✓ You are in Room 2</p>
@@ -192,7 +225,6 @@ export default function NflBtsHome() {
                 </div>
               ) : (
                 <div>
-                  <p style={{ fontSize: "13px", color: "#64748b", textAlign: "center", marginBottom: 12 }}>High roller stake competition.</p>
                   <div style={{ marginBottom: 12 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
                       <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE }}>Entry / Display Name:</label>
@@ -223,7 +255,11 @@ export default function NflBtsHome() {
 
             {/* Room 3 (100 Credits B) */}
             <div style={{ flex: "1 1 260px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
-              <h4 style={{ margin: "0 0 8px 0", color: NFL_BLUE, textAlign: "center" }}>Room 3: 100 Credit Pool B</h4>
+              <h4 style={{ margin: "0 0 4px 0", color: NFL_BLUE, textAlign: "center" }}>Room 3: 100 Credit Pool B</h4>
+              <p style={{ textAlign: "center", fontSize: "12px", color: "#64748b", margin: "0 0 12px 0" }}>
+                Current Count: <strong style={{ color: NFL_BLUE }}>{roomCounts[3]} / 32</strong>
+              </p>
+
               {entryRoom3 ? (
                 <div style={{ textAlign: "center" }}>
                   <p style={{ fontSize: "14px", color: "#16a34a", fontWeight: "bold" }}>✓ You are in Room 3</p>
@@ -246,7 +282,6 @@ export default function NflBtsHome() {
                 </div>
               ) : (
                 <div>
-                  <p style={{ fontSize: "13px", color: "#64748b", textAlign: "center", marginBottom: 12 }}>Second high roller stake room.</p>
                   <div style={{ marginBottom: 12 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
                       <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE }}>Entry / Display Name:</label>
