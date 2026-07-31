@@ -10,9 +10,28 @@ export default function NflPickemAtsMatrix() {
     const { user, loading: authLoading } = useAuth();
     const [currentWeek, setCurrentWeek] = useState(1);
     const [matrixData, setMatrixData] = useState([]);
+    const [teamColors, setTeamColors] = useState({});
     const [loading, setLoading] = useState(true);
 
     const token = localStorage.getItem("token");
+
+    // Fetch team branding mapping for secondary colors
+    useEffect(() => {
+        if (!token) return;
+        axios.get("/api/nfl_teams", {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => {
+                const map = {};
+                (res.data || []).forEach(t => {
+                    map[t.name] = {
+                        secondaryColor: t.secondary_color || t.alt_color || "#ffffff"
+                    };
+                });
+                setTeamColors(map);
+            })
+            .catch(err => console.error("Failed to load NFL team colors", err));
+    }, [token]);
 
     // Fetch matrix data for the selected week
     useEffect(() => {
@@ -203,27 +222,47 @@ export default function NflPickemAtsMatrix() {
                                     }}>
                                         Player (Pts)
                                     </th>
-                                    {gamesList.map((game) => (
-                                        <th key={game.game_id} style={{
-                                            padding: "12px 14px",
-                                            textAlign: "center",
-                                            fontSize: "12px",
-                                            borderLeft: "1px solid rgba(255,255,255,0.15)",
-                                            minWidth: "130px"
-                                        }}>
-                                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 4 }}>
-                                                {game.away_logo && <img src={game.away_logo} alt={game.away_team} style={{ width: 18, height: 18, objectFit: "contain" }} />}
-                                                <span>@</span>
-                                                {game.home_logo && <img src={game.home_logo} alt={game.home_team} style={{ width: 18, height: 18, objectFit: "contain" }} />}
-                                            </div>
-                                            <div style={{ fontWeight: 700, fontSize: "11px", opacity: 0.9 }}>
-                                                {game.away_team} vs {game.home_team}
-                                            </div>
-                                            <div style={{ fontSize: "10px", color: GOLD, marginTop: 2 }}>
-                                                Line: {game.adjusted_spread}
-                                            </div>
-                                        </th>
-                                    ))}
+                                    {gamesList.map((game) => {
+                                        const favLogo = game.favorite === game.away_team ? game.away_logo : (game.favorite === game.home_team ? game.home_logo : null);
+                                        const favSecondary = (game.favorite && teamColors[game.favorite]?.secondaryColor) ? teamColors[game.favorite].secondaryColor : "rgba(255, 255, 255, 0.2)";
+                                        const awaySecondary = teamColors[game.away_team]?.secondaryColor || "rgba(255, 255, 255, 0.2)";
+                                        const homeSecondary = teamColors[game.home_team]?.secondaryColor || "rgba(255, 255, 255, 0.2)";
+
+                                        return (
+                                            <th key={game.game_id} style={{
+                                                padding: "12px 14px",
+                                                textAlign: "center",
+                                                fontSize: "12px",
+                                                borderLeft: "1px solid rgba(255,255,255,0.15)",
+                                                minWidth: "130px"
+                                            }}>
+                                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 4 }}>
+                                                    {game.away_logo && (
+                                                        <span style={{ background: awaySecondary, borderRadius: 4, padding: "1px 3px", display: "inline-flex", alignItems: "center" }}>
+                                                            <img src={game.away_logo} alt={game.away_team} style={{ width: 18, height: 18, objectFit: "contain" }} />
+                                                        </span>
+                                                    )}
+                                                    <span style={{ fontSize: '10px' }}>@</span>
+                                                    {game.home_logo && (
+                                                        <span style={{ background: homeSecondary, borderRadius: 4, padding: "1px 3px", display: "inline-flex", alignItems: "center" }}>
+                                                            <img src={game.home_logo} alt={game.home_team} style={{ width: 18, height: 18, objectFit: "contain" }} />
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div style={{ fontWeight: 700, fontSize: "11px", opacity: 0.9 }}>
+                                                    {game.away_team} vs {game.home_team}
+                                                </div>
+                                                <div style={{ fontSize: "10px", color: GOLD, marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                                                    {favLogo && (
+                                                        <span style={{ background: favSecondary, borderRadius: 4, padding: "1px 3px", display: "inline-flex", alignItems: "center" }}>
+                                                            <img src={favLogo} alt={game.favorite} style={{ width: 14, height: 14, objectFit: "contain" }} />
+                                                        </span>
+                                                    )}
+                                                    <span>{game.adjusted_spread || "Pick'em"}</span>
+                                                </div>
+                                            </th>
+                                        );
+                                    })}
                                 </tr>
                             </thead>
                             <tbody>
