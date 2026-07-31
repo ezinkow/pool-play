@@ -206,19 +206,19 @@ export default function NflPickemAtsMyPicks() {
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "space-between",
-                                flexWrap: "wrap",
-                                gap: 10
+                                flexWrap: "nowrap",
+                                gap: 8
                             }}>
                                 {/* Left: Matchup & Final Score */}
-                                <div style={{ display: "flex", flexDirection: "column", minWidth: "130px" }}>
-                                    <div className="matchup-header-row" style={{ fontSize: "17px", color: "#1e2229", fontWeight: 500, display: "flex", gap: 4, alignItems: "center" }}>
+                                <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, overflow: "hidden" }}>
+                                    <div className="matchup-header-row" style={{ fontSize: "15px", color: "#1e2229", fontWeight: 500, display: "flex", gap: 4, alignItems: "center", flexWrap: "nowrap", whiteSpace: "nowrap" }}>
                                         <span className="team-display" style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
-                                            {awayLogo && <img src={awayLogo} alt={game.away_team} style={{ width: 30, height: 30, objectFit: "contain" }} />}
+                                            {awayLogo && <img src={awayLogo} alt={game.away_team} className="matchup-logo" style={{ width: 22, height: 22, objectFit: "contain" }} />}
                                             <span className="team-text">{game.away_team}</span> ({awaySpreadStr})
                                         </span>
                                         <span style={{ color: "#40464e" }}>@</span>
                                         <span className="team-display" style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
-                                            {homeLogo && <img src={homeLogo} alt={game.home_team} style={{ width: 30, height: 30, objectFit: "contain" }} />}
+                                            {homeLogo && <img src={homeLogo} alt={game.home_team} className="matchup-logo" style={{ width: 22, height: 22, objectFit: "contain" }} />}
                                             <span className="team-text">{game.home_team}</span> ({homeSpreadStr})
                                         </span>
                                     </div>
@@ -230,14 +230,8 @@ export default function NflPickemAtsMyPicks() {
                                     {ouBadge && <div style={{ marginTop: 2 }}>{ouBadge}</div>}
                                 </div>
 
-                                {/* Right: Pick Logo, Best Bet Badge, and Status */}
-                                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                    {isBestBet && (
-                                        <span style={{ background: GOLD, color: "white", fontSize: "9px", padding: "2px 6px", borderRadius: 4, fontWeight: 900 }}>
-                                            ★ BEST BET
-                                        </span>
-                                    )}
-
+                                {/* Right: Pick Logo & Status / Best Bet Column */}
+                                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                                     {pickedTeam ? (
                                         <div style={{ 
                                             display: "flex", 
@@ -247,14 +241,19 @@ export default function NflPickemAtsMyPicks() {
                                             borderRadius: 6, 
                                             border: `1px solid ${teamSecondary}40` 
                                         }}>
-                                            {pickedLogo && <img src={pickedLogo} alt={pickedTeam} style={{ width: 50, height: 50, objectFit: "contain" }} />}
+                                            {pickedLogo && <img src={pickedLogo} alt={pickedTeam} style={{ width: 38, height: 38, objectFit: "contain" }} />}
                                         </div>
                                     ) : (
                                         <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 600 }}>No Pick</span>
                                     )}
 
-                                    <div style={{ minWidth: "75px", textAlign: "right" }}>
+                                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2, minWidth: "70px" }}>
                                         {statusBadge}
+                                        {isBestBet && (
+                                            <span style={{ background: GOLD, color: "white", fontSize: "8px", padding: "1px 4px", borderRadius: 3, fontWeight: 900, letterSpacing: "0.3px" }}>
+                                                ★ BEST BET
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -266,6 +265,13 @@ export default function NflPickemAtsMyPicks() {
                     @media (max-width: 576px) {
                         .team-text {
                             display: none !important;
+                        }
+                        .matchup-header-row {
+                            font-size: 13px !important;
+                        }
+                        .matchup-logo {
+                            width: 18px !important;
+                            height: 18px !important;
                         }
                     }
                 `}</style>
