@@ -157,7 +157,7 @@ export default function NflBtsHome() {
                   Log In
                 </button>
               </Link>
-              <Link to="/register" style={{ textDecoration: "none" }}>
+              <Link to="/signup" style={{ textDecoration: "none" }}>
                 <button style={{ backgroundColor: WHITE, color: NFL_BLUE, border: `2px solid ${NFL_BLUE}`, padding: "10px 20px", borderRadius: 8, fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}>
                   Create Account
                 </button>
