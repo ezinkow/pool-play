@@ -15,7 +15,7 @@ export default function NflPickemAtsMatrix() {
 
     const token = localStorage.getItem("token");
 
-    // Fetch team branding mapping for secondary colors
+    // Fetch team branding mapping for secondary colors and logos
     useEffect(() => {
         if (!token) return;
         axios.get("/api/nfl_teams", {
@@ -25,7 +25,8 @@ export default function NflPickemAtsMatrix() {
                 const map = {};
                 (res.data || []).forEach(t => {
                     map[t.name] = {
-                        secondaryColor: t.secondary_color || t.alt_color || "#ffffff"
+                        secondaryColor: t.secondary_color || t.alt_color || "#ffffff",
+                        logo: t.logo
                     };
                 });
                 setTeamColors(map);
@@ -238,13 +239,13 @@ export default function NflPickemAtsMatrix() {
                                             }}>
                                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 4 }}>
                                                     {game.away_logo && (
-                                                        <span style={{ background: awaySecondary, borderRadius: 4, padding: "1px 3px", display: "inline-flex", alignItems: "center" }}>
+                                                        <span style={{ background: awaySecondary, borderRadius: 4, padding: "1px 3px", display: "inline-flex", alignItems: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }}>
                                                             <img src={game.away_logo} alt={game.away_team} style={{ width: 18, height: 18, objectFit: "contain" }} />
                                                         </span>
                                                     )}
                                                     <span style={{ fontSize: '10px' }}>@</span>
                                                     {game.home_logo && (
-                                                        <span style={{ background: homeSecondary, borderRadius: 4, padding: "1px 3px", display: "inline-flex", alignItems: "center" }}>
+                                                        <span style={{ background: homeSecondary, borderRadius: 4, padding: "1px 3px", display: "inline-flex", alignItems: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }}>
                                                             <img src={game.home_logo} alt={game.home_team} style={{ width: 18, height: 18, objectFit: "contain" }} />
                                                         </span>
                                                     )}
@@ -254,7 +255,7 @@ export default function NflPickemAtsMatrix() {
                                                 </div>
                                                 <div style={{ fontSize: "10px", color: GOLD, marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
                                                     {favLogo && (
-                                                        <span style={{ background: favSecondary, borderRadius: 4, padding: "1px 3px", display: "inline-flex", alignItems: "center" }}>
+                                                        <span style={{ background: favSecondary, borderRadius: 4, padding: "1px 3px", display: "inline-flex", alignItems: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }}>
                                                             <img src={favLogo} alt={game.favorite} style={{ width: 14, height: 14, objectFit: "contain" }} />
                                                         </span>
                                                     )}
@@ -318,9 +319,14 @@ export default function NflPickemAtsMatrix() {
                                                     pointsDisplay = pick?.is_best_bet ? "+2" : "+1";
                                                 }
 
+                                                const pickedTeam = pick?.ats_pick;
+                                                const pickedMeta = teamColors[pickedTeam] || {};
+                                                const pickedLogo = pickedTeam === game.away_team ? game.away_logo : (pickedTeam === game.home_team ? game.home_logo : pickedMeta.logo);
+                                                const pickedSecondary = pickedMeta.secondaryColor || "#cbd5e1";
+
                                                 return (
                                                     <td key={game.game_id} style={{
-                                                        padding: "10px 14px",
+                                                        padding: "8px 14px",
                                                         textAlign: "center",
                                                         fontSize: 13,
                                                         fontWeight: 700,
@@ -329,10 +335,20 @@ export default function NflPickemAtsMatrix() {
                                                         color: textColor
                                                     }}>
                                                         {showPick ? (
-                                                            pick?.ats_pick ? (
-                                                                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                                                            pickedTeam ? (
+                                                                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                                                                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                                                        <span>{pick.ats_pick}</span>
+                                                                        <span style={{
+                                                                            background: pickedSecondary,
+                                                                            borderRadius: 4,
+                                                                            padding: "2px 4px",
+                                                                            display: "inline-flex",
+                                                                            alignItems: "center",
+                                                                            boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                                                                            border: "1px solid rgba(0,0,0,0.08)"
+                                                                        }}>
+                                                                            {pickedLogo && <img src={pickedLogo} alt={pickedTeam} style={{ width: 22, height: 22, objectFit: "contain" }} />}
+                                                                        </span>
                                                                         {pick.is_best_bet && (
                                                                             <span style={{ fontSize: "8px", background: GOLD, color: "white", padding: "1px 3px", borderRadius: 3, fontWeight: 900 }}>
                                                                                 ★ BB
