@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Toaster, toast } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import axios from "axios";
@@ -12,13 +12,15 @@ const WHITE = "#FFFFFF";
 
 export default function NflPickemAtsHome() {
   const { user, loading: authLoading, token } = useAuth();
+  const navigate = useNavigate();
   const [poolData, setPoolData] = useState(null);
   const [userEntry, setUserEntry] = useState(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [customEntryName, setCustomEntryName] = useState("");
 
+  const activeToken = token || localStorage.getItem("token");
+
   const loadData = () => {
-    // If you have a settings/active-states route or countdown endpoint
     axios.get("/api/settings/active-states")
       .then(res => {
         const pickemPool = res.data.find(p => p.game_key === "nfl_pickem_ats");
@@ -26,9 +28,9 @@ export default function NflPickemAtsHome() {
       })
       .catch(err => console.error("Failed to load pool data", err));
 
-    if (token || localStorage.getItem("token")) {
+    if (activeToken) {
       axios.get("/api/nfl_pickem_ats/entries/me", {
-        headers: { Authorization: `Bearer ${token || localStorage.getItem("token")}` }
+        headers: { Authorization: `Bearer ${activeToken}` }
       })
         .then(res => {
           setUserEntry(res.data.entry || null);
@@ -36,13 +38,18 @@ export default function NflPickemAtsHome() {
             setCustomEntryName(res.data.entry.entry_name);
           }
         })
-        .catch(err => console.error("Failed to fetch pick'em entry", err));
+        .catch(err => {
+          console.error("Failed to fetch pick'em entry", err);
+          if (err.response?.status === 401) {
+            toast.error("Session expired. Please log in again.");
+          }
+        });
     }
   };
 
   useEffect(() => {
     loadData();
-  }, [token]);
+  }, [activeToken]);
 
   const isPoolStarted = useMemo(() => {
     if (!poolData?.lock_date) return false;
@@ -50,25 +57,41 @@ export default function NflPickemAtsHome() {
   }, [poolData]);
 
   const handleJoinPool = async () => {
+    if (!activeToken) {
+      toast.error("Please log in or create an account to join a pool.");
+      navigate("/login");
+      return;
+    }
+
     try {
       const entryNameInput = customEntryName.trim() || user?.name;
       const res = await axios.post("/api/nfl_pickem_ats/entries/create", {
         entry_name: entryNameInput
       }, {
-        headers: { Authorization: `Bearer ${token || localStorage.getItem("token")}` }
+        headers: { Authorization: `Bearer ${activeToken}` }
       });
       setUserEntry(res.data.entry);
       toast.success("Successfully joined Standard ATS Pick'em!");
       loadData();
     } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to join pool");
+      if (err.response?.status === 401) {
+        toast.error("Session expired. Please log in again.");
+      } else {
+        toast.error(err.response?.data?.error || "Failed to join pool");
+      }
     }
   };
 
   const handleLeavePool = async () => {
+    if (!activeToken) {
+      toast.error("Please log in first.");
+      navigate("/login");
+      return;
+    }
+
     try {
       await axios.post("/api/nfl_pickem_ats/entries/leave", {}, {
-        headers: { Authorization: `Bearer ${token || localStorage.getItem("token")}` }
+        headers: { Authorization: `Bearer ${activeToken}` }
       });
       setUserEntry(null);
       setConfirmLeave(false);
@@ -93,7 +116,40 @@ export default function NflPickemAtsHome() {
       )}
 
       <div className="container" style={{ textAlign: "center", padding: "20px 16px", boxSizing: "border-box" }}>
-        
+
+        {!activeToken && (
+          <div style={{
+            background: "#fffbeb",
+            border: "1px solid #fde68a",
+            borderRadius: 16,
+            padding: "20px 24px",
+            marginBottom: 24,
+            maxWidth: "650px",
+            margin: "0 auto 24px auto",
+            textAlign: "center",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.05)"
+          }}>
+            <h4 style={{ color: "#92400e", margin: "0 0 8px 0", fontSize: "1.1rem" }}>
+              🔒 Account Required to Join Pool
+            </h4>
+            <p style={{ margin: "0 0 16px 0", color: "#78350f", fontSize: "14px", lineHeight: "1.5" }}>
+              You must be logged in or create an account before you can select a display name and join this pool.
+            </p>
+            <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap" }}>
+              <Link to="/login" style={{ textDecoration: "none" }}>
+                <button style={{ backgroundColor: NFL_BLUE, color: WHITE, border: "none", padding: "10px 20px", borderRadius: 8, fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}>
+                  Log In
+                </button>
+              </Link>
+              <Link to="/signup" style={{ textDecoration: "none" }}>
+                <button style={{ backgroundColor: WHITE, color: NFL_BLUE, border: `2px solid ${NFL_BLUE}`, padding: "10px 20px", borderRadius: 8, fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}>
+                  Create Account
+                </button>
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Join & Leave Pool Section */}
         <div style={{
           background: WHITE,
@@ -114,7 +170,7 @@ export default function NflPickemAtsHome() {
             <div style={{ textAlign: "center" }}>
               <p style={{ fontSize: "15px", color: "#16a34a", fontWeight: "bold" }}>✓ You are officially registered!</p>
               <p style={{ fontSize: "13px", color: "#475569", margin: "4px 0 16px 0" }}>Display Name: <strong>{userEntry.entry_name}</strong></p>
-              
+
               {!isPoolStarted && (
                 <div>
                   {confirmLeave ? (
