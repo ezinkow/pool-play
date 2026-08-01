@@ -6,7 +6,6 @@ import PoolGatekeeper from "../../components/PoolGatekeeper";
 
 const NFL_BLUE = "#013369";
 const NFL_RED = "#D50A0A";
-const GOLD = "#c89d3c";
 
 export default function NflSurvivorPicks() {
     const { user, loading: authLoading } = useAuth();
@@ -97,17 +96,22 @@ export default function NflSurvivorPicks() {
         loadSurvivorData(targetWeek);
     };
 
-    const handleMakePick = async (gameId, teamName, isUsed, isLocked) => {
-        if (isLocked || isUsed) return;
+    const handleMakePick = async (gameId, teamName, isUsed, isLocked, isAlreadyPicked) => {
+        if (isLocked || (isUsed && !isAlreadyPicked)) return;
         try {
-            await axios.post("/api/nfl_survivor/picks", {
+            const res = await axios.post("/api/nfl_survivor/picks", {
                 week: currentWeek,
                 game_id: gameId,
                 picked_team: teamName
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            toast.success(`Locked in your pick: ${teamName}!`);
+
+            if (res.data?.cleared) {
+                toast.success(`Removed pick for Week ${currentWeek}`);
+            } else {
+                toast.success(`Locked in your pick: ${teamName}!`);
+            }
             loadSurvivorData(currentWeek);
         } catch (err) {
             toast.error(err.response?.data?.error || "Failed to save pick");
@@ -131,7 +135,7 @@ export default function NflSurvivorPicks() {
         });
     };
 
-    if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50 }}>Loading survivor dashboard...</div>;
+    if (authLoading || loading) return <div style={{ textAlign: "center", padding: 30 }}>Loading survivor dashboard...</div>;
 
     const currentWeekPick = userPicks[currentWeek];
     const pickedTeamMeta = teamColors[currentWeekPick] || {};
@@ -141,13 +145,13 @@ export default function NflSurvivorPicks() {
 
     return (
         <PoolGatekeeper user={user} gameKey="nfl_survivor">
-            <div style={{ maxWidth: 850, margin: "0 auto", padding: "20px 12px", paddingBottom: 90 }}>
+            <div style={{ maxWidth: 800, margin: "0 auto", padding: "12px 10px", paddingBottom: 60 }}>
                 <Toaster />
 
-                <div style={{ textAlign: "center", marginBottom: 20 }}>
-                    <h2 style={{ color: NFL_BLUE, fontSize: "26px", margin: 0 }}>NFL Survivor: Week {currentWeek}</h2>
-                    <p style={{ color: "#666", marginTop: 6, fontSize: "14px" }}>
-                        Pick one team to win straight up. You cannot reuse teams throughout the season!
+                <div style={{ textAlign: "center", marginBottom: 14 }}>
+                    <h2 style={{ color: NFL_BLUE, fontSize: "22px", margin: 0 }}>NFL Survivor: Week {currentWeek}</h2>
+                    <p style={{ color: "#666", marginTop: 4, fontSize: "13px" }}>
+                        Pick one team straight up. Click your selected team again to de-select.
                     </p>
                 </div>
 
@@ -155,12 +159,12 @@ export default function NflSurvivorPicks() {
                 <div style={{
                     display: "flex",
                     justifyContent: "flex-start",
-                    gap: 6,
-                    marginBottom: 20,
+                    gap: 4,
+                    marginBottom: 14,
                     flexWrap: "nowrap",
                     overflowX: "auto",
                     WebkitOverflowScrolling: "touch",
-                    paddingBottom: 6,
+                    paddingBottom: 4,
                     width: "100%"
                 }}>
                     {[...Array(maxAvailableWeek)].map((_, i) => (
@@ -168,15 +172,15 @@ export default function NflSurvivorPicks() {
                             key={i + 1}
                             onClick={() => handleWeekChange(i + 1)}
                             style={{
-                                padding: "6px 12px",
-                                borderRadius: 6,
+                                padding: "4px 10px",
+                                borderRadius: 4,
                                 border: "1px solid #ddd",
                                 backgroundColor: currentWeek === i + 1 ? NFL_BLUE : "white",
                                 color: currentWeek === i + 1 ? "white" : "#333",
                                 cursor: "pointer",
                                 fontWeight: 600,
                                 flexShrink: 0,
-                                fontSize: "14px"
+                                fontSize: "13px"
                             }}
                         >
                             Week {i + 1}
@@ -184,49 +188,40 @@ export default function NflSurvivorPicks() {
                     ))}
                 </div>
 
-                {/* Current Week Pick Dynamic Ombré Banner */}
+                {/* Current Week Pick Banner */}
                 <div style={{
                     background: bannerBg,
                     color: currentWeekPick ? "#ffffff" : "#92400e",
-                    border: `2px solid ${currentWeekPick ? (pickedTeamMeta.secondaryColor || "#16a34a") : "#fde68a"}`,
-                    borderRadius: 12,
-                    padding: "16px 20px",
-                    marginBottom: 24,
+                    border: `1px solid ${currentWeekPick ? (pickedTeamMeta.secondaryColor || "#16a34a") : "#fde68a"}`,
+                    borderRadius: 8,
+                    padding: "10px 14px",
+                    marginBottom: 16,
                     textAlign: "center",
                     fontWeight: 700,
-                    fontSize: "15px",
-                    boxShadow: currentWeekPick ? `0 4px 16px ${pickedTeamMeta.primaryColor || "#000"}44` : "none",
-                    transition: "all 0.4s ease-in-out",
+                    fontSize: "13px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: 12
+                    gap: 8
                 }}>
                     {currentWeekPick ? (
                         <>
                             {pickedTeamMeta.logo && (
-                                <span style={{
-                                    background: "rgba(255,255,255,0.25)",
-                                    borderRadius: 6,
-                                    padding: "2px 6px",
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
-                                }}>
-                                    <img src={pickedTeamMeta.logo} alt={currentWeekPick} style={{ width: 26, height: 26, objectFit: "contain" }} />
+                                <span style={{ background: "rgba(255,255,255,0.25)", borderRadius: 4, padding: "1px 4px", display: "inline-flex", alignItems: "center" }}>
+                                    <img src={pickedTeamMeta.logo} alt={currentWeekPick} style={{ width: 20, height: 20, objectFit: "contain" }} />
                                 </span>
                             )}
-                            <span>✓ Week {currentWeek} Locked Selection: {currentWeekPick}</span>
+                            <span>✓ Week {currentWeek} Selection: {currentWeekPick}</span>
                         </>
                     ) : (
-                        `⚠️ You haven't made a selection for Week ${currentWeek} yet!`
+                        `⚠️ No selection made for Week ${currentWeek} yet.`
                     )}
                 </div>
 
-                {/* Games List */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {/* Games List (Compact Grid) */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {games.length === 0 ? (
-                        <div style={{ textAlign: "center", padding: "40px", color: "#666", background: "white", borderRadius: 10 }}>
+                        <div style={{ textAlign: "center", padding: "30px", color: "#666", background: "white", borderRadius: 8, fontSize: "13px" }}>
                             No games found for Week {currentWeek}.
                         </div>
                     ) : (
@@ -246,68 +241,64 @@ export default function NflSurvivorPicks() {
                             const formattedDate = formatGameDate(game.game_date);
 
                             const rawSpread = game.spread !== null && game.spread !== undefined ? game.spread : null;
-                            
-                            // Independent Home & Away Juice Odds
-                            const homeSpreadOdds = game.spread_odds !== null && game.spread_odds !== undefined ? game.spread_odds : -110;
-                            const awaySpreadOdds = game.away_spread_odds !== null && game.away_spread_odds !== undefined ? game.away_spread_odds : -110;
+                            const homeSpreadOdds = game.spread_odds ?? -110;
+                            const awaySpreadOdds = game.away_spread_odds ?? -110;
 
-                            const homeOddsFormatted = homeSpreadOdds > 0 ? `+${homeSpreadOdds}` : `${homeSpreadOdds}`;
-                            const awayOddsFormatted = awaySpreadOdds > 0 ? `+${awaySpreadOdds}` : `${awaySpreadOdds}`;
-
-                            let awaySpreadStr = "Pick'em";
-                            let homeSpreadStr = "Pick'em";
+                            let awaySpreadStr = "PK";
+                            let homeSpreadStr = "PK";
 
                             if (rawSpread !== null) {
                                 const absSpread = Math.abs(rawSpread);
                                 const isAwayFav = game.favorite === game.away_team;
+                                const hOddsStr = homeSpreadOdds > 0 ? `+${homeSpreadOdds}` : homeSpreadOdds;
+                                const aOddsStr = awaySpreadOdds > 0 ? `+${awaySpreadOdds}` : awaySpreadOdds;
                                 
                                 if (rawSpread === 0) {
-                                    awaySpreadStr = `PK (${awayOddsFormatted})`;
-                                    homeSpreadStr = `PK (${homeOddsFormatted})`;
+                                    awaySpreadStr = `PK (${aOddsStr})`;
+                                    homeSpreadStr = `PK (${hOddsStr})`;
                                 } else if (isAwayFav) {
-                                    awaySpreadStr = `-${absSpread} (${awayOddsFormatted})`;
-                                    homeSpreadStr = `+${absSpread} (${homeOddsFormatted})`;
+                                    awaySpreadStr = `-${absSpread} (${aOddsStr})`;
+                                    homeSpreadStr = `+${absSpread} (${hOddsStr})`;
                                 } else {
-                                    awaySpreadStr = `+${absSpread} (${awayOddsFormatted})`;
-                                    homeSpreadStr = `-${absSpread} (${homeOddsFormatted})`;
+                                    awaySpreadStr = `+${absSpread} (${aOddsStr})`;
+                                    homeSpreadStr = `-${absSpread} (${hOddsStr})`;
                                 }
                             }
 
-                            // Ombré Shading backgrounds
                             const awayPrimary = awayMeta.primaryColor || "#013369";
                             const awaySecondary = awayMeta.secondaryColor || "#475569";
                             const awayBg = isAwayPicked
                                 ? `linear-gradient(135deg, ${awayPrimary}, ${awaySecondary})`
-                                : (awayUsed ? "#f1f5f9" : `linear-gradient(135deg, ${awayPrimary}12, ${awaySecondary}1A)`);
+                                : (awayUsed ? "#f1f5f9" : `linear-gradient(135deg, ${awayPrimary}10, ${awaySecondary}16)`);
 
                             const homePrimary = homeMeta.primaryColor || "#013369";
                             const homeSecondary = homeMeta.secondaryColor || "#475569";
                             const homeBg = isHomePicked
                                 ? `linear-gradient(135deg, ${homePrimary}, ${homeSecondary})`
-                                : (homeUsed ? "#f1f5f9" : `linear-gradient(135deg, ${homePrimary}12, ${homeSecondary}1A)`);
+                                : (homeUsed ? "#f1f5f9" : `linear-gradient(135deg, ${homePrimary}10, ${homeSecondary}16)`);
 
                             return (
                                 <div key={game.id} style={{
                                     background: "#ffffff",
-                                    borderRadius: 10,
-                                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                                    padding: "14px 16px",
+                                    borderRadius: 8,
+                                    boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                                    padding: "8px 12px",
                                     border: "1px solid #e2e8f0",
                                     display: "flex",
                                     flexDirection: "column",
-                                    gap: 10
+                                    gap: 6
                                 }}>
-                                    {/* Game Time Header */}
+                                    {/* Game Header / Date */}
                                     {formattedDate && (
-                                        <div style={{ fontSize: "12px", fontWeight: 700, color: "#475569", textAlign: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: 6 }}>
-                                            🗓️ {formattedDate}
+                                        <div style={{ fontSize: "11px", fontWeight: 600, color: "#64748b", textAlign: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: 4 }}>
+                                            {formattedDate} {locked && <span style={{ color: NFL_RED, marginLeft: 6 }}>🔒 Locked</span>}
                                         </div>
                                     )}
 
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-                                        {/* Away Team Tile (Clickable Button) */}
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                        {/* Away Team Tile */}
                                         <div
-                                            onClick={() => handleMakePick(game.id, game.away_team, awayUsed, locked)}
+                                            onClick={() => handleMakePick(game.id, game.away_team, awayUsed, locked, isAwayPicked)}
                                             style={{
                                                 flex: 1,
                                                 display: "flex",
@@ -315,54 +306,35 @@ export default function NflSurvivorPicks() {
                                                 justifyContent: "space-between",
                                                 background: awayBg,
                                                 color: isAwayPicked ? "#ffffff" : (awayUsed ? "#94a3b8" : "#0f172a"),
-                                                padding: "12px 16px",
-                                                borderRadius: 8,
-                                                border: `2px solid ${isAwayPicked ? awaySecondary : (awayUsed ? "#cbd5e1" : `${awayPrimary}40`)}`,
-                                                boxShadow: isAwayPicked ? `0 2px 12px ${awayPrimary}55` : "none",
+                                                padding: "8px 10px",
+                                                borderRadius: 6,
+                                                border: `1px solid ${isAwayPicked ? awaySecondary : (awayUsed ? "#cbd5e1" : `${awayPrimary}35`)}`,
                                                 cursor: (locked || awayUsed) ? "not-allowed" : "pointer",
-                                                opacity: awayUsed ? 0.7 : 1,
-                                                transition: "all 0.2s ease-in-out",
-                                                transform: "scale(1)"
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                if (!locked && !awayUsed && !isAwayPicked) {
-                                                    e.currentTarget.style.transform = "translateY(-2px)";
-                                                    e.currentTarget.style.boxShadow = `0 4px 12px ${awayPrimary}33`;
-                                                }
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.transform = "translateY(0)";
-                                                e.currentTarget.style.boxShadow = isAwayPicked ? `0 2px 12px ${awayPrimary}55` : "none";
+                                                opacity: awayUsed ? 0.65 : 1,
+                                                transition: "all 0.15s ease"
                                             }}
                                         >
-                                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                                 {awayLogo && (
-                                                    <span style={{
-                                                        background: isAwayPicked ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.6)",
-                                                        borderRadius: 4,
-                                                        padding: "2px 4px",
-                                                        display: "inline-flex",
-                                                        alignItems: "center",
-                                                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
-                                                    }}>
-                                                        <img src={awayLogo} alt={game.away_team} style={{ width: 26, height: 26, objectFit: "contain" }} />
+                                                    <span style={{ background: isAwayPicked ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.6)", borderRadius: 3, padding: "1px 2px", display: "inline-flex", alignItems: "center" }}>
+                                                        <img src={awayLogo} alt={game.away_team} style={{ width: 18, height: 18, objectFit: "contain" }} />
                                                     </span>
                                                 )}
                                                 <div style={{ display: "flex", flexDirection: "column" }}>
-                                                    <span style={{ fontWeight: 700, fontSize: "14px" }}>{game.away_team}</span>
-                                                    <span style={{ fontSize: "11px", opacity: isAwayPicked ? 0.9 : 0.75, fontWeight: 600 }}>{awaySpreadStr}</span>
+                                                    <span style={{ fontWeight: 700, fontSize: "13px", lineHeight: "1.2" }}>{game.away_team}</span>
+                                                    <span style={{ fontSize: "10px", opacity: isAwayPicked ? 0.9 : 0.7, fontWeight: 600 }}>{awaySpreadStr}</span>
                                                 </div>
                                             </div>
-                                            <div style={{ fontWeight: 700, fontSize: "12px", padding: "4px 10px", borderRadius: 6, background: isAwayPicked ? awaySecondary : "transparent", color: isAwayPicked ? "#fff" : "#64748b" }}>
-                                                {isAwayPicked ? "✓ Picked" : (awayUsed ? "Used Already" : "Select")}
-                                            </div>
+                                            <span style={{ fontSize: "11px", fontWeight: 700, color: isAwayPicked ? "#fff" : "#64748b" }}>
+                                                {isAwayPicked ? "✓" : (awayUsed ? "Used" : "Select")}
+                                            </span>
                                         </div>
 
-                                        <span style={{ fontWeight: 600, color: "#64748b", fontSize: "13px" }}>@</span>
+                                        <span style={{ fontWeight: 600, color: "#94a3b8", fontSize: "11px" }}>@</span>
 
-                                        {/* Home Team Tile (Clickable Button) */}
+                                        {/* Home Team Tile */}
                                         <div
-                                            onClick={() => handleMakePick(game.id, game.home_team, homeUsed, locked)}
+                                            onClick={() => handleMakePick(game.id, game.home_team, homeUsed, locked, isHomePicked)}
                                             style={{
                                                 flex: 1,
                                                 display: "flex",
@@ -370,55 +342,30 @@ export default function NflSurvivorPicks() {
                                                 justifyContent: "space-between",
                                                 background: homeBg,
                                                 color: isHomePicked ? "#ffffff" : (homeUsed ? "#94a3b8" : "#0f172a"),
-                                                padding: "12px 16px",
-                                                borderRadius: 8,
-                                                border: `2px solid ${isHomePicked ? homeSecondary : (homeUsed ? "#cbd5e1" : `${homePrimary}40`)}`,
-                                                boxShadow: isHomePicked ? `0 2px 12px ${homePrimary}55` : "none",
+                                                padding: "8px 10px",
+                                                borderRadius: 6,
+                                                border: `1px solid ${isHomePicked ? homeSecondary : (homeUsed ? "#cbd5e1" : `${homePrimary}35`)}`,
                                                 cursor: (locked || homeUsed) ? "not-allowed" : "pointer",
-                                                opacity: homeUsed ? 0.7 : 1,
-                                                transition: "all 0.2s ease-in-out",
-                                                transform: "scale(1)"
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                if (!locked && !homeUsed && !isHomePicked) {
-                                                    e.currentTarget.style.transform = "translateY(-2px)";
-                                                    e.currentTarget.style.boxShadow = `0 4px 12px ${homePrimary}33`;
-                                                }
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.transform = "translateY(0)";
-                                                e.currentTarget.style.boxShadow = isHomePicked ? `0 2px 12px ${homePrimary}55` : "none";
+                                                opacity: homeUsed ? 0.65 : 1,
+                                                transition: "all 0.15s ease"
                                             }}
                                         >
-                                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                                 {homeLogo && (
-                                                    <span style={{
-                                                        background: isHomePicked ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.6)",
-                                                        borderRadius: 4,
-                                                        padding: "2px 4px",
-                                                        display: "inline-flex",
-                                                        alignItems: "center",
-                                                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
-                                                    }}>
-                                                        <img src={homeLogo} alt={game.home_team} style={{ width: 26, height: 26, objectFit: "contain" }} />
+                                                    <span style={{ background: isHomePicked ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.6)", borderRadius: 3, padding: "1px 2px", display: "inline-flex", alignItems: "center" }}>
+                                                        <img src={homeLogo} alt={game.home_team} style={{ width: 18, height: 18, objectFit: "contain" }} />
                                                     </span>
                                                 )}
                                                 <div style={{ display: "flex", flexDirection: "column" }}>
-                                                    <span style={{ fontWeight: 700, fontSize: "14px" }}>{game.home_team}</span>
-                                                    <span style={{ fontSize: "11px", opacity: isHomePicked ? 0.9 : 0.75, fontWeight: 600 }}>{homeSpreadStr}</span>
+                                                    <span style={{ fontWeight: 700, fontSize: "13px", lineHeight: "1.2" }}>{game.home_team}</span>
+                                                    <span style={{ fontSize: "10px", opacity: isHomePicked ? 0.9 : 0.7, fontWeight: 600 }}>{homeSpreadStr}</span>
                                                 </div>
                                             </div>
-                                            <div style={{ fontWeight: 700, fontSize: "12px", padding: "4px 10px", borderRadius: 6, background: isHomePicked ? homeSecondary : "transparent", color: isHomePicked ? "#fff" : "#64748b" }}>
-                                                {isHomePicked ? "✓ Picked" : (homeUsed ? "Used Already" : "Select")}
-                                            </div>
+                                            <span style={{ fontSize: "11px", fontWeight: 700, color: isHomePicked ? "#fff" : "#64748b" }}>
+                                                {isHomePicked ? "✓" : (homeUsed ? "Used" : "Select")}
+                                            </span>
                                         </div>
                                     </div>
-
-                                    {locked && (
-                                        <div style={{ fontSize: "11px", color: NFL_RED, fontWeight: 600, textAlign: "right" }}>
-                                            🔒 Game Started / Locked
-                                        </div>
-                                    )}
                                 </div>
                             );
                         })

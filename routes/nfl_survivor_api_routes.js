@@ -165,42 +165,57 @@ module.exports = function (app) {
     });
 
     // ------------------------------------------------------------------
-    // 7. POST Submit / Update Weekly Pick
+    // POST /api/nfl_survivor/picks (Make or Clear a Survivor Pick)
     // ------------------------------------------------------------------
     app.post("/api/nfl_survivor/picks", requireAuth, async (req, res) => {
         try {
-            const week = parseInt(req.body.week);
-            const teamName = req.body.picked_team || req.body.team_name;
+            const { week, game_id, picked_team } = req.body;
+            const userId = req.user.id;
 
-            if (!week || !teamName) {
-                return res.status(400).json({ error: "Week and team name are required." });
+            // Check if user is already eliminated
+            const entry = await NflSurvivorEntries.findOne({ where: { user_id: userId } });
+            if (entry && entry.is_eliminated) {
+                return res.status(400).json({ error: "Cannot make picks after being eliminated!" });
             }
 
-            // Check if user already used this team in a *different* week
-            const existingUse = await NflSurvivorPicks.findOne({
-                where: {
-                    user_id: req.user.id,
-                    team_name: teamName,
-                    week: { [Op.ne]: week }
-                }
+            // Check if game has already started
+            const game = await NflRegularSeasonGames.findByPk(game_id);
+            if (!game) {
+                return res.status(404).json({ error: "Game not found" });
+            }
+
+            if (game.game_date && new Date() >= new Date(game.game_date)) {
+                return res.status(400).json({ error: "Cannot change pick after game has started!" });
+            }
+
+            // Check if user already has this exact team picked for this week (toggle off / de-select)
+            const existingPick = await NflSurvivorPicks.findOne({
+                where: { user_id: userId, week: week }
             });
 
-            if (existingUse) {
-                return res.status(400).json({ error: `You have already used the ${teamName} in a previous week!` });
+            if (existingPick && existingPick.team_name === picked_team) {
+                // De-select / Remove pick
+                await existingPick.destroy();
+                return res.json({ success: true, message: "Pick removed successfully", cleared: true });
             }
 
-            // Upsert the pick for this week
-            let [pick, created] = await NflSurvivorPicks.findOrCreate({
-                where: { user_id: req.user.id, week: week },
-                defaults: { team_name: teamName, status: "pending" }
-            });
-
-            if (!created) {
-                pick.team_name = teamName;
-                await pick.save();
+            // Otherwise, upsert the new pick
+            if (existingPick) {
+                existingPick.team_name = picked_team;
+                existingPick.game_id = game_id;
+                existingPick.status = "pending";
+                await existingPick.save();
+            } else {
+                await NflSurvivorPicks.create({
+                    user_id: userId,
+                    week: week,
+                    game_id: game_id,
+                    team_name: picked_team,
+                    status: "pending"
+                });
             }
 
-            res.json({ success: true, pick });
+            res.json({ success: true, message: `Locked in pick: ${picked_team}` });
         } catch (err) {
             console.error("Error saving survivor pick:", err);
             res.status(500).json({ error: "Failed to save pick" });
