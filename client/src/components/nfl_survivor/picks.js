@@ -246,8 +246,13 @@ export default function NflSurvivorPicks() {
                             const formattedDate = formatGameDate(game.game_date);
 
                             const rawSpread = game.spread !== null && game.spread !== undefined ? game.spread : null;
-                            const spreadOdds = game.spread_odds !== null && game.spread_odds !== undefined ? game.spread_odds : -110;
-                            const oddsFormatted = spreadOdds > 0 ? `+${spreadOdds}` : `${spreadOdds}`;
+                            
+                            // Independent Home & Away Juice Odds
+                            const homeSpreadOdds = game.spread_odds !== null && game.spread_odds !== undefined ? game.spread_odds : -110;
+                            const awaySpreadOdds = game.away_spread_odds !== null && game.away_spread_odds !== undefined ? game.away_spread_odds : -110;
+
+                            const homeOddsFormatted = homeSpreadOdds > 0 ? `+${homeSpreadOdds}` : `${homeSpreadOdds}`;
+                            const awayOddsFormatted = awaySpreadOdds > 0 ? `+${awaySpreadOdds}` : `${awaySpreadOdds}`;
 
                             let awaySpreadStr = "Pick'em";
                             let homeSpreadStr = "Pick'em";
@@ -257,14 +262,14 @@ export default function NflSurvivorPicks() {
                                 const isAwayFav = game.favorite === game.away_team;
                                 
                                 if (rawSpread === 0) {
-                                    awaySpreadStr = `PK (${oddsFormatted})`;
-                                    homeSpreadStr = `PK (${oddsFormatted})`;
+                                    awaySpreadStr = `PK (${awayOddsFormatted})`;
+                                    homeSpreadStr = `PK (${homeOddsFormatted})`;
                                 } else if (isAwayFav) {
-                                    awaySpreadStr = `-${absSpread} (${oddsFormatted})`;
-                                    homeSpreadStr = `+${absSpread} (${oddsFormatted})`;
+                                    awaySpreadStr = `-${absSpread} (${awayOddsFormatted})`;
+                                    homeSpreadStr = `+${absSpread} (${homeOddsFormatted})`;
                                 } else {
-                                    awaySpreadStr = `+${absSpread} (${oddsFormatted})`;
-                                    homeSpreadStr = `-${absSpread} (${oddsFormatted})`;
+                                    awaySpreadStr = `+${absSpread} (${awayOddsFormatted})`;
+                                    homeSpreadStr = `-${absSpread} (${homeOddsFormatted})`;
                                 }
                             }
 
