@@ -90,6 +90,9 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
 
   // NFL BTS
   require("./routes/nfl_bts_api_routes.js")(app);
+
+  // NFL Survivor
+  require("./routes/nfl_survivor_api_routes.js")(app);
   
   // MLB
   require("./routes/mlb/entries-api-routes.js")(app);

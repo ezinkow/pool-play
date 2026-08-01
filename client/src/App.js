@@ -86,6 +86,12 @@ import NflBtsPicks from './pages/nfl_bts/Picks';
 import NflBtsGroupPicks from './pages/nfl_bts/GroupPicks';
 import AdminTeamAssignment from './pages/nfl_bts/AdminTeamAssignment';
 
+// NFL Survivor pages
+import NflSurvivorHome from './pages/nfl_survivor/Home';
+import NflSurvivorPicks from './pages/nfl_survivor/Picks';
+import NflSurvivorMyPicks from './pages/nfl_survivor/MyPicks';
+import NflSurvivorGroupPicks from './pages/nfl_survivor/GroupsPicks';
+
 // Super Bowl Squares pages
 import SuperBowlSquaresGrid from "./pages/superbowl_squares/Grid";
 import SuperBowlSquaresResults from "./pages/superbowl_squares/Results";
@@ -202,6 +208,12 @@ export default function App() {
           <Route path="/nflbts/standings" element={<NflBtsStandings />} />
           <Route path="/nflbts/grouppicks" element={<NflBtsGroupPicks />} />
           <Route path="/nflbts/admin/teamassignments" element={<AdminTeamAssignment />} />
+  
+          {/* NFL Survivor*/}
+          <Route path="/nflsurvivor" element={<NflSurvivorHome />} />
+          <Route path="/nflsurvivor/picks" element={<NflSurvivorPicks />} />
+          <Route path="/nflsurvivor/mypicks" element={<NflSurvivorMyPicks />} />
+          <Route path="/nflsurvivor/grouppicks" element={<NflSurvivorGroupPicks />} />
 
           {/* Super Bowl Squares */}
           <Route path="/superbowlsquares" element={<SuperBowlSquaresHome />} />

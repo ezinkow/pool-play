@@ -9,6 +9,7 @@ module.exports = function (sequelize, DataTypes) {
         away_color: { type: DataTypes.STRING, allowNull: true },
         spread: { type: DataTypes.FLOAT, allowNull: true },
         spread_odds: { type: DataTypes.INTEGER, allowNull: true },
+        away_spread_odds: { type: DataTypes.INTEGER, allowNull: true },
         adjusted_spread: { type: DataTypes.FLOAT, allowNull: true },
         over_under: { type: DataTypes.FLOAT, allowNull: true },
         favorite: { type: DataTypes.STRING, allowNull: true },
