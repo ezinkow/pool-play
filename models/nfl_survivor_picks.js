@@ -5,6 +5,9 @@ module.exports = (sequelize, DataTypes) => {
         game_id: { type: DataTypes.INTEGER, allowNull: false },
         team_name: { type: DataTypes.STRING, allowNull: false },
         status: { type: DataTypes.STRING, defaultValue: "pending" }
+    }, {
+        tableName: "nfl_survivor_picks",
+        timestamps: true
     });
 
     NflSurvivorPicks.associate = (models) => {
