@@ -178,28 +178,37 @@ module.exports = function (app) {
                 return res.status(400).json({ error: "Cannot make picks after being eliminated!" });
             }
 
-            // Check if game has already started
+            // 1. Fetch the target game being picked/interacted with
             const game = await NflRegularSeasonGames.findByPk(game_id);
             if (!game) {
                 return res.status(404).json({ error: "Game not found" });
             }
 
+            // 2. RULE 2: Check if this specific game has started (Locks individual pick)
             if (game.game_date && new Date() >= new Date(game.game_date)) {
-                return res.status(400).json({ error: "Cannot change pick after game has started!" });
+                return res.status(400).json({ error: "Cannot change or remove pick after this game has started!" });
             }
 
-            // Check if user already has this exact team picked for this week (toggle off / de-select)
+            // 3. Check if user already has an existing pick for this week
             const existingPick = await NflSurvivorPicks.findOne({
                 where: { user_id: userId, week: week }
             });
 
+            // If they already had a pick on a DIFFERENT game, check if *that* previous game started too
+            if (existingPick && existingPick.game_id !== parseInt(game_id)) {
+                const prevGame = await NflRegularSeasonGames.findByPk(existingPick.game_id);
+                if (prevGame && prevGame.game_date && new Date() >= new Date(prevGame.game_date)) {
+                    return res.status(400).json({ error: "Cannot switch picks; your previous pick's game has already started!" });
+                }
+            }
+
+            // Toggle off / De-select check
             if (existingPick && existingPick.team_name === picked_team) {
-                // De-select / Remove pick
                 await existingPick.destroy();
                 return res.json({ success: true, message: "Pick removed successfully", cleared: true });
             }
 
-            // Otherwise, upsert the new pick
+            // Upsert the new pick
             if (existingPick) {
                 existingPick.team_name = picked_team;
                 existingPick.game_id = game_id;
@@ -227,43 +236,52 @@ module.exports = function (app) {
     // ------------------------------------------------------------------
     app.get("/api/nfl_survivor/roster", requireAuth, async (req, res) => {
         try {
+            const currentUserId = req.user.id;
+            const now = new Date();
+
+            // Fetch entries and their picks
             const entries = await NflSurvivorEntries.findAll({
-                raw: true
+                include: [{ model: NflSurvivorPicks, include: [NflRegularSeasonGames] }]
             });
 
-            const allPicks = await NflSurvivorPicks.findAll({ raw: true });
-            const allTeams = await NflTeams.findAll({ raw: true });
+            const rosterResponse = entries.map(entry => {
+                const picksMap = {};
 
-            const teamLogoMap = {};
-            allTeams.forEach(t => {
-                teamLogoMap[t.name] = t.logo;
-            });
+                (entry.NflSurvivorPicks || []).forEach(pick => {
+                    const game = pick.NflRegularSeasonGame;
+                    const gameStarted = game && game.game_date && now >= new Date(game.game_date);
+                    const isOwnEntry = Number(entry.user_id) === Number(currentUserId);
 
-            // Group picks by user_id
-            const picksByUser = {};
-            allPicks.forEach(p => {
-                if (!picksByUser[p.user_id]) {
-                    picksByUser[p.user_id] = {};
-                }
-                picksByUser[p.user_id][p.week] = {
-                    team_name: p.team_name,
-                    logo: teamLogoMap[p.team_name] || null,
-                    status: p.status
+                    // Reveal pick ONLY if it's the user's own pick OR if the game has started
+                    if (isOwnEntry || gameStarted) {
+                        picksMap[pick.week] = {
+                            team_name: pick.team_name,
+                            status: pick.status,
+                            game_id: pick.game_id
+                        };
+                    } else {
+                        // Masked pick for unstarted games of other users
+                        picksMap[pick.week] = {
+                            team_name: "🔒 Hidden",
+                            status: "hidden",
+                            game_id: pick.game_id
+                        };
+                    }
+                });
+
+                return {
+                    user_id: entry.user_id,
+                    entry_name: entry.entry_name || entry.username,
+                    is_eliminated: entry.is_eliminated,
+                    eliminated_week: entry.eliminated_week,
+                    picks: picksMap
                 };
             });
 
-            const rosterData = entries.map(entry => ({
-                user_id: entry.user_id,
-                entry_name: entry.entry_name || "Unknown",
-                is_eliminated: entry.is_eliminated,
-                eliminated_week: entry.eliminated_week,
-                picks: picksByUser[entry.user_id] || {}
-            }));
-
-            res.json(rosterData);
+            res.json(rosterResponse);
         } catch (err) {
-            console.error("Error fetching survivor roster data:", err);
-            res.status(500).json({ error: "Failed to load survivor roster" });
+            console.error("Error fetching survivor roster:", err);
+            res.status(500).json({ error: "Failed to load roster" });
         }
     });
 };

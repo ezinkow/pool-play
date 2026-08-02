@@ -99,6 +99,7 @@ export default function Navbar() {
     const navBg = currentGame ? currentGame.navBg : "#13447a";
 
     const getCompactLabel = (label) => {
+        if (!label || typeof label !== "string") return "";
         const lower = label.toLowerCase();
         if (lower.includes("make picks") || lower.includes("submit")) return "Picks";
         if (lower.includes("my picks") || lower.includes("my sheet")) return "My Picks";

@@ -255,6 +255,7 @@ export default function NflPickemAtsHome() {
           </h3>
           <ol style={{ paddingLeft: 20, lineHeight: "1.7", fontSize: "14px" }}>
             <li><strong>Full Slate Picks:</strong> Select a side Against The Spread (ATS) for every matchup available each week.</li>
+            <li><strong>The Hook Rule:</strong> Whole number spreads are adjusted up or down based on their juice. -110 and lower moves down (ex. -3 to -2.5), while anything above -110 moves up (ex. -3 to -3.5)</li>
             <li><strong>Best Bets:</strong> Designate exactly 3 games each week as your <strong>Best Bets ⭐</strong> for extra weight/points.</li>
             <li><strong>Kickoff Locks:</strong> Individual game picks lock automatically the moment each game kicks off.</li>
             <li><strong>Privacy:</strong> Group picks on the weekly matrix remain hidden until that specific game gets underway.</li>

@@ -37,10 +37,15 @@ export default function PoolGatekeeper({
             return;
         }
 
-        axios.get("/api/settings/active-states")
-            .then(res => {
-                const states = res.data || [];
+        // Fetch active settings and check if league/pool has started via games schedule
+        Promise.all([
+            axios.get("/api/settings/active-states"),
+            axios.get(`/api/settings/pool-started?game_key=${gameKey}`).catch(() => ({ data: { started: false } }))
+        ])
+            .then(([statesRes, startedRes]) => {
+                const states = statesRes.data || [];
                 const currentPool = states.find(s => s.game_key === gameKey);
+                const leagueStarted = startedRes.data?.started || false;
 
                 if (currentPool) {
                     const dbActive = !!currentPool.is_active;
@@ -57,7 +62,8 @@ export default function PoolGatekeeper({
                         isPastLockTime = currentTime >= lockTime;
                     }
 
-                    setIsPoolOpen(dbActive && !isPastLockTime);
+                    // Pool is closed if disabled, past lock time, OR if the actual league games have started
+                    setIsPoolOpen(dbActive && !isPastLockTime && !leagueStarted);
                     setPoolName(currentPool.title || currentPool.game_label || gameKey.toUpperCase());
                     setPoolEmoji(currentPool.emoji || "🏆");
                 } else {
@@ -80,14 +86,23 @@ export default function PoolGatekeeper({
             return;
         }
 
-        // 🧠 Strict user_id validation via secure endpoint lookup
+        // Strict user_id validation via secure endpoint lookup
         const token = localStorage.getItem("token");
-        axios.get(`/api/nfl_bts/entries/me`, {
+        // Adapt endpoint based on your gameKey or general entries route
+        const entriesUrl = gameKey === "nfl_survivor" ? "/api/nfl_survivor/roster" : "/api/nfl_bts/entries/me";
+
+        axios.get(entriesUrl, {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => {
-                const entries = res.data.entries || [];
-                setHasAnyEntry(entries.length > 0);
+                let userHasEntry = false;
+                if (gameKey === "nfl_survivor") {
+                    userHasEntry = (res.data || []).some(entry => Number(entry.user_id) === Number(user.id));
+                } else {
+                    const entries = res.data.entries || [];
+                    userHasEntry = entries.length > 0;
+                }
+                setHasAnyEntry(userHasEntry);
                 setChecking(false);
             })
             .catch(err => {
@@ -121,7 +136,7 @@ export default function PoolGatekeeper({
                     <span style={{ fontSize: 48 }}>🔒</span>
                     <h2 style={{ color: NAVY, marginTop: 16, marginBottom: 8, fontSize: 24, fontWeight: 800 }}>Registration Closed</h2>
                     <p style={{ color: "#6b7280", fontSize: 15, lineHeight: 1.6, maxWidth: 420, margin: "0 auto 32px auto" }}>
-                        The {poolName} pool is no longer accepting entries for this season. Come back next time to secure your slot!
+                        The {poolName} pool has already started or closed registration for this season. Come back next time!
                     </p>
                     {otherActivePools.length > 0 && (
                         <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: 28, textAlign: "left" }}>

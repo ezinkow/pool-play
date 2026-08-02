@@ -54,7 +54,7 @@ export default function NflSurvivorGroupPicks() {
                     setCurrentWeek(activeWk);
                 }
             })
-            .catch(() => {})
+            .catch(() => { })
             .finally(() => {
                 // Fetch roster data from your existing route
                 axios.get("/api/nfl_survivor/roster", {
@@ -154,6 +154,7 @@ export default function NflSurvivorGroupPicks() {
                                     const isCurrentUser = Number(row.user_id) === Number(user.id);
                                     const weekPickObj = row.picks?.[currentWeek] || null;
                                     const pickedTeam = weekPickObj?.team_name || null;
+                                    const isHidden = pickedTeam === "🔒 Hidden";
                                     const teamMeta = teamColors[pickedTeam] || {};
                                     const pickLogo = weekPickObj?.logo || teamMeta.logo;
 
@@ -172,8 +173,17 @@ export default function NflSurvivorGroupPicks() {
                                             </td>
                                             <td style={{ padding: "12px 16px", textAlign: "center" }}>
                                                 {pickedTeam ? (
-                                                    <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: teamMeta.primaryColor || "#f1f5f9", color: "#fff", padding: "4px 10px", borderRadius: 6, border: `1px solid ${teamMeta.secondaryColor || "#cbd5e1"}` }}>
-                                                        {pickLogo && (
+                                                    <div style={{
+                                                        display: "inline-flex",
+                                                        alignItems: "center",
+                                                        gap: 8,
+                                                        background: isHidden ? "#f1f5f9" : (teamMeta.primaryColor || "#f1f5f9"),
+                                                        color: isHidden ? "#64748b" : "#fff",
+                                                        padding: "4px 10px",
+                                                        borderRadius: 6,
+                                                        border: `1px solid ${isHidden ? "#cbd5e1" : (teamMeta.secondaryColor || "#cbd5e1")}`
+                                                    }}>
+                                                        {!isHidden && pickLogo && (
                                                             <span style={{ background: teamMeta.secondaryColor || "rgba(255,255,255,0.2)", borderRadius: 4, padding: "1px 3px", display: "inline-flex", alignItems: "center" }}>
                                                                 <img src={pickLogo} alt={pickedTeam} style={{ width: 18, height: 18, objectFit: "contain" }} />
                                                             </span>

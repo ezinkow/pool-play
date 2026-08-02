@@ -26,4 +26,22 @@ module.exports = function (app) {
             res.status(500).json({ error: "Failed to fetch matchup" });
         }
     });
+    
+    // GET /api/settings/pool-started?game_key=...
+    app.get("/api/settings/pool-started", async (req, res) => {
+        try {
+            const { game_key } = req.query;
+            // Check if Week 1 (or the earliest scheduled game for this context) has started
+            const firstGame = await NflRegularSeasonGames.findOne({
+                where: { week: 1 },
+                order: [["game_date", "ASC"]]
+            });
+
+            const started = firstGame && firstGame.game_date ? new Date() >= new Date(firstGame.game_date) : false;
+            res.json({ started });
+        } catch (err) {
+            console.error("Error checking if pool started:", err);
+            res.json({ started: false });
+        }
+    });
 }
