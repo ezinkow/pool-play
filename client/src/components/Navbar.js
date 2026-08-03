@@ -77,16 +77,25 @@ export default function Navbar() {
             ? new Date() >= new Date(currentGame.lock_date)
             : false;
 
-        // 🚀 DYNAMIC ENGINE: Use custom nav links from settings if defined, 
-        // otherwise fall back to standard default pool links (Home, Picks, My Picks, Standings)
-        let templateLinks = currentGame.nav_links && Array.isArray(currentGame.nav_links)
-            ? currentGame.nav_links.map(link => ({
+        // 🧠 Safely parse nav_links whether it comes as an Array or a JSON String from production DB
+        let parsedNavLinks = currentGame.nav_links;
+        if (typeof parsedNavLinks === "string") {
+            try {
+                parsedNavLinks = JSON.parse(parsedNavLinks);
+            } catch (e) {
+                console.error("Failed to parse nav_links JSON:", e);
+                parsedNavLinks = null;
+            }
+        }
+
+        let templateLinks = parsedNavLinks && Array.isArray(parsedNavLinks)
+            ? parsedNavLinks.map(link => ({
                 ...link,
                 to: link.to.startsWith("http") ? link.to : `${pfx}${link.to === "/" ? "" : link.to}`
             }))
             : [
                 { to: `${pfx}`, label: "Home", emoji: "🏠" },
-                { to: `${pfx}/picks`, label: "Make Picks", emoji: "🌎" },
+                { to: `${pfx}/picks`, label: "Make Picks", emoji: "🎯" },
                 { to: `${pfx}/mypicks`, label: "My Picks", emoji: "📋" },
                 { to: `${pfx}/grouppicks`, label: "Group Picks", emoji: "📊" },
                 { to: `${pfx}/standings`, label: "Standings", emoji: "🏆" }
@@ -94,7 +103,7 @@ export default function Navbar() {
 
         return templateLinks.filter(({ to }) => isAdmin || !signupLocked || !to.endsWith("/signup"));
     }, [currentGame, user]);
-
+    console.log(activeLinks)
     const brandLabel = currentGame ? `${currentGame.emoji} ${currentGame.game_label.toUpperCase()}` : "🏆 POOL PLAY 🏊";
     const navBg = currentGame ? currentGame.navBg : "#13447a";
 
@@ -104,6 +113,7 @@ export default function Navbar() {
         if (lower.includes("make picks") || lower.includes("submit")) return "Picks";
         if (lower.includes("my picks") || lower.includes("my sheet")) return "My Picks";
         if (lower.includes("group picks") || lower.includes("user picks") || lower.includes("weekly matrix") || lower.includes("matrix")) return "Matrix";
+        if (lower.includes("standings")) return "Standings";
         if (lower.includes("bracket board")) return "Bracket";
         return label;
     };
