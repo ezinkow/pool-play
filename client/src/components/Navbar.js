@@ -103,7 +103,7 @@ export default function Navbar() {
 
         return templateLinks.filter(({ to }) => isAdmin || !signupLocked || !to.endsWith("/signup"));
     }, [currentGame, user]);
-    console.log(activeLinks)
+
     const brandLabel = currentGame ? `${currentGame.emoji} ${currentGame.game_label.toUpperCase()}` : "🏆 POOL PLAY 🏊";
     const navBg = currentGame ? currentGame.navBg : "#13447a";
 
@@ -146,7 +146,6 @@ export default function Navbar() {
                 inactive.push(game);
             }
         });
-        console.log(active)
         return { active, inactive };
     }, [rawGameSettings]);
 
