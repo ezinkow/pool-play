@@ -138,10 +138,15 @@ export default function Navbar() {
         );
 
         sorted.forEach(game => {
-            if (game.is_active === true) active.push(game);
-            else inactive.push(game);
+            // Treat boolean true, number 1, or string "true" as active
+            const isActive = game.is_active === true || game.is_active === 1 || game.is_active === "true";
+            if (isActive) {
+                active.push(game);
+            } else {
+                inactive.push(game);
+            }
         });
-
+        console.log(active)
         return { active, inactive };
     }, [rawGameSettings]);
 
@@ -214,15 +219,18 @@ export default function Navbar() {
                                 {dropdownOpen && (
                                     <div style={{ position: "absolute", top: "110%", right: 0, backgroundColor: "white", minWidth: "240px", borderRadius: "8px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", border: "1px solid #e2e8f0", padding: "6px 0", zIndex: 2500, maxHeight: "70vh", overflowY: "auto" }}>
 
-                                        {/* ACTIVE SECTION */}
+                                        {/* ACTIVE SECTION FIRST */}
                                         <div style={{ padding: "6px 16px 4px", fontSize: "10px", fontWeight: 800, color: "#64748b", textTransform: "uppercase" }}>Active Pools</div>
                                         {categorizedGames.active.map(game => renderGameLink(game))}
 
-                                        <div style={{ height: "1px", background: "#e2e8f0", margin: "6px 0" }} />
-
-                                        {/* INACTIVE SECTION */}
-                                        <div style={{ padding: "6px 16px 4px", fontSize: "10px", fontWeight: 800, color: "#9ca3af", textTransform: "uppercase" }}>Inactive Pools</div>
-                                        {categorizedGames.inactive.map(game => renderGameLink(game))}
+                                        {categorizedGames.inactive.length > 0 && (
+                                            <>
+                                                <div style={{ height: "1px", background: "#e2e8f0", margin: "6px 0" }} />
+                                                {/* INACTIVE SECTION SECOND */}
+                                                <div style={{ padding: "6px 16px 4px", fontSize: "10px", fontWeight: 800, color: "#9ca3af", textTransform: "uppercase" }}>Inactive Pools</div>
+                                                {categorizedGames.inactive.map(game => renderGameLink(game))}
+                                            </>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -343,18 +351,32 @@ export default function Navbar() {
                                 </button>
                             </div>
                         )}
-
                         <div style={{ padding: "16px 0" }}>
-                            <div style={{ padding: "0 20px 8px 20px", fontSize: "10px", color: "#9ca3af", fontWeight: 800, letterSpacing: "1px" }}>SWITCH TOURNAMENTS</div>
-                            {rawGameSettings.map((game) => {
-                                const isLinkActive = game.is_active === true || user?.is_admin === true;
+                            <div style={{ padding: "0 20px 8px 20px", fontSize: "10px", color: "#64748b", fontWeight: 800, letterSpacing: "1px" }}>ACTIVE POOLS</div>
+                            {categorizedGames.active.map((game) => {
+                                const isLinkActive = true;
                                 const isSelected = currentGame?.game_key === game.game_key;
                                 return (
-                                    <Link key={game.game_key} to={game.prefix} onClick={(e) => handleDropdownLinkClick(e, isLinkActive, game.prefix)} style={{ display: "block", padding: "10px 20px", textDecoration: "none", fontSize: "13px", fontWeight: isSelected ? 700 : 500, color: !isLinkActive ? "#4b5563" : (isSelected ? GOLD : "#d1d5db"), fontStyle: isLinkActive ? "normal" : "italic" }}>
-                                        <span>{game.emoji}</span> {game.game_label.toUpperCase()} {!isLinkActive && " (🔒)"}
+                                    <Link key={game.game_key} to={game.prefix} onClick={(e) => handleDropdownLinkClick(e, isLinkActive, game.prefix)} style={{ display: "block", padding: "10px 20px", textDecoration: "none", fontSize: "13px", fontWeight: isSelected ? 700 : 500, color: isSelected ? GOLD : "#f3f4f6" }}>
+                                        <span>{game.emoji}</span> {game.game_label.toUpperCase()}
                                     </Link>
                                 );
                             })}
+
+                            {categorizedGames.inactive.length > 0 && (
+                                <>
+                                    <div style={{ padding: "16px 20px 8px 20px", fontSize: "10px", color: "#9ca3af", fontWeight: 800, letterSpacing: "1px", borderTop: "1px solid rgba(255,255,255,0.1)", marginTop: "12px" }}>INACTIVE POOLS</div>
+                                    {categorizedGames.inactive.map((game) => {
+                                        const isLinkActive = user?.is_admin === true;
+                                        const isSelected = currentGame?.game_key === game.game_key;
+                                        return (
+                                            <Link key={game.game_key} to={game.prefix} onClick={(e) => handleDropdownLinkClick(e, isLinkActive, game.prefix)} style={{ display: "block", padding: "10px 20px", textDecoration: "none", fontSize: "13px", fontWeight: isSelected ? 700 : 500, color: !isLinkActive ? "#4b5563" : (isSelected ? GOLD : "#d1d5db"), fontStyle: isLinkActive ? "normal" : "italic" }}>
+                                                <span>{game.emoji}</span> {game.game_label.toUpperCase()} {!isLinkActive && " (🔒)"}
+                                            </Link>
+                                        );
+                                    })}
+                                </>
+                            )}
                         </div>
 
                         <div style={{ marginTop: "auto", padding: "20px", borderTop: "1px solid rgba(255,255,255,0.1)", backgroundColor: "#1f2937" }}>
