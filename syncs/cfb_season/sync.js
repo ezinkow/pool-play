@@ -7,20 +7,16 @@ const db = require("../../models");
  * Subsequent Weeks: Saturday to Friday rolling window
  */
 function getCfbDateRange(weekNumber) {
-    // Week 1 custom range override
     if (weekNumber === 1 || !weekNumber) {
         return "20260822-20260907";
     }
 
-    // Week 2 starts on Saturday, September 8, 2026 (or adjust base opening Saturday)
     const baseSaturday = new Date("2026-09-08T00:00:00");
-
-    // Add 7 days per week past Week 1
     const weekStart = new Date(baseSaturday);
     weekStart.setDate(baseSaturday.getDate() + (weekNumber - 2) * 7);
 
     const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6); // Friday of that week
+    weekEnd.setDate(weekStart.getDate() + 6);
 
     const formatDate = (date) => {
         const year = date.getFullYear();
@@ -32,9 +28,6 @@ function getCfbDateRange(weekNumber) {
     return `${formatDate(weekStart)}-${formatDate(weekEnd)}`;
 }
 
-/**
- * 🧠 UNIVERSAL HOOK RULE LOGIC:
- */
 function applyHookRule(spread, odds) {
     if (spread === null || spread === undefined) return spread;
 
@@ -53,33 +46,36 @@ function applyHookRule(spread, odds) {
 }
 
 /**
- * 🧠 FETCH TEAM RANKINGS FROM ESPN CORE API
- * Designed to pull and map team rankings when the endpoint becomes active.
+ * 🧠 FETCH TEAM RANKINGS FROM ESPN CORE API BY WEEK
+ * Dereferences team $ref and maps using the team's unique ESPN $ref ID (extracted directly from the URL string).
  */
-async function fetchTeamRankings() {
+async function fetchTeamRankings(weekNumber) {
     const rankingsMap = {};
     try {
-        const rankingsUrl = "http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2026/rankings?lang=en&region=us";
+        const rankingsUrl = `http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2026/types/1/weeks/${weekNumber}/rankings/2?lang=en&region=us`;
         const { data } = await axios.get(rankingsUrl, { timeout: 10000 });
+        const ranksArray = data?.ranks || [];
 
-        // Defensive parsing depending on ESPN's core API structure layout for rankings
-        // Typically contains a list/ranks array mapping team IDs or names to current rank numbers
-        const rankingRanks = data?.ranks || data?.items || [];
-        rankingRanks.forEach(item => {
-            const teamName = item.team?.name || item.name;
-            const rank = item.current || item.rank;
-            if (teamName && rank) {
-                rankingsMap[teamName] = parseInt(rank, 10);
+        ranksArray.forEach(item => {
+            const currentRank = item.current;
+            const teamRef = item.team?.$ref;
+
+            if (currentRank && teamRef) {
+                // Extract unique team ID from the end of the $ref URL (e.g., ".../teams/61?...")
+                const match = teamRef.match(/\/teams\/(\d+)\?/);
+                if (match && match[1]) {
+                    const teamId = match[1];
+                    rankingsMap[teamId] = parseInt(currentRank, 10);
+                }
             }
         });
     } catch (err) {
-        // Safe fallback since the endpoint is not yet configured/populated
-        console.log("[CFB Sync] Rankings endpoint not yet active or returned empty. Defaulting ranks to null.");
+        console.log(`[CFB Sync] Rankings endpoint for Week ${weekNumber} not active or returned error.`);
     }
     return rankingsMap;
 }
 
-async function extractMatchups(data) {
+async function extractMatchups(data, weekNum) {
     if (!data?.events) return [];
     const matchups = [];
     const validConferenceIds = ["1", "4", "5", "8"]; // ACC, Big 12, Big Ten, SEC
@@ -95,18 +91,14 @@ async function extractMatchups(data) {
         return POWER_FOUR_CONFERENCES[String(confId)] || "Other";
     }
 
-    // Fetch rankings map asynchronously to inject into matchups
-    const rankingsMap = await fetchTeamRankings();
+    const rankingsMap = await fetchTeamRankings(weekNum);
 
     data.events.forEach(event => {
         const seasonType = event.season?.type;
-        if (seasonType !== 2) {
-            return;
-        }
+        if (seasonType !== 2) return;
         const comp = event.competitions?.[0];
         if (!comp) return;
 
-        const weekNum = event.week?.number || 1;
         const gameDate = event.date;
 
         const homeCompetitor = comp.competitors.find(c => c.homeAway === "home");
@@ -170,9 +162,30 @@ async function extractMatchups(data) {
             calculatedOutcomes = calculateGameOutcomes({ home_team: homeCompetitor.team.name, away_team: awayCompetitor.team.name, spread: finalSpread, adjusted_spread: adjustedSpread, favorite: favoriteTeamName, over_under: overUnder }, homeScore, awayScore);
         }
 
-        // Map team ranks from rankings map (defaults to null if unranked/unavailable)
-        const homeTeamRank = rankingsMap[homeCompetitor.team.name] || null;
-        const awayTeamRank = rankingsMap[awayCompetitor.team.name] || null;
+        // Match rank by exact team id directly available on competitor.team.id
+        const getTeamRank = (teamObj) => {
+            if (!teamObj || !teamObj.id) return null;
+            return rankingsMap[String(teamObj.id)] || null;
+        };
+
+        const homeTeamRank = getTeamRank(homeCompetitor.team);
+        const awayTeamRank = getTeamRank(awayCompetitor.team);
+
+        let homeColor = homeCompetitor.team.color ? `#${homeCompetitor.team.color}` : "#013369";
+        let homeSecondaryColor = homeCompetitor.team.alternateColor ? `#${homeCompetitor.team.alternateColor}` : homeColor;
+        if (homeCompetitor.team.shortDisplayName === "West Virginia" || homeCompetitor.team.name === "West Virginia Mountaineers") {
+            const temp = homeColor;
+            homeColor = homeSecondaryColor;
+            homeSecondaryColor = temp;
+        }
+
+        let awayColor = awayCompetitor.team.color ? `#${awayCompetitor.team.color}` : "#013369";
+        let awaySecondaryColor = awayCompetitor.team.alternateColor ? `#${awayCompetitor.team.alternateColor}` : awayColor;
+        if (awayCompetitor.team.shortDisplayName === "West Virginia" || awayCompetitor.team.name === "West Virginia Mountaineers") {
+            const temp = awayColor;
+            awayColor = awaySecondaryColor;
+            awaySecondaryColor = temp;
+        }
 
         matchups.push({
             week: weekNum,
@@ -186,10 +199,10 @@ async function extractMatchups(data) {
             away_team_rank: awayTeamRank,
             home_logo: homeCompetitor.team.logo || null,
             away_logo: awayCompetitor.team.logo || null,
-            home_color: homeCompetitor.team.color ? `#${homeCompetitor.team.color}` : null,
-            home_secondary_color: homeCompetitor.team.color ? `#${homeCompetitor.team.alternateColor}` : null,
-            away_color: awayCompetitor.team.color ? `#${awayCompetitor.team.color}` : null,
-            away_secondary_color: awayCompetitor.team.color ? `#${awayCompetitor.team.alternateColor}` : null,
+            home_color: homeColor,
+            home_secondary_color: homeSecondaryColor,
+            away_color: awayColor,
+            away_secondary_color: awaySecondaryColor,
             spread: finalSpread,
             spread_odds: homeSpreadOdds,
             away_spread_odds: awaySpreadOdds,
@@ -257,9 +270,6 @@ async function processMatchup(m) {
     }
 }
 
-/**
- * Syncs a specific week or defaults to Week 1
- */
 async function syncCfbSeason(targetWeek = 1) {
     try {
         const dateRange = getCfbDateRange(targetWeek);
@@ -268,7 +278,7 @@ async function syncCfbSeason(targetWeek = 1) {
         console.log(`[CFB Regular Season sync] Fetching Week ${targetWeek} data for range: ${dateRange}`);
         const { data } = await axios.get(scoreboardUrl, { timeout: 15000 });
 
-        const matchups = await extractMatchups(data);
+        const matchups = await extractMatchups(data, targetWeek);
         for (const m of matchups) {
             await processMatchup(m);
         }

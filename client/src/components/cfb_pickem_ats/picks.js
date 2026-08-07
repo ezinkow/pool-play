@@ -56,7 +56,7 @@ export default function CfbPickemAtsPicks() {
                 toast.error("Failed to load matchups");
             })
             .finally(() => setLoading(false));
-    }, [user, currentWeek]);
+    }, [user, currentWeek, token]);
 
     const bestBetCount = Object.values(picks).filter(p => p.is_best_bet).length;
     const selectedPicksCount = Object.values(picks).filter(p => p.picked_team).length;
@@ -348,11 +348,11 @@ export default function CfbPickemAtsPicks() {
                             const awayTeamMeta = teamColors[game.away_team] || {};
                             const homeTeamMeta = teamColors[game.home_team] || {};
 
-                            const awayColor = game.away_color || "#1e3a8a";
-                            const awaySecondary = game.away_secondary_color || "#cbd5e1";
+                            const awayColor = game.away_color || awayTeamMeta.color || "#1e3a8a";
+                            const awaySecondary = game.away_secondary_color || awayTeamMeta.secondaryColor || "#cbd5e1";
 
                             const homeColor = game.home_color || homeTeamMeta.color || "#1e3a8a";
-                            const homeSecondary = game.home_secondary_color || "#cbd5e1";
+                            const homeSecondary = game.home_secondary_color || homeTeamMeta.secondaryColor || "#cbd5e1";
 
                             const isAwayPicked = userPick.picked_team === game.away_team;
                             const isHomePicked = userPick.picked_team === game.home_team;
@@ -472,7 +472,10 @@ export default function CfbPickemAtsPicks() {
                                                             />
                                                         </span>
                                                     )}
-                                                    <span style={{ fontWeight: 700, fontSize: "13px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{game.away_team}</span>
+                                                    <span style={{ fontWeight: 700, fontSize: "13px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                                        {game.away_team_rank ? <span style={{ color: isAwayPicked ? "#fef08a" : "#b45309", marginRight: 4 }}>({game.away_team_rank})</span> : null}
+                                                        {game.away_team_nickname}
+                                                    </span>
                                                 </div>
                                                 <span style={{ 
                                                     fontSize: "11px", 
@@ -534,7 +537,10 @@ export default function CfbPickemAtsPicks() {
                                                             />
                                                         </span>
                                                     )}
-                                                    <span style={{ fontWeight: 700, fontSize: "13px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{game.home_team}</span>
+                                                    <span style={{ fontWeight: 700, fontSize: "13px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                                        {game.home_team_rank ? <span style={{ color: isHomePicked ? "#fef08a" : "#b45309", marginRight: 4 }}>({game.home_team_rank})</span> : null}
+                                                        {game.home_team_nickname}
+                                                    </span>
                                                 </div>
                                                 <span style={{ 
                                                     fontSize: "11px", 

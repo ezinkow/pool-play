@@ -69,7 +69,9 @@ export default function CfbPickemAtsMatrix() {
                 gamesMap.set(gameId, {
                     game_id: gameId,
                     away_team: row.away_team,
+                    away_team_nickname:row.away_team_nickname,
                     home_team: row.home_team,
+                    home_team_nickname:row.home_team_nickname,
                     away_logo: row.away_logo,
                     home_logo: row.home_logo,
                     home_color: row.home_color,
@@ -262,7 +264,7 @@ export default function CfbPickemAtsMatrix() {
                                                     )}
                                                 </div>
                                                 <div style={{ fontWeight: 700, fontSize: "11px", opacity: 0.9 }}>
-                                                    {game.away_team} vs {game.home_team}
+                                                    {game.away_team_nickname} vs {game.home_team_nickname}
                                                 </div>
                                                 <div style={{ fontSize: "10px", color: GOLD, marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
                                                     {favLogo && (
