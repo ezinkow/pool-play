@@ -163,7 +163,7 @@ export default function CfbPickemAtsHome() {
           textAlign: "left"
         }}>
           <h3 style={{ color: NFL_BLUE, marginTop: 0, marginBottom: 16, fontSize: "1.2rem", textAlign: "center" }}>
-            🏈 Standard ATS Pick'em Pool
+            🏈 CFB ATS Pick'em Pool
           </h3>
 
           {userEntry ? (
@@ -189,7 +189,7 @@ export default function CfbPickemAtsHome() {
             </div>
           ) : (
             <div>
-              <p style={{ fontSize: "13px", color: "#64748b", textAlign: "center", marginBottom: 16 }}>Pick every game against the spread each week and select your 3 Best Bets.</p>
+              <p style={{ fontSize: "13px", color: "#64748b", textAlign: "center", marginBottom: 16 }}>Pick 15 games against the spread each week and select your 3 Best Bets, plus up to 3 must-pick games.</p>
               <div style={{ marginBottom: 16 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
                   <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE }}>Entry / Display Name:</label>
@@ -251,12 +251,13 @@ export default function CfbPickemAtsHome() {
           margin: "24px auto 80px auto"
         }}>
           <h3 style={{ color: NFL_BLUE, marginTop: 0, marginBottom: 16, fontSize: "1.2rem", textAlign: 'center' }}>
-            📋 Standard ATS Pick'em: <br />Rules & Overview
+            📋 FBS ATS Pick'em: <br />Rules & Overview
           </h3>
           <ol style={{ paddingLeft: 20, lineHeight: "1.7", fontSize: "14px" }}>
-            <li><strong>Full Slate Picks:</strong> Select a side Against The Spread (ATS) for every matchup available each week.</li>
+            <li><strong>15 Picks:</strong> Select a side Against The Spread (ATS) for 15 matchups among the Power 4 Conferenes each week.</li>
             <li><strong>The Hook Rule:</strong> Whole number spreads are adjusted up or down based on their juice. -110 and lower moves down (ex. -3 to -2.5), while anything above -110 moves up (ex. -3 to -3.5)</li>
             <li><strong>Best Bets:</strong> Designate exactly 3 games each week as your <strong>Best Bets ⭐</strong> for extra weight/points.</li>
+            <li><strong>Must Picks:</strong> Every week up to 3 games will be designated as <strong>Must pick ⭐</strong> games, where everyone will need to pick them. These will include top-ranked matchups and Saturday Night prime time games.</li>
             <li><strong>Kickoff Locks:</strong> Individual game picks lock automatically the moment each game kicks off.</li>
             <li><strong>Privacy:</strong> Group picks on the weekly matrix remain hidden until that specific game gets underway.</li>
           </ol>

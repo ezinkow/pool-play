@@ -172,7 +172,7 @@ async function extractMatchups(data, weekNum) {
         const awayTeamRank = getTeamRank(awayCompetitor.team);
 
         let homeColor = homeCompetitor.team.color ? `#${homeCompetitor.team.color}` : "#013369";
-        let homeSecondaryColor = homeCompetitor.team.alternateColor ? `#${homeCompetitor.team.alternateColor}` : homeColor;
+        let homeSecondaryColor = homeCompetitor.team.alternateColor ? `#${homeCompetitor.team.alternateColor}` : "#64748b";
         if (homeCompetitor.team.shortDisplayName === "West Virginia" || homeCompetitor.team.shortDisplayName === "Ole Miss" || homeCompetitor.team.shortDisplayName === "Arizona" || homeCompetitor.team.shortDisplayName === "N Arizona" || homeCompetitor.team.shortDisplayName === "Long Island") {
             const temp = homeColor;
             homeColor = homeSecondaryColor;
@@ -180,7 +180,7 @@ async function extractMatchups(data, weekNum) {
         }
 
         let awayColor = awayCompetitor.team.color ? `#${awayCompetitor.team.color}` : "#013369";
-        let awaySecondaryColor = awayCompetitor.team.alternateColor ? `#${awayCompetitor.team.alternateColor}` : awayColor;
+        let awaySecondaryColor = awayCompetitor.team.alternateColor ? `#${awayCompetitor.team.alternateColor}` : "#64748b";
         if (awayCompetitor.team.shortDisplayName === "West Virginia" || awayCompetitor.team.shortDisplayName === "Ole Miss" || awayCompetitor.team.shortDisplayName === "Arizona" || awayCompetitor.team.shortDisplayName === "N Arizona" || awayCompetitor.team.shortDisplayName === "Long Island") {
             const temp = awayColor;
             awayColor = awaySecondaryColor;
