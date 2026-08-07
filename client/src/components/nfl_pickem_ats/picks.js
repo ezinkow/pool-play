@@ -30,7 +30,7 @@ export default function NflPickemAtsPicks() {
                 (res.data || []).forEach(t => {
                     map[t.name] = {
                         color: t.color || t.primary_color || NFL_BLUE,
-                        secondaryColor: t.secondary_color || t.alt_color || "#64748b",
+                        secondaryColor: t.secondary_color || t.alt_color || "#cbd5e1",
                         logo: t.logo
                     };
                 });
@@ -56,7 +56,7 @@ export default function NflPickemAtsPicks() {
                 toast.error("Failed to load matchups");
             })
             .finally(() => setLoading(false));
-    }, [user, currentWeek]);
+    }, [user, currentWeek, token]);
 
     const bestBetCount = Object.values(picks).filter(p => p.is_best_bet).length;
     const selectedPicksCount = Object.values(picks).filter(p => p.picked_team).length;
@@ -225,16 +225,16 @@ export default function NflPickemAtsPicks() {
         }
     };
 
-    if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50 }}>Loading matchups...</div>;
+    if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, -apple-system, sans-serif" }}>Loading matchups...</div>;
 
     return (
         <PoolGatekeeper user={user} gameKey="nfl_pickem_ats">
-            <div style={{ maxWidth: 850, margin: "0 auto", padding: "20px 12px", paddingBottom: 90 }}>
+            <div style={{ maxWidth: 850, margin: "0 auto", padding: "20px 12px", paddingBottom: 90, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 <Toaster />
 
                 <div style={{ textAlign: "center", marginBottom: 20 }}>
-                    <h2 style={{ color: NFL_BLUE, fontSize: "26px", margin: 0 }}>🏈 Pick'em Against the Spread <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span></h2>
-                    <p style={{ color: "#666", marginTop: 6, fontSize: "14px" }}>
+                    <h2 style={{ color: NFL_BLUE, fontSize: "26px", margin: 0, fontWeight: 800, letterSpacing: "-0.025em" }}>🏈 Pick'em Against the Spread <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span></h2>
+                    <p style={{ color: "#64748b", marginTop: 6, fontSize: "14px", fontWeight: 500 }}>
                         Make your ATS picks for every game and assign exactly <strong>3 Best Bets ⭐</strong>.<br />
                         Best bets are worth 2 points.
                     </p>
@@ -409,13 +409,16 @@ export default function NflPickemAtsPicks() {
                             const homeTeamMeta = teamColors[game.home_team] || {};
 
                             const awayColor = game.away_color || awayTeamMeta.color || "#1e3a8a";
-                            const awaySecondary = awayTeamMeta.secondaryColor || "#64748b";
+                            const awaySecondary = game.away_secondary_color || awayTeamMeta.secondaryColor || "#cbd5e1";
 
                             const homeColor = game.home_color || homeTeamMeta.color || "#1e3a8a";
-                            const homeSecondary = homeTeamMeta.secondaryColor || "#64748b";
+                            const homeSecondary = game.home_secondary_color || homeTeamMeta.secondaryColor || "#cbd5e1";
 
                             const isAwayPicked = userPick.picked_team === game.away_team;
                             const isHomePicked = userPick.picked_team === game.home_team;
+
+                            const awayLogo = game.away_logo || awayTeamMeta.logo;
+                            const homeLogo = game.home_logo || homeTeamMeta.logo;
 
                             return (
                                 <div key={game.id} style={{
@@ -428,7 +431,7 @@ export default function NflPickemAtsPicks() {
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "space-between",
-                                    flexWrap: "wrap",
+                                    flexWrap: "nowrap",
                                     gap: 10
                                 }}>
                                     {/* Left: Matchup & Kickoff info */}
@@ -467,18 +470,28 @@ export default function NflPickemAtsPicks() {
                                             }}
                                         >
                                             <div style={{ display: "flex", alignItems: "center", gap: 6, overflow: "hidden" }}>
-                                                {(game.away_logo || awayTeamMeta.logo) && (
-                                                    <img 
-                                                        src={game.away_logo || awayTeamMeta.logo} 
-                                                        alt={game.away_team} 
-                                                        style={{ 
-                                                            width: 22, 
-                                                            height: 22, 
-                                                            objectFit: "contain", 
-                                                            flexShrink: 0,
-                                                            filter: isAwayPicked ? "drop-shadow(0 1px 4px rgba(255, 255, 255, 0.8))" : "none"
-                                                        }} 
-                                                    />
+                                                {awayLogo && (
+                                                    <span style={{
+                                                        background: awaySecondary,
+                                                        borderRadius: 4,
+                                                        padding: "2px 4px",
+                                                        display: "inline-flex",
+                                                        alignItems: "center",
+                                                        boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                                                        border: "1px solid rgba(0,0,0,0.08)",
+                                                        flexShrink: 0
+                                                    }}>
+                                                        <img 
+                                                            src={awayLogo} 
+                                                            alt={game.away_team} 
+                                                            style={{ 
+                                                                width: 18, 
+                                                                height: 18, 
+                                                                objectFit: "contain", 
+                                                                filter: isAwayPicked ? "drop-shadow(0 1px 4px rgba(255, 255, 255, 0.8))" : "none"
+                                                            }} 
+                                                        />
+                                                    </span>
                                                 )}
                                                 <span style={{ fontWeight: 700, fontSize: "13px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{game.away_team}</span>
                                             </div>
@@ -520,18 +533,28 @@ export default function NflPickemAtsPicks() {
                                             }}
                                         >
                                             <div style={{ display: "flex", alignItems: "center", gap: 6, overflow: "hidden" }}>
-                                                {(game.home_logo || homeTeamMeta.logo) && (
-                                                    <img 
-                                                        src={game.home_logo || homeTeamMeta.logo} 
-                                                        alt={game.home_team} 
-                                                        style={{ 
-                                                            width: 22, 
-                                                            height: 22, 
-                                                            objectFit: "contain", 
-                                                            flexShrink: 0,
-                                                            filter: isHomePicked ? "drop-shadow(0 1px 4px rgba(255, 255, 255, 0.8))" : "none"
-                                                        }} 
-                                                    />
+                                                {homeLogo && (
+                                                    <span style={{
+                                                        background: homeSecondary,
+                                                        borderRadius: 4,
+                                                        padding: "2px 4px",
+                                                        display: "inline-flex",
+                                                        alignItems: "center",
+                                                        boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                                                        border: "1px solid rgba(0,0,0,0.08)",
+                                                        flexShrink: 0
+                                                    }}>
+                                                        <img 
+                                                            src={homeLogo} 
+                                                            alt={game.home_team} 
+                                                            style={{ 
+                                                                width: 18, 
+                                                                height: 18, 
+                                                                objectFit: "contain", 
+                                                                filter: isHomePicked ? "drop-shadow(0 1px 4px rgba(255, 255, 255, 0.8))" : "none"
+                                                            }} 
+                                                        />
+                                                    </span>
                                                 )}
                                                 <span style={{ fontWeight: 700, fontSize: "13px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{game.home_team}</span>
                                             </div>

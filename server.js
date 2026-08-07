@@ -33,16 +33,6 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/shared/comments-api-routes.js")(app);
   require("./routes/shared/banter-api-routes.js")(app);
 
-  //Champ Week
-  require("./routes/champweek_pickem/picks-api-routes.js")(app);
-  require("./routes/champweek_pickem/games-api-routes.js")(app);
-  require("./routes/champweek_pickem/entries-api-routes.js")(app);
-  require("./routes/champweek_pickem/standings-api-routes.js")(app);
-  require("./routes/champweek_pickem/scoreboard-api-routes.js")(app);
-  require("./routes/champweek_pickem/adminRefreshGames.js")(app);
-  require("./routes/champweek_pickem/picksdisplay-api-routes.js")(app);
-  require("./routes/champweek_pickem/tiebreaker-api-routes.js")(app);
-
   // Bracket
   require("./routes/bracket/picks-api-routes.js")(app);
   require("./routes/bracket/games-api-routes.js")(app);
@@ -52,6 +42,21 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/bracket/adminRefreshGames.js")(app);
   require("./routes/bracket/picksdisplay-api-routes.js")(app);
   require("./routes/bracket/tiebreaker-api-routes.js")(app);
+
+  // CFB Pickem
+  require("./routes/cfb_ats_api_routes.js")(app);
+
+  // Champ Week
+  require("./routes/champweek_pickem/picks-api-routes.js")(app);
+  require("./routes/champweek_pickem/games-api-routes.js")(app);
+  require("./routes/champweek_pickem/entries-api-routes.js")(app);
+  require("./routes/champweek_pickem/standings-api-routes.js")(app);
+  require("./routes/champweek_pickem/scoreboard-api-routes.js")(app);
+  require("./routes/champweek_pickem/adminRefreshGames.js")(app);
+  require("./routes/champweek_pickem/picksdisplay-api-routes.js")(app);
+  require("./routes/champweek_pickem/tiebreaker-api-routes.js")(app);
+
+
 
   // Tourney Pickem
   require("./routes/tourney_pickem/picks-api-routes.js")(app);
@@ -113,7 +118,8 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   const syncBracket = require("./syncs/bracket/sync.js");
   const syncNba = require("./syncs/nba/sync.js");
   const syncMlb = require("./syncs/mlb/sync.js");
-  const syncNflBts = require("./syncs/nfl_season/sync.js");
+  const syncNfl = require("./syncs/nfl_season/sync.js");
+  const syncCfb = require("./syncs/cfb_season/sync.js");
   const syncWorldCup = require("./syncs/world_cup/sync.js");
   const tourneyPickemLockLines = require("./jobs/tourney_pickem/lockLines.js");
 
@@ -124,7 +130,8 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
       // await syncBracket();
       // await syncNba();
       // await syncMlb();
-      await syncNflBts();
+      await syncNfl();
+      await syncCfb();
       // await syncWorldCup();
       // await tourneyPickemLockLines();
     } catch (err) {

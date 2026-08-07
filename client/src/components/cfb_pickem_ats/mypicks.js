@@ -4,11 +4,11 @@ import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../PoolGatekeeper";
 
-const NFL_BLUE = "#013369";
-const NFL_RED = "#D50A0A";
+const CFB_BLUE = "#013369";
+const CFB_RED = "#D50A0A";
 const GOLD = "#c89d3c";
 
-export default function NflPickemAtsMyPicks() {
+export default function CdbPickemAtsMyPicks() {
     const { user, loading: authLoading } = useAuth();
     const [currentWeek, setCurrentWeek] = useState(1);
     const [games, setGames] = useState([]);
@@ -21,28 +21,28 @@ export default function NflPickemAtsMyPicks() {
     // Fetch team branding mapping
     useEffect(() => {
         if (!token) return;
-        axios.get("/api/nfl_teams", {
+        axios.get("/api/cfb_teams", {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => {
                 const map = {};
                 (res.data || []).forEach(t => {
                     map[t.name] = {
-                        color: t.color || t.primary_color || NFL_BLUE,
+                        color: t.color || t.primary_color || CFB_BLUE,
                         secondaryColor: t.secondary_color || t.alt_color || "#cbd5e1",
                         logo: t.logo
                     };
                 });
                 setTeamColors(map);
             })
-            .catch(err => console.error("Failed to load NFL team colors", err));
+            .catch(err => console.error("Failed to load CFB team colors", err));
     }, [token]);
 
     // Fetch weekly schedule and user picks summary
     useEffect(() => {
         if (!user) return;
         setLoading(true);
-        axios.get("/api/nfl_pickem_ats/mypicks", {
+        axios.get("/api/cfb_pickem_ats/mypicks", {
             params: { week: currentWeek },
             headers: { Authorization: `Bearer ${token}` }
         })
@@ -88,12 +88,12 @@ export default function NflPickemAtsMyPicks() {
     if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, -apple-system, sans-serif" }}>Loading your picks summary...</div>;
 
     return (
-        <PoolGatekeeper user={user} gameKey="nfl_pickem_ats">
+        <PoolGatekeeper user={user} gameKey="cfb_pickem_ats">
             <div style={{ maxWidth: 850, margin: "0 auto", padding: "20px 12px", paddingBottom: 90, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 <Toaster />
 
                 <div style={{ textAlign: "center", marginBottom: 20 }}>
-                    <h2 style={{ color: NFL_BLUE, fontSize: "26px", margin: 0, fontWeight: 800, letterSpacing: "-0.025em" }}>My Week {currentWeek} Summary</h2>
+                    <h2 style={{ color: CFB_BLUE, fontSize: "26px", margin: 0, fontWeight: 800, letterSpacing: "-0.025em" }}>My Week {currentWeek} Summary</h2>
                     <p style={{ color: "#64748b", marginTop: 6, fontSize: "14px", fontWeight: 500 }}>
                         Review your ATS selections, Best Bet outcomes, and Over/Under picks.
                     </p>
@@ -129,7 +129,7 @@ export default function NflPickemAtsMyPicks() {
                                 padding: "6px 12px",
                                 borderRadius: 6,
                                 border: "1px solid #ddd",
-                                backgroundColor: currentWeek === i + 1 ? NFL_BLUE : "white",
+                                backgroundColor: currentWeek === i + 1 ? CFB_BLUE : "white",
                                 color: currentWeek === i + 1 ? "white" : "#333",
                                 cursor: "pointer",
                                 fontWeight: 600,
@@ -156,7 +156,7 @@ export default function NflPickemAtsMyPicks() {
                             No picks saved for Week {currentWeek} yet.
                         </p>
                         <p style={{ fontSize: "14px", color: "#64748b", marginTop: 8, marginBottom: 0 }}>
-                            Head over to the matchups page to submit your ATS selections!
+                            Head over to the matchups page to submit your 15 ATS selections!
                         </p>
                     </div>
                 ) : (
@@ -168,7 +168,7 @@ export default function NflPickemAtsMyPicks() {
                             const ouPick = userPick?.ou_pick;
 
                             const teamMeta = teamColors[pickedTeam] || {};
-                            const teamColor = teamMeta.color || NFL_BLUE;
+                            const teamColor = teamMeta.color || CFB_BLUE;
 
                             const awayMeta = teamColors[game.away_team] || {};
                             const homeMeta = teamColors[game.home_team] || {};
@@ -187,13 +187,9 @@ export default function NflPickemAtsMyPicks() {
                                 : (isPickedHome ? homeSecondary : (teamMeta.secondaryColor || "#cbd5e1"));
 
                             const isFinished = game.ats_winner !== null && game.ats_winner !== undefined;
-                            
-                            // Stricter check to ensure scores are actually populated (greater than 0 or explicitly finalized status)
-                            const hasValidScores = 
-                                game.home_score !== null && game.home_score !== undefined &&
-                                game.away_score !== null && game.away_score !== undefined &&
-                                (Number(game.home_score) > 0 || Number(game.away_score) > 0 || 
-                                 game.status === "STATUS_FINAL" || game.status === "Final" || game.status === "completed" || isFinished);
+                            const hasScores = game.home_score !== null && game.home_score !== undefined &&
+                                              game.away_score !== null && game.away_score !== undefined &&
+                                              (game.home_score > 0 || game.away_score > 0 || game.status === "STATUS_FINAL" || game.status === "Final" || game.status === "completed");
 
                             // ATS Status Badge
                             let statusBadge = <span style={{ color: "#64748b", fontWeight: 700, fontSize: "11px" }}>⏳ Pending</span>;
@@ -203,7 +199,7 @@ export default function NflPickemAtsMyPicks() {
                                 } else if (game.ats_winner === pickedTeam) {
                                     statusBadge = <span style={{ color: "#16a34a", fontWeight: 800, fontSize: "11px" }}>✓ WIN ({isBestBet ? "+2" : "+1"})</span>;
                                 } else {
-                                    statusBadge = <span style={{ color: NFL_RED, fontWeight: 800, fontSize: "11px" }}>✕ LOSS</span>;
+                                    statusBadge = <span style={{ color: CFB_RED, fontWeight: 800, fontSize: "11px" }}>✕ LOSS</span>;
                                 }
                             }
 
@@ -221,7 +217,7 @@ export default function NflPickemAtsMyPicks() {
                                         ouColor = "#16a34a";
                                     } else {
                                         ouText = `✕ O/U LOSS`;
-                                        ouColor = NFL_RED;
+                                        ouColor = CFB_RED;
                                     }
                                 }
                                 ouBadge = <span style={{ color: ouColor, fontWeight: 700, fontSize: "10px", marginLeft: 4 }}>{ouText}</span>;
@@ -232,6 +228,7 @@ export default function NflPickemAtsMyPicks() {
                             const awaySpreadStr = isAwayFav ? `-${absSpread}` : `+${absSpread}`;
                             const homeSpreadStr = isAwayFav ? `+${absSpread}` : `-${absSpread}`;
 
+                            // Highlighting the user's picked team row text bold/colored
                             const isAwayPicked = pickedTeam === game.away_team;
                             const isHomePicked = pickedTeam === game.home_team;
 
@@ -316,7 +313,7 @@ export default function NflPickemAtsMyPicks() {
                                             </span>
 
                                         </div>
-                                        {hasValidScores && (
+                                        {hasScores && (
                                             <span style={{ background: "#0f172a", color: "white", padding: "1px 6px", borderRadius: 4, fontSize: "11px", fontWeight: 700, marginTop: 4, width: "fit-content", letterSpacing: "0.3px" }}>
                                                 Final: {game.away_score} - {game.home_score}
                                             </span>

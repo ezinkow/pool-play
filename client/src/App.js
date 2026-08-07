@@ -12,6 +12,13 @@ import MyAccount from "./pages/MyAccount";
 import Comments from "./pages/Comments";
 import NotFound from "./pages/NotFound";
 
+// CFB Pickem ATS pages
+import CfbPickemAtsHome from './pages/cfb_pickem_ats/Home';
+import CfbPickemAtsStandings from './pages/cfb_pickem_ats/Standings';
+import CfbPickemAtsPicks from './pages/cfb_pickem_ats/Picks';
+import CfbPickemAtsMyPicks from './pages/cfb_pickem_ats/MyPicks';
+import CfbPickemAtsGroupPicks from './pages/cfb_pickem_ats/GroupPicks';
+
 // ChampWeekPickem pages
 import ChampWeekPickemHome from './pages/champweek_pickem/Home';
 import ChampWeekPickemPicks from './pages/champweek_pickem/Picks';
@@ -135,6 +142,13 @@ export default function App() {
           <Route path="/comments" element={<Comments />} />
           <Route path="*" element={<NotFound />} />
 
+          {/* CFB Pickem ATS*/}
+          <Route path="/cfbpickemats" element={<CfbPickemAtsHome />} />
+          <Route path="/cfbpickemats/picks" element={<CfbPickemAtsPicks />} />
+          <Route path="/cfbpickemats/mypicks" element={<CfbPickemAtsMyPicks />} />
+          <Route path="/cfbpickemats/standings" element={<CfbPickemAtsStandings />} />
+          <Route path="/cfbpickemats/grouppicks" element={<CfbPickemAtsGroupPicks />} />
+
           {/* Champ Week Pickem */}
           <Route path="/champweekpickem/" element={<ChampWeekPickemHome />} />
           <Route path="/champweekpickem/signup" element={<ChampWeekPickemSignUp />} />
@@ -208,7 +222,7 @@ export default function App() {
           <Route path="/nflbts/standings" element={<NflBtsStandings />} />
           <Route path="/nflbts/grouppicks" element={<NflBtsGroupPicks />} />
           <Route path="/nflbts/admin/teamassignments" element={<AdminTeamAssignment />} />
-  
+
           {/* NFL Survivor*/}
           <Route path="/nflsurvivor" element={<NflSurvivorHome />} />
           <Route path="/nflsurvivor/picks" element={<NflSurvivorPicks />} />
