@@ -283,28 +283,27 @@ export default function NflPickemAtsPicks() {
                     ))}
                 </div>
 
-                {/* Controls Bar: Sort Dropdown & Highlighted Bulk Select Actions */}
+                {/* Controls Bar: Sort Dropdown & Refined Mobile-Friendly Quick Select Actions */}
                 <div style={{
                     display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    flexDirection: "column",
                     background: "white",
-                    padding: "12px 16px",
+                    padding: "14px 16px",
                     borderRadius: 12,
                     marginBottom: 20,
                     boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
                     border: "1px solid #e2e8f0",
-                    flexWrap: "wrap",
                     gap: 12
                 }}>
-                    {/* Sort Dropdown */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#475569" }}>Sort By:</span>
+                    {/* Sort Dropdown Row */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
+                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#475569", flexShrink: 0 }}>Sort By:</span>
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}
                             style={{
-                                padding: "6px 12px",
+                                flex: 1,
+                                padding: "8px 12px",
                                 borderRadius: 6,
                                 border: "1px solid #cbd5e1",
                                 fontSize: "13px",
@@ -322,9 +321,9 @@ export default function NflPickemAtsPicks() {
                         </select>
                     </div>
 
-                    {/* Bulk Select All Quick Actions with Highlight State & Top Regular-Sized Save Button */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#475569", marginRight: 4 }}>Select:</span>
+                    {/* Bulk Select Action Buttons Row */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4, width: "100%" }}>
+                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#475569", marginRight: 2, flexShrink: 0 }}>Select:</span>
                         {[
                             { key: "favorites", label: "Faves" },
                             { key: "underdogs", label: "Dogs" },
@@ -338,15 +337,17 @@ export default function NflPickemAtsPicks() {
                                     key={action.key}
                                     onClick={() => handleSelectAll(action.key)}
                                     style={{
+                                        flex: 1,
                                         background: active ? NFL_BLUE : "#f1f5f9",
                                         color: active ? "white" : "#334155",
                                         border: active ? `1px solid ${NFL_BLUE}` : "1px solid #cbd5e1",
-                                        padding: "5px 10px",
+                                        padding: "6px 4px",
                                         borderRadius: 6,
                                         fontSize: "12px",
                                         fontWeight: 700,
                                         cursor: "pointer",
                                         transition: "all 0.2s",
+                                        textAlign: "center",
                                         boxShadow: active ? "0 2px 6px rgba(1,51,105,0.3)" : "none"
                                     }}
                                 >
@@ -354,27 +355,30 @@ export default function NflPickemAtsPicks() {
                                 </button>
                             );
                         })}
-
-                        {sortedGames.length > 0 && (
-                            <button
-                                onClick={handleSubmitAll}
-                                style={{
-                                    background: "#16a34a",
-                                    color: "white",
-                                    border: "none",
-                                    padding: "5px 14px",
-                                    borderRadius: 6,
-                                    fontSize: "12px",
-                                    fontWeight: 700,
-                                    cursor: "pointer",
-                                    marginLeft: 6,
-                                    boxShadow: "0 2px 6px rgba(22,163,74,0.3)"
-                                }}
-                            >
-                                Save Picks
-                            </button>
-                        )}
                     </div>
+
+                    {/* Full Width Save Picks Button */}
+                    {sortedGames.length > 0 && (
+                        <button
+                            onClick={handleSubmitAll}
+                            style={{
+                                width: "100%",
+                                background: "#16a34a",
+                                color: "white",
+                                border: "none",
+                                padding: "10px 14px",
+                                borderRadius: 8,
+                                fontSize: "13px",
+                                fontWeight: 800,
+                                cursor: "pointer",
+                                textTransform: "uppercase",
+                                letterSpacing: "0.5px",
+                                boxShadow: "0 2px 6px rgba(22,163,74,0.3)"
+                            }}
+                        >
+                            Save Picks
+                        </button>
+                    )}
                 </div>
 
                 {/* Compact Games List or Notice */}
@@ -427,33 +431,50 @@ export default function NflPickemAtsPicks() {
                                     boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
                                     overflow: "hidden",
                                     border: userPick.is_best_bet ? `2px solid ${GOLD}` : "1px solid #cbd5e1",
-                                    padding: "10px 14px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "space-between",
-                                    flexWrap: "nowrap",
-                                    gap: 10
+                                    padding: "10px 14px"
                                 }}>
-                                    {/* Left: Matchup & Kickoff info */}
-                                    <div style={{ display: "flex", flexDirection: "column", minWidth: "110px" }}>
-                                        <span style={{ fontSize: "11px", color: "#64748b", fontWeight: 700 }}>
-                                            {game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "TBD"}
-                                        </span>
-                                        <span style={{ fontSize: "11px", color: "#475569", fontWeight: 600, marginTop: 2 }}>
-                                            O/U: <strong>{game.over_under}</strong>
-                                        </span>
-                                        {isLocked && <span style={{ fontSize: "10px", color: NFL_RED, fontWeight: 700 }}>🔒 Locked</span>}
+                                    {/* Top row: Date/Time, O/U, and Best Bet button */}
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                                            <span style={{ fontSize: "11px", color: "#64748b", fontWeight: 700 }}>
+                                                {game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "TBD"}
+                                            </span>
+                                            <span style={{ fontSize: "11px", color: "#475569", fontWeight: 600 }}>
+                                                O/U: <strong>{game.over_under}</strong>
+                                            </span>
+                                            {isLocked && <span style={{ fontSize: "10px", color: NFL_RED, fontWeight: 700 }}>🔒 Locked</span>}
+                                        </div>
+
+                                        <div>
+                                            <button
+                                                onClick={() => handleBestBetToggle(game.id, game.game_date)}
+                                                disabled={isLocked || !userPick.picked_team}
+                                                style={{
+                                                    background: userPick.is_best_bet ? GOLD : "#f1f5f9",
+                                                    color: userPick.is_best_bet ? "white" : "#64748b",
+                                                    border: userPick.is_best_bet ? `1px solid ${GOLD}` : "1px solid #cbd5e1",
+                                                    padding: "4px 8px",
+                                                    borderRadius: 6,
+                                                    fontWeight: 700,
+                                                    fontSize: "11px",
+                                                    cursor: (isLocked || !userPick.picked_team) ? "not-allowed" : "pointer",
+                                                    whiteSpace: "nowrap"
+                                                }}
+                                            >
+                                                {userPick.is_best_bet ? "★ Best Bet" : "☆ Best Bet"}
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    {/* Center: Compact Team Selection Buttons with Fade-to-Solid Styling */}
-                                    <div style={{ display: "flex", gap: 8, alignItems: "center", flex: 1, minWidth: "260px", maxWidth: "450px" }}>
+                                    {/* Bottom row: Stacked Away / Home Team Selection Buttons for Mobile */}
+                                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                                         {/* Away Team */}
                                         <button
                                             onClick={() => handleTeamPick(game.id, game.away_team, game.game_date)}
                                             disabled={isLocked}
                                             style={{
-                                                flex: 1,
-                                                padding: "8px 10px",
+                                                width: "100%",
+                                                padding: "8px 12px",
                                                 borderRadius: 8,
                                                 border: isAwayPicked ? `2px solid ${awayColor}` : `1px solid ${awayColor}66`,
                                                 background: isAwayPicked 
@@ -464,12 +485,11 @@ export default function NflPickemAtsPicks() {
                                                 display: "flex",
                                                 alignItems: "center",
                                                 justifyContent: "space-between",
-                                                gap: 6,
                                                 boxShadow: isAwayPicked ? `0 2px 8px ${awayColor}66` : "none",
                                                 transition: "all 0.15s ease"
                                             }}
                                         >
-                                            <div style={{ display: "flex", alignItems: "center", gap: 6, overflow: "hidden" }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 8, overflow: "hidden" }}>
                                                 {awayLogo && (
                                                     <span style={{
                                                         background: awaySecondary,
@@ -493,13 +513,13 @@ export default function NflPickemAtsPicks() {
                                                         />
                                                     </span>
                                                 )}
-                                                <span style={{ fontWeight: 700, fontSize: "13px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{game.away_team}</span>
+                                                <span style={{ fontWeight: 700, fontSize: "13px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{game.away_team}</span>
                                             </div>
                                             <span style={{ 
-                                                fontSize: "11px", 
+                                                fontSize: "12px", 
                                                 fontWeight: 700, 
                                                 flexShrink: 0,
-                                                padding: "1px 5px",
+                                                padding: "2px 6px",
                                                 borderRadius: 4,
                                                 background: isAwayPicked ? "rgba(255,255,255,0.2)" : "transparent",
                                                 color: isAwayPicked ? "white" : "#475569"
@@ -508,15 +528,13 @@ export default function NflPickemAtsPicks() {
                                             </span>
                                         </button>
 
-                                        <span style={{ fontWeight: 800, color: "#94a3b8", fontSize: "12px" }}>@</span>
-
                                         {/* Home Team */}
                                         <button
                                             onClick={() => handleTeamPick(game.id, game.home_team, game.game_date)}
                                             disabled={isLocked}
                                             style={{
-                                                flex: 1,
-                                                padding: "8px 10px",
+                                                width: "100%",
+                                                padding: "8px 12px",
                                                 borderRadius: 8,
                                                 border: isHomePicked ? `2px solid ${homeColor}` : `1px solid ${homeColor}66`,
                                                 background: isHomePicked 
@@ -527,12 +545,11 @@ export default function NflPickemAtsPicks() {
                                                 display: "flex",
                                                 alignItems: "center",
                                                 justifyContent: "space-between",
-                                                gap: 6,
                                                 boxShadow: isHomePicked ? `0 2px 8px ${homeColor}66` : "none",
                                                 transition: "all 0.15s ease"
                                             }}
                                         >
-                                            <div style={{ display: "flex", alignItems: "center", gap: 6, overflow: "hidden" }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 8, overflow: "hidden" }}>
                                                 {homeLogo && (
                                                     <span style={{
                                                         background: homeSecondary,
@@ -556,40 +573,19 @@ export default function NflPickemAtsPicks() {
                                                         />
                                                     </span>
                                                 )}
-                                                <span style={{ fontWeight: 700, fontSize: "13px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{game.home_team}</span>
+                                                <span style={{ fontWeight: 700, fontSize: "13px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{game.home_team}</span>
                                             </div>
                                             <span style={{ 
-                                                fontSize: "11px", 
+                                                fontSize: "12px", 
                                                 fontWeight: 700, 
                                                 flexShrink: 0,
-                                                padding: "1px 5px",
+                                                padding: "2px 6px",
                                                 borderRadius: 4,
                                                 background: isHomePicked ? "rgba(255,255,255,0.2)" : "transparent",
                                                 color: isHomePicked ? "white" : "#475569"
                                             }}>
                                                 {homeSpreadStr}
                                             </span>
-                                        </button>
-                                    </div>
-
-                                    {/* Right: Best Bet Action */}
-                                    <div>
-                                        <button
-                                            onClick={() => handleBestBetToggle(game.id, game.game_date)}
-                                            disabled={isLocked || !userPick.picked_team}
-                                            style={{
-                                                background: userPick.is_best_bet ? GOLD : "#f1f5f9",
-                                                color: userPick.is_best_bet ? "white" : "#64748b",
-                                                border: userPick.is_best_bet ? `1px solid ${GOLD}` : "1px solid #cbd5e1",
-                                                padding: "6px 10px",
-                                                borderRadius: 6,
-                                                fontWeight: 700,
-                                                fontSize: "11px",
-                                                cursor: (isLocked || !userPick.picked_team) ? "not-allowed" : "pointer",
-                                                whiteSpace: "nowrap"
-                                            }}
-                                        >
-                                            {userPick.is_best_bet ? "★ Best Bet" : "☆ Best Bet"}
                                         </button>
                                     </div>
                                 </div>

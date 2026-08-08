@@ -81,6 +81,11 @@ export default function Home() {
             else if (now >= c.open_date && now < c.lock_date) buckets.upcoming.push(c);
             else buckets.inactive.push(c);
         });
+
+        // Sort open/active pools by lock date (ascending: soonest lock date first)
+        buckets.live.sort((a, b) => a.lock_date - b.lock_date);
+        buckets.upcoming.sort((a, b) => a.lock_date - b.lock_date);
+
         buckets.inactive.sort((a, b) => a.open_date - b.open_date);
         return buckets;
     }, [cards]);

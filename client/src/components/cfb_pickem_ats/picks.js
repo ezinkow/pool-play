@@ -15,7 +15,7 @@ export default function CfbPickemAtsPicks() {
     const [picks, setPicks] = useState({}); // { game_id: { picked_team, is_best_bet } }
     const [teamColors, setTeamColors] = useState({}); // { teamName: { color, secondaryColor, logo } }
     const [loading, setLoading] = useState(true);
-    const [sortBy, setSortBy] = useState("kickoff"); // "kickoff", "team_asc", "team_desc", "fav_desc", "fav_asc"
+    const [sortBy, setSortBy] = useState("kickoff"); // "kickoff", "home_team_asc", "home_team_desc", "away_team_asc", "away_team_desc", "fav_desc", "fav_asc"
 
     const token = localStorage.getItem("token");
 
@@ -39,7 +39,7 @@ export default function CfbPickemAtsPicks() {
             .catch(err => console.error("Failed to load CFB team colors", err));
     }, [token]);
 
-    // Fetch weekly schedule and user picks
+    // Fetch weekly schedule, user picks, and auto-select must-pick games
     useEffect(() => {
         if (!user) return;
         setLoading(true);
@@ -48,8 +48,26 @@ export default function CfbPickemAtsPicks() {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => {
-                setGames(res.data.games || []);
-                setPicks(res.data.userPicks || {});
+                const fetchedGames = res.data.games || [];
+                const existingPicks = res.data.userPicks || {};
+                
+                setGames(fetchedGames);
+
+                // Auto-populate picks for must_pick games if the user hasn't already picked them
+                const initialPicks = { ...existingPicks };
+                fetchedGames.forEach(game => {
+                    if (game.must_pick && !initialPicks[game.id]?.picked_team) {
+                        const isAwayFav = game.favorite === game.away_team;
+                        const defaultPickedTeam = isAwayFav ? game.home_team : game.away_team;
+
+                        initialPicks[game.id] = {
+                            picked_team: defaultPickedTeam,
+                            is_best_bet: initialPicks[game.id]?.is_best_bet || false
+                        };
+                    }
+                });
+
+                setPicks(initialPicks);
             })
             .catch(err => {
                 console.error("Failed to load pickem games", err);
@@ -66,9 +84,14 @@ export default function CfbPickemAtsPicks() {
     const totalMustPicks = mustPickGames.length;
     const completedMustPicks = mustPickGames.filter(g => picks[g.id]?.picked_team).length;
 
-    const handleTeamPick = (gameId, team, gameDate) => {
+    const handleTeamPick = (gameId, team, gameDate, isMustPick) => {
         if (gameDate && new Date() >= new Date(gameDate)) {
             toast.error("This game has already started. Pick is locked.");
+            return;
+        }
+
+        if (isMustPick) {
+            toast.error("Must-Pick games are automatically selected and cannot be cleared or changed.");
             return;
         }
 
@@ -133,14 +156,14 @@ export default function CfbPickemAtsPicks() {
             const dateA = a.game_date ? new Date(a.game_date) : new Date(0);
             const dateB = b.game_date ? new Date(b.game_date) : new Date(0);
             return dateA - dateB;
-        } else if (sortBy === "away_team_asc") {
-            return a.away_team_nickname.localeCompare(b.away_team_nickname);
-        } else if (sortBy === "away_team_desc") {
-            return b.away_team_nickname.localeCompare(a.away_team_nickname);
         } else if (sortBy === "home_team_asc") {
-            return a.home_team_nickname.localeCompare(b.home_team_nickname);
+            return (a.home_team_nickname || a.home_team).localeCompare(b.home_team_nickname || b.home_team);
         } else if (sortBy === "home_team_desc") {
-            return b.home_team_nickname.localeCompare(a.home_team_nickname);
+            return (b.home_team_nickname || b.home_team).localeCompare(a.home_team_nickname || a.home_team);
+        } else if (sortBy === "away_team_asc") {
+            return (a.away_team_nickname || a.away_team).localeCompare(b.away_team_nickname || b.away_team);
+        } else if (sortBy === "away_team_desc") {
+            return (b.away_team_nickname || b.away_team).localeCompare(a.away_team_nickname || a.away_team);
         } else if (sortBy === "fav_desc") {
             const spreadA = Math.abs(a.adjusted_spread !== null ? a.adjusted_spread : (a.spread || 0));
             const spreadB = Math.abs(b.adjusted_spread !== null ? b.adjusted_spread : (b.spread || 0));
@@ -296,7 +319,7 @@ export default function CfbPickemAtsPicks() {
                             <option value="home_team_asc">Home Team (A-Z)</option>
                             <option value="home_team_desc">Home Team (Z-A)</option>
                             <option value="away_team_asc">Away Team (A-Z)</option>
-                            <option value="team_desc">Away Team (Z-A)</option>
+                            <option value="away_team_desc">Away Team (Z-A)</option>
                             <option value="fav_desc">Favorite Spread (Biggest to Least)</option>
                             <option value="fav_asc">Favorite Spread (Least to Biggest)</option>
                         </select>
@@ -408,57 +431,74 @@ export default function CfbPickemAtsPicks() {
                                         boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
                                         overflow: "hidden",
                                         border: game.must_pick ? "2px solid #f59e0b" : (userPick.is_best_bet ? `2px solid ${GOLD}` : "1px solid #cbd5e1"),
-                                        padding: "10px 14px",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "space-between",
-                                        flexWrap: "wrap",
-                                        gap: 10
+                                        padding: "10px 14px"
                                     }}>
-                                        {/* Left: Matchup & Kickoff info */}
-                                        <div style={{ display: "flex", flexDirection: "column", minWidth: "110px" }}>
-                                            {game.must_pick && (
-                                                <span style={{ fontSize: "10px", backgroundColor: "#fef3c2", color: "#b45309", padding: "1px 6px", borderRadius: 4, fontWeight: 800, width: "fit-content", marginBottom: 2 }}>
-                                                    MUST-PICK
+                                        {/* Top row: Date/Time, O/U, and Best Bet button */}
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                                                {game.must_pick && (
+                                                    <span style={{ fontSize: "10px", backgroundColor: "#fef3c2", color: "#b45309", padding: "1px 6px", borderRadius: 4, fontWeight: 800 }}>
+                                                        MUST-PICK
+                                                    </span>
+                                                )}
+                                                <span style={{ fontSize: "11px", color: "#64748b", fontWeight: 700 }}>
+                                                    {game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "TBD"}
                                                 </span>
-                                            )}
-                                            <span style={{ fontSize: "11px", color: "#64748b", fontWeight: 700 }}>
-                                                {game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "TBD"}
-                                            </span>
-                                            <span style={{ fontSize: "11px", color: "#475569", fontWeight: 600, marginTop: 2 }}>
-                                                O/U: <strong>{game.over_under}</strong>
-                                            </span>
-                                            {isLocked && <span style={{ fontSize: "10px", color: CFB_RED, fontWeight: 700 }}>🔒 Locked</span>}
+                                                <span style={{ fontSize: "11px", color: "#475569", fontWeight: 600 }}>
+                                                    O/U: <strong>{game.over_under}</strong>
+                                                </span>
+                                                {isLocked && <span style={{ fontSize: "10px", color: CFB_RED, fontWeight: 700 }}>🔒 Locked</span>}
+                                            </div>
+
+                                            <div>
+                                                <button
+                                                    onClick={() => handleBestBetToggle(game.id, game.game_date)}
+                                                    disabled={isLocked || !userPick.picked_team}
+                                                    style={{
+                                                        background: userPick.is_best_bet ? GOLD : "#f1f5f9",
+                                                        color: userPick.is_best_bet ? "white" : "#64748b",
+                                                        border: userPick.is_best_bet ? `1px solid ${GOLD}` : "1px solid #cbd5e1",
+                                                        padding: "4px 8px",
+                                                        borderRadius: 6,
+                                                        fontWeight: 700,
+                                                        fontSize: "11px",
+                                                        cursor: (isLocked || !userPick.picked_team) ? "not-allowed" : "pointer",
+                                                        whiteSpace: "nowrap"
+                                                    }}
+                                                >
+                                                    {userPick.is_best_bet ? "★ Best Bet" : "☆ Best Bet"}
+                                                </button>
+                                            </div>
                                         </div>
 
-                                        {/* Center: Compact Team Selection Buttons */}
-                                        <div style={{ display: "flex", gap: 8, alignItems: "center", flex: 1, minWidth: "260px", maxWidth: "450px" }}>
+                                        {/* Bottom row: Stacked Away / Home Team Selection Buttons for Mobile */}
+                                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                                             {/* Away Team */}
                                             <button
-                                                onClick={() => handleTeamPick(game.id, game.away_team, game.game_date)}
-                                                disabled={isLocked}
+                                                onClick={() => handleTeamPick(game.id, game.away_team, game.game_date, game.must_pick)}
+                                                disabled={isLocked || game.must_pick}
                                                 style={{
-                                                    flex: 1,
-                                                    padding: "8px 10px",
+                                                    width: "100%",
+                                                    padding: "8px 12px",
                                                     borderRadius: 8,
                                                     border: isAwayPicked ? `2px solid ${awayColor}` : `1px solid ${awayColor}66`,
                                                     background: isAwayPicked 
                                                         ? awayColor 
                                                         : `linear-gradient(135deg, ${awaySecondary}33 0%, ${awayColor}1A 100%)`,
                                                     color: isAwayPicked ? "white" : "#0f172a",
-                                                    cursor: isLocked ? "not-allowed" : "pointer",
+                                                    cursor: (isLocked || game.must_pick) ? "not-allowed" : "pointer",
                                                     display: "flex",
                                                     alignItems: "center",
                                                     justifyContent: "space-between",
-                                                    gap: 6,
                                                     boxShadow: isAwayPicked ? `0 2px 8px ${awayColor}66` : "none",
-                                                    transition: "all 0.15s ease"
+                                                    transition: "all 0.15s ease",
+                                                    opacity: game.must_pick && !isAwayPicked ? 0.75 : 1
                                                 }}
                                             >
-                                                <div style={{ display: "flex", alignItems: "center", gap: 6, overflow: "hidden" }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: 8, overflow: "hidden" }}>
                                                     {(game.away_logo || awayTeamMeta.logo) && (
                                                         <span style={{ 
-                                                            background: awaySecondary, 
+                                                            background: awaySecondary || "#cbd5e1", 
                                                             borderRadius: 4, 
                                                             padding: "2px 4px", 
                                                             display: "inline-flex", 
@@ -478,16 +518,16 @@ export default function CfbPickemAtsPicks() {
                                                             />
                                                         </span>
                                                     )}
-                                                    <span style={{ fontWeight: 700, fontSize: "13px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                                    <span style={{ fontWeight: 700, fontSize: "13px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                                         {game.away_team_rank ? <span style={{ color: isAwayPicked ? "#fef08a" : "#b45309", marginRight: 4 }}>({game.away_team_rank})</span> : null}
-                                                        {game.away_team_nickname}
+                                                        {game.away_team_nickname || game.away_team}
                                                     </span>
                                                 </div>
                                                 <span style={{ 
-                                                    fontSize: "11px", 
+                                                    fontSize: "12px", 
                                                     fontWeight: 700, 
                                                     flexShrink: 0,
-                                                    padding: "1px 5px",
+                                                    padding: "2px 6px",
                                                     borderRadius: 4,
                                                     background: isAwayPicked ? "rgba(255,255,255,0.2)" : "transparent",
                                                     color: isAwayPicked ? "white" : "#475569"
@@ -496,34 +536,32 @@ export default function CfbPickemAtsPicks() {
                                                 </span>
                                             </button>
 
-                                            <span style={{ fontWeight: 800, color: "#94a3b8", fontSize: "12px" }}>@</span>
-
                                             {/* Home Team */}
                                             <button
-                                                onClick={() => handleTeamPick(game.id, game.home_team, game.game_date)}
-                                                disabled={isLocked}
+                                                onClick={() => handleTeamPick(game.id, game.home_team, game.game_date, game.must_pick)}
+                                                disabled={isLocked || game.must_pick}
                                                 style={{
-                                                    flex: 1,
-                                                    padding: "8px 10px",
+                                                    width: "100%",
+                                                    padding: "8px 12px",
                                                     borderRadius: 8,
                                                     border: isHomePicked ? `2px solid ${homeColor}` : `1px solid ${homeColor}66`,
                                                     background: isHomePicked 
                                                         ? homeColor 
                                                         : `linear-gradient(135deg, ${homeSecondary}33 0%, ${homeColor}1A 100%)`,
                                                     color: isHomePicked ? "white" : "#0f172a",
-                                                    cursor: isLocked ? "not-allowed" : "pointer",
+                                                    cursor: (isLocked || game.must_pick) ? "not-allowed" : "pointer",
                                                     display: "flex",
                                                     alignItems: "center",
                                                     justifyContent: "space-between",
-                                                    gap: 6,
                                                     boxShadow: isHomePicked ? `0 2px 8px ${homeColor}66` : "none",
-                                                    transition: "all 0.15s ease"
+                                                    transition: "all 0.15s ease",
+                                                    opacity: game.must_pick && !isHomePicked ? 0.75 : 1
                                                 }}
                                             >
-                                                <div style={{ display: "flex", alignItems: "center", gap: 6, overflow: "hidden" }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: 8, overflow: "hidden" }}>
                                                     {(game.home_logo || homeTeamMeta.logo) && (
                                                         <span style={{ 
-                                                            background: homeSecondary, 
+                                                            background: homeSecondary || "#cbd5e1", 
                                                             borderRadius: 4, 
                                                             padding: "2px 4px", 
                                                             display: "inline-flex", 
@@ -543,43 +581,22 @@ export default function CfbPickemAtsPicks() {
                                                             />
                                                         </span>
                                                     )}
-                                                    <span style={{ fontWeight: 700, fontSize: "13px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                                    <span style={{ fontWeight: 700, fontSize: "13px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                                         {game.home_team_rank ? <span style={{ color: isHomePicked ? "#fef08a" : "#b45309", marginRight: 4 }}>({game.home_team_rank})</span> : null}
-                                                        {game.home_team_nickname}
+                                                        {game.home_team_nickname || game.home_team}
                                                     </span>
                                                 </div>
                                                 <span style={{ 
-                                                    fontSize: "11px", 
+                                                    fontSize: "12px", 
                                                     fontWeight: 700, 
                                                     flexShrink: 0,
-                                                    padding: "1px 5px",
+                                                    padding: "2px 6px",
                                                     borderRadius: 4,
                                                     background: isHomePicked ? "rgba(255,255,255,0.2)" : "transparent",
                                                     color: isHomePicked ? "white" : "#475569"
                                                 }}>
                                                     {homeSpreadStr}
                                                 </span>
-                                            </button>
-                                        </div>
-
-                                        {/* Right: Best Bet Action */}
-                                        <div>
-                                            <button
-                                                onClick={() => handleBestBetToggle(game.id, game.game_date)}
-                                                disabled={isLocked || !userPick.picked_team}
-                                                style={{
-                                                    background: userPick.is_best_bet ? GOLD : "#f1f5f9",
-                                                    color: userPick.is_best_bet ? "white" : "#64748b",
-                                                    border: userPick.is_best_bet ? `1px solid ${GOLD}` : "1px solid #cbd5e1",
-                                                    padding: "6px 10px",
-                                                    borderRadius: 6,
-                                                    fontWeight: 700,
-                                                    fontSize: "11px",
-                                                    cursor: (isLocked || !userPick.picked_team) ? "not-allowed" : "pointer",
-                                                    whiteSpace: "nowrap"
-                                                }}
-                                            >
-                                                {userPick.is_best_bet ? "★ Best Bet" : "☆ Best Bet"}
                                             </button>
                                         </div>
                                     </div>
