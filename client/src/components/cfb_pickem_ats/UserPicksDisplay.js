@@ -3,7 +3,7 @@ import axios from "axios";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 
-const CFB_BLUE = "#013369";
+const CFB_BLUE = "#535967";
 const GOLD = "#c89d3c";
 
 export default function CfbPickemAtsMatrix() {
@@ -25,7 +25,7 @@ export default function CfbPickemAtsMatrix() {
                 const map = {};
                 (res.data || []).forEach(t => {
                     map[t.name] = {
-                        secondaryColor: t.secondary_color || t.alt_color || "#cbd5e1",
+                        secondaryColor: t.secondary_color || t.alt_color || "#afb1dcef",
                         logo: t.logo
                     };
                 });
@@ -69,9 +69,9 @@ export default function CfbPickemAtsMatrix() {
                 gamesMap.set(gameId, {
                     game_id: gameId,
                     away_team: row.away_team,
-                    away_team_nickname:row.away_team_nickname,
+                    away_team_nickname: row.away_team_nickname,
                     home_team: row.home_team,
-                    home_team_nickname:row.home_team_nickname,
+                    home_team_nickname: row.home_team_nickname,
                     away_logo: row.away_logo,
                     home_logo: row.home_logo,
                     home_color: row.home_color,
@@ -233,14 +233,16 @@ export default function CfbPickemAtsMatrix() {
                                         const favTeam = game.favorite;
                                         const isFavAway = favTeam === game.away_team;
                                         const isFavHome = favTeam === game.home_team;
-                                        
+
                                         const favLogo = isFavAway ? game.away_logo : (isFavHome ? game.home_logo : null);
-                                        const favSecondary = isFavAway 
+                                        const favSecondary = isFavAway
                                             ? (game.away_secondary_color || teamColors[game.away_team]?.secondaryColor || "rgba(255, 255, 255, 0.2)")
                                             : (isFavHome ? (game.home_secondary_color || teamColors[game.home_team]?.secondaryColor || "rgba(255, 255, 255, 0.2)") : "rgba(255, 255, 255, 0.2)");
-                                        
-                                        const awaySecondary = game.away_secondary_color || teamColors[game.away_team]?.secondaryColor || "rgba(255, 255, 255, 0.2)";
+
+                                        const homeColor = game.home_color || teamColors[game.home_team]?.Color || "rgba(255, 255, 255, 0.2)";
+                                        const awayColor = game.away_color || teamColors[game.away_team]?.Color || "rgba(255, 255, 255, 0.2)";
                                         const homeSecondary = game.home_secondary_color || teamColors[game.home_team]?.secondaryColor || "rgba(255, 255, 255, 0.2)";
+                                        const awaySecondary = game.away_secondary_color || teamColors[game.away_team]?.secondaryColor || "rgba(255, 255, 255, 0.2)";
 
                                         return (
                                             <th key={game.game_id} style={{
@@ -334,16 +336,16 @@ export default function CfbPickemAtsMatrix() {
 
                                                 const pickedTeam = pick?.ats_pick;
                                                 const pickedMeta = teamColors[pickedTeam] || {};
-                                                
+
                                                 // Resolve exact secondary background color and logo for the picked team
                                                 const isPickedAway = pickedTeam === game.away_team;
                                                 const isPickedHome = pickedTeam === game.home_team;
 
                                                 const pickedLogo = isPickedAway ? game.away_logo : (isPickedHome ? game.home_logo : pickedMeta.logo);
-                                                const pickedSecondary = isPickedAway 
+                                                const pickedSecondary = isPickedAway
                                                     ? (game.away_secondary_color || teamColors[game.away_team]?.secondaryColor || "#cbd5e1")
-                                                    : (isPickedHome 
-                                                        ? (game.home_secondary_color || teamColors[game.home_team]?.secondaryColor || "#cbd5e1") 
+                                                    : (isPickedHome
+                                                        ? (game.home_secondary_color || teamColors[game.home_team]?.secondaryColor || "#cbd5e1")
                                                         : (pickedMeta.secondaryColor || "#cbd5e1"));
 
                                                 return (

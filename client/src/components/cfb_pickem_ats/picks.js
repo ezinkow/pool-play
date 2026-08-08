@@ -133,10 +133,14 @@ export default function CfbPickemAtsPicks() {
             const dateA = a.game_date ? new Date(a.game_date) : new Date(0);
             const dateB = b.game_date ? new Date(b.game_date) : new Date(0);
             return dateA - dateB;
-        } else if (sortBy === "team_asc") {
-            return a.away_team.localeCompare(b.away_team);
-        } else if (sortBy === "team_desc") {
-            return b.away_team.localeCompare(a.away_team);
+        } else if (sortBy === "away_team_asc") {
+            return a.away_team_nickname.localeCompare(b.away_team_nickname);
+        } else if (sortBy === "away_team_desc") {
+            return b.away_team_nickname.localeCompare(a.away_team_nickname);
+        } else if (sortBy === "home_team_asc") {
+            return a.home_team_nickname.localeCompare(b.home_team_nickname);
+        } else if (sortBy === "home_team_desc") {
+            return b.home_team_nickname.localeCompare(a.home_team_nickname);
         } else if (sortBy === "fav_desc") {
             const spreadA = Math.abs(a.adjusted_spread !== null ? a.adjusted_spread : (a.spread || 0));
             const spreadB = Math.abs(b.adjusted_spread !== null ? b.adjusted_spread : (b.spread || 0));
@@ -289,7 +293,9 @@ export default function CfbPickemAtsPicks() {
                             }}
                         >
                             <option value="kickoff">Kickoff Time (Default)</option>
-                            <option value="team_asc">Away Team (A-Z)</option>
+                            <option value="home_team_asc">Home Team (A-Z)</option>
+                            <option value="home_team_desc">Home Team (Z-A)</option>
+                            <option value="away_team_asc">Away Team (A-Z)</option>
                             <option value="team_desc">Away Team (Z-A)</option>
                             <option value="fav_desc">Favorite Spread (Biggest to Least)</option>
                             <option value="fav_asc">Favorite Spread (Least to Biggest)</option>
