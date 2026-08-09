@@ -3,7 +3,7 @@ import axios from "axios";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 
-const CFB_BLUE = "#535967";
+const CFB_BLUE = "#d2daddf1";
 const GOLD = "#c89d3c";
 
 export default function CfbPickemAtsMatrix() {
@@ -15,7 +15,7 @@ export default function CfbPickemAtsMatrix() {
 
     const token = localStorage.getItem("token");
 
-    // Fetch team branding mapping for secondary colors and logos
+    // Fetch team branding mapping for primary/secondary colors and logos
     useEffect(() => {
         if (!token) return;
         axios.get("/api/cfb_teams", {
@@ -25,6 +25,7 @@ export default function CfbPickemAtsMatrix() {
                 const map = {};
                 (res.data || []).forEach(t => {
                     map[t.name] = {
+                        color: t.color || t.primary_color || "#0f172a",
                         secondaryColor: t.secondary_color || t.alt_color || "#afb1dcef",
                         logo: t.logo
                     };
@@ -65,6 +66,9 @@ export default function CfbPickemAtsMatrix() {
 
         matrixData.forEach(row => {
             const gameId = row.game_id;
+            const rawMp = row.must_pick;
+            const isMustPick = rawMp === true || rawMp === 1 || rawMp === "1" || rawMp === "true";
+
             if (!gamesMap.has(gameId)) {
                 gamesMap.set(gameId, {
                     game_id: gameId,
@@ -81,7 +85,8 @@ export default function CfbPickemAtsMatrix() {
                     game_date: row.game_date,
                     adjusted_spread: row.adjusted_spread,
                     favorite: row.favorite,
-                    winner: row.winner // Authoritative ATS winner from backend
+                    winner: row.winner, // Authoritative ATS winner from backend
+                    must_pick: isMustPick // Normalized boolean check for 1/0
                 });
             }
 
@@ -150,12 +155,12 @@ export default function CfbPickemAtsMatrix() {
             <div style={{ maxWidth: "100%", margin: "0 auto", padding: "20px 12px", paddingBottom: 80 }}>
 
                 <div style={{ textAlign: "center", marginBottom: 20 }}>
-                    <h2 style={{ color: CFB_BLUE, fontSize: "28px", margin: 0 }}>Weekly Group Matrix</h2>
-                    <p style={{ color: "#666", marginTop: 8 }}>Picks are hidden until individual game kickoff.</p>
+                    <h2 style={{ color: "#000000", fontSize: "28px", margin: 0 }}>Weekly Group Matrix</h2>
+                    <p style={{ color: "#303030", marginTop: 8 }}>Picks are hidden until individual game kickoff.</p>
                 </div>
 
                 <div style={{ textAlign: "center", marginBottom: 1 }}>
-                    <h3 style={{ color: CFB_BLUE, fontSize: "15px", margin: 0 }}>Select Week:</h3>
+                    <h3 style={{ color: "#000000", fontSize: "15px", margin: 0 }}>Select Week:</h3>
                 </div>
 
                 {/* Week Selector Tabs */}
@@ -184,7 +189,7 @@ export default function CfbPickemAtsMatrix() {
                                     borderRadius: 6,
                                     border: "1px solid #ddd",
                                     backgroundColor: currentWeek === i + 1 ? CFB_BLUE : "white",
-                                    color: currentWeek === i + 1 ? "white" : "#333",
+                                    color: currentWeek === i + 1 ? "white" : "#1d1d1d",
                                     cursor: "pointer",
                                     fontWeight: 600,
                                     flexShrink: 0,
@@ -215,12 +220,12 @@ export default function CfbPickemAtsMatrix() {
                     ) : (
                         <table style={{ width: "100%", borderCollapse: "collapse", whiteSpace: "nowrap" }}>
                             <thead>
-                                <tr style={{ backgroundColor: CFB_BLUE, color: "white" }}>
+                                <tr style={{ backgroundColor: CFB_BLUE, color: "black" }}>
                                     <th style={{
                                         position: "sticky",
                                         left: 0,
                                         zIndex: 10,
-                                        backgroundColor: CFB_BLUE,
+                                        backgroundColor: "#397286f1",
                                         padding: "14px 16px",
                                         textAlign: "left",
                                         fontSize: 14,
@@ -239,8 +244,8 @@ export default function CfbPickemAtsMatrix() {
                                             ? (game.away_secondary_color || teamColors[game.away_team]?.secondaryColor || "rgba(255, 255, 255, 0.2)")
                                             : (isFavHome ? (game.home_secondary_color || teamColors[game.home_team]?.secondaryColor || "rgba(255, 255, 255, 0.2)") : "rgba(255, 255, 255, 0.2)");
 
-                                        const homeColor = game.home_color || teamColors[game.home_team]?.Color || "rgba(255, 255, 255, 0.2)";
-                                        const awayColor = game.away_color || teamColors[game.away_team]?.Color || "rgba(255, 255, 255, 0.2)";
+                                        const homeColor = game.home_color || teamColors[game.home_team]?.color || "#0f172a";
+                                        const awayColor = game.away_color || teamColors[game.away_team]?.color || "#0f172a";
                                         const homeSecondary = game.home_secondary_color || teamColors[game.home_team]?.secondaryColor || "rgba(255, 255, 255, 0.2)";
                                         const awaySecondary = game.away_secondary_color || teamColors[game.away_team]?.secondaryColor || "rgba(255, 255, 255, 0.2)";
 
@@ -250,7 +255,8 @@ export default function CfbPickemAtsMatrix() {
                                                 textAlign: "center",
                                                 fontSize: "12px",
                                                 borderLeft: "1px solid rgba(255,255,255,0.15)",
-                                                minWidth: "130px"
+                                                minWidth: "130px",
+                                                backgroundColor: game.must_pick ? "rgba(180, 83, 9, 0.85)" : "transparent"
                                             }}>
                                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 4 }}>
                                                     {game.away_logo && (
@@ -265,10 +271,19 @@ export default function CfbPickemAtsMatrix() {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <div style={{ fontWeight: 700, fontSize: "11px", opacity: 0.9 }}>
-                                                    {game.away_team_nickname} vs {game.home_team_nickname}
+                                                <div style={{ fontSize: "11px", opacity: 0.95 }}>
+                                                    <span style={{ fontWeight: 800, color: awayColor }}>{game.away_team_nickname}</span>
+                                                    <span style={{ fontWeight: 700, color: "#000000", margin: "0 4px" }}>vs</span>
+                                                    <span style={{ fontWeight: 800, color: homeColor }}>{game.home_team_nickname}</span>
                                                 </div>
-                                                <div style={{ fontSize: "10px", color: GOLD, marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                                                {game.must_pick && (
+                                                    <div style={{ marginTop: 3, marginBottom: 2 }}>
+                                                        <span style={{ fontSize: "10px", backgroundColor: "#fef3c2", color: "#b45309", padding: "1px 6px", borderRadius: 4, fontWeight: 900, border: "1px solid #f59e0b", display: "inline-block" }}>
+                                                            ⭐ MUST-PICK
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <div style={{ fontSize: "10px", color: game.must_pick ? "#fef3c2" : GOLD, marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, fontWeight: game.must_pick ? 700 : 400 }}>
                                                     {favLogo && (
                                                         <span style={{ background: favSecondary, borderRadius: 4, padding: "2px 4px", display: "inline-flex", alignItems: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", border: "1px solid rgba(0,0,0,0.08)" }}>
                                                             <img src={favLogo} alt={game.favorite} style={{ width: 14, height: 14, objectFit: "contain" }} />
@@ -315,7 +330,7 @@ export default function CfbPickemAtsMatrix() {
                                                 const showPick = isRevealed || isCurrentUser;
 
                                                 let status = pick?.status || "";
-                                                let pickBg = "transparent";
+                                                let pickBg = game.must_pick ? "rgba(254, 243, 199, 0.45)" : "transparent";
                                                 let textColor = "#0f172a";
                                                 if (status === "win" || status === "correct") {
                                                     pickBg = "#dcfce7";
@@ -337,9 +352,15 @@ export default function CfbPickemAtsMatrix() {
                                                 const pickedTeam = pick?.ats_pick;
                                                 const pickedMeta = teamColors[pickedTeam] || {};
 
-                                                // Resolve exact secondary background color and logo for the picked team
+                                                // Resolve exact team primary color, secondary color, and logo
                                                 const isPickedAway = pickedTeam === game.away_team;
                                                 const isPickedHome = pickedTeam === game.home_team;
+
+                                                const pickedPrimary = isPickedAway 
+                                                    ? (game.away_color || pickedMeta.color || "#0f172a") 
+                                                    : (isPickedHome 
+                                                        ? (game.home_color || pickedMeta.color || "#0f172a") 
+                                                        : (pickedMeta.color || "#0f172a"));
 
                                                 const pickedLogo = isPickedAway ? game.away_logo : (isPickedHome ? game.home_logo : pickedMeta.logo);
                                                 const pickedSecondary = isPickedAway
@@ -372,6 +393,9 @@ export default function CfbPickemAtsMatrix() {
                                                                             border: "1px solid rgba(0,0,0,0.08)"
                                                                         }}>
                                                                             {pickedLogo && <img src={pickedLogo} alt={pickedTeam} style={{ width: 22, height: 22, objectFit: "contain" }} />}
+                                                                        </span>
+                                                                        <span style={{ fontSize: "12px", fontWeight: 800, color: pickedPrimary }}>
+                                                                            {pickedTeam}
                                                                         </span>
                                                                         {pick.is_best_bet && (
                                                                             <span style={{ fontSize: "8px", background: GOLD, color: "white", padding: "1px 3px", borderRadius: 3, fontWeight: 900 }}>

@@ -230,7 +230,8 @@ module.exports = function (app) {
                     p.picked_team as ats_pick,
                     p.is_best_bet,
                     p.status,
-                    g.winner
+                    g.winner,
+                    g.must_pick
                 FROM cfb_pickem_ats_entries e
                 CROSS JOIN cfb_regular_season_games g
                 LEFT JOIN cfb_pickem_ats_picks p ON e.user_id = p.user_id AND g.id = p.game_id
