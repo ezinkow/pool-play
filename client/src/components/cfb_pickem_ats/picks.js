@@ -69,8 +69,6 @@ export default function CfbPickemAtsPicks() {
     const totalMustPicks = mustPickGames.length;
     const completedMustPicks = mustPickGames.filter(g => picks[g.id]?.picked_team).length;
 
-    // Dynamic max limit calculation for non-must-pick games: 15 total minus the number of must-pick games
-    const maxFlexPicks = Math.max(0, 15 - totalMustPicks);
     const userFlexPicksCount = Object.entries(picks).filter(([gameId, p]) => {
         if (!p.picked_team) return false;
         const game = games.find(g => String(g.id) === String(gameId));
@@ -83,21 +81,12 @@ export default function CfbPickemAtsPicks() {
             return;
         }
 
-        const game = games.find(g => String(g.id) === String(gameId));
-        const isMustPick = game?.must_pick;
-
         setPicks(prev => {
             const currentPickedTeam = prev[gameId]?.picked_team;
             if (currentPickedTeam === team) {
                 const copy = { ...prev };
                 delete copy[gameId];
                 return copy;
-            }
-
-            // Enforce max flex picks limit when adding a new pick for a regular game
-            if (!currentPickedTeam && !isMustPick && userFlexPicksCount >= maxFlexPicks) {
-                toast.error(`You can only select a maximum of ${maxFlexPicks} flex games (${totalMustPicks} must-pick games required for 15 total)!`);
-                return prev;
             }
 
             // Enforce absolute max 15 selections limit as a safety check
@@ -162,30 +151,25 @@ export default function CfbPickemAtsPicks() {
         } else if (sortBy === "away_team_desc") {
             return (b.away_team_nickname || b.away_team).localeCompare(a.away_team_nickname || a.away_team);
         } else if (sortBy === "fav_desc") {
-            const spreadA = Math.abs(a.adjusted_spread !== null ? a.adjusted_spread : (a.spread || 0));
-            const spreadB = Math.abs(b.adjusted_spread !== null ? b.adjusted_spread : (b.spread || 0));
+            const spreadA = Math.abs(a.adjusted_spread !== null && a.adjusted_spread !== undefined ? a.adjusted_spread : (a.spread !== null && a.spread !== undefined ? a.spread : 0));
+            const spreadB = Math.abs(b.adjusted_spread !== null && b.adjusted_spread !== undefined ? b.adjusted_spread : (b.spread !== null && b.spread !== undefined ? b.spread : 0));
             return spreadB - spreadA;
         } else if (sortBy === "fav_asc") {
-            const spreadA = Math.abs(a.adjusted_spread !== null ? a.adjusted_spread : (a.spread || 0));
-            const spreadB = Math.abs(b.adjusted_spread !== null ? b.adjusted_spread : (b.spread || 0));
+            const spreadA = Math.abs(a.adjusted_spread !== null && a.adjusted_spread !== undefined ? a.adjusted_spread : (a.spread !== null && a.spread !== undefined ? a.spread : 0));
+            const spreadB = Math.abs(b.adjusted_spread !== null && b.adjusted_spread !== undefined ? b.adjusted_spread : (b.spread !== null && b.spread !== undefined ? b.spread : 0));
             return spreadA - spreadB;
         }
         return 0;
     });
 
     const handleSubmitAll = async () => {
-        if (selectedPicksCount !== 15) {
-            toast.error(`You must select exactly 15 games before saving! (Currently selected: ${selectedPicksCount})`);
-            return;
-        }
-
         if (completedMustPicks !== totalMustPicks) {
-            toast.error(`You must select ${totalMustPicks} must-pick games before saving!`);
+            toast.error(`You must select all ${totalMustPicks} must-pick games before saving!`);
             return;
         }
 
-        if (bestBetCount !== 3) {
-            toast.error(`You must select exactly 3 Best Bets before saving! (Currently selected: ${bestBetCount})`);
+        if (bestBetCount > 3) {
+            toast.error(`You can select a maximum of 3 Best Bets! (Currently selected: ${bestBetCount})`);
             return;
         }
 
@@ -232,9 +216,9 @@ export default function CfbPickemAtsPicks() {
                     paddingRight: "12px"
                 }}>
                     <div style={{ textAlign: "center" }}>
-                        <h2 style={{ color: CFB_BLUE, fontSize: "24px", margin: 0 }}>🏈 CFP Pick'em ATS <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span></h2>
+                        <h2 style={{ color: CFB_BLUE, fontSize: "24px", margin: 0 }}>🏈 Pick'em Against the Spread <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span></h2>
                         <p style={{ color: "#666", marginTop: 4, fontSize: "13px" }}>
-                            Select all {totalMustPicks} must-pick games and <strong>{maxFlexPicks} flex games</strong> (15 total) and designate exactly <strong>3 Best Bets ⭐</strong>.<br />
+                            Select all {totalMustPicks} must-pick games and up to 15 total games, designating up to <strong>3 Best Bets ⭐</strong>.<br />
                             Best bets are worth 2 points.
                         </p>
                         <div style={{ display: "flex", justifyContent: "center", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
@@ -243,11 +227,11 @@ export default function CfbPickemAtsPicks() {
                                     Must-Picks: {completedMustPicks} / {totalMustPicks}
                                 </div>
                             )}
-                            <div style={{ background: bestBetCount === 3 ? "#ecfdf5" : "#fef3c2", color: bestBetCount === 3 ? "#047857" : "#b45309", padding: "6px 14px", borderRadius: 8, fontWeight: 700, fontSize: "13px" }}>
+                            <div style={{ background: bestBetCount <= 3 ? "#ecfdf5" : "#fef3c2", color: bestBetCount <= 3 ? "#047857" : "#b45309", padding: "6px 14px", borderRadius: 8, fontWeight: 700, fontSize: "13px" }}>
                                 Best Bets: {bestBetCount} / 3
                             </div>
-                            <div style={{ background: userFlexPicksCount === maxFlexPicks ? "#ecfdf5" : "#fef2f2", color: userFlexPicksCount === maxFlexPicks ? "#047857" : "#b91c1c", padding: "6px 14px", borderRadius: 8, fontWeight: 700, fontSize: "13px" }}>
-                                Flex: {userFlexPicksCount} / {maxFlexPicks}
+                            <div style={{ background: "#f8fafc", color: "#475569", padding: "6px 14px", borderRadius: 8, fontWeight: 700, fontSize: "13px", border: "1px solid #cbd5e1" }}>
+                                Total Selected: {selectedPicksCount} / 15
                             </div>
                         </div>
                     </div>
@@ -370,11 +354,14 @@ export default function CfbPickemAtsPicks() {
                         {sortedGames.map((game, index) => {
                             const isLocked = game.game_date && new Date() >= new Date(game.game_date);
                             const userPick = picks[game.id] || {};
-                            const absSpread = Math.abs(game.adjusted_spread || game.spread || 3.0);
-                            const isAwayFav = game.favorite === game.away_team;
 
-                            const awaySpreadStr = isAwayFav ? `-${absSpread}` : `+${absSpread}`;
-                            const homeSpreadStr = isAwayFav ? `+${absSpread}` : `-${absSpread}`;
+                            const rawSpread = game.adjusted_spread !== null && game.adjusted_spread !== undefined ? game.adjusted_spread : game.spread;
+                            const hasLine = rawSpread !== null && rawSpread !== undefined;
+                            const absSpread = hasLine ? (Object.is(Math.abs(rawSpread), -0) ? 0 : Math.abs(rawSpread)) : null;
+                            const isAwayFav = hasLine && game.favorite === game.away_team;
+
+                            const awaySpreadStr = hasLine ? (absSpread === 0 ? "0" : (isAwayFav ? `-${absSpread}` : `+${absSpread}`)) : null;
+                            const homeSpreadStr = hasLine ? (absSpread === 0 ? "0" : (isAwayFav ? `+${absSpread}` : `-${absSpread}`)) : null;
 
                             const awayTeamMeta = teamColors[game.away_team] || {};
                             const homeTeamMeta = teamColors[game.home_team] || {};
@@ -526,15 +513,16 @@ export default function CfbPickemAtsPicks() {
                                                     </span>
                                                 </div>
                                                 <span style={{
-                                                    fontSize: "12px",
-                                                    fontWeight: 700,
+                                                    fontSize: hasLine ? "12px" : "11px",
+                                                    fontWeight: hasLine ? 700 : 500,
+                                                    fontStyle: hasLine ? "normal" : "italic",
                                                     flexShrink: 0,
                                                     padding: "2px 6px",
                                                     borderRadius: 4,
                                                     background: isAwayPicked ? "rgba(255,255,255,0.2)" : "transparent",
-                                                    color: isAwayPicked ? "white" : "#475569"
+                                                    color: isAwayPicked ? "white" : (hasLine ? "#475569" : "#94a3b8")
                                                 }}>
-                                                    {awaySpreadStr}
+                                                    {hasLine ? awaySpreadStr : "no line yet"}
                                                 </span>
                                             </button>
 
@@ -589,15 +577,16 @@ export default function CfbPickemAtsPicks() {
                                                     </span>
                                                 </div>
                                                 <span style={{
-                                                    fontSize: "12px",
-                                                    fontWeight: 700,
+                                                    fontSize: hasLine ? "12px" : "11px",
+                                                    fontWeight: hasLine ? 700 : 500,
+                                                    fontStyle: hasLine ? "normal" : "italic",
                                                     flexShrink: 0,
                                                     padding: "2px 6px",
                                                     borderRadius: 4,
                                                     background: isHomePicked ? "rgba(255,255,255,0.2)" : "transparent",
-                                                    color: isHomePicked ? "white" : "#475569"
+                                                    color: isHomePicked ? "white" : (hasLine ? "#475569" : "#94a3b8")
                                                 }}>
-                                                    {homeSpreadStr}
+                                                    {hasLine ? homeSpreadStr : "no line yet"}
                                                 </span>
                                             </button>
                                         </div>
@@ -610,7 +599,7 @@ export default function CfbPickemAtsPicks() {
 
                 {sortedGames.length > 0 && (
                     <div style={{ marginTop: 24 }}>
-                        {(selectedPicksCount !== 15 || completedMustPicks !== totalMustPicks) && (
+                        {(completedMustPicks !== totalMustPicks || bestBetCount > 3) && (
                             <div style={{
                                 backgroundColor: "#fff7ed",
                                 border: "1px solid #fdba74",
@@ -622,7 +611,7 @@ export default function CfbPickemAtsPicks() {
                                 textAlign: "center",
                                 marginBottom: 12
                             }}>
-                                ⚠️ Note: You have selected <strong>{selectedPicksCount}</strong> out of <strong>15</strong> required games (Must-Picks: <strong>{completedMustPicks}/{totalMustPicks}</strong>, Flex: <strong>{userFlexPicksCount}/{maxFlexPicks}</strong>) for Week {currentWeek}.
+                                ⚠️ Note: You must select all <strong>{totalMustPicks}</strong> must-pick games (Currently selected: <strong>{completedMustPicks}/{totalMustPicks}</strong>) and at most 3 Best Bets.
                             </div>
                         )}
                         <button

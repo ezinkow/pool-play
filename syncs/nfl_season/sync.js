@@ -76,7 +76,7 @@ function extractMatchups(data) {
 
         if (!homeCompetitor || !awayCompetitor) return;
 
-        let rawSpread = 3.0;
+        let rawSpread = '';
         let favoriteTeamName = homeCompetitor.team.name;
 
         // 🧠 Pull the odds object cleanly from the array or object

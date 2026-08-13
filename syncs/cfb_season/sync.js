@@ -112,7 +112,7 @@ async function extractMatchups(data, weekNum) {
 
         if (!isPower4Game) return;
 
-        let rawSpread = 3.0;
+        let rawSpread = '10';
         let favoriteTeamName = homeCompetitor.team.name;
 
         const oddsObj = Array.isArray(comp.odds) ? comp.odds[0] : comp.odds;

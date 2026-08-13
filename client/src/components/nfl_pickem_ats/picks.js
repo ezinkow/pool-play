@@ -403,7 +403,7 @@ export default function NflPickemAtsPicks() {
                         {sortedGames.map(game => {
                             const isLocked = game.game_date && new Date() >= new Date(game.game_date);
                             const userPick = picks[game.id] || {};
-                            const absSpread = Math.abs(game.adjusted_spread || game.spread || 3.0);
+                            const absSpread = Math.abs(game.adjusted_spread || game.spread);
                             const isAwayFav = game.favorite === game.away_team;
 
                             const awaySpreadStr = isAwayFav ? `-${absSpread}` : `+${absSpread}`;
