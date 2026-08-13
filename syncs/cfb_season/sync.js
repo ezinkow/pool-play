@@ -118,7 +118,7 @@ async function extractMatchups(data, weekNum) {
         const oddsObj = Array.isArray(comp.odds) ? comp.odds[0] : comp.odds;
 
         if (oddsObj) {
-            if (oddsObj.spread !== undefined) {
+            if (oddsObj.spread !== undefined && oddsObj.spread !== null) {
                 rawSpread = Math.abs(parseFloat(oddsObj.spread));
             }
 
@@ -149,8 +149,8 @@ async function extractMatchups(data, weekNum) {
             }
         }
 
-        const overUnder = oddsObj?.overUnder !== undefined ? parseFloat(oddsObj.overUnder) : 0.0;
-        const finalSpread = -rawSpread;
+        const overUnder = oddsObj?.overUnder !== undefined && oddsObj?.overUnder !== null ? parseFloat(oddsObj.overUnder) : 0.0;
+        const finalSpread = rawSpread !== null ? -rawSpread : null;
         const adjustedSpread = applyHookRule(rawSpread, homeSpreadOdds);
 
         const homeScore = homeCompetitor.score !== undefined ? parseInt(homeCompetitor.score, 10) : null;
@@ -173,16 +173,16 @@ async function extractMatchups(data, weekNum) {
 
         let homeColor = homeCompetitor.team.color ? `#${homeCompetitor.team.color}` : "#013369";
         let homeSecondaryColor = homeCompetitor.team.alternateColor ? `#${homeCompetitor.team.alternateColor}` : "#64748b";
-        if (homeCompetitor.team.shortDisplayName === "West Virginia" || 
-            homeCompetitor.team.shortDisplayName === "Ole Miss" || 
-            homeCompetitor.team.shortDisplayName === "N Arizona" || 
-            homeCompetitor.team.shortDisplayName === "Wake Forest" || 
-            homeCompetitor.team.shortDisplayName === "Michigan" || 
-            homeCompetitor.team.shortDisplayName === "Syracuse" || 
-            homeCompetitor.team.shortDisplayName === "AR-Pine Bluff" || 
-            homeCompetitor.team.shortDisplayName === "New Mexico St" || 
-            homeCompetitor.team.shortDisplayName === "Toledo" || 
-            homeCompetitor.team.shortDisplayName === "Georgia" || 
+        if (homeCompetitor.team.shortDisplayName === "West Virginia" ||
+            homeCompetitor.team.shortDisplayName === "Ole Miss" ||
+            homeCompetitor.team.shortDisplayName === "N Arizona" ||
+            homeCompetitor.team.shortDisplayName === "Wake Forest" ||
+            homeCompetitor.team.shortDisplayName === "Michigan" ||
+            homeCompetitor.team.shortDisplayName === "Syracuse" ||
+            homeCompetitor.team.shortDisplayName === "AR-Pine Bluff" ||
+            homeCompetitor.team.shortDisplayName === "New Mexico St" ||
+            homeCompetitor.team.shortDisplayName === "Toledo" ||
+            homeCompetitor.team.shortDisplayName === "Georgia" ||
             homeCompetitor.team.shortDisplayName === "Vanderbilt") {
             const temp = homeColor;
             homeColor = homeSecondaryColor;
@@ -191,16 +191,16 @@ async function extractMatchups(data, weekNum) {
 
         let awayColor = awayCompetitor.team.color ? `#${awayCompetitor.team.color}` : "#013369";
         let awaySecondaryColor = awayCompetitor.team.alternateColor ? `#${awayCompetitor.team.alternateColor}` : "#64748b";
-        if (awayCompetitor.team.shortDisplayName === "West Virginia" || 
-            awayCompetitor.team.shortDisplayName === "Ole Miss" || 
-            awayCompetitor.team.shortDisplayName === "N Arizona" || 
-            awayCompetitor.team.shortDisplayName === "Wake Forest" || 
-            awayCompetitor.team.shortDisplayName === "Michigan" || 
-            awayCompetitor.team.shortDisplayName === "Syracuse" || 
-            awayCompetitor.team.shortDisplayName === "AR-Pine Bluff" || 
-            awayCompetitor.team.shortDisplayName === "New Mexico St" || 
-            awayCompetitor.team.shortDisplayName === "Toledo" || 
-            awayCompetitor.team.shortDisplayName === "Georgia" || 
+        if (awayCompetitor.team.shortDisplayName === "West Virginia" ||
+            awayCompetitor.team.shortDisplayName === "Ole Miss" ||
+            awayCompetitor.team.shortDisplayName === "N Arizona" ||
+            awayCompetitor.team.shortDisplayName === "Wake Forest" ||
+            awayCompetitor.team.shortDisplayName === "Michigan" ||
+            awayCompetitor.team.shortDisplayName === "Syracuse" ||
+            awayCompetitor.team.shortDisplayName === "AR-Pine Bluff" ||
+            awayCompetitor.team.shortDisplayName === "New Mexico St" ||
+            awayCompetitor.team.shortDisplayName === "Toledo" ||
+            awayCompetitor.team.shortDisplayName === "Georgia" ||
             awayCompetitor.team.shortDisplayName === "Vanderbilt") {
             const temp = awayColor;
             awayColor = awaySecondaryColor;
