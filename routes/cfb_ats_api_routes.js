@@ -168,6 +168,26 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
+    // GET /api/cfb_pickem_ats/settings (Fetch pool settings/title)
+    // --------------------------------------------------------
+    app.get("/api/cfb_pickem_ats/settings", requireAuth, async (req, res) => {
+        try {
+            // Assuming you have a game_settings model or generic settings table
+            // Adjust the model name according to your schema setup
+            const settings = await db.game_settings?.findOne({
+                where: { game_key: "cfb_pickem_ats" }
+            }) || await db.GameSettings?.findOne({
+                where: { game_key: "cfb_pickem_ats" }
+            });
+
+            res.json({ title: settings?.title });
+        } catch (err) {
+            console.error("Error fetching pool settings:", err);
+            res.status(500).json({ error: "Failed to fetch settings" });
+        }
+    });
+
+    // --------------------------------------------------------
     // GET /api/cfb_pickem_ats/mypicks (Fetch user's picks and results for a week)
     // --------------------------------------------------------
     app.get("/api/cfb_pickem_ats/mypicks", requireAuth, async (req, res) => {

@@ -14,14 +14,28 @@ export default function CfbPickemAtsPicks() {
     const [games, setGames] = useState([]);
     const [picks, setPicks] = useState({}); // { game_id: { picked_team, is_best_bet } }
     const [teamColors, setTeamColors] = useState({}); // { teamName: { color, secondaryColor, logo } }
+    const [poolTitle, setPoolTitle] = useState("");
     const [loading, setLoading] = useState(true);
     const [sortBy, setSortBy] = useState("kickoff"); // "kickoff", "home_team_asc", "home_team_desc", "away_team_asc", "away_team_desc", "fav_desc", "fav_asc"
 
     const token = localStorage.getItem("token");
 
-    // Fetch team primary/secondary colors and branding mapping
+    // Fetch pool settings (title) and team colors mapping on mount
     useEffect(() => {
         if (!token) return;
+
+        // Fetch game settings for title
+        axios.get("/api/cfb_pickem_ats/settings", {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => {
+                if (res.data && res.data.title) {
+                    setPoolTitle(res.data.title);
+                }
+            })
+            .catch(err => console.error("Failed to load pool settings", err));
+
+        // Fetch team colors
         axios.get("/api/cfb_teams", {
             headers: { Authorization: `Bearer ${token}` }
         })
@@ -196,7 +210,7 @@ export default function CfbPickemAtsPicks() {
 
     return (
         <PoolGatekeeper user={user} gameKey="cfb_pickem_ats">
-            <div style={{ maxWidth: 850, margin: "0 auto", padding: "20px 12px", paddingBottom: 90, paddingTop: 90 }}>
+            <div style={{ maxWidth: 850, margin: "0 auto", padding: "20px 12px", paddingBottom: 90, paddingTop: 30 }}>
                 <Toaster />
 
                 {/* Sticky Header Summary Bar */}
@@ -216,7 +230,7 @@ export default function CfbPickemAtsPicks() {
                     paddingRight: "12px"
                 }}>
                     <div style={{ textAlign: "center" }}>
-                        <h2 style={{ color: CFB_BLUE, fontSize: "24px", margin: 0 }}>🏈 Pick'em Against the Spread <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span></h2>
+                        <h2 style={{ color: CFB_BLUE, fontSize: "24px", margin: 0 }}>🏈 {poolTitle} <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span></h2>
                         <p style={{ color: "#666", marginTop: 4, fontSize: "13px" }}>
                             Select all {totalMustPicks} must-pick games and up to 15 total games, designating up to <strong>3 Best Bets ⭐</strong>.<br />
                             Best bets are worth 2 points.
