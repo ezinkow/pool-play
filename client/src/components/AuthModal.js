@@ -23,6 +23,8 @@ export default function AuthModal({ show, onClose }) {
         setLoginSubmitting(false);
         if (result.success) {
             handleClose();
+            // 🧠 Force a quick window reload to update global auth state and clean component caches across the layout
+            window.location.reload();
         } else {
             setLoginError(result.error);
         }

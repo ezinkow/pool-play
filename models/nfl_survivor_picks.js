@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
     NflSurvivorPicks.associate = (models) => {
         NflSurvivorPicks.belongsTo(models.NflSurvivorEntries, {
             foreignKey: "user_id",
-            targetKey: "user_id"
+            targetKey: "id" // 👈 Target the primary id key
         });
         NflSurvivorPicks.belongsTo(models.NflRegularSeasonGames, {
             foreignKey: "game_id"
