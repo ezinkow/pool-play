@@ -6,6 +6,7 @@ import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import Home from './pages/Home';
 import SignUp from './pages/SignUp';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import ChangePassword from './pages/ChangePassword';
 import LoginPage from "./pages/LogIn";
 import MyAccount from "./pages/MyAccount";
@@ -257,6 +258,7 @@ export default function App() {
           {/* <Route path="/worldcup/" element={<WorldCupCountryPoolsTable />} /> */}
         </Routes>
       </main>
+      <Footer />
     </Router >
   );
 }
