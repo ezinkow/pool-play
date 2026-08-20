@@ -41,7 +41,6 @@ export default function SignUp() {
         if (!form.name.trim()) return setError("Please choose a username.");
         if (form.password.length < 1) return setError("Please enter a password.");
         if (form.password !== form.confirm_password) return setError("Passwords do not match.");
-        // 🧠 NEW: Front-end mandatory field verification catch
         if (!form.email.trim()) return setError("Please enter a valid email address.");
 
         setSubmitting(true);
@@ -62,7 +61,9 @@ export default function SignUp() {
 
             // Auto-login after account creation
             await login(form.name.trim(), form.password);
-            navigate("/");
+
+            // 🧠 Force a window reload so the global auth state and navbar instantly reflect the logged-in user
+            window.location.reload();
         } catch (err) {
             setError(err.response?.data?.error || "Signup failed — please try again.");
             setSubmitting(false);
@@ -70,7 +71,7 @@ export default function SignUp() {
     };
 
     return (
-        <div  style={{ background: "#f4f7f9", minHeight: "100vh" }}>
+        <div style={{ background: "#f4f7f9", minHeight: "100vh" }}>
             <div style={{ maxWidth: 480, margin: "0 auto", padding: "40px 16px" }}>
 
                 <div style={{ textAlign: "center", marginBottom: 32 }}>
@@ -118,7 +119,7 @@ export default function SignUp() {
                                 type="password"
                                 value={form.password}
                                 onChange={set("password")}
-                                placeholder="Do not use your real password. There is no encryption!"
+                                placeholder="Enter a secure password"
                                 style={inputStyle}
                             />
                         </Field>
@@ -133,7 +134,6 @@ export default function SignUp() {
                             />
                         </Field>
 
-                        {/* 🧠 MODIFIED: Added required prop node flag handle below */}
                         <Field label="Email" required hint="Used for password recovery">
                             <input
                                 type="email"

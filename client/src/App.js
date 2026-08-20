@@ -12,6 +12,9 @@ import LoginPage from "./pages/LogIn";
 import MyAccount from "./pages/MyAccount";
 import Comments from "./pages/Comments";
 import NotFound from "./pages/NotFound";
+import Help from "./pages/Help";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 
 // CFB Pickem ATS pages
 import CfbPickemAtsHome from './pages/cfb_pickem_ats/Home';
@@ -127,7 +130,6 @@ import WorldCupStandings from './pages/world_cup/Standings';
 import WorldCupGroupPicks from './pages/world_cup/GroupPicks';
 
 
-
 export default function App() {
   return (
     <Router>
@@ -140,7 +142,10 @@ export default function App() {
           <Route path="/changepassword" element={<ChangePassword />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/myaccount" element={<MyAccount />} />
-          <Route path="/comments" element={<Comments />} />
+          <Route path="/contact" element={<Comments />} />
+          <Route path="/help" element={<Help />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           <Route path="*" element={<NotFound />} />
 
           {/* CFB Pickem ATS*/}

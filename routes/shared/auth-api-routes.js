@@ -1,4 +1,4 @@
-const { Users, Tokens } = require("../../models"); // Cleaned out legacy NbaEntries model dependency
+const { Users, Tokens } = require("../../models");
 const crypto = require("crypto");
 
 module.exports = function (app) {
@@ -22,7 +22,9 @@ module.exports = function (app) {
         try {
             const { name, password } = req.body;
             const user = await Users.findOne({ where: { name } });
-            if (!user || user.password !== password) {
+
+            // 🧠 Updated: Use the model's validPassword instance method for bcrypt comparison
+            if (!user || !(await user.validPassword(password))) {
                 return res.json({ success: false });
             }
 
@@ -30,14 +32,13 @@ module.exports = function (app) {
             const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
             await Tokens.upsert({ token, user_id: user.id, expires });
 
-            // ✨ Modified: Returns is_admin profile instead of legacy pool entries
             res.json({
                 success: true,
                 token,
                 id: user.id,
                 name: user.name,
                 real_name: user.real_name,
-                is_admin: !!user.is_admin // Forced explicitly to boolean value
+                is_admin: !!user.is_admin
             });
         } catch (err) {
             console.error(err);
@@ -63,7 +64,6 @@ module.exports = function (app) {
                 expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             });
 
-            // ✨ Modified: Returns is_admin profile instead of legacy pool entries
             res.json({
                 success: true,
                 id: user.id,
@@ -94,26 +94,24 @@ module.exports = function (app) {
         try {
             const { real_name, name, password, email, phone } = req.body;
 
-            // 🧠 MODIFIED: Added email to the strict required fields check
             if (!real_name || !name || !password || !email || !email.trim()) {
                 return res.status(400).json({ error: "Name, username, password, and email address are required" });
             }
 
-            // 1. Guard against duplicate usernames
             const existingUsername = await Users.findOne({ where: { name } });
             if (existingUsername) return res.status(400).json({ error: "Username taken" });
 
-            // 2. Guard against duplicate emails (Now strictly enforced)
             const existingEmail = await Users.findOne({ where: { email: email.trim() } });
             if (existingEmail) {
                 return res.status(400).json({ error: "An account already exists for this email address." });
             }
 
+            // 🧠 The `beforeCreate` model hook automatically intercepts and hashes this password
             await Users.create({
                 real_name: real_name.trim(),
                 name: name.trim(),
                 password,
-                email: email.trim(), // Stored safely as a verified string
+                email: email.trim(),
                 phone: phone ? phone.trim() : null
             });
 
@@ -133,6 +131,8 @@ module.exports = function (app) {
             }
             const user = await Users.findOne({ where: { email } });
             if (!user) return res.status(404).json({ error: "No account found with that email" });
+
+            // 🧠 The `beforeUpdate` model hook automatically detects the password change and hashes it
             await user.update({ password: newPassword });
             res.json({ success: true });
         } catch (err) {

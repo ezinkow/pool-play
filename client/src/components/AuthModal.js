@@ -94,7 +94,7 @@ export default function AuthModal({ show, onClose }) {
                     <span style={{ margin: "0 8px", color: "#d1d5db" }}>|</span>
 
                     <a
-                        href="#/comments"
+                        href="#/contact"
                         style={{ color: "#13447a", textDecoration: "none", fontWeight: 600 }}
                         onClick={() => onClose()}
                     >

@@ -58,7 +58,7 @@ export default function NotFound() {
                 <Link to="/myaccount" style={{ textDecoration: 'none' }}>
                     <button style={btnStyle("transparent", GOLD, GOLD)}>Dashboard</button>
                 </Link>
-                <Link to="/comments" style={{ textDecoration: 'none' }}>
+                <Link to="/contact" style={{ textDecoration: 'none' }}>
                     <button style={btnStyle("transparent", "#ef4444", "#ef4444")}>Support</button>
                 </Link>
             </div>

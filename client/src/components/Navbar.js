@@ -238,7 +238,7 @@ export default function Navbar() {
                         {!isMobile && !loading && (
                             user ? (
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                    <button onClick={() => navigate("/comments")} style={{ fontSize: "12px", fontWeight: 700, padding: "5px 12px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.4)", backgroundColor: "rgba(255,255,255,0.1)", color: "white", cursor: "pointer" }}>📩 Contact Us</button>
+                                    <button onClick={() => navigate("/contact")} style={{ fontSize: "12px", fontWeight: 700, padding: "5px 12px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.4)", backgroundColor: "rgba(255,255,255,0.1)", color: "white", cursor: "pointer" }}>📩 Contact Us</button>
                                     <button onClick={() => navigate("/myaccount")} style={{ fontSize: "12px", fontWeight: 700, padding: "5px 12px", borderRadius: 12, border: `1px solid ${GOLD}`, backgroundColor: "transparent", color: GOLD, cursor: "pointer" }}>👤 My Pools</button>
                                     <span style={{ color: GOLD, fontSize: 12, fontWeight: 700 }}>{user.name}</span>
                                     <button onClick={handleLogout} style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.3)", background: "transparent", color: "white", cursor: "pointer" }}>Log out</button>
@@ -246,7 +246,7 @@ export default function Navbar() {
                                 </div>
                             ) : (
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                    <button onClick={() => navigate("/comments")} style={{ fontSize: "12px", fontWeight: 700, padding: "5px 12px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "transparent", color: "white", cursor: "pointer" }}>📩 Contact Us</button>
+                                    <button onClick={() => navigate("/contact")} style={{ fontSize: "12px", fontWeight: 700, padding: "5px 12px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "transparent", color: "white", cursor: "pointer" }}>📩 Contact Us</button>
                                     <button onClick={() => setShowLogin(true)} style={{ fontSize: "12px", fontWeight: 700, padding: "5px 12px", borderRadius: 12, border: "none", background: GOLD, color: "#0a1628", cursor: "pointer" }}>Log in</button>
                                 </div>
                             )
@@ -392,7 +392,7 @@ export default function Navbar() {
 
                             )}
                             <div style={{ paddingTop: "10px" }}>
-                                <button onClick={() => { setMenuOpen(false); navigate("/comments"); }} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #4b5563", background: "transparent", color: "white", fontWeight: 700, fontSize: "13px" }}>📩 Contact Support</button>
+                                <button onClick={() => { setMenuOpen(false); navigate("/contact"); }} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #4b5563", background: "transparent", color: "white", fontWeight: 700, fontSize: "13px" }}>📩 Contact Support</button>
                             </div>
                         </div>
                     </nav>
