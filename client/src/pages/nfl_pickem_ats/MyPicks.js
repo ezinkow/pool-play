@@ -1,5 +1,5 @@
 import React from 'react'
-import MyPicks from '../../components/nfl_pickem_ats/mypicks'
+import MyPicks from '../../components/nfl_pickem_ats/MyPicks'
 
 export default function NflPickemAtsMyPicks() {
 

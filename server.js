@@ -56,7 +56,8 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/champweek_pickem/picksdisplay-api-routes.js")(app);
   require("./routes/champweek_pickem/tiebreaker-api-routes.js")(app);
 
-
+  // Home Run Derby
+  require("./routes/hrd_api_routes.js")(app);
 
   // Tourney Pickem
   require("./routes/tourney_pickem/picks-api-routes.js")(app);
@@ -116,6 +117,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   // ── 4. MOVED INSIDE: Background jobs can safely execute query sets ────────
   const syncTourneyPickem = require("./syncs/tourney_pickem/sync.js");
   const syncBracket = require("./syncs/bracket/sync.js");
+  const syncHrd = require("./syncs/home_run_derby/sync.js");
   const syncNba = require("./syncs/nba/sync.js");
   const syncMlb = require("./syncs/mlb/sync.js");
   const syncNfl = require("./syncs/nfl_season/sync.js");
@@ -123,11 +125,13 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   const syncWorldCup = require("./syncs/world_cup/sync.js");
   const tourneyPickemLockLines = require("./jobs/tourney_pickem/lockLines.js");
 
+
   async function runSync() {
     // console.log(`[${new Date().toLocaleTimeString()}] 🔄 Triggering Sync...`);
     try {
       // await syncTourneyPickem();
       // await syncBracket();
+      await syncHrd();
       // await syncNba();
       // await syncMlb();
       await syncNfl();

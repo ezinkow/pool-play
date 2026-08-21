@@ -33,6 +33,13 @@ import ChampWeekPickemUserPicksDisplay from './pages/champweek_pickem/UserPicksD
 import ChampWeekPickemSignUp from './pages/champweek_pickem/SignUp';
 import ChampWeekPickemAdminRefresh from './pages/champweek_pickem/AdminRefresh';
 
+// Home Run Derby pages
+import HomeRunDerbyHome from './pages/home_run_derby/Home';
+import HomeRunDerbyStandings from './pages/home_run_derby/Standings';
+import HomeRunDerbyPicks from './pages/home_run_derby/Picks';
+// import HomeRunDerbyMyPicks from './pages/home_run_derby/MyPicks';
+import ViewAllTeams from './pages/home_run_derby/ViewAllTeams';
+
 // TourneyPickem pages
 import TourneyPickemHome from './pages/tourney_pickem/Home';
 import TourneyPickemPicks from './pages/tourney_pickem/Picks';
@@ -164,6 +171,12 @@ export default function App() {
           <Route path="/champweekpickem/picksdisplay" element={<ChampWeekPickemUserPicksDisplay />} />
           <Route path="/champweekpickem/standings" element={<ChampWeekPickemStandings />} />
           <Route path="/champweekpickem/adminrefresh" element={<ChampWeekPickemAdminRefresh />} />
+
+          {/* Home Run Derby*/}
+          <Route path="/hrd" element={<HomeRunDerbyHome />} />
+          <Route path="/hrd/picks" element={<HomeRunDerbyPicks />} />
+          <Route path="/hrd/standings" element={<HomeRunDerbyStandings />} />
+          <Route path="/hrd/allteams" element={<ViewAllTeams />} />
 
           {/* Tourney Pickem */}
           <Route path="/tourneypickem" element={<TourneyPickemHome />} />

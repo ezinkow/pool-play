@@ -1,5 +1,5 @@
 import React from 'react'
-import Picks from '../../components/nfl_survivor/picks'
+import Picks from '../../components/nfl_survivor/Picks'
 
 export default function NflSurvivorPicks() {
 

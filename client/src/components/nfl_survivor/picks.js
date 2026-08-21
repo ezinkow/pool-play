@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
-import PoolGatekeeper from "../../components/PoolGatekeeper";
+import PoolGatekeeper from "../PoolGatekeeper";
 
 const NFL_BLUE = "#013369";
 const NFL_RED = "#D50A0A";

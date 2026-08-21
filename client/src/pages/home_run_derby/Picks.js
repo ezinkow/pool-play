@@ -1,7 +1,7 @@
 import React from 'react'
-import Picks from '../../components/cfb_pickem_ats/Picks'
+import Picks from '../../components/home_run_derby/Picks'
 
-export default function CfbPickemAtsPicks() {
+export default function HomeRunDerbyPicks() {
 
 
     return (
