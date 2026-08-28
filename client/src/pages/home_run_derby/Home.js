@@ -106,18 +106,13 @@ export default function HrdHome() {
 
   if (authLoading) return null;
 
-  const displayPoolData = poolData || {
-  title: "Home Run Derby",
-  lock_date: "2026-08-31T23:59:59Z"
-};
-
   return (
     <div style={{ width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative", paddingTop: 68 }} className='page-content'>
       <Toaster />
 
       {poolData && (
         <PoolCountdown
-          poolData={displayPoolData}
+          poolData={poolData}
           mode={isPoolStarted ? "active" : "pre-start"}
         />
       )}
@@ -259,8 +254,8 @@ export default function HrdHome() {
           </h3>
           <ol style={{ paddingLeft: 20, lineHeight: "1.7", fontSize: "14px" }}>
             <li><strong>Roster Size & Cap:</strong> Build a team of 12 hitters while staying at or under the salary cap of 300 credits.</li>
-            <li><strong>Player Salaries:</strong> Each player's salary equals their total home runs from the 2025 MLB season.</li>
-            <li><strong>Eligibility:</strong> Player pool consists of MLB hitters who hit 12+ home runs and had 400+ at-bats in 2025.</li>
+            <li><strong>Player Salaries:</strong> Each player's salary equals their total home runs from the previous MLB season.</li>
+            <li><strong>Eligibility:</strong> Player pool consists of MLB hitters who hit 12+ home runs and had 350+ at-bats in the previous year.</li>
             <li><strong>Full Season Bench Rule:</strong> The hitter with the lowest total home runs on your team is sent to the bench and excluded from your season-end total.</li>
             <li><strong>Monthly Payouts:</strong> Standings reset at zero on the 1st of each month (March games roll into April, October rolls into September). All 12 players count for monthly standings.</li>
           </ol>

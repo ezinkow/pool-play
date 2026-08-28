@@ -239,20 +239,33 @@ module.exports = function (app) {
             const currentUserId = req.user.id;
             const now = new Date();
 
-            // Fetch entries and their picks
-            const entries = await NflSurvivorEntries.findAll({
-                include: [{ model: NflSurvivorPicks, include: [NflRegularSeasonGames] }]
+            // 1. Fetch all survivor entries
+            const entries = await NflSurvivorEntries.findAll();
+
+            // 2. Fetch all survivor picks and all related games concurrently
+            const allPicks = await NflSurvivorPicks.findAll();
+            const allGames = await NflRegularSeasonGames.findAll();
+            const gamesMap = {};
+            allGames.forEach(g => { gamesMap[g.id] = g; });
+
+            // 3. Group picks by user_id
+            const picksByUser = {};
+            allPicks.forEach(pick => {
+                if (!picksByUser[pick.user_id]) {
+                    picksByUser[pick.user_id] = [];
+                }
+                picksByUser[pick.user_id].push(pick);
             });
 
             const rosterResponse = entries.map(entry => {
                 const picksMap = {};
+                const userPicks = picksByUser[entry.user_id] || [];
+                const isOwnEntry = Number(entry.user_id) === Number(currentUserId);
 
-                (entry.NflSurvivorPicks || []).forEach(pick => {
-                    const game = pick.NflRegularSeasonGame;
+                userPicks.forEach(pick => {
+                    const game = gamesMap[pick.game_id];
                     const gameStarted = game && game.game_date && now >= new Date(game.game_date);
-                    const isOwnEntry = Number(entry.user_id) === Number(currentUserId);
 
-                    // Reveal pick ONLY if it's the user's own pick OR if the game has started
                     if (isOwnEntry || gameStarted) {
                         picksMap[pick.week] = {
                             team_name: pick.team_name,
@@ -260,7 +273,6 @@ module.exports = function (app) {
                             game_id: pick.game_id
                         };
                     } else {
-                        // Masked pick for unstarted games of other users
                         picksMap[pick.week] = {
                             team_name: "🔒 Hidden",
                             status: "hidden",
@@ -271,7 +283,7 @@ module.exports = function (app) {
 
                 return {
                     user_id: entry.user_id,
-                    entry_name: entry.entry_name || entry.username,
+                    entry_name: entry.entry_name || "Participant",
                     is_eliminated: entry.is_eliminated,
                     eliminated_week: entry.eliminated_week,
                     picks: picksMap

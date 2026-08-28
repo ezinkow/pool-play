@@ -180,12 +180,18 @@ export default function NflSurvivorMyPicks() {
                                             fontSize: "13px"
                                         }}>
                                             <span style={{ fontWeight: 600 }}>{game.away_team} @ {game.home_team}</span>
-                                            {game.home_score !== null && game.away_score !== null ? (
+                                            {game.status === "final" || (game.home_score > 0 || game.away_score > 0 && game.status !== "scheduled" && game.status !== "pending") ? (
                                                 <span style={{ background: "#0f172a", color: "white", padding: "2px 6px", borderRadius: 4, fontSize: "11px", fontWeight: 700 }}>
-                                                    Final: {game.away_score} - {game.home_score}
+                                                    {game.status === "final" ? "Final: " : "Live: "} {game.away_score} - {game.home_score}
+                                                </span>
+                                            ) : game.home_score !== null && game.away_score !== null && (game.home_score > 0 || game.away_score > 0) ? (
+                                                <span style={{ background: "#0f172a", color: "white", padding: "2px 6px", borderRadius: 4, fontSize: "11px", fontWeight: 700 }}>
+                                                    Score: {game.away_score} - {game.home_score}
                                                 </span>
                                             ) : (
-                                                <span style={{ opacity: 0.9, fontSize: "11px" }}>Kickoff Pending</span>
+                                                <span style={{ background: "rgba(255,255,255,0.15)", color: "#fff", padding: "2px 6px", borderRadius: 4, fontSize: "11px", fontWeight: 600 }}>
+                                                    Pending
+                                                </span>
                                             )}
                                         </div>
                                     )}
