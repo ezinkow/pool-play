@@ -277,13 +277,34 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
 async function processMatchup(m) {
     const { CfbRegularSeasonGames } = db;
     try {
-        const [game, created] = await CfbRegularSeasonGames.findOrCreate({
-            where: { week: m.week, home_team: m.home_team, away_team: m.away_team },
-            defaults: m
+        const existingGame = await CfbRegularSeasonGames.findOne({
+            where: { week: m.week, home_team: m.home_team, away_team: m.away_team }
         });
 
-        if (!created) {
-            await game.update(m);
+        if (!existingGame) {
+            // Create new game if it doesn't exist yet
+            await CfbRegularSeasonGames.create(m);
+        } else {
+            // Check if the game is within 48 hours of kickoff
+            let payloadToUpdate = { ...m };
+
+            if (existingGame.game_date) {
+                const kickoffTime = new Date(existingGame.game_date).getTime();
+                const now = Date.now();
+                const hoursUntilKickoff = (kickoffTime - now) / (1000 * 60 * 60);
+
+                // If kickoff is less than 48 hours away (or already started/passed), lock in the existing spreads & odds
+                if (hoursUntilKickoff <= 48) {
+                    payloadToUpdate.spread = existingGame.spread;
+                    payloadToUpdate.adjusted_spread = existingGame.adjusted_spread;
+                    payloadToUpdate.spread_odds = existingGame.spread_odds;
+                    payloadToUpdate.away_spread_odds = existingGame.away_spread_odds;
+                    payloadToUpdate.over_under = existingGame.over_under;
+                    payloadToUpdate.favorite = existingGame.favorite;
+                }
+            }
+
+            await existingGame.update(payloadToUpdate);
         }
     } catch (err) {
         console.error(`[CFB Sync] Error saving matchup Week ${m.week} (${m.away_team} @ ${m.home_team}):`, err.message);
