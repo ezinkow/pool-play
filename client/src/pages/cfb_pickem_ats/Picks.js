@@ -75,19 +75,22 @@ export default function CfbPickemAtsPicks() {
             .finally(() => setLoading(false));
     }, [user, currentWeek, token]);
 
+    // Filter out any games that have already kicked off (only show future games)
+    const availableGames = games.filter(game => {
+        if (!game.game_date) return true;
+        const kickoffTime = new Date(game.game_date).getTime();
+        const now = Date.now();
+        return kickoffTime > now;
+    });
+
+    // Calculate total picks across all games including locked/past games already saved in backend plus current front-end state
+    const totalSelectedCount = Object.values(picks).filter(p => p.picked_team).length;
     const bestBetCount = Object.values(picks).filter(p => p.is_best_bet).length;
-    const selectedPicksCount = Object.values(picks).filter(p => p.picked_team).length;
 
     // Calculate total must-pick count and how many have been picked by the user
     const mustPickGames = games.filter(g => g.must_pick);
     const totalMustPicks = mustPickGames.length;
     const completedMustPicks = mustPickGames.filter(g => picks[g.id]?.picked_team).length;
-
-    const userFlexPicksCount = Object.entries(picks).filter(([gameId, p]) => {
-        if (!p.picked_team) return false;
-        const game = games.find(g => String(g.id) === String(gameId));
-        return game && !game.must_pick;
-    }).length;
 
     const handleTeamPick = (gameId, team, gameDate) => {
         if (gameDate && new Date() >= new Date(gameDate)) {
@@ -104,7 +107,7 @@ export default function CfbPickemAtsPicks() {
             }
 
             // Enforce absolute max 15 selections limit as a safety check
-            if (!currentPickedTeam && selectedPicksCount >= 15) {
+            if (!currentPickedTeam && totalSelectedCount >= 15) {
                 toast.error("You can only select a maximum of 15 games!");
                 return prev;
             }
@@ -144,17 +147,6 @@ export default function CfbPickemAtsPicks() {
             }
         }));
     };
-
-    // Filter out any games that have already kicked off (only show future games)
-    const availableGames = games.filter(game => {
-        if (!game.game_date) return true;
-        const kickoffTime = new Date(game.game_date).getTime();
-        const now = Date.now();
-
-        // Only return games where kickoff is strictly in the future
-        return kickoffTime > now;
-    });
-    console.log(availableGames, "availableGames");
 
     // Sorting Logic: Update to sort availableGames instead of raw games
     const sortedGames = [...availableGames].sort((a, b) => {
@@ -196,6 +188,17 @@ export default function CfbPickemAtsPicks() {
         if (bestBetCount > 3) {
             toast.error(`You can select a maximum of 3 Best Bets! (Currently selected: ${bestBetCount})`);
             return;
+        }
+
+        // If user is submitting 15 total picks (including past locked games), they MUST have exactly 3 Best Bets
+        if (totalSelectedCount === 15 && bestBetCount < 3) {
+            toast.error("You must select 3 Best Bets when submitting 15 total picks.");
+            return;
+        }
+
+        // If user has less than 15 total picks, show a warning toast that they don't have 3 best bets yet, but allow submission
+        if (totalSelectedCount < 15 && bestBetCount < 3) {
+            toast("Note: You have fewer than 3 Best Bets selected.", { icon: '⚠️' });
         }
 
         // Only include picks for games that are NOT locked (i.e. present in availableGames)
@@ -261,7 +264,7 @@ export default function CfbPickemAtsPicks() {
                                 Best Bets: {bestBetCount} / 3
                             </div>
                             <div style={{ background: "#f8fafc", color: "#475569", padding: "6px 14px", borderRadius: 8, fontWeight: 700, fontSize: "13px", border: "1px solid #cbd5e1" }}>
-                                Total Selected: {selectedPicksCount} / 15
+                                Total Selected: {totalSelectedCount} / 15
                             </div>
                         </div>
                     </div>

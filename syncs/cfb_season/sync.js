@@ -92,28 +92,37 @@ async function extractMatchups(data, weekNum) {
     }
 
     const rankingsMap = await fetchTeamRankings(weekNum);
+    const { CfbRegularSeasonGames } = db;
 
-    data.events.forEach(event => {
+    for (const event of data.events) {
         const seasonType = event.season?.type;
-        if (seasonType !== 2) return;
+        if (seasonType !== 2) continue;
         const comp = event.competitions?.[0];
-        if (!comp) return;
+        if (!comp) continue;
 
         const gameDate = event.date;
 
         const homeCompetitor = comp.competitors.find(c => c.homeAway === "home");
         const awayCompetitor = comp.competitors.find(c => c.homeAway === "away");
 
-        if (!homeCompetitor || !awayCompetitor) return;
+        if (!homeCompetitor || !awayCompetitor) continue;
 
         const homeConfId = String(homeCompetitor.team?.conferenceId || "");
         const awayConfId = String(awayCompetitor.team?.conferenceId || "");
         const isPower4Game = validConferenceIds.includes(homeConfId) || validConferenceIds.includes(awayConfId);
 
-        if (!isPower4Game) return;
+        if (!isPower4Game) continue;
+
+        const homeTeamName = homeCompetitor.team.name;
+        const awayTeamName = awayCompetitor.team.name;
+
+        // Fetch existing game from DB first to preserve locked lines for final/past games
+        const existingGame = await CfbRegularSeasonGames.findOne({
+            where: { week: weekNum, home_team: homeTeamName, away_team: awayTeamName }
+        });
 
         let rawSpread = null;
-        let favoriteTeamName = homeCompetitor.team.name;
+        let favoriteTeamName = homeTeamName;
 
         const oddsObj = Array.isArray(comp.odds) ? comp.odds[0] : comp.odds;
 
@@ -127,9 +136,9 @@ async function extractMatchups(data, weekNum) {
                 const favAbbr = parts[0];
 
                 if (homeCompetitor.team.abbreviation === favAbbr || homeCompetitor.team.shortDisplayName === favAbbr) {
-                    favoriteTeamName = homeCompetitor.team.name;
+                    favoriteTeamName = homeTeamName;
                 } else if (awayCompetitor.team.abbreviation === favAbbr || awayCompetitor.team.shortDisplayName === favAbbr) {
-                    favoriteTeamName = awayCompetitor.team.name;
+                    favoriteTeamName = awayTeamName;
                 }
             }
         }
@@ -149,20 +158,40 @@ async function extractMatchups(data, weekNum) {
             }
         }
 
-        const overUnder = oddsObj?.overUnder !== undefined && oddsObj?.overUnder !== null ? parseFloat(oddsObj.overUnder) : 0.0;
-        const finalSpread = rawSpread !== null ? -rawSpread : null;
-        const adjustedSpread = applyHookRule(rawSpread, homeSpreadOdds);
+        let overUnder = oddsObj?.overUnder !== undefined && oddsObj?.overUnder !== null ? parseFloat(oddsObj.overUnder) : 0.0;
+        let finalSpread = rawSpread !== null ? -rawSpread : null;
+        let adjustedSpread = applyHookRule(rawSpread, homeSpreadOdds);
 
         const homeScore = homeCompetitor.score !== undefined ? parseInt(homeCompetitor.score, 10) : null;
         const awayScore = awayCompetitor.score !== undefined ? parseInt(awayCompetitor.score, 10) : null;
         const statusType = comp.status?.type?.name || "STATUS_SCHEDULED";
 
-        let calculatedOutcomes = { home_score: homeScore, away_score: awayScore, winner: null, ats_winner: null, ou_result: null };
-        if (statusType === "STATUS_FINAL" || statusType === "Final" || statusType === "completed") {
-            calculatedOutcomes = calculateGameOutcomes({ home_team: homeCompetitor.team.name, away_team: awayCompetitor.team.name, spread: finalSpread, adjusted_spread: adjustedSpread, favorite: favoriteTeamName, over_under: overUnder }, homeScore, awayScore);
+        const isFinal = statusType === "STATUS_FINAL" || statusType === "Final" || statusType === "completed";
+
+        // If game is final or API line is missing, fall back to what's already locked in the DB
+        if ((isFinal || finalSpread === null) && existingGame) {
+            if (finalSpread === null) {
+                finalSpread = existingGame.spread;
+                adjustedSpread = existingGame.adjusted_spread;
+                homeSpreadOdds = existingGame.spread_odds ?? homeSpreadOdds;
+                awaySpreadOdds = existingGame.away_spread_odds ?? awaySpreadOdds;
+                overUnder = existingGame.over_under || overUnder;
+                favoriteTeamName = existingGame.favorite || favoriteTeamName;
+            }
         }
 
-        // Match rank by exact team id directly available on competitor.team.id
+        let calculatedOutcomes = { home_score: homeScore, away_score: awayScore, winner: null, ats_winner: null, ou_result: null };
+        if (isFinal) {
+            calculatedOutcomes = calculateGameOutcomes({
+                home_team: homeTeamName,
+                away_team: awayTeamName,
+                spread: finalSpread,
+                adjusted_spread: adjustedSpread,
+                favorite: favoriteTeamName,
+                over_under: overUnder
+            }, homeScore, awayScore);
+        }
+
         const getTeamRank = (teamObj) => {
             if (!teamObj || !teamObj.id) return null;
             return rankingsMap[String(teamObj.id)] || null;
@@ -171,58 +200,18 @@ async function extractMatchups(data, weekNum) {
         const homeTeamRank = getTeamRank(homeCompetitor.team);
         const awayTeamRank = getTeamRank(awayCompetitor.team);
 
-        let homeColor = homeCompetitor.team.color ? `#${homeCompetitor.team.color}` : "#013369";
-        let homeSecondaryColor = homeCompetitor.team.alternateColor ? `#${homeCompetitor.team.alternateColor}` : "#64748b";
-        if (homeCompetitor.team.shortDisplayName === "West Virginia" ||
-            homeCompetitor.team.shortDisplayName === "Ole Miss" ||
-            homeCompetitor.team.shortDisplayName === "N Arizona" ||
-            homeCompetitor.team.shortDisplayName === "Wake Forest" ||
-            homeCompetitor.team.shortDisplayName === "Michigan" ||
-            homeCompetitor.team.shortDisplayName === "Syracuse" ||
-            homeCompetitor.team.shortDisplayName === "AR-Pine Bluff" ||
-            homeCompetitor.team.shortDisplayName === "New Mexico St" ||
-            homeCompetitor.team.shortDisplayName === "Toledo" ||
-            homeCompetitor.team.shortDisplayName === "Georgia" ||
-            homeCompetitor.team.shortDisplayName === "Vanderbilt") {
-            const temp = homeColor;
-            homeColor = homeSecondaryColor;
-            homeSecondaryColor = temp;
-        }
-
-        let awayColor = awayCompetitor.team.color ? `#${awayCompetitor.team.color}` : "#013369";
-        let awaySecondaryColor = awayCompetitor.team.alternateColor ? `#${awayCompetitor.team.alternateColor}` : "#64748b";
-        if (awayCompetitor.team.shortDisplayName === "West Virginia" ||
-            awayCompetitor.team.shortDisplayName === "Ole Miss" ||
-            awayCompetitor.team.shortDisplayName === "N Arizona" ||
-            awayCompetitor.team.shortDisplayName === "Wake Forest" ||
-            awayCompetitor.team.shortDisplayName === "Michigan" ||
-            awayCompetitor.team.shortDisplayName === "Syracuse" ||
-            awayCompetitor.team.shortDisplayName === "AR-Pine Bluff" ||
-            awayCompetitor.team.shortDisplayName === "New Mexico St" ||
-            awayCompetitor.team.shortDisplayName === "Toledo" ||
-            awayCompetitor.team.shortDisplayName === "Georgia" ||
-            awayCompetitor.team.shortDisplayName === "Vanderbilt") {
-            const temp = awayColor;
-            awayColor = awaySecondaryColor;
-            awaySecondaryColor = temp;
-        }
-
         matchups.push({
             week: weekNum,
-            home_team: homeCompetitor.team.name,
+            home_team: homeTeamName,
             home_team_nickname: homeCompetitor.team.shortDisplayName,
             home_team_conference: getConferenceName(homeConfId),
             home_team_rank: homeTeamRank,
-            away_team: awayCompetitor.team.name,
+            away_team: awayTeamName,
             away_team_nickname: awayCompetitor.team.shortDisplayName,
             away_team_conference: getConferenceName(awayConfId),
             away_team_rank: awayTeamRank,
             home_logo: homeCompetitor.team.logo || null,
             away_logo: awayCompetitor.team.logo || null,
-            home_color: homeColor,
-            home_secondary_color: homeSecondaryColor,
-            away_color: awayColor,
-            away_secondary_color: awaySecondaryColor,
             spread: finalSpread,
             spread_odds: homeSpreadOdds,
             away_spread_odds: awaySpreadOdds,
@@ -233,7 +222,7 @@ async function extractMatchups(data, weekNum) {
             status: statusType,
             ...calculatedOutcomes
         });
-    });
+    }
 
     return matchups;
 }
@@ -285,15 +274,25 @@ async function processMatchup(m) {
             // Create new game if it doesn't exist yet
             await CfbRegularSeasonGames.create(m);
         } else {
-            // Check if the game is within 48 hours of kickoff
             let payloadToUpdate = { ...m };
 
+            // 1. Protect against incoming null/undefined spreads from the API:
+            // If the incoming sync doesn't have a spread, but the DB already has one, keep the DB's spread.
+            if ((payloadToUpdate.spread === null || payloadToUpdate.spread === undefined) && existingGame.spread != null) {
+                payloadToUpdate.spread = existingGame.spread;
+                payloadToUpdate.adjusted_spread = existingGame.adjusted_spread;
+                payloadToUpdate.spread_odds = existingGame.spread_odds;
+                payloadToUpdate.away_spread_odds = existingGame.away_spread_odds;
+                payloadToUpdate.over_under = existingGame.over_under;
+                payloadToUpdate.favorite = existingGame.favorite;
+            }
+
+            // 2. 48-hour pre-kickoff lock check
             if (existingGame.game_date) {
                 const kickoffTime = new Date(existingGame.game_date).getTime();
                 const now = Date.now();
                 const hoursUntilKickoff = (kickoffTime - now) / (1000 * 60 * 60);
 
-                // If kickoff is less than 48 hours away (or already started/passed), lock in the existing spreads & odds
                 if (hoursUntilKickoff <= 48) {
                     payloadToUpdate.spread = existingGame.spread;
                     payloadToUpdate.adjusted_spread = existingGame.adjusted_spread;
