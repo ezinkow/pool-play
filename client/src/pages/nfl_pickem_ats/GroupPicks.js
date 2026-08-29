@@ -25,7 +25,7 @@ export default function NflPickemAtsMatrix() {
                 const map = {};
                 (res.data || []).forEach(t => {
                     map[t.name] = {
-                        secondaryColor: t.secondary_color || t.alt_color || "#ffffff",
+                        secondaryColor: t.bg_color,
                         logo: t.logo
                     };
                 });

@@ -70,7 +70,6 @@ export default function NflSurvivorGroupPicks() {
                     .finally(() => setLoading(false));
             });
     }, [user, token]);
-    console.log(rosterData);
 
     const handleWeekChange = (targetWeek) => {
         if (targetWeek > maxAvailableWeek) {

@@ -115,40 +115,83 @@ module.exports = function (app) {
     // POST /api/cfb_pickem_ats/picks (Save batch picks for the week)
     // --------------------------------------------------------
     app.post("/api/cfb_pickem_ats/picks", requireAuth, async (req, res) => {
+        const t = await db.sequelize.transaction();
         try {
-            const { week, picks } = req.body; // picks is an array: [{ game_id, picked_team, is_best_bet }]
+            const { week, picks } = req.body; // picks is an array of unlocked picks being saved
             const targetWeek = parseInt(week);
 
             if (!Array.isArray(picks)) {
+                await t.rollback();
                 return res.status(400).json({ error: "Invalid picks payload." });
             }
 
-            // 1. Count best bets and validate max 3
-            const bestBetCount = picks.filter(p => p.is_best_bet === true).length;
-            if (bestBetCount > 3) {
+            // 1. Fetch all games for this week to check lock status
+            const weekGames = await CfbRegularSeasonGames.findAll({
+                where: { week: targetWeek },
+                transaction: t
+            });
+            const gameMap = {};
+            weekGames.forEach(g => { gameMap[g.id] = g; });
+
+            // 2. Fetch existing user picks for this week
+            const existingPicks = await CfbPickemAtsPicks.findAll({
+                where: { user_id: req.user.id, week: targetWeek },
+                transaction: t
+            });
+            const existingPickMap = {};
+            existingPicks.forEach(p => { existingPickMap[p.game_id] = p; });
+
+            const incomingGameIds = picks.map(p => Number(p.game_id));
+
+            // 3. Evaluate best bets count across ALL picks (retaining locked ones + new incoming ones)
+            let simulatedBestBetsCount = 0;
+            const finalPicksMap = {};
+
+            // First, load existing locked picks into our simulated map
+            for (const ep of existingPicks) {
+                const game = gameMap[ep.game_id];
+                const isLocked = game && game.game_date && new Date() >= new Date(game.game_date);
+                if (isLocked) {
+                    finalPicksMap[ep.game_id] = { picked_team: ep.picked_team, is_best_bet: ep.is_best_bet };
+                    if (ep.is_best_bet) simulatedBestBetsCount++;
+                }
+            }
+
+            // Next, layer in the incoming unlocked picks
+            for (const p of picks) {
+                finalPicksMap[p.game_id] = { picked_team: p.picked_team, is_best_bet: p.is_best_bet || false };
+                if (p.is_best_bet) simulatedBestBetsCount++;
+            }
+
+            if (simulatedBestBetsCount > 3) {
+                await t.rollback();
                 return res.status(400).json({ error: "You can only select a maximum of 3 Best Bets per week." });
             }
 
-            // 2. Process each pick with kickoff check
+            // 4. Process deletions: remove unlocked picks that were deselected
+            for (const ep of existingPicks) {
+                const game = gameMap[ep.game_id];
+                const isLocked = game && game.game_date && new Date() >= new Date(game.game_date);
+
+                if (!isLocked && !incomingGameIds.includes(ep.game_id)) {
+                    await ep.destroy({ transaction: t });
+                }
+            }
+
+            // 5. Process upserts for incoming unlocked picks
             for (const p of picks) {
-                const game = await CfbRegularSeasonGames.findByPk(p.game_id);
+                const game = gameMap[p.game_id];
                 if (!game) continue;
 
-                // Check if game has kicked off
-                if (game.game_date && new Date() >= new Date(game.game_date)) {
-                    return res.status(403).json({ error: `Game (${game.away_team} @ ${game.home_team}) has already kicked off. Picks are locked.` });
-                }
+                const isLocked = game.game_date && new Date() >= new Date(game.game_date);
+                if (isLocked) continue; // Safety guard: never modify locked games server-side
 
-                // Upsert pick
-                let existingPick = await CfbPickemAtsPicks.findOne({
-                    where: { user_id: req.user.id, week: targetWeek, game_id: p.game_id }
-                });
-
+                let existingPick = existingPickMap[p.game_id];
                 if (existingPick) {
                     await existingPick.update({
                         picked_team: p.picked_team,
                         is_best_bet: p.is_best_bet || false
-                    });
+                    }, { transaction: t });
                 } else {
                     await CfbPickemAtsPicks.create({
                         user_id: req.user.id,
@@ -156,12 +199,14 @@ module.exports = function (app) {
                         game_id: p.game_id,
                         picked_team: p.picked_team,
                         is_best_bet: p.is_best_bet || false
-                    });
+                    }, { transaction: t });
                 }
             }
 
+            await t.commit();
             res.json({ success: true, message: "Weekly picks saved successfully!" });
         } catch (err) {
+            await t.rollback();
             console.error("Error saving pick'em picks:", err);
             res.status(500).json({ error: "Failed to save picks" });
         }

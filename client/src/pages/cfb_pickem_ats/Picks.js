@@ -145,8 +145,19 @@ export default function CfbPickemAtsPicks() {
         }));
     };
 
-    // Sorting Logic: Always prioritize must_pick games to the very top, then apply secondary sort
-    const sortedGames = [...games].sort((a, b) => {
+    // Filter out any games that have already kicked off (only show future games)
+    const availableGames = games.filter(game => {
+        if (!game.game_date) return true;
+        const kickoffTime = new Date(game.game_date).getTime();
+        const now = Date.now();
+
+        // Only return games where kickoff is strictly in the future
+        return kickoffTime > now;
+    });
+    console.log(availableGames, "availableGames");
+
+    // Sorting Logic: Update to sort availableGames instead of raw games
+    const sortedGames = [...availableGames].sort((a, b) => {
         // 1. Must-pick games always float to top
         if (a.must_pick && !b.must_pick) return -1;
         if (!a.must_pick && b.must_pick) return 1;
@@ -187,11 +198,16 @@ export default function CfbPickemAtsPicks() {
             return;
         }
 
-        const formattedPicks = Object.keys(picks).map(gameId => ({
-            game_id: Number(gameId),
-            picked_team: picks[gameId].picked_team,
-            is_best_bet: picks[gameId].is_best_bet
-        }));
+        // Only include picks for games that are NOT locked (i.e. present in availableGames)
+        const activeGameIds = new Set(availableGames.map(g => g.id));
+
+        const formattedPicks = Object.keys(picks)
+            .filter(gameId => activeGameIds.has(Number(gameId)))
+            .map(gameId => ({
+                game_id: Number(gameId),
+                picked_team: picks[gameId].picked_team,
+                is_best_bet: picks[gameId].is_best_bet
+            }));
 
         try {
             await axios.post("/api/cfb_pickem_ats/picks", {

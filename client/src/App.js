@@ -101,6 +101,7 @@ import NflPickemAtsGroupPicks from './pages/nfl_pickem_ats/GroupPicks';
 import NflBtsHome from './pages/nfl_bts/Home';
 import NflBtsStandings from './pages/nfl_bts/Standings';
 import NflBtsPicks from './pages/nfl_bts/Picks';
+import NflBtsMyPicks from './pages/nfl_bts/MyPicks';
 import NflBtsGroupPicks from './pages/nfl_bts/GroupPicks';
 import AdminTeamAssignment from './pages/nfl_bts/AdminTeamAssignment';
 
@@ -238,6 +239,7 @@ export default function App() {
           {/* NFL BTS*/}
           <Route path="/nflbts" element={<NflBtsHome />} />
           <Route path="/nflbts/picks" element={<NflBtsPicks />} />
+          <Route path="/nflbts/mypicks" element={<NflBtsMyPicks />} />
           <Route path="/nflbts/standings" element={<NflBtsStandings />} />
           <Route path="/nflbts/grouppicks" element={<NflBtsGroupPicks />} />
           <Route path="/nflbts/admin/teamassignments" element={<AdminTeamAssignment />} />
