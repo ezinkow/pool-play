@@ -3,8 +3,9 @@ import axios from "axios";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 
-const CFB_BLUE = "#d2daddf1";
+const CFB_BLUE = "#013369";
 const GOLD = "#c89d3c";
+const CFB_RED = "#D50A0A";
 
 export default function CfbPickemAtsMatrix() {
     const { user, loading: authLoading } = useAuth();
@@ -15,7 +16,6 @@ export default function CfbPickemAtsMatrix() {
 
     const token = localStorage.getItem("token");
 
-    // Fetch team branding mapping for primary/secondary colors and logos
     useEffect(() => {
         if (!token) return;
         axios.get("/api/cfb_teams", {
@@ -26,7 +26,7 @@ export default function CfbPickemAtsMatrix() {
                 (res.data || []).forEach(t => {
                     map[t.name] = {
                         color: t.color || t.primary_color || "#0f172a",
-                        secondaryColor: t.secondary_color || t.alt_color || "#afb1dcef",
+                        secondaryColor: t.secondary_color || t.alt_color || "#cbd5e1",
                         logo: t.logo
                     };
                 });
@@ -35,23 +35,30 @@ export default function CfbPickemAtsMatrix() {
             .catch(err => console.error("Failed to load CFB team colors", err));
     }, [token]);
 
-    // Fetch matrix data for the selected week
     useEffect(() => {
         if (!user) return;
-        setLoading(true);
+        
+        const fetchMatrix = (isInitial = false) => {
+            if (isInitial) setLoading(true);
+            axios.get("/api/cfb_pickem_ats/matrix", {
+                params: { week: currentWeek },
+                headers: { Authorization: `Bearer ${token}` }
+            })
+                .then(res => {
+                    setMatrixData(res.data || []);
+                })
+                .catch(err => {
+                    console.error("Failed to load pick'em matrix", err);
+                    if (isInitial) setMatrixData([]);
+                })
+                .finally(() => {
+                    if (isInitial) setLoading(false);
+                });
+        };
 
-        axios.get("/api/cfb_pickem_ats/matrix", {
-            params: { week: currentWeek },
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(res => {
-                setMatrixData(res.data || []);
-            })
-            .catch(err => {
-                console.error("Failed to load pick'em matrix", err);
-                setMatrixData([]);
-            })
-            .finally(() => setLoading(false));
+        fetchMatrix(true);
+        const interval = setInterval(() => fetchMatrix(false), 15000);
+        return () => clearInterval(interval);
     }, [user, currentWeek, token]);
 
     const canRevealPick = (gameDate) => {
@@ -59,7 +66,6 @@ export default function CfbPickemAtsMatrix() {
         return new Date() >= new Date(gameDate);
     };
 
-    // Pivot flat rows into: { games: [...unique games], players: [ ...sorted list of player objects with calculated points ] }
     const { gamesList, sortedPlayers } = React.useMemo(() => {
         const gamesMap = new Map();
         const playersMap = {};
@@ -76,8 +82,8 @@ export default function CfbPickemAtsMatrix() {
                     away_team_nickname: row.away_team_nickname,
                     home_team: row.home_team,
                     home_team_nickname: row.home_team_nickname,
-                    away_logo: row.away_logo,
-                    home_logo: row.home_logo,
+                    away_logo: row.away_logo || teamColors[row.away_team]?.logo,
+                    home_logo: row.home_logo || teamColors[row.home_team]?.logo,
                     home_color: row.home_color,
                     home_secondary_color: row.home_secondary_color,
                     away_color: row.away_color,
@@ -85,8 +91,11 @@ export default function CfbPickemAtsMatrix() {
                     game_date: row.game_date,
                     adjusted_spread: row.adjusted_spread,
                     favorite: row.favorite,
-                    winner: row.winner, // Authoritative ATS winner from backend
-                    must_pick: isMustPick // Normalized boolean check for 1/0
+                    winner: row.winner,
+                    must_pick: isMustPick,
+                    home_score: row.home_score,
+                    away_score: row.away_score,
+                    status: row.status
                 });
             }
 
@@ -123,7 +132,6 @@ export default function CfbPickemAtsMatrix() {
             };
         });
 
-        // Calculate total points for each player
         const gamesArr = Array.from(gamesMap.values());
         const playersArr = Object.values(playersMap).map(player => {
             let totalPoints = 0;
@@ -139,28 +147,27 @@ export default function CfbPickemAtsMatrix() {
             return { ...player, totalPoints };
         });
 
-        // Sort players by total points descending, then by user_name alphabetically
         playersArr.sort((a, b) => b.totalPoints - a.totalPoints || a.user_name.localeCompare(b.user_name));
 
         return {
             gamesList: gamesArr,
             sortedPlayers: playersArr
         };
-    }, [matrixData]);
+    }, [matrixData, teamColors]);
 
     if (authLoading) return <div style={{ textAlign: "center", padding: 50 }}>Verifying session...</div>;
 
     return (
         <PoolGatekeeper user={user} gameKey="cfb_pickem_ats" className='page-content'>
-            <div style={{ maxWidth: "100%", margin: "0 auto", padding: "20px 12px", paddingBottom: 80 }}>
+            <div style={{ maxWidth: "100%", margin: "0 auto", padding: "16px 8px", paddingBottom: 80 }}>
 
-                <div style={{ textAlign: "center", marginBottom: 20 }}>
-                    <h2 style={{ color: "#000000", fontSize: "28px", margin: 0 }}>Weekly Group Matrix</h2>
-                    <p style={{ color: "#303030", marginTop: 8 }}>Picks are hidden until individual game kickoff.</p>
+                <div style={{ textAlign: "center", marginBottom: 14 }}>
+                    <h2 style={{ color: CFB_BLUE, fontSize: "24px", margin: 0 }}>🏈 Weekly Group Matrix & Live Scores</h2>
+                    <p style={{ color: "#64748b", marginTop: 4, fontSize: "13px" }}>Picks are hidden until individual game kickoff. Scores update live.</p>
                 </div>
 
                 <div style={{ textAlign: "center", marginBottom: 1 }}>
-                    <h3 style={{ color: "#000000", fontSize: "15px", margin: 0 }}>Select Week:</h3>
+                    <h3 style={{ color: "#0f172a", fontSize: "14px", margin: 0 }}>Select Week:</h3>
                 </div>
 
                 {/* Week Selector Tabs */}
@@ -168,16 +175,16 @@ export default function CfbPickemAtsMatrix() {
                     display: "flex",
                     justifyContent: "center",
                     width: "100%",
-                    marginBottom: 20,
+                    marginBottom: 16,
                     marginTop: 4
                 }}>
                     <div style={{
                         display: "flex",
-                        gap: 6,
+                        gap: 4,
                         flexWrap: "nowrap",
                         overflowX: "auto",
                         WebkitOverflowScrolling: "touch",
-                        paddingBottom: 6,
+                        paddingBottom: 4,
                         maxWidth: "100%"
                     }}>
                         {[...Array(18)].map((_, i) => (
@@ -185,15 +192,15 @@ export default function CfbPickemAtsMatrix() {
                                 key={i + 1}
                                 onClick={() => setCurrentWeek(i + 1)}
                                 style={{
-                                    padding: "6px 12px",
+                                    padding: "4px 10px",
                                     borderRadius: 6,
-                                    border: "1px solid #ddd",
+                                    border: "1px solid #cbd5e1",
                                     backgroundColor: currentWeek === i + 1 ? CFB_BLUE : "white",
-                                    color: currentWeek === i + 1 ? "white" : "#1d1d1d",
+                                    color: currentWeek === i + 1 ? "white" : "#0f172a",
                                     cursor: "pointer",
                                     fontWeight: 600,
                                     flexShrink: 0,
-                                    fontSize: "14px",
+                                    fontSize: "13px",
                                     transition: "all 0.2s"
                                 }}
                             >
@@ -206,30 +213,30 @@ export default function CfbPickemAtsMatrix() {
                 {/* Scrollable Matrix Table */}
                 <div style={{
                     background: "white",
-                    borderRadius: 12,
-                    boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                    borderRadius: 10,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
                     border: "1px solid #e2e8f0",
                     maxWidth: "100%",
                     overflowX: "auto",
                     position: "relative"
                 }}>
                     {loading ? (
-                        <div style={{ padding: 40, textAlign: "center", color: "#666" }}>Loading Week {currentWeek} matrix...</div>
+                        <div style={{ padding: 30, textAlign: "center", color: "#666" }}>Loading Week {currentWeek} matrix...</div>
                     ) : gamesList.length === 0 || sortedPlayers.length === 0 ? (
-                        <div style={{ padding: 40, textAlign: "center", color: "#666" }}>No entries or games found for Week {currentWeek}.</div>
+                        <div style={{ padding: 30, textAlign: "center", color: "#666" }}>No entries or games found for Week {currentWeek}.</div>
                     ) : (
                         <table style={{ width: "100%", borderCollapse: "collapse", whiteSpace: "nowrap" }}>
                             <thead>
-                                <tr style={{ backgroundColor: CFB_BLUE, color: "black" }}>
+                                <tr style={{ backgroundColor: CFB_BLUE, color: "white" }}>
                                     <th style={{
                                         position: "sticky",
                                         left: 0,
                                         zIndex: 10,
-                                        backgroundColor: "#397286f1",
-                                        padding: "14px 16px",
+                                        backgroundColor: CFB_BLUE,
+                                        padding: "10px 14px",
                                         textAlign: "left",
-                                        fontSize: 14,
-                                        minWidth: "180px",
+                                        fontSize: 13,
+                                        minWidth: "160px",
                                         boxShadow: "2px 0 5px rgba(0,0,0,0.1)"
                                     }}>
                                         Player (Pts)
@@ -241,52 +248,71 @@ export default function CfbPickemAtsMatrix() {
 
                                         const favLogo = isFavAway ? game.away_logo : (isFavHome ? game.home_logo : null);
                                         const favSecondary = isFavAway
-                                            ? (game.away_secondary_color || teamColors[game.away_team]?.secondaryColor || "rgba(255, 255, 255, 0.2)")
-                                            : (isFavHome ? (game.home_secondary_color || teamColors[game.home_team]?.secondaryColor || "rgba(255, 255, 255, 0.2)") : "rgba(255, 255, 255, 0.2)");
+                                            ? (game.away_secondary_color || teamColors[game.away_team]?.secondaryColor || "#cbd5e1")
+                                            : (isFavHome ? (game.home_secondary_color || teamColors[game.home_team]?.secondaryColor || "#cbd5e1") : "#cbd5e1");
 
-                                        const homeColor = game.home_color || teamColors[game.home_team]?.color || "#0f172a";
-                                        const awayColor = game.away_color || teamColors[game.away_team]?.color || "#0f172a";
-                                        const homeSecondary = game.home_secondary_color || teamColors[game.home_team]?.secondaryColor || "rgba(255, 255, 255, 0.2)";
-                                        const awaySecondary = game.away_secondary_color || teamColors[game.away_team]?.secondaryColor || "rgba(255, 255, 255, 0.2)";
+                                        const homeSecondary = game.home_secondary_color || teamColors[game.home_team]?.secondaryColor || "#cbd5e1";
+                                        const awaySecondary = game.away_secondary_color || teamColors[game.away_team]?.secondaryColor || "#cbd5e1";
+
+                                        const rawStatus = (game.status || "").toUpperCase();
+                                        const isFinal = rawStatus === "STATUS_FINAL" || rawStatus === "FINAL" || rawStatus === "COMPLETED";
+                                        const isLive = rawStatus === "STATUS_IN_PROGRESS" || rawStatus === "IN_PROGRESS" || rawStatus === "LIVE";
+                                        const hasScores = game.home_score !== null && game.home_score !== undefined && game.away_score !== null && game.away_score !== undefined;
 
                                         return (
                                             <th key={game.game_id} style={{
-                                                padding: "12px 14px",
+                                                padding: "8px 10px",
                                                 textAlign: "center",
-                                                fontSize: "12px",
+                                                fontSize: "11px",
                                                 borderLeft: "1px solid rgba(255,255,255,0.15)",
-                                                minWidth: "130px",
-                                                backgroundColor: game.must_pick ? "rgba(180, 83, 9, 0.85)" : "transparent"
+                                                minWidth: "105px",
+                                                backgroundColor: game.must_pick ? "#b45309" : "transparent"
                                             }}>
-                                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 4 }}>
-                                                    {game.away_logo && (
-                                                        <span style={{ background: awaySecondary, borderRadius: 4, padding: "2px 4px", display: "inline-flex", alignItems: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", border: "1px solid rgba(0,0,0,0.08)" }}>
-                                                            <img src={game.away_logo} alt={game.away_team} style={{ width: 18, height: 18, objectFit: "contain" }} />
-                                                        </span>
-                                                    )}
-                                                    <span style={{ fontSize: '10px' }}>@</span>
-                                                    {game.home_logo && (
-                                                        <span style={{ background: homeSecondary, borderRadius: 4, padding: "2px 4px", display: "inline-flex", alignItems: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", border: "1px solid rgba(0,0,0,0.08)" }}>
-                                                            <img src={game.home_logo} alt={game.home_team} style={{ width: 18, height: 18, objectFit: "contain" }} />
+                                                {/* Away Team Logo & Score */}
+                                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2, padding: "0 4px" }}>
+                                                    <div style={{ background: awaySecondary, borderRadius: 3, padding: "1px 3px", display: "inline-flex", alignItems: "center" }}>
+                                                        {game.away_logo && <img src={game.away_logo} alt={game.away_team} style={{ width: 16, height: 16, objectFit: "contain" }} />}
+                                                    </div>
+                                                    <span style={{ fontWeight: 900, color: hasScores ? "#fef08a" : "rgba(255,255,255,0.4)", fontSize: "13px" }}>
+                                                        {hasScores ? game.away_score : "-"}
+                                                    </span>
+                                                </div>
+
+                                                {/* Home Team Logo & Score */}
+                                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4, padding: "0 4px" }}>
+                                                    <div style={{ background: homeSecondary, borderRadius: 3, padding: "1px 3px", display: "inline-flex", alignItems: "center" }}>
+                                                        {game.home_logo && <img src={game.home_logo} alt={game.home_team} style={{ width: 16, height: 16, objectFit: "contain" }} />}
+                                                    </div>
+                                                    <span style={{ fontWeight: 900, color: hasScores ? "#fef08a" : "rgba(255,255,255,0.4)", fontSize: "13px" }}>
+                                                        {hasScores ? game.home_score : "-"}
+                                                    </span>
+                                                </div>
+
+                                                {/* Status Badge */}
+                                                <div style={{ marginBottom: 3 }}>
+                                                    {isFinal ? (
+                                                        <span style={{ fontSize: "8px", backgroundColor: "#16a34a", color: "white", padding: "1px 4px", borderRadius: 3, fontWeight: 800 }}>FINAL</span>
+                                                    ) : isLive ? (
+                                                        <span style={{ fontSize: "8px", backgroundColor: CFB_RED, color: "white", padding: "1px 4px", borderRadius: 3, fontWeight: 800 }}>LIVE</span>
+                                                    ) : (
+                                                        <span style={{ fontSize: "9px", color: "#e2e8f0", fontWeight: 600 }}>
+                                                            {game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "TBD"}
                                                         </span>
                                                     )}
                                                 </div>
-                                                <div style={{ fontSize: "11px", opacity: 0.95 }}>
-                                                    <span style={{ fontWeight: 800, color: awayColor }}>{game.away_team_nickname}</span>
-                                                    <span style={{ fontWeight: 700, color: "#000000", margin: "0 4px" }}>vs</span>
-                                                    <span style={{ fontWeight: 800, color: homeColor }}>{game.home_team_nickname}</span>
-                                                </div>
+
                                                 {game.must_pick && (
-                                                    <div style={{ marginTop: 3, marginBottom: 2 }}>
-                                                        <span style={{ fontSize: "10px", backgroundColor: "#fef3c2", color: "#b45309", padding: "1px 6px", borderRadius: 4, fontWeight: 900, border: "1px solid #f59e0b", display: "inline-block" }}>
-                                                            ⭐ MUST-PICK
+                                                    <div style={{ marginBottom: 2 }}>
+                                                        <span style={{ fontSize: "8px", backgroundColor: "#fef3c2", color: "#b45309", padding: "1px 4px", borderRadius: 3, fontWeight: 900, border: "1px solid #f59e0b", display: "inline-block" }}>
+                                                            ⭐ MUST
                                                         </span>
                                                     </div>
                                                 )}
-                                                <div style={{ fontSize: "10px", color: game.must_pick ? "#fef3c2" : GOLD, marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, fontWeight: game.must_pick ? 700 : 400 }}>
+
+                                                <div style={{ fontSize: "9px", color: game.must_pick ? "#fef3c2" : GOLD, display: "flex", alignItems: "center", justifyContent: "center", gap: 3, fontWeight: 600 }}>
                                                     {favLogo && (
-                                                        <span style={{ background: favSecondary, borderRadius: 4, padding: "2px 4px", display: "inline-flex", alignItems: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", border: "1px solid rgba(0,0,0,0.08)" }}>
-                                                            <img src={favLogo} alt={game.favorite} style={{ width: 14, height: 14, objectFit: "contain" }} />
+                                                        <span style={{ background: favSecondary, borderRadius: 2, padding: "1px 2px", display: "inline-flex", alignItems: "center" }}>
+                                                            <img src={favLogo} alt={game.favorite} style={{ width: 10, height: 10, objectFit: "contain" }} />
                                                         </span>
                                                     )}
                                                     <span>{game.adjusted_spread || "Pick'em"}</span>
@@ -310,15 +336,15 @@ export default function CfbPickemAtsMatrix() {
                                                 left: 0,
                                                 zIndex: 5,
                                                 backgroundColor: isCurrentUser ? "#dbeafe" : (idx % 2 === 0 ? "#fafafa" : "white"),
-                                                padding: "12px 16px",
+                                                padding: "10px 14px",
                                                 fontWeight: isCurrentUser ? 800 : 600,
-                                                fontSize: 14,
+                                                fontSize: 13,
                                                 color: "#0f172a",
                                                 boxShadow: "2px 0 5px rgba(0,0,0,0.05)"
                                             }}>
                                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                                     <span>{player.user_name} {isCurrentUser && "(You)"}</span>
-                                                    <span style={{ fontWeight: 800, color: CFB_BLUE, marginLeft: 12 }}>
+                                                    <span style={{ fontWeight: 800, color: CFB_BLUE, marginLeft: 10 }}>
                                                         {player.totalPoints} pts
                                                     </span>
                                                 </div>
@@ -352,15 +378,8 @@ export default function CfbPickemAtsMatrix() {
                                                 const pickedTeam = pick?.ats_pick;
                                                 const pickedMeta = teamColors[pickedTeam] || {};
 
-                                                // Resolve exact team primary color, secondary color, and logo
                                                 const isPickedAway = pickedTeam === game.away_team;
                                                 const isPickedHome = pickedTeam === game.home_team;
-
-                                                const pickedPrimary = isPickedAway
-                                                    ? (game.away_color || pickedMeta.color || "#0f172a")
-                                                    : (isPickedHome
-                                                        ? (game.home_color || pickedMeta.color || "#0f172a")
-                                                        : (pickedMeta.color || "#0f172a"));
 
                                                 const pickedLogo = isPickedAway ? game.away_logo : (isPickedHome ? game.home_logo : pickedMeta.logo);
                                                 const pickedSecondary = isPickedAway
@@ -371,9 +390,9 @@ export default function CfbPickemAtsMatrix() {
 
                                                 return (
                                                     <td key={game.game_id} style={{
-                                                        padding: "8px 14px",
+                                                        padding: "6px 10px",
                                                         textAlign: "center",
-                                                        fontSize: 13,
+                                                        fontSize: 12,
                                                         fontWeight: 700,
                                                         borderLeft: "1px solid #e2e8f0",
                                                         backgroundColor: pickBg,
@@ -381,39 +400,36 @@ export default function CfbPickemAtsMatrix() {
                                                     }}>
                                                         {showPick ? (
                                                             pickedTeam ? (
-                                                                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                                                                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                                                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                                                                    <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
                                                                         <span style={{
                                                                             background: pickedSecondary,
-                                                                            borderRadius: 4,
-                                                                            padding: "2px 4px",
+                                                                            borderRadius: 3,
+                                                                            padding: "1px 3px",
                                                                             display: "inline-flex",
                                                                             alignItems: "center",
-                                                                            boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                                                                            boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
                                                                             border: "1px solid rgba(0,0,0,0.08)"
                                                                         }}>
-                                                                            {pickedLogo && <img src={pickedLogo} alt={pickedTeam} style={{ width: 22, height: 22, objectFit: "contain" }} />}
-                                                                        </span>
-                                                                        <span style={{ fontSize: "12px", fontWeight: 800, color: pickedPrimary }}>
-                                                                            {pickedTeam}
+                                                                            {pickedLogo && <img src={pickedLogo} alt={pickedTeam} style={{ width: 18, height: 18, objectFit: "contain" }} />}
                                                                         </span>
                                                                         {pick.is_best_bet && (
-                                                                            <span style={{ fontSize: "8px", background: GOLD, color: "white", padding: "1px 3px", borderRadius: 3, fontWeight: 900 }}>
-                                                                                ★ BB
+                                                                            <span style={{ fontSize: "8px", background: GOLD, color: "white", padding: "1px 2px", borderRadius: 2, fontWeight: 900 }}>
+                                                                                ★
                                                                             </span>
                                                                         )}
-                                                                    </div>
-                                                                    {(pointsDisplay === "+1" || pointsDisplay === "+2") && (
-                                                                        <span style={{ fontSize: "11px", fontWeight: 800, opacity: 0.85 }}>
+                                    </div>
+                                                                    {pointsDisplay && (
+                                                                        <span style={{ fontSize: "10px", fontWeight: 800, opacity: 0.85 }}>
                                                                             ({pointsDisplay})
                                                                         </span>
                                                                     )}
                                                                 </div>
                                                             ) : (
-                                                                <span style={{ color: "#94a3b8", fontWeight: 400 }}>No Pick</span>
+                                                                <span style={{ color: "#94a3b8", fontWeight: 400, fontSize: "11px" }}>-</span>
                                                             )
                                                         ) : (
-                                                            <span style={{ color: "#d97706", fontWeight: 600 }}>🔒 Hidden</span>
+                                                            <span style={{ color: "#d97706", fontWeight: 600, fontSize: "11px" }}>🔒</span>
                                                         )}
                                                     </td>
                                                 );

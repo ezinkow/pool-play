@@ -217,8 +217,6 @@ module.exports = function (app) {
     // --------------------------------------------------------
     app.get("/api/cfb_pickem_ats/settings", requireAuth, async (req, res) => {
         try {
-            // Assuming you have a game_settings model or generic settings table
-            // Adjust the model name according to your schema setup
             const settings = await db.game_settings?.findOne({
                 where: { game_key: "cfb_pickem_ats" }
             }) || await db.GameSettings?.findOne({
@@ -284,17 +282,20 @@ module.exports = function (app) {
                     g.home_secondary_color,
                     g.home_team_nickname,
                     g.home_logo,
+                    g.home_score,
                     g.away_team,
                     g.away_color,
                     g.away_secondary_color,
                     g.away_team_nickname,
                     g.away_logo,
+                    g.away_score,
                     g.game_date,
                     g.adjusted_spread,
                     g.favorite,
+                    g.status,
                     p.picked_team as ats_pick,
                     p.is_best_bet,
-                    p.status,
+                    p.status as pick_status,
                     g.winner,
                     g.must_pick
                 FROM cfb_pickem_ats_entries e
