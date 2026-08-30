@@ -70,13 +70,11 @@ module.exports = function (app) {
         try {
             const week = parseInt(req.query.week) || 1;
 
-            // 1. Get all regular season games for the week
             const games = await CfbRegularSeasonGames.findAll({
                 where: { week },
                 order: [["game_date", "ASC"]]
             });
 
-            // 2. Get user's current picks for this week
             const userPicks = await CfbPickemAtsPicks.findAll({
                 where: { user_id: req.user.id, week }
             });
@@ -117,7 +115,7 @@ module.exports = function (app) {
     app.post("/api/cfb_pickem_ats/picks", requireAuth, async (req, res) => {
         const t = await db.sequelize.transaction();
         try {
-            const { week, picks } = req.body; // picks is an array of unlocked picks being saved
+            const { week, picks } = req.body;
             const targetWeek = parseInt(week);
 
             if (!Array.isArray(picks)) {
@@ -125,7 +123,6 @@ module.exports = function (app) {
                 return res.status(400).json({ error: "Invalid picks payload." });
             }
 
-            // 1. Fetch all games for this week to check lock status
             const weekGames = await CfbRegularSeasonGames.findAll({
                 where: { week: targetWeek },
                 transaction: t
@@ -133,7 +130,6 @@ module.exports = function (app) {
             const gameMap = {};
             weekGames.forEach(g => { gameMap[g.id] = g; });
 
-            // 2. Fetch existing user picks for this week
             const existingPicks = await CfbPickemAtsPicks.findAll({
                 where: { user_id: req.user.id, week: targetWeek },
                 transaction: t
@@ -143,11 +139,9 @@ module.exports = function (app) {
 
             const incomingGameIds = picks.map(p => Number(p.game_id));
 
-            // 3. Evaluate best bets count across ALL picks (retaining locked ones + new incoming ones)
             let simulatedBestBetsCount = 0;
             const finalPicksMap = {};
 
-            // First, load existing locked picks into our simulated map
             for (const ep of existingPicks) {
                 const game = gameMap[ep.game_id];
                 const isLocked = game && game.game_date && new Date() >= new Date(game.game_date);
@@ -157,7 +151,6 @@ module.exports = function (app) {
                 }
             }
 
-            // Next, layer in the incoming unlocked picks
             for (const p of picks) {
                 finalPicksMap[p.game_id] = { picked_team: p.picked_team, is_best_bet: p.is_best_bet || false };
                 if (p.is_best_bet) simulatedBestBetsCount++;
@@ -168,7 +161,6 @@ module.exports = function (app) {
                 return res.status(400).json({ error: "You can only select a maximum of 3 Best Bets per week." });
             }
 
-            // 4. Process deletions: remove unlocked picks that were deselected
             for (const ep of existingPicks) {
                 const game = gameMap[ep.game_id];
                 const isLocked = game && game.game_date && new Date() >= new Date(game.game_date);
@@ -178,13 +170,12 @@ module.exports = function (app) {
                 }
             }
 
-            // 5. Process upserts for incoming unlocked picks
             for (const p of picks) {
                 const game = gameMap[p.game_id];
                 if (!game) continue;
 
                 const isLocked = game.game_date && new Date() >= new Date(game.game_date);
-                if (isLocked) continue; // Safety guard: never modify locked games server-side
+                if (isLocked) continue;
 
                 let existingPick = existingPickMap[p.game_id];
                 if (existingPick) {
@@ -237,13 +228,11 @@ module.exports = function (app) {
         try {
             const week = parseInt(req.query.week) || 1;
 
-            // 1. Get games for the week
             const games = await CfbRegularSeasonGames.findAll({
                 where: { week },
                 order: [["game_date", "ASC"]]
             });
 
-            // 2. Get user's picks for this week
             const userPicks = await CfbPickemAtsPicks.findAll({
                 where: { user_id: req.user.id, week }
             });
@@ -253,7 +242,7 @@ module.exports = function (app) {
                 pickMap[p.game_id] = {
                     picked_team: p.picked_team,
                     is_best_bet: p.is_best_bet,
-                    status: p.status // "win", "loss", "push", or null/pending
+                    status: p.status
                 };
             });
 
@@ -297,6 +286,7 @@ module.exports = function (app) {
                     p.is_best_bet,
                     p.status as pick_status,
                     g.winner,
+                    g.ats_winner,
                     g.must_pick
                 FROM cfb_pickem_ats_entries e
                 CROSS JOIN cfb_regular_season_games g
@@ -309,7 +299,30 @@ module.exports = function (app) {
                 replacements: { week }
             });
 
-            res.json(results);
+    // Normalize result/status mapping for matrix cells so frontend sees explicit win/loss
+    const mappedResults = results.map(row => {
+        let pickStatus = (row.pick_status || row.status || "").toLowerCase();
+        const atsWinner = row.ats_winner;
+        const atsPick = row.ats_pick;
+
+        if (!pickStatus || pickStatus === "" || pickStatus === "pending") {
+            if (atsWinner && atsPick) {
+                if (atsWinner === "PUSH") {
+                    pickStatus = "push";
+                } else if (atsWinner === atsPick) {
+                    pickStatus = "win";
+                } else {
+                    pickStatus = "loss";
+                }
+            }
+        }
+        return {
+            ...row,
+            pick_status: pickStatus
+        };
+    });
+
+            res.json(mappedResults);
         } catch (err) {
             console.error("Error fetching pickem matrix:", err);
             res.status(500).json({ error: "Failed to fetch group matrix" });

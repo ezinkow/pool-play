@@ -83,7 +83,7 @@ export default function CfbPickemAtsMatrix() {
                     home_team: row.home_team,
                     home_team_nickname: row.home_team_nickname,
                     away_logo: row.away_logo || teamColors[row.away_team]?.logo,
-                    home_logo: row.home_logo || teamColors[row.home_team]?.logo,
+                    home_logo: row.home_logo || teamColors[row.home_logo]?.logo,
                     home_color: row.home_color,
                     home_secondary_color: row.home_secondary_color,
                     away_color: row.away_color,
@@ -92,6 +92,7 @@ export default function CfbPickemAtsMatrix() {
                     adjusted_spread: row.adjusted_spread,
                     favorite: row.favorite,
                     winner: row.winner,
+                    ats_winner: row.ats_winner,
                     must_pick: isMustPick,
                     home_score: row.home_score,
                     away_score: row.away_score,
@@ -111,14 +112,14 @@ export default function CfbPickemAtsMatrix() {
             const rawBb = row.is_best_bet;
             const isBestBet = rawBb === true || rawBb === 1 || rawBb === "1" || rawBb === "true";
 
-            let status = (row.status || row.result || "").toLowerCase();
-            const winner = row.winner;
+            const atsWinner = row.ats_winner;
             const atsPick = row.ats_pick || row.picked_team;
+            let status = (row.pick_status || row.status || row.result || "").toLowerCase();
 
-            if (!status && winner !== null && winner !== undefined && winner !== "" && atsPick) {
-                if (winner === "PUSH") {
+            if (atsWinner && atsPick) {
+                if (atsWinner === "PUSH") {
                     status = "push";
-                } else if (winner === atsPick) {
+                } else if (atsWinner === atsPick) {
                     status = "win";
                 } else {
                     status = "loss";
@@ -155,6 +156,95 @@ export default function CfbPickemAtsMatrix() {
         };
     }, [matrixData, teamColors]);
 
+    const getCellStyle = (game, pickObj) => {
+        if (!pickObj || !pickObj.ats_pick) return { backgroundColor: "transparent" };
+        
+        const rawStatus = (game.status || "").toUpperCase();
+        const isFinal = rawStatus === "STATUS_FINAL" || rawStatus === "FINAL" || rawStatus === "COMPLETED";
+        
+        if (!isFinal && !game.ats_winner) return { backgroundColor: "transparent" };
+
+        const st = pickObj.status;
+        if (st === "win" || st === "correct" || (game.ats_winner && game.ats_winner === pickObj.ats_pick)) {
+            return { backgroundColor: "#dcfce7", color: "#166534" }; // Soft Green
+        } else if (st === "push" || st === "tie" || game.ats_winner === "PUSH") {
+            return { backgroundColor: "#fef3c2", color: "#b45309" }; // Soft Yellow
+        } else if (game.ats_winner && game.ats_winner !== pickObj.ats_pick) {
+            return { backgroundColor: "#fee2e2", color: "#991b1b" }; // Soft Red
+        }
+        
+        return { backgroundColor: "transparent" };
+    };
+
+    const GameHeader = ({ game }) => {
+        const rawStatus = (game.status || "").toUpperCase();
+        const isFinal = rawStatus === "STATUS_FINAL" || rawStatus === "FINAL" || rawStatus === "COMPLETED";
+        const isLive = rawStatus === "STATUS_IN_PROGRESS" || rawStatus === "IN_PROGRESS" || rawStatus === "HALFTIME" || rawStatus === "STATUS_HALFTIME" || rawStatus === "LIVE";
+        const hasScores = game.home_score !== null && game.home_score !== undefined && game.away_score !== null && game.away_score !== undefined;
+
+        const coveredTeam = game.ats_winner;
+        const coveredLogo = coveredTeam === game.away_team ? game.away_logo : (coveredTeam === game.home_team ? game.home_logo : null);
+        const isFavCovered = coveredTeam === game.favorite;
+        const spreadLabel = game.adjusted_spread !== null && game.adjusted_spread !== undefined ? game.adjusted_spread : "";
+
+        const awaySecondary = game.away_secondary_color || teamColors[game.away_team]?.secondaryColor || "#cbd5e1";
+        const homeSecondary = game.home_secondary_color || teamColors[game.home_team]?.secondaryColor || "#cbd5e1";
+        const coveredSecondary = coveredTeam === game.away_team ? awaySecondary : (coveredTeam === game.home_team ? homeSecondary : "#cbd5e1");
+
+        return (
+            <div style={{ textAlign: "center", width: "100%", overflow: "hidden" }}>
+                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 3, padding: "2px 2px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <span style={{ background: awaySecondary, borderRadius: 3, padding: "1px 3px", display: "inline-flex", alignItems: "center", boxShadow: "0 1px 2px rgba(0,0,0,0.1)", border: "1px solid rgba(0,0,0,0.08)" }}>
+                            {game.away_logo && <img src={game.away_logo} alt="" height={14} style={{ flexShrink: 0, objectFit: "contain" }} />}
+                        </span>
+                        <span style={{ fontSize: 10, fontWeight: 900, color: hasScores ? "#fef08a" : "#ffffff" }}>
+                            {hasScores ? game.away_score : "-"}
+                        </span>
+                    </div>
+                    <span style={{ fontSize: 9, color: "#cbd5e1" }}>@</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <span style={{ fontSize: 10, fontWeight: 900, color: hasScores ? "#fef08a" : "#ffffff" }}>
+                            {hasScores ? game.home_score : "-"}
+                        </span>
+                        <span style={{ background: homeSecondary, borderRadius: 3, padding: "1px 3px", display: "inline-flex", alignItems: "center", boxShadow: "0 1px 2px rgba(0,0,0,0.1)", border: "1px solid rgba(0,0,0,0.08)" }}>
+                            {game.home_logo && <img src={game.home_logo} alt="" height={14} style={{ flexShrink: 0, objectFit: "contain" }} />}
+                        </span>
+                    </div>
+                </div>
+
+                <div style={{ fontSize: 8, fontWeight: 700, margin: "2px 0" }}>
+                    {isFinal ? (
+                        <span style={{ backgroundColor: "#16a34a", color: "white", padding: "1px 4px", borderRadius: 3 }}>FINAL</span>
+                    ) : isLive ? (
+                        <span style={{ backgroundColor: CFB_RED, color: "white", padding: "1px 4px", borderRadius: 3 }}>LIVE</span>
+                    ) : (
+                        <span style={{ color: "#cbd5e1" }}>
+                            {game.game_date ? new Date(game.game_date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : "TBD"}
+                        </span>
+                    )}
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 2, height: 16 }}>
+                    {isFinal && coveredLogo && coveredTeam !== "PUSH" ? (
+                        <>
+                            <span style={{ background: coveredSecondary, borderRadius: 2, padding: "1px 2px", display: "inline-flex", alignItems: "center", boxShadow: "0 1px 2px rgba(0,0,0,0.1)", border: "1px solid rgba(0,0,0,0.08)" }}>
+                                <img src={coveredLogo} alt="" height={11} style={{ flexShrink: 0, objectFit: "contain" }} />
+                            </span>
+                            <span style={{ fontSize: 8, color: isFavCovered ? "#86efac" : "#fca5a5", fontWeight: 700 }}>
+                                {spreadLabel ? (spreadLabel < 0 ? spreadLabel : `-${spreadLabel}`) : ""}
+                            </span>
+                        </>
+                    ) : (
+                        <span style={{ fontSize: 8, color: GOLD, fontWeight: 600 }}>
+                            {spreadLabel ? (spreadLabel < 0 ? spreadLabel : `-${spreadLabel}`) : "Pick'em"}
+                        </span>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     if (authLoading) return <div style={{ textAlign: "center", padding: 50 }}>Verifying session...</div>;
 
     return (
@@ -170,7 +260,6 @@ export default function CfbPickemAtsMatrix() {
                     <h3 style={{ color: "#0f172a", fontSize: "14px", margin: 0 }}>Select Week:</h3>
                 </div>
 
-                {/* Week Selector Tabs */}
                 <div style={{
                     display: "flex",
                     justifyContent: "center",
@@ -210,7 +299,6 @@ export default function CfbPickemAtsMatrix() {
                     </div>
                 </div>
 
-                {/* Scrollable Matrix Table */}
                 <div style={{
                     background: "white",
                     borderRadius: 10,
@@ -236,90 +324,23 @@ export default function CfbPickemAtsMatrix() {
                                         padding: "10px 14px",
                                         textAlign: "left",
                                         fontSize: 13,
-                                        minWidth: "160px",
+                                        minWidth: "150px",
                                         boxShadow: "2px 0 5px rgba(0,0,0,0.1)"
                                     }}>
                                         Player (Pts)
                                     </th>
-                                    {gamesList.map((game) => {
-                                        const favTeam = game.favorite;
-                                        const isFavAway = favTeam === game.away_team;
-                                        const isFavHome = favTeam === game.home_team;
-
-                                        const favLogo = isFavAway ? game.away_logo : (isFavHome ? game.home_logo : null);
-                                        const favSecondary = isFavAway
-                                            ? (game.away_secondary_color || teamColors[game.away_team]?.secondaryColor || "#cbd5e1")
-                                            : (isFavHome ? (game.home_secondary_color || teamColors[game.home_team]?.secondaryColor || "#cbd5e1") : "#cbd5e1");
-
-                                        const homeSecondary = game.home_secondary_color || teamColors[game.home_team]?.secondaryColor || "#cbd5e1";
-                                        const awaySecondary = game.away_secondary_color || teamColors[game.away_team]?.secondaryColor || "#cbd5e1";
-
-                                        const rawStatus = (game.status || "").toUpperCase();
-                                        const isFinal = rawStatus === "STATUS_FINAL" || rawStatus === "FINAL" || rawStatus === "COMPLETED";
-                                        const isLive = rawStatus === "STATUS_IN_PROGRESS" || rawStatus === "IN_PROGRESS" || rawStatus === "LIVE";
-                                        const hasScores = game.home_score !== null && game.home_score !== undefined && game.away_score !== null && game.away_score !== undefined;
-
-                                        return (
-                                            <th key={game.game_id} style={{
-                                                padding: "8px 10px",
-                                                textAlign: "center",
-                                                fontSize: "11px",
-                                                borderLeft: "1px solid rgba(255,255,255,0.15)",
-                                                minWidth: "105px",
-                                                backgroundColor: game.must_pick ? "#b45309" : "transparent"
-                                            }}>
-                                                {/* Away Team Logo & Score */}
-                                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2, padding: "0 4px" }}>
-                                                    <div style={{ background: awaySecondary, borderRadius: 3, padding: "1px 3px", display: "inline-flex", alignItems: "center" }}>
-                                                        {game.away_logo && <img src={game.away_logo} alt={game.away_team} style={{ width: 16, height: 16, objectFit: "contain" }} />}
-                                                    </div>
-                                                    <span style={{ fontWeight: 900, color: hasScores ? "#fef08a" : "rgba(255,255,255,0.4)", fontSize: "13px" }}>
-                                                        {hasScores ? game.away_score : "-"}
-                                                    </span>
-                                                </div>
-
-                                                {/* Home Team Logo & Score */}
-                                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4, padding: "0 4px" }}>
-                                                    <div style={{ background: homeSecondary, borderRadius: 3, padding: "1px 3px", display: "inline-flex", alignItems: "center" }}>
-                                                        {game.home_logo && <img src={game.home_logo} alt={game.home_team} style={{ width: 16, height: 16, objectFit: "contain" }} />}
-                                                    </div>
-                                                    <span style={{ fontWeight: 900, color: hasScores ? "#fef08a" : "rgba(255,255,255,0.4)", fontSize: "13px" }}>
-                                                        {hasScores ? game.home_score : "-"}
-                                                    </span>
-                                                </div>
-
-                                                {/* Status Badge */}
-                                                <div style={{ marginBottom: 3 }}>
-                                                    {isFinal ? (
-                                                        <span style={{ fontSize: "8px", backgroundColor: "#16a34a", color: "white", padding: "1px 4px", borderRadius: 3, fontWeight: 800 }}>FINAL</span>
-                                                    ) : isLive ? (
-                                                        <span style={{ fontSize: "8px", backgroundColor: CFB_RED, color: "white", padding: "1px 4px", borderRadius: 3, fontWeight: 800 }}>LIVE</span>
-                                                    ) : (
-                                                        <span style={{ fontSize: "9px", color: "#e2e8f0", fontWeight: 600 }}>
-                                                            {game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "TBD"}
-                                                        </span>
-                                                    )}
-                                                </div>
-
-                                                {game.must_pick && (
-                                                    <div style={{ marginBottom: 2 }}>
-                                                        <span style={{ fontSize: "8px", backgroundColor: "#fef3c2", color: "#b45309", padding: "1px 4px", borderRadius: 3, fontWeight: 900, border: "1px solid #f59e0b", display: "inline-block" }}>
-                                                            ⭐ MUST
-                                                        </span>
-                                                    </div>
-                                                )}
-
-                                                <div style={{ fontSize: "9px", color: game.must_pick ? "#fef3c2" : GOLD, display: "flex", alignItems: "center", justifyContent: "center", gap: 3, fontWeight: 600 }}>
-                                                    {favLogo && (
-                                                        <span style={{ background: favSecondary, borderRadius: 2, padding: "1px 2px", display: "inline-flex", alignItems: "center" }}>
-                                                            <img src={favLogo} alt={game.favorite} style={{ width: 10, height: 10, objectFit: "contain" }} />
-                                                        </span>
-                                                    )}
-                                                    <span>{game.adjusted_spread || "Pick'em"}</span>
-                                                </div>
-                                            </th>
-                                        );
-                                    })}
+                                    {gamesList.map((game) => (
+                                        <th key={game.game_id} style={{
+                                            padding: "6px 8px",
+                                            textAlign: "center",
+                                            fontSize: "11px",
+                                            borderLeft: "1px solid rgba(255,255,255,0.15)",
+                                            minWidth: "115px",
+                                            backgroundColor: game.must_pick ? "#b45309" : CFB_BLUE
+                                        }}>
+                                            <GameHeader game={game} />
+                                        </th>
+                                    ))}
                                 </tr>
                             </thead>
                             <tbody>
@@ -343,7 +364,9 @@ export default function CfbPickemAtsMatrix() {
                                                 boxShadow: "2px 0 5px rgba(0,0,0,0.05)"
                                             }}>
                                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                    <span>{player.user_name} {isCurrentUser && "(You)"}</span>
+                                                    <span>
+                                                        {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`} {player.user_name} {isCurrentUser && "(You)"}
+                                                    </span>
                                                     <span style={{ fontWeight: 800, color: CFB_BLUE, marginLeft: 10 }}>
                                                         {player.totalPoints} pts
                                                     </span>
@@ -351,52 +374,26 @@ export default function CfbPickemAtsMatrix() {
                                             </td>
 
                                             {gamesList.map((game) => {
-                                                const pick = player.picks[game.game_id];
+                                                const pickObj = player.picks[game.game_id];
                                                 const isRevealed = canRevealPick(game.game_date);
                                                 const showPick = isRevealed || isCurrentUser;
 
-                                                let status = pick?.status || "";
-                                                let pickBg = game.must_pick ? "rgba(254, 243, 199, 0.45)" : "transparent";
-                                                let textColor = "#0f172a";
-                                                if (status === "win" || status === "correct") {
-                                                    pickBg = "#dcfce7";
-                                                    textColor = "#166534";
-                                                } else if (status === "loss" || status === "incorrect" || status === "lost") {
-                                                    pickBg = "#fee2e2";
-                                                    textColor = "#991b1b";
-                                                } else if (status === "push" || status === "tie") {
-                                                    pickBg = "#fef3c2";
-                                                    textColor = "#b45309";
-                                                }
-
-                                                const isWin = status === "win" || status === "correct";
-                                                let pointsDisplay = null;
-                                                if (isWin) {
-                                                    pointsDisplay = pick?.is_best_bet ? "+2" : "+1";
-                                                }
-
-                                                const pickedTeam = pick?.ats_pick;
+                                                const pickedTeam = pickObj?.ats_pick;
                                                 const pickedMeta = teamColors[pickedTeam] || {};
+                                                const pickedLogo = pickedTeam === game.away_team ? game.away_logo : (pickedTeam === game.home_team ? game.home_logo : pickedMeta.logo);
+                                                const pickedSecondary = pickedTeam === game.away_team ? (game.away_secondary_color || teamColors[game.away_team]?.secondaryColor || "#cbd5e1") : (pickedTeam === game.home_team ? (game.home_secondary_color || teamColors[game.home_team]?.secondaryColor || "#cbd5e1") : (pickedMeta.secondaryColor || "#cbd5e1"));
 
-                                                const isPickedAway = pickedTeam === game.away_team;
-                                                const isPickedHome = pickedTeam === game.home_team;
-
-                                                const pickedLogo = isPickedAway ? game.away_logo : (isPickedHome ? game.home_logo : pickedMeta.logo);
-                                                const pickedSecondary = isPickedAway
-                                                    ? (game.away_secondary_color || teamColors[game.away_team]?.secondaryColor || "#cbd5e1")
-                                                    : (isPickedHome
-                                                        ? (game.home_secondary_color || teamColors[game.home_team]?.secondaryColor || "#cbd5e1")
-                                                        : (pickedMeta.secondaryColor || "#cbd5e1"));
+                                                const cellStyle = getCellStyle(game, pickObj);
 
                                                 return (
                                                     <td key={game.game_id} style={{
-                                                        padding: "6px 10px",
+                                                        padding: "8px 10px",
                                                         textAlign: "center",
                                                         fontSize: 12,
                                                         fontWeight: 700,
                                                         borderLeft: "1px solid #e2e8f0",
-                                                        backgroundColor: pickBg,
-                                                        color: textColor
+                                                        borderBottom: "1px solid #f3f4f6",
+                                                        ...cellStyle
                                                     }}>
                                                         {showPick ? (
                                                             pickedTeam ? (
@@ -411,19 +408,18 @@ export default function CfbPickemAtsMatrix() {
                                                                             boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
                                                                             border: "1px solid rgba(0,0,0,0.08)"
                                                                         }}>
-                                                                            {pickedLogo && <img src={pickedLogo} alt={pickedTeam} style={{ width: 18, height: 18, objectFit: "contain" }} />}
+                                                                            {pickedLogo ? (
+                                                                                <img src={pickedLogo} alt={pickedTeam} style={{ width: 18, height: 18, objectFit: "contain" }} />
+                                                                            ) : (
+                                                                                <span style={{ fontSize: 10 }}>{pickedTeam}</span>
+                                                                            )}
                                                                         </span>
-                                                                        {pick.is_best_bet && (
-                                                                            <span style={{ fontSize: "8px", background: GOLD, color: "white", padding: "1px 2px", borderRadius: 2, fontWeight: 900 }}>
+                                                                        {pickObj.is_best_bet && (
+                                                                            <span style={{ fontSize: "8px", background: GOLD, color: "white", padding: "1px 2px", borderRadius: 2, fontWeight: 900, boxShadow: "0 1px 2px rgba(0,0,0,0.2)" }}>
                                                                                 ★
                                                                             </span>
                                                                         )}
-                                    </div>
-                                                                    {pointsDisplay && (
-                                                                        <span style={{ fontSize: "10px", fontWeight: 800, opacity: 0.85 }}>
-                                                                            ({pointsDisplay})
-                                                                        </span>
-                                                                    )}
+                                                                    </div>
                                                                 </div>
                                                             ) : (
                                                                 <span style={{ color: "#94a3b8", fontWeight: 400, fontSize: "11px" }}>-</span>
