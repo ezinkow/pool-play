@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import useAuth from "../../hooks/useAuth";
+import useTeamColors from '../../hooks/useCFBTeamColors';
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 
 const CFB_BLUE = "#013369";
@@ -11,9 +12,10 @@ export default function CfbPickemAtsMatrix() {
     const { user, loading: authLoading } = useAuth();
     const [currentWeek, setCurrentWeek] = useState(1);
     const [matrixData, setMatrixData] = useState([]);
-    const [teamColors, setTeamColors] = useState({});
+    // const [teamColors, setTeamColors] = useState({});
     const [loading, setLoading] = useState(true);
 
+    const { teamColors, loading: colorsLoading, error: colorsError, refresh: refreshTeamColors } = useTeamColors();
     const token = localStorage.getItem("token");
 
     useEffect(() => {
@@ -37,7 +39,7 @@ export default function CfbPickemAtsMatrix() {
 
     useEffect(() => {
         if (!user) return;
-        
+
         const fetchMatrix = (isInitial = false) => {
             if (isInitial) setLoading(true);
             axios.get("/api/cfb_pickem_ats/matrix", {
@@ -82,8 +84,8 @@ export default function CfbPickemAtsMatrix() {
                     away_team_nickname: row.away_team_nickname,
                     home_team: row.home_team,
                     home_team_nickname: row.home_team_nickname,
-                    away_logo: row.away_logo || teamColors[row.away_team]?.logo,
-                    home_logo: row.home_logo || teamColors[row.home_logo]?.logo,
+                    away_logo: teamColors[row.away_team]?.logo || row.away_logo || null,
+                    home_logo: teamColors[row.home_team]?.logo || row.home_logo || null,
                     home_color: row.home_color,
                     home_secondary_color: row.home_secondary_color,
                     away_color: row.away_color,
@@ -158,10 +160,10 @@ export default function CfbPickemAtsMatrix() {
 
     const getCellStyle = (game, pickObj) => {
         if (!pickObj || !pickObj.ats_pick) return { backgroundColor: "transparent" };
-        
+
         const rawStatus = (game.status || "").toUpperCase();
         const isFinal = rawStatus === "STATUS_FINAL" || rawStatus === "FINAL" || rawStatus === "COMPLETED";
-        
+
         if (!isFinal && !game.ats_winner && !game.winner) return { backgroundColor: "transparent" };
 
         const st = pickObj.status;
@@ -173,7 +175,7 @@ export default function CfbPickemAtsMatrix() {
         } else if (atsWinner && atsWinner !== pickObj.ats_pick) {
             return { backgroundColor: "#fee2e2", color: "#991b1b" }; // Soft Red
         }
-        
+
         return { backgroundColor: "transparent" };
     };
 
@@ -187,12 +189,12 @@ export default function CfbPickemAtsMatrix() {
         const coveredLogo = coveredTeam === game.away_team ? game.away_logo : (coveredTeam === game.home_team ? game.home_logo : null);
         const isFavCovered = coveredTeam === game.favorite;
         const rawSpread = game.adjusted_spread !== null && game.adjusted_spread !== undefined ? parseFloat(game.adjusted_spread) : null;
-        
+
         const spreadLabel = rawSpread !== null ? (isFavCovered ? (rawSpread < 0 ? rawSpread : -Math.abs(rawSpread)) : (rawSpread > 0 ? `+${rawSpread}` : `+${Math.abs(rawSpread)}`)) : "";
 
         const awayPrimary = game.away_color || teamColors[game.away_team]?.color || "#000000";
         const awaySecondary = game.away_secondary_color || teamColors[game.away_team]?.secondaryColor || "#cbd5e1";
-        
+
         const homePrimary = game.home_color || teamColors[game.home_team]?.color || "#000000";
         const homeSecondary = game.home_secondary_color || teamColors[game.home_team]?.secondaryColor || "#cbd5e1";
 
@@ -399,7 +401,7 @@ export default function CfbPickemAtsMatrix() {
                                             borderBottom: "1px solid #f1f5f9",
                                             backgroundColor: isCurrentUser ? "#eff6ff" : (idx % 2 === 0 ? "#fafafa" : "white")
                                         }}>
-                                            <td 
+                                            <td
                                                 title={playerLabel}
                                                 style={{
                                                     position: "sticky",

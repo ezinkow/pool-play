@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
+import useTeamColors from '../../hooks/useCFBTeamColors';
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 
 const CFB_BLUE = "#013369";
@@ -13,30 +14,11 @@ export default function CdbPickemAtsMyPicks() {
     const [currentWeek, setCurrentWeek] = useState(1);
     const [games, setGames] = useState([]);
     const [picks, setPicks] = useState({});
-    const [teamColors, setTeamColors] = useState({});
     const [loading, setLoading] = useState(true);
 
-    const token = localStorage.getItem("token");
+    const { teamColors, loading: colorsLoading } = useTeamColors();
 
-    // Fetch team branding mapping
-    useEffect(() => {
-        if (!token) return;
-        axios.get("/api/cfb_teams", {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(res => {
-                const map = {};
-                (res.data || []).forEach(t => {
-                    map[t.name] = {
-                        color: t.color || t.primary_color || CFB_BLUE,
-                        secondaryColor: t.secondary_color || t.alt_color || "#cbd5e1",
-                        logo: t.logo
-                    };
-                });
-                setTeamColors(map);
-            })
-            .catch(err => console.error("Failed to load CFB team colors", err));
-    }, [token]);
+    const token = localStorage.getItem("token");
 
     // Fetch weekly schedule and user picks summary
     useEffect(() => {
@@ -85,7 +67,7 @@ export default function CdbPickemAtsMyPicks() {
         return userPick && userPick.picked_team;
     });
 
-    if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, -apple-system, sans-serif" }}>Loading your picks summary...</div>;
+    if (authLoading || loading || colorsLoading) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, -apple-system, sans-serif" }}>Loading your picks summary...</div>;
 
     return (
         <PoolGatekeeper user={user} gameKey="cfb_pickem_ats" className='page-content'>
@@ -168,24 +150,29 @@ export default function CdbPickemAtsMyPicks() {
                             const ouPick = userPick?.ou_pick;
                             const isMustPick = game.must_pick;
 
+                            // Canonical metadata lookup using useCFBTeamColors hook
                             const teamMeta = teamColors[pickedTeam] || {};
-                            const teamColor = teamMeta.color || CFB_BLUE;
+                            const teamColor = teamMeta.primaryColor || CFB_BLUE;
 
                             const awayMeta = teamColors[game.away_team] || {};
                             const homeMeta = teamColors[game.home_team] || {};
                             const awayLogo = game.away_logo || awayMeta.logo;
                             const homeLogo = game.home_logo || homeMeta.logo;
 
+                            const awayColor = game.away_color || awayMeta.primaryColor || CFB_BLUE;
+                            const homeColor = game.home_color || homeMeta.primaryColor || CFB_BLUE;
+
                             const awaySecondary = game.away_secondary_color || awayMeta.secondaryColor || "#cbd5e1";
                             const homeSecondary = game.home_secondary_color || homeMeta.secondaryColor || "#cbd5e1";
 
-                            const isPickedAway = pickedTeam === game.away_team;
-                            const isPickedHome = pickedTeam === game.home_team;
+                            const isAwayPicked = pickedTeam === game.away_team;
+                            const isHomePicked = pickedTeam === game.home_team;
 
-                            const pickedLogo = isPickedAway ? awayLogo : (isPickedHome ? homeLogo : teamMeta.logo);
-                            const pickedSecondary = isPickedAway
+                            const pickedLogo = isAwayPicked ? awayLogo : (isHomePicked ? homeLogo : teamMeta.logo);
+                            const pickedPrimary = isAwayPicked ? awayColor : (isHomePicked ? homeColor : teamColor);
+                            const pickedSecondary = isAwayPicked
                                 ? awaySecondary
-                                : (isPickedHome ? homeSecondary : (teamMeta.secondaryColor || "#cbd5e1"));
+                                : (isHomePicked ? homeSecondary : (teamMeta.secondaryColor || "#cbd5e1"));
 
                             const isFinished = game.ats_winner !== null && game.ats_winner !== undefined;
                             const hasScores = game.home_score !== null && game.home_score !== undefined &&
@@ -229,9 +216,6 @@ export default function CdbPickemAtsMyPicks() {
                             const awaySpreadStr = isAwayFav ? `-${absSpread}` : `+${absSpread}`;
                             const homeSpreadStr = isAwayFav ? `+${absSpread}` : `-${absSpread}`;
 
-                            const isAwayPicked = pickedTeam === game.away_team;
-                            const isHomePicked = pickedTeam === game.home_team;
-
                             return (
                                 <div key={game.id} style={{
                                     background: isBestBet ? "linear-gradient(135deg, #fffdf4 0%, #ffffff 100%)" : (isMustPick ? "#fffbeb" : "white"),
@@ -249,7 +233,7 @@ export default function CdbPickemAtsMyPicks() {
                                     gap: 12
                                 }}>
                                     {/* Left: Matchup & Final Score */}
-                                    <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, overflow: "hidden" }}>
+                                    <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, overflow: "visible" }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                                             {isMustPick && (
                                                 <span style={{ fontSize: "10px", backgroundColor: "#fef3c2", color: "#b45309", padding: "1px 6px", borderRadius: 4, fontWeight: 800 }}>
@@ -257,7 +241,7 @@ export default function CdbPickemAtsMyPicks() {
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="matchup-header-row" style={{ fontSize: "14px", color: "#1e293b", fontWeight: 600, display: "flex", gap: 8, alignItems: "center", flexWrap: "nowrap", whiteSpace: "nowrap" }}>
+                                        <div className="matchup-header-row" style={{ fontSize: "14px", color: "#1e293b", fontWeight: 600, display: "flex", gap: 8, alignItems: "center", flexWrap: "nowrap", whiteSpace: "nowrap", overflow: "visible" }}>
 
                                             {/* Away Team Section */}
                                             <span className="team-display" style={{
@@ -267,19 +251,22 @@ export default function CdbPickemAtsMyPicks() {
                                                 background: isAwayPicked ? `${teamColor}12` : "transparent",
                                                 padding: isAwayPicked ? "2px 6px" : "0",
                                                 borderRadius: 6,
-                                                border: isAwayPicked ? `1px solid ${teamColor}30` : "1px solid transparent"
+                                                border: isAwayPicked ? `1px solid ${teamColor}30` : "1px solid transparent",
+                                                overflow: "visible"
                                             }}>
                                                 {awayLogo && (
                                                     <span style={{
                                                         background: awaySecondary,
-                                                        borderRadius: 4,
-                                                        padding: "2px 4px",
+                                                        borderRadius: 6,
+                                                        padding: "3px 5px",
                                                         display: "inline-flex",
                                                         alignItems: "center",
-                                                        boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                                                        border: "1px solid rgba(0,0,0,0.06)"
+                                                        boxShadow: `0 0 4px 1px ${awayColor}, 0 1px 2px rgba(0,0,0,0.15)`,
+                                                        border: `1.5px solid ${awayColor}`,
+                                                        overflow: "visible",
+                                                        flexShrink: 0
                                                     }}>
-                                                        <img src={awayLogo} alt={game.away_team} className="matchup-logo" style={{ width: 18, height: 18, objectFit: "contain" }} />
+                                                        <img src={awayLogo} alt={game.away_team} className="matchup-logo" style={{ width: 16, height: 16, objectFit: "contain", display: "block" }} />
                                                     </span>
                                                 )}
                                                 <span className="team-text" style={{ fontWeight: isAwayPicked ? 800 : 600, color: isAwayPicked ? teamColor : "#334155" }}>
@@ -298,19 +285,22 @@ export default function CdbPickemAtsMyPicks() {
                                                 background: isHomePicked ? `${teamColor}12` : "transparent",
                                                 padding: isHomePicked ? "2px 6px" : "0",
                                                 borderRadius: 6,
-                                                border: isHomePicked ? `1px solid ${teamColor}30` : "1px solid transparent"
+                                                border: isHomePicked ? `1px solid ${teamColor}30` : "1px solid transparent",
+                                                overflow: "visible"
                                             }}>
                                                 {homeLogo && (
                                                     <span style={{
                                                         background: homeSecondary,
-                                                        borderRadius: 4,
-                                                        padding: "2px 4px",
+                                                        borderRadius: 6,
+                                                        padding: "3px 5px",
                                                         display: "inline-flex",
                                                         alignItems: "center",
-                                                        boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                                                        border: "1px solid rgba(0,0,0,0.06)"
+                                                        boxShadow: `0 0 4px 1px ${homeColor}, 0 1px 2px rgba(0,0,0,0.15)`,
+                                                        border: `1.5px solid ${homeColor}`,
+                                                        overflow: "visible",
+                                                        flexShrink: 0
                                                     }}>
-                                                        <img src={homeLogo} alt={game.home_team} className="matchup-logo" style={{ width: 18, height: 18, objectFit: "contain" }} />
+                                                        <img src={homeLogo} alt={game.home_team} className="matchup-logo" style={{ width: 16, height: 16, objectFit: "contain", display: "block" }} />
                                                     </span>
                                                 )}
                                                 <span className="team-text" style={{ fontWeight: isHomePicked ? 800 : 600, color: isHomePicked ? teamColor : "#334155" }}>
@@ -329,17 +319,19 @@ export default function CdbPickemAtsMyPicks() {
                                     </div>
 
                                     {/* Right: Pick Logo & Status / Best Bet Column */}
-                                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, overflow: "visible" }}>
                                         <div style={{
                                             display: "flex",
                                             alignItems: "center",
                                             background: pickedSecondary,
                                             padding: "3px 6px",
-                                            borderRadius: 8,
-                                            border: "1px solid rgba(0,0,0,0.08)",
-                                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                                            borderRadius: 6,
+                                            border: `1.5px solid ${pickedPrimary}`,
+                                            boxShadow: `0 0 4px 1px ${pickedPrimary}, 0 1px 2px rgba(0,0,0,0.15)`,
+                                            overflow: "visible",
+                                            flexShrink: 0
                                         }}>
-                                            {pickedLogo && <img src={pickedLogo} alt={pickedTeam} style={{ width: 30, height: 30, objectFit: "contain" }} />}
+                                            {pickedLogo && <img src={pickedLogo} alt={pickedTeam} style={{ width: 20, height: 20, objectFit: "contain", display: "block" }} />}
                                         </div>
 
                                         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, minWidth: "75px" }}>
@@ -366,8 +358,8 @@ export default function CdbPickemAtsMyPicks() {
                             font-size: 13px !important;
                         }
                         .matchup-logo {
-                            width: 16px !important;
-                            height: 16px !important;
+                            width: 14px !important;
+                            height: 14px !important;
                         }
                     }
                 `}</style>

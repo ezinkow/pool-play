@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
+import useTeamColors from '../../hooks/useCFBTeamColors';
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 
 const CFB_BLUE = "#013369";
@@ -13,10 +14,11 @@ export default function CfbPickemAtsPicks() {
     const [currentWeek, setCurrentWeek] = useState(1);
     const [games, setGames] = useState([]);
     const [picks, setPicks] = useState({}); // { game_id: { picked_team, is_best_bet } }
-    const [teamColors, setTeamColors] = useState({}); // { teamName: { color, secondaryColor, logo } }
+    // const [teamColors, setTeamColors] = useState({}); // { teamName: { color, secondaryColor, logo } }
     const [poolTitle, setPoolTitle] = useState("");
     const [loading, setLoading] = useState(true);
     const [sortBy, setSortBy] = useState("kickoff"); // "kickoff", "home_team_asc", "home_team_desc", "away_team_asc", "away_team_desc", "fav_desc", "fav_asc"
+    const { teamColors, loading: colorsLoading, error: colorsError, refresh: refreshTeamColors } = useTeamColors();
 
     const token = localStorage.getItem("token");
 
@@ -396,14 +398,20 @@ export default function CfbPickemAtsPicks() {
                             const awaySpreadStr = hasLine ? (absSpread === 0 ? "0" : (isAwayFav ? `-${absSpread}` : `+${absSpread}`)) : null;
                             const homeSpreadStr = hasLine ? (absSpread === 0 ? "0" : (isAwayFav ? `+${absSpread}` : `-${absSpread}`)) : null;
 
+                            // prefer canonical teamColors from the hook, fall back to whatever the game provides
                             const awayTeamMeta = teamColors[game.away_team] || {};
                             const homeTeamMeta = teamColors[game.home_team] || {};
 
-                            const awayColor = game.away_color || awayTeamMeta.color || "#1e3a8a";
-                            const awaySecondary = game.away_secondary_color || awayTeamMeta.secondaryColor || "#cbd5e1";
+                            // logos: prefer teamColors lookup, then game-provided logo
+                            const awayLogo = teamColors[game.away_team]?.logo || game.away_logo || awayTeamMeta.logo || null;
+                            const homeLogo = teamColors[game.home_team]?.logo || game.home_logo || homeTeamMeta.logo || null;
 
-                            const homeColor = game.home_color || homeTeamMeta.color || "#1e3a8a";
-                            const homeSecondary = game.home_secondary_color || homeTeamMeta.secondaryColor || "#cbd5e1";
+                            // colors: prefer explicit game fields, then hook's primary/secondary, then defaults
+                            const awayColor = game.away_color || awayTeamMeta.primaryColor || awayTeamMeta.color || "#1e3a8a";
+                            const awaySecondary = game.away_secondary_color || awayTeamMeta.secondaryColor || awayTeamMeta.alt_color || "#cbd5e1";
+
+                            const homeColor = game.home_color || homeTeamMeta.primaryColor || homeTeamMeta.color || "#1e3a8a";
+                            const homeSecondary = game.home_secondary_color || homeTeamMeta.secondaryColor || homeTeamMeta.alt_color || "#cbd5e1";
 
                             const isAwayPicked = userPick.picked_team === game.away_team;
                             const isHomePicked = userPick.picked_team === game.home_team;
@@ -530,7 +538,7 @@ export default function CfbPickemAtsPicks() {
                                                             flexShrink: 0
                                                         }}>
                                                             <img
-                                                                src={game.away_logo || awayTeamMeta.logo}
+                                                                src={awayLogo}
                                                                 alt={game.away_team}
                                                                 style={{
                                                                     width: 20,
@@ -594,7 +602,7 @@ export default function CfbPickemAtsPicks() {
                                                             flexShrink: 0
                                                         }}>
                                                             <img
-                                                                src={game.home_logo || homeTeamMeta.logo}
+                                                                src={homeLogo}
                                                                 alt={game.home_team}
                                                                 style={{
                                                                     width: 20,
