@@ -388,8 +388,10 @@ export default function CfbPickemAtsMatrix() {
                             </thead>
                             <tbody>
                                 {sortedPlayers.map((player, idx) => {
+                                    // Calculate standard competitive ranking (ties share the same rank)
+                                    const rank = sortedPlayers.filter(p => p.totalPoints > player.totalPoints).length + 1;
                                     const isCurrentUser = Number(player.user_id) === Number(user.id);
-                                    const playerLabel = `${idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`} ${player.user_name} ${isCurrentUser ? "(You)" : ""}`;
+                                    const playerLabel = `${rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`} ${player.user_name} ${isCurrentUser ? "(You)" : ""}`;
                                     const ptsLabel = player.totalPoints === 1 ? "1 pt" : `${player.totalPoints} pts`;
 
                                     return (
@@ -419,7 +421,7 @@ export default function CfbPickemAtsMatrix() {
                                             >
                                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", overflow: "hidden" }}>
                                                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginRight: 4 }}>
-                                                        {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}.`} {player.user_name} {isCurrentUser && "(You)"}
+                                                        {rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`} {player.user_name} {isCurrentUser && "(You)"}
                                                     </span>
                                                     <span style={{ fontWeight: 800, color: CFB_BLUE, flexShrink: 0 }}>
                                                         {ptsLabel}
