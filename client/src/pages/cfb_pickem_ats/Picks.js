@@ -14,13 +14,12 @@ export default function CfbPickemAtsPicks() {
     const [currentWeek, setCurrentWeek] = useState(1);
     const [games, setGames] = useState([]);
     const [picks, setPicks] = useState({}); // { game_id: { picked_team, is_best_bet } }
-    // const [teamColors, setTeamColors] = useState({}); // { teamName: { color, secondaryColor, logo } }
     const [poolTitle, setPoolTitle] = useState("");
     const [loading, setLoading] = useState(true);
     const [sortBy, setSortBy] = useState("kickoff"); // "kickoff", "home_team_asc", "home_team_desc", "away_team_asc", "away_team_desc", "fav_desc", "fav_asc"
-    const { teamColors, loading: colorsLoading, error: colorsError, refresh: refreshTeamColors } = useTeamColors();
-
+    
     const token = localStorage.getItem("token");
+    const { teamColors, loading: colorsLoading, error: colorsError, refresh: refreshTeamColors } = useTeamColors(token);
 
     // Fetch pool settings (title) and team colors mapping on mount
     useEffect(() => {
@@ -36,23 +35,6 @@ export default function CfbPickemAtsPicks() {
                 }
             })
             .catch(err => console.error("Failed to load pool settings", err));
-
-        // Fetch team colors
-        axios.get("/api/cfb_teams", {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(res => {
-                const map = {};
-                (res.data || []).forEach(t => {
-                    map[t.name] = {
-                        color: t.color || t.primary_color || CFB_BLUE,
-                        secondaryColor: t.secondary_color || t.alt_color || "#64748b",
-                        logo: t.logo
-                    };
-                });
-                setTeamColors(map);
-            })
-            .catch(err => console.error("Failed to load CFB team colors", err));
     }, [token]);
 
     // Fetch weekly schedule and user picks
@@ -227,7 +209,7 @@ export default function CfbPickemAtsPicks() {
         }
     };
 
-    if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50 }}>Loading matchups...</div>;
+    if (authLoading || loading || colorsLoading) return <div style={{ textAlign: "center", padding: 50 }}>Loading matchups...</div>;
 
     return (
         <PoolGatekeeper user={user} gameKey="cfb_pickem_ats" className='page-content'>
@@ -385,10 +367,12 @@ export default function CfbPickemAtsPicks() {
                         </p>
                     </div>
                 ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                         {sortedGames.map((game, index) => {
                             const isLocked = game.game_date && new Date() >= new Date(game.game_date);
                             const userPick = picks[game.id] || {};
+                            const isBestBet = userPick.is_best_bet;
+                            const isMustPick = game.must_pick;
 
                             const rawSpread = game.adjusted_spread !== null && game.adjusted_spread !== undefined ? game.adjusted_spread : game.spread;
                             const hasLine = rawSpread !== null && rawSpread !== undefined;
@@ -398,20 +382,23 @@ export default function CfbPickemAtsPicks() {
                             const awaySpreadStr = hasLine ? (absSpread === 0 ? "0" : (isAwayFav ? `-${absSpread}` : `+${absSpread}`)) : null;
                             const homeSpreadStr = hasLine ? (absSpread === 0 ? "0" : (isAwayFav ? `+${absSpread}` : `-${absSpread}`)) : null;
 
-                            // prefer canonical teamColors from the hook, fall back to whatever the game provides
+                            // Team metadata lookup (falling back to game object properties if not found in cfb_teams hook)
                             const awayTeamMeta = teamColors[game.away_team] || {};
                             const homeTeamMeta = teamColors[game.home_team] || {};
 
-                            // logos: prefer teamColors lookup, then game-provided logo
-                            const awayLogo = teamColors[game.away_team]?.logo || game.away_logo || awayTeamMeta.logo || null;
-                            const homeLogo = teamColors[game.home_team]?.logo || game.home_logo || homeTeamMeta.logo || null;
+                            const awayLogo = awayTeamMeta.logo || game.away_logo || null;
+                            const homeLogo = homeTeamMeta.logo || game.home_logo || null;
 
-                            // colors: prefer explicit game fields, then hook's primary/secondary, then defaults
-                            const awayColor = game.away_color || awayTeamMeta.primaryColor || awayTeamMeta.color || "#1e3a8a";
-                            const awaySecondary = game.away_secondary_color || awayTeamMeta.secondaryColor || awayTeamMeta.alt_color || "#cbd5e1";
+                            const awayColor = awayTeamMeta.primaryColor || game.away_color || "#1e3a8a";
+                            const awaySecondary = awayTeamMeta.secondaryColor || game.away_secondary_color || "#cbd5e1";
 
-                            const homeColor = game.home_color || homeTeamMeta.primaryColor || homeTeamMeta.color || "#1e3a8a";
-                            const homeSecondary = game.home_secondary_color || homeTeamMeta.secondaryColor || homeTeamMeta.alt_color || "#cbd5e1";
+                            const homeColor = homeTeamMeta.primaryColor || game.home_color || "#1e3a8a";
+                            const homeSecondary = homeTeamMeta.secondaryColor || game.home_secondary_color || "#cbd5e1";
+
+                            // Determine favorite team logo for the header display
+                            const favoriteTeam = game.favorite;
+                            const favTeamMeta = teamColors[favoriteTeam] || {};
+                            const favoriteLogo = favTeamMeta.logo || (favoriteTeam === game.away_team ? awayLogo : (favoriteTeam === game.home_team ? homeLogo : game.favorite_logo)) || null;
 
                             const isAwayPicked = userPick.picked_team === game.away_team;
                             const isHomePicked = userPick.picked_team === game.home_team;
@@ -455,29 +442,54 @@ export default function CfbPickemAtsPicks() {
                                         </div>
                                     )}
 
+                                    {/* Game Card Container with White Background */}
                                     <div style={{
-                                        background: game.must_pick ? "#fffbeb" : "#f8fafc",
-                                        borderRadius: 10,
-                                        boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+                                        background: "#ffffff",
+                                        borderRadius: 12,
+                                        boxShadow: isBestBet ? "0 4px 14px rgba(200, 157, 60, 0.25)" : "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                                        border: isBestBet ? `2px solid ${GOLD}` : (isMustPick ? "1px solid #f59e0b" : "1px solid #cbd5e1"),
                                         overflow: "hidden",
-                                        border: game.must_pick ? "2px solid #f59e0b" : (userPick.is_best_bet ? `2px solid ${GOLD}` : "1px solid #cbd5e1"),
-                                        padding: "10px 14px"
+                                        padding: "12px 14px"
                                     }}>
-                                        {/* Top row: Date/Time, O/U, and Best Bet button */}
-                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                                            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                                        {/* Card Header Info with Favorite Logo placed cleanly after Spread */}
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "nowrap", whiteSpace: "nowrap", overflowX: "auto" }}>
                                                 {game.must_pick && (
-                                                    <span style={{ fontSize: "10px", backgroundColor: "#fef3c2", color: "#b45309", padding: "1px 6px", borderRadius: 4, fontWeight: 800 }}>
+                                                    <span style={{ fontSize: "10px", backgroundColor: "#fef3c2", color: "#b45309", padding: "1px 6px", borderRadius: 4, fontWeight: 800, flexShrink: 0 }}>
                                                         MUST-PICK
                                                     </span>
                                                 )}
-                                                <span style={{ fontSize: "11px", color: "#64748b", fontWeight: 700 }}>
-                                                    {game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "TBD"}
+                                                <span style={{ fontSize: "11px", color: "#000000", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", flexShrink: 0 }}>
+                                                    {game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).toUpperCase() : "TBD"}
                                                 </span>
-                                                <span style={{ fontSize: "11px", color: "#475569", fontWeight: 600 }}>
-                                                    O/U: <strong>{game.over_under}</strong>
+                                                
+                                                <span style={{ fontSize: "11px", color: "#000000", fontWeight: 600, flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                                    Spread: 
+                                                    {favoriteLogo && (
+                                                        <span style={{
+                                                            background: favTeamMeta.secondaryColor || homeSecondary,
+                                                            borderRadius: 4,
+                                                            padding: "1px",
+                                                            display: "inline-flex",
+                                                            alignItems: "center",
+                                                            justifyContent: "center",
+                                                            border: `1px solid ${favTeamMeta.primaryColor || homeColor}`,
+                                                            width: 18,
+                                                            height: 18,
+                                                            flexShrink: 0,
+                                                            verticalAlign: "middle"
+                                                        }}>
+                                                            <img 
+                                                                src={favoriteLogo} 
+                                                                alt={favoriteTeam || "Favorite"} 
+                                                                title={favoriteTeam ? `Favorite: ${favoriteTeam}` : "Favorite"}
+                                                                style={{ width: 12, height: 12, objectFit: "contain", display: "block" }} 
+                                                            />
+                                                        </span>
+                                                    )}
+                                                    <strong>{rawSpread}</strong> | O/U: <strong>{game.over_under}</strong>
                                                 </span>
-                                                {isLocked && <span style={{ fontSize: "10px", color: CFB_RED, fontWeight: 700 }}>🔒 Locked</span>}
+                                                {isLocked && <span style={{ fontSize: "10px", color: CFB_RED, fontWeight: 700, flexShrink: 0 }}>🔒 Locked</span>}
                                             </div>
 
                                             <div>
@@ -485,10 +497,10 @@ export default function CfbPickemAtsPicks() {
                                                     onClick={() => handleBestBetToggle(game.id, game.game_date)}
                                                     disabled={isLocked || !userPick.picked_team}
                                                     style={{
-                                                        background: userPick.is_best_bet ? GOLD : "#f1f5f9",
-                                                        color: userPick.is_best_bet ? "white" : "#64748b",
-                                                        border: userPick.is_best_bet ? `1px solid ${GOLD}` : "1px solid #cbd5e1",
-                                                        padding: "4px 8px",
+                                                        background: userPick.is_best_bet ? GOLD : "#334155",
+                                                        color: userPick.is_best_bet ? "white" : "#cbd5e1",
+                                                        border: userPick.is_best_bet ? `1px solid ${GOLD}` : "1px solid #475569",
+                                                        padding: "4px 10px",
                                                         borderRadius: 6,
                                                         fontWeight: 700,
                                                         fontSize: "11px",
@@ -501,135 +513,119 @@ export default function CfbPickemAtsPicks() {
                                             </div>
                                         </div>
 
-                                        {/* Bottom row: Stacked Away / Home Team Selection Buttons for Mobile */}
-                                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                                            {/* Away Team */}
-                                            <button
-                                                onClick={() => handleTeamPick(game.id, game.away_team, game.game_date)}
-                                                disabled={isLocked}
+                                        {/* Side-by-Side Team Selection Box Container */}
+                                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                                            {/* Away Team Option Box */}
+                                            <div
+                                                onClick={() => !isLocked && handleTeamPick(game.id, game.away_team, game.game_date)}
                                                 style={{
-                                                    width: "100%",
-                                                    padding: "8px 12px",
+                                                    background: isAwayPicked ? awayColor : `linear-gradient(135deg, ${awayColor}33 0%, ${awaySecondary}33 50%, #f8fafc 100%)`,
                                                     borderRadius: 8,
-                                                    border: isAwayPicked ? `2px solid ${awayColor}` : `1px solid ${awayColor}66`,
-                                                    background: isAwayPicked
-                                                        ? awayColor
-                                                        : `linear-gradient(135deg, ${awaySecondary}33 0%, ${awayColor}1A 100%)`,
-                                                    color: isAwayPicked ? "white" : "#0f172a",
+                                                    border: isAwayPicked ? `2px solid #0284c7` : `1px solid ${awayColor}66`,
+                                                    padding: "10px 12px",
                                                     cursor: isLocked ? "not-allowed" : "pointer",
                                                     display: "flex",
+                                                    flexDirection: "column",
                                                     alignItems: "center",
-                                                    justifyContent: "space-between",
-                                                    boxShadow: isAwayPicked ? `0 2px 8px ${awayColor}66` : "none",
-                                                    transition: "all 0.15s ease",
-                                                    opacity: 1
+                                                    textAlign: "center",
+                                                    position: "relative",
+                                                    boxShadow: isAwayPicked ? `0 0 14px rgba(2, 132, 199, 0.4), inset 0 0 10px ${awayColor}` : "none",
+                                                    transition: "all 0.15s ease"
                                                 }}
                                             >
-                                                <div style={{ display: "flex", alignItems: "center", gap: 8, overflow: "hidden" }}>
-                                                    {(game.away_logo || awayTeamMeta.logo) && (
-                                                        <span style={{
-                                                            background: awaySecondary || "#cbd5e1",
-                                                            borderRadius: 4,
-                                                            padding: "2px 4px",
-                                                            display: "inline-flex",
-                                                            alignItems: "center",
-                                                            boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
-                                                            border: "1px solid rgba(0,0,0,0.08)",
-                                                            flexShrink: 0
-                                                        }}>
-                                                            <img
-                                                                src={awayLogo}
-                                                                alt={game.away_team}
-                                                                style={{
-                                                                    width: 20,
-                                                                    height: 20,
-                                                                    objectFit: "contain"
-                                                                }}
-                                                            />
-                                                        </span>
-                                                    )}
-                                                    <span style={{ fontWeight: 700, fontSize: "13px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                                        {game.away_team_rank ? <span style={{ color: isAwayPicked ? "#fef08a" : "#b45309", marginRight: 4 }}>({game.away_team_rank})</span> : null}
-                                                        {game.away_team} {game.away_team_nickname}
+                                                {isAwayPicked && (
+                                                    <span style={{
+                                                        position: "absolute",
+                                                        top: 6,
+                                                        right: 8,
+                                                        fontSize: "11px",
+                                                        color: "#ffffff",
+                                                        fontWeight: 900
+                                                    }}>
+                                                        ✓
                                                     </span>
+                                                )}
+                                                {awayLogo && (
+                                                    <div style={{
+                                                        background: awaySecondary,
+                                                        borderRadius: 8,
+                                                        padding: "4px",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        boxShadow: `0 0 6px 1px ${awayColor}, 0 2px 4px rgba(0,0,0,0.15)`,
+                                                        border: `1.5px solid ${awayColor}`,
+                                                        marginBottom: 6,
+                                                        width: 32,
+                                                        height: 32
+                                                    }}>
+                                                        <img src={awayLogo} alt={game.away_team} style={{ width: 22, height: 22, objectFit: "contain", display: "block" }} />
+                                                    </div>
+                                                )}
+                                                <div style={{ fontWeight: isAwayPicked ? 800 : 600, fontSize: "13px", color: isAwayPicked ? "#ffffff" : "#0f172a", marginBottom: 2, lineHeight: 1.2 }}>
+                                                    {game.away_team_rank ? <span style={{ color: isAwayPicked ? "#fef08a" : "#b45309", marginRight: 3 }}>({game.away_team_rank})</span> : null}
+                                                    {game.away_team}
                                                 </div>
-                                                <span style={{
-                                                    fontSize: hasLine ? "12px" : "11px",
-                                                    fontWeight: hasLine ? 700 : 500,
-                                                    fontStyle: hasLine ? "normal" : "italic",
-                                                    flexShrink: 0,
-                                                    padding: "2px 6px",
-                                                    borderRadius: 4,
-                                                    background: isAwayPicked ? "rgba(255,255,255,0.2)" : "transparent",
-                                                    color: isAwayPicked ? "white" : (hasLine ? "#475569" : "#94a3b8")
-                                                }}>
-                                                    {hasLine ? awaySpreadStr : "no line yet"}
-                                                </span>
-                                            </button>
+                                                <div style={{ fontSize: "12px", fontWeight: 700, color: isAwayPicked ? "#e2e8f0" : "#475569" }}>
+                                                    {hasLine ? awaySpreadStr : "No Line"}
+                                                </div>
+                                            </div>
 
-                                            {/* Home Team */}
-                                            <button
-                                                onClick={() => handleTeamPick(game.id, game.home_team, game.game_date)}
-                                                disabled={isLocked}
+                                            {/* Home Team Option Box */}
+                                            <div
+                                                onClick={() => !isLocked && handleTeamPick(game.id, game.home_team, game.game_date)}
                                                 style={{
-                                                    width: "100%",
-                                                    padding: "8px 12px",
+                                                    background: isHomePicked ? homeColor : `linear-gradient(135deg, ${homeColor}33 0%, ${homeSecondary}33 50%, #f8fafc 100%)`,
                                                     borderRadius: 8,
-                                                    border: isHomePicked ? `2px solid ${homeColor}` : `1px solid ${homeColor}66`,
-                                                    background: isHomePicked
-                                                        ? homeColor
-                                                        : `linear-gradient(135deg, ${homeSecondary}33 0%, ${homeColor}1A 100%)`,
-                                                    color: isHomePicked ? "white" : "#0f172a",
+                                                    border: isHomePicked ? `2px solid #0284c7` : `1px solid ${homeColor}66`,
+                                                    padding: "10px 12px",
                                                     cursor: isLocked ? "not-allowed" : "pointer",
                                                     display: "flex",
+                                                    flexDirection: "column",
                                                     alignItems: "center",
-                                                    justifyContent: "space-between",
-                                                    boxShadow: isHomePicked ? `0 2px 8px ${homeColor}66` : "none",
-                                                    transition: "all 0.15s ease",
-                                                    opacity: 1
+                                                    textAlign: "center",
+                                                    position: "relative",
+                                                    boxShadow: isHomePicked ? `0 0 14px rgba(2, 132, 199, 0.4), inset 0 0 10px ${homeColor}` : "none",
+                                                    transition: "all 0.15s ease"
                                                 }}
                                             >
-                                                <div style={{ display: "flex", alignItems: "center", gap: 8, overflow: "hidden" }}>
-                                                    {(game.home_logo || homeTeamMeta.logo) && (
-                                                        <span style={{
-                                                            background: homeSecondary || "#cbd5e1",
-                                                            borderRadius: 4,
-                                                            padding: "2px 4px",
-                                                            display: "inline-flex",
-                                                            alignItems: "center",
-                                                            boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
-                                                            border: "1px solid rgba(0,0,0,0.08)",
-                                                            flexShrink: 0
-                                                        }}>
-                                                            <img
-                                                                src={homeLogo}
-                                                                alt={game.home_team}
-                                                                style={{
-                                                                    width: 20,
-                                                                    height: 20,
-                                                                    objectFit: "contain"
-                                                                }}
-                                                            />
-                                                        </span>
-                                                    )}
-                                                    <span style={{ fontWeight: 700, fontSize: "13px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                                        {game.home_team_rank ? <span style={{ color: isHomePicked ? "#fef08a" : "#b45309", marginRight: 4 }}>({game.home_team_rank})</span> : null}
-                                                        {game.home_team} {game.home_team_nickname}
+                                                {isHomePicked && (
+                                                    <span style={{
+                                                        position: "absolute",
+                                                        top: 6,
+                                                        right: 8,
+                                                        fontSize: "11px",
+                                                        color: "#ffffff",
+                                                        fontWeight: 900
+                                                    }}>
+                                                        ✓
                                                     </span>
+                                                )}
+                                                {homeLogo && (
+                                                    <div style={{
+                                                        background: homeSecondary,
+                                                        borderRadius: 8,
+                                                        padding: "4px",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        boxShadow: `0 0 6px 1px ${homeColor}, 0 2px 4px rgba(0,0,0,0.15)`,
+                                                        border: `1.5px solid ${homeColor}`,
+                                                        marginBottom: 6,
+                                                        width: 32,
+                                                        height: 32
+                                                    }}>
+                                                        <img src={homeLogo} alt={game.home_team} style={{ width: 22, height: 22, objectFit: "contain", display: "block" }} />
+                                                    </div>
+                                                )}
+                                                <div style={{ fontWeight: isHomePicked ? 800 : 600, fontSize: "13px", color: isHomePicked ? "#ffffff" : "#0f172a", marginBottom: 2, lineHeight: 1.2 }}>
+                                                    {game.home_team_rank ? <span style={{ color: isHomePicked ? "#fef08a" : "#b45309", marginRight: 3 }}>({game.home_team_rank})</span> : null}
+                                                    {game.home_team}
                                                 </div>
-                                                <span style={{
-                                                    fontSize: hasLine ? "12px" : "11px",
-                                                    fontWeight: hasLine ? 700 : 500,
-                                                    fontStyle: hasLine ? "normal" : "italic",
-                                                    flexShrink: 0,
-                                                    padding: "2px 6px",
-                                                    borderRadius: 4,
-                                                    background: isHomePicked ? "rgba(255,255,255,0.2)" : "transparent",
-                                                    color: isHomePicked ? "white" : (hasLine ? "#475569" : "#94a3b8")
-                                                }}>
-                                                    {hasLine ? homeSpreadStr : "no line yet"}
-                                                </span>
-                                            </button>
+                                                <div style={{ fontSize: "12px", fontWeight: 700, color: isHomePicked ? "#e2e8f0" : "#475569" }}>
+                                                    {hasLine ? homeSpreadStr : "No Line"}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </React.Fragment>
@@ -659,7 +655,7 @@ export default function CfbPickemAtsPicks() {
                             onClick={handleSubmitAll}
                             style={{
                                 width: "100%", padding: 14, backgroundColor: "#16a34a", color: "white",
-                                borderRadius: 10, border: "none", fontWeight: 800, fontSize: 15, cursor: "pointer",
+                                borderRadius: 10, border: "none", fontWeight: 800, fontSize: "15px", cursor: "pointer",
                                 boxShadow: "0 4px 14px rgba(22,163,74,0.4)", textTransform: "uppercase", letterSpacing: "0.5px"
                             }}
                         >

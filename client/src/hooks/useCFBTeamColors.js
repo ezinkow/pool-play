@@ -1,18 +1,22 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
-export default function useCFBTeamColors() {
+export default function useCFBTeamColors(token) {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const abortRef = useRef(null);
 
   const fetchTeams = useCallback(async () => {
+    if (!token) return;
     setLoading(true);
     setError(null);
     const controller = new AbortController();
     abortRef.current = controller;
     try {
-      const res = await fetch('/api/cfb_teams', { signal: controller.signal });
+      const res = await fetch('/api/cfb_teams', { 
+        signal: controller.signal,
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (!res.ok) throw new Error(`Failed to fetch teams: ${res.status}`);
       const data = await res.json();
       setTeams(Array.isArray(data) ? data : []);
@@ -22,7 +26,7 @@ export default function useCFBTeamColors() {
       setLoading(false);
       abortRef.current = null;
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     fetchTeams();
