@@ -550,7 +550,7 @@ export default function CfbPickemAtsPicks() {
                                                     )}
                                                     <span style={{ fontWeight: 700, fontSize: "13px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                                         {game.away_team_rank ? <span style={{ color: isAwayPicked ? "#fef08a" : "#b45309", marginRight: 4 }}>({game.away_team_rank})</span> : null}
-                                                        {game.away_team_nickname || game.away_team}
+                                                        {game.away_team} {game.away_team_nickname}
                                                     </span>
                                                 </div>
                                                 <span style={{
@@ -614,7 +614,7 @@ export default function CfbPickemAtsPicks() {
                                                     )}
                                                     <span style={{ fontWeight: 700, fontSize: "13px", textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                                         {game.home_team_rank ? <span style={{ color: isHomePicked ? "#fef08a" : "#b45309", marginRight: 4 }}>({game.home_team_rank})</span> : null}
-                                                        {game.home_team_nickname || game.home_team}
+                                                        {game.home_team} {game.home_team_nickname}
                                                     </span>
                                                 </div>
                                                 <span style={{
