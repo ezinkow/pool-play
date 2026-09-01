@@ -61,7 +61,6 @@ async function fetchTeamRankings(weekNumber) {
             const teamRef = item.team?.$ref;
 
             if (currentRank && teamRef) {
-                // Extract unique team ID from the end of the $ref URL (e.g., ".../teams/61?...")
                 const match = teamRef.match(/\/teams\/(\d+)\?/);
                 if (match && match[1]) {
                     const teamId = match[1];
@@ -100,6 +99,7 @@ async function extractMatchups(data, weekNum) {
         const comp = event.competitions?.[0];
         if (!comp) continue;
 
+        const gameId = event.id; // ESPN Game ID used as PK
         const gameDate = event.date;
 
         const homeCompetitor = comp.competitors.find(c => c.homeAway === "home");
@@ -113,16 +113,30 @@ async function extractMatchups(data, weekNum) {
 
         if (!isPower4Game) continue;
 
-        const homeTeamName = homeCompetitor.team.name;
-        const awayTeamName = awayCompetitor.team.name;
+        // --- CORE IDENTIFIERS & COLORS ---
+        const homeTeamId = homeCompetitor.team.id;
+        const awayTeamId = awayCompetitor.team.id;
+        
+        const homeTeamSchool = homeCompetitor.team.shortDisplayName || homeCompetitor.team.location;
+        const awayTeamSchool = awayCompetitor.team.shortDisplayName || awayCompetitor.team.location;
+        
+        const homeTeamMascot = homeCompetitor.team.name || homeCompetitor.team.nickname;
+        const awayTeamMascot = awayCompetitor.team.name || awayCompetitor.team.nickname;
 
-        // Fetch existing game from DB first to preserve locked lines for final/past games
+        const homeColor = homeCompetitor.team.color ? `#${homeCompetitor.team.color.replace('#', '')}` : null;
+        const homeSecondaryColor = homeCompetitor.team.alternateColor ? `#${homeCompetitor.team.alternateColor.replace('#', '')}` : (homeCompetitor.team.secondaryColor ? `#${homeCompetitor.team.secondaryColor.replace('#', '')}` : null);
+        
+        const awayColor = awayCompetitor.team.color ? `#${awayCompetitor.team.color.replace('#', '')}` : null;
+        const awaySecondaryColor = awayCompetitor.team.alternateColor ? `#${awayCompetitor.team.alternateColor.replace('#', '')}` : (awayCompetitor.team.secondaryColor ? `#${awayCompetitor.team.secondaryColor.replace('#', '')}` : null);
+        // ---------------------------------
+
         const existingGame = await CfbRegularSeasonGames.findOne({
-            where: { week: weekNum, home_team: homeTeamName, away_team: awayTeamName }
+            where: { id: gameId }
         });
 
         let rawSpread = null;
-        let favoriteTeamName = homeTeamName;
+        let favoriteTeamSchool = homeTeamSchool;
+        let favoriteTeamId = homeTeamId;
 
         const oddsObj = Array.isArray(comp.odds) ? comp.odds[0] : comp.odds;
 
@@ -135,10 +149,12 @@ async function extractMatchups(data, weekNum) {
                 const parts = oddsObj.details.split(" ");
                 const favAbbr = parts[0];
 
-                if (homeCompetitor.team.abbreviation === favAbbr || homeCompetitor.team.shortDisplayName === favAbbr) {
-                    favoriteTeamName = homeTeamName;
-                } else if (awayCompetitor.team.abbreviation === favAbbr || awayCompetitor.team.shortDisplayName === favAbbr) {
-                    favoriteTeamName = awayTeamName;
+                if (homeCompetitor.team.abbreviation === favAbbr || homeCompetitor.team.shortDisplayName === favAbbr || homeCompetitor.team.name === favAbbr) {
+                    favoriteTeamSchool = homeTeamSchool;
+                    favoriteTeamId = homeTeamId;
+                } else if (awayCompetitor.team.abbreviation === favAbbr || awayCompetitor.team.shortDisplayName === favAbbr || awayCompetitor.team.name === favAbbr) {
+                    favoriteTeamSchool = awayTeamSchool;
+                    favoriteTeamId = awayTeamId;
                 }
             }
         }
@@ -168,7 +184,6 @@ async function extractMatchups(data, weekNum) {
 
         const isFinal = statusType === "STATUS_FINAL" || statusType === "Final" || statusType === "completed";
 
-        // If game is final or API line is missing, fall back to what's already locked in the DB
         if ((isFinal || finalSpread === null) && existingGame) {
             if (finalSpread === null) {
                 finalSpread = existingGame.spread;
@@ -176,18 +191,22 @@ async function extractMatchups(data, weekNum) {
                 homeSpreadOdds = existingGame.spread_odds ?? homeSpreadOdds;
                 awaySpreadOdds = existingGame.away_spread_odds ?? awaySpreadOdds;
                 overUnder = existingGame.over_under || overUnder;
-                favoriteTeamName = existingGame.favorite || favoriteTeamName;
+                favoriteTeamSchool = existingGame.favorite || favoriteTeamSchool;
+                favoriteTeamId = existingGame.favorite_id || favoriteTeamId;
             }
         }
 
         let calculatedOutcomes = { home_score: homeScore, away_score: awayScore, winner: null, ats_winner: null, ou_result: null };
         if (isFinal) {
             calculatedOutcomes = calculateGameOutcomes({
-                home_team: homeTeamName,
-                away_team: awayTeamName,
+                home_team_id: homeTeamId,
+                home_team: homeTeamSchool,
+                away_team_id: awayTeamId,
+                away_team: awayTeamSchool,
                 spread: finalSpread,
                 adjusted_spread: adjustedSpread,
-                favorite: favoriteTeamName,
+                favorite_id: favoriteTeamId,
+                favorite: favoriteTeamSchool,
                 over_under: overUnder
             }, homeScore, awayScore);
         }
@@ -201,23 +220,31 @@ async function extractMatchups(data, weekNum) {
         const awayTeamRank = getTeamRank(awayCompetitor.team);
 
         matchups.push({
+            id: gameId, // Set ESPN game ID as primary key
             week: weekNum,
-            home_team: homeTeamName,
-            home_team_nickname: homeCompetitor.team.shortDisplayName,
+            home_team_id: homeTeamId,
+            home_team: homeTeamSchool, 
+            home_team_nickname: homeTeamMascot, 
             home_team_conference: getConferenceName(homeConfId),
             home_team_rank: homeTeamRank,
-            away_team: awayTeamName,
-            away_team_nickname: awayCompetitor.team.shortDisplayName,
+            away_team_id: awayTeamId,
+            away_team: awayTeamSchool, 
+            away_team_nickname: awayTeamMascot, 
             away_team_conference: getConferenceName(awayConfId),
             away_team_rank: awayTeamRank,
             home_logo: homeCompetitor.team.logo || null,
             away_logo: awayCompetitor.team.logo || null,
+            home_color: homeColor,
+            home_secondary_color: homeSecondaryColor,
+            away_color: awayColor,
+            away_secondary_color: awaySecondaryColor,
             spread: finalSpread,
             spread_odds: homeSpreadOdds,
             away_spread_odds: awaySpreadOdds,
             adjusted_spread: adjustedSpread,
             over_under: overUnder,
-            favorite: favoriteTeamName,
+            favorite_id: favoriteTeamId,
+            favorite: favoriteTeamSchool,
             game_date: gameDate,
             status: statusType,
             ...calculatedOutcomes
@@ -240,7 +267,7 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
     let ats_winner = "PUSH";
 
     if (spreadVal !== null && spreadVal !== undefined) {
-        const isHomeFav = m.favorite === m.home_team;
+        const isHomeFav = m.favorite_id === m.home_team_id;
         const favScore = isHomeFav ? homeScore : awayScore;
         const dogScore = isHomeFav ? awayScore : homeScore;
         const favTeam = isHomeFav ? m.home_team : m.away_team;
@@ -267,17 +294,14 @@ async function processMatchup(m) {
     const { CfbRegularSeasonGames } = db;
     try {
         const existingGame = await CfbRegularSeasonGames.findOne({
-            where: { week: m.week, home_team: m.home_team, away_team: m.away_team }
+            where: { id: m.id }
         });
 
         if (!existingGame) {
-            // Create new game if it doesn't exist yet
             await CfbRegularSeasonGames.create(m);
         } else {
             let payloadToUpdate = { ...m };
 
-            // 1. Protect against incoming null/undefined spreads from the API:
-            // If the incoming sync doesn't have a spread, but the DB already has one, keep the DB's spread.
             if ((payloadToUpdate.spread === null || payloadToUpdate.spread === undefined) && existingGame.spread != null) {
                 payloadToUpdate.spread = existingGame.spread;
                 payloadToUpdate.adjusted_spread = existingGame.adjusted_spread;
@@ -285,9 +309,9 @@ async function processMatchup(m) {
                 payloadToUpdate.away_spread_odds = existingGame.away_spread_odds;
                 payloadToUpdate.over_under = existingGame.over_under;
                 payloadToUpdate.favorite = existingGame.favorite;
+                payloadToUpdate.favorite_id = existingGame.favorite_id;
             }
 
-            // 2. 48-hour pre-kickoff lock check
             if (existingGame.game_date) {
                 const kickoffTime = new Date(existingGame.game_date).getTime();
                 const now = Date.now();
@@ -300,6 +324,7 @@ async function processMatchup(m) {
                     payloadToUpdate.away_spread_odds = existingGame.away_spread_odds;
                     payloadToUpdate.over_under = existingGame.over_under;
                     payloadToUpdate.favorite = existingGame.favorite;
+                    payloadToUpdate.favorite_id = existingGame.favorite_id;
                 }
             }
 

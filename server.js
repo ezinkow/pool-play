@@ -131,7 +131,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
     try {
       // await syncTourneyPickem();
       // await syncBracket();
-      await syncHrd();
+      // await syncHrd();
       // await syncNba();
       // await syncMlb();
       await syncNfl();

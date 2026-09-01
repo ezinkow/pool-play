@@ -1,12 +1,14 @@
 module.exports = function (sequelize, DataTypes) {
     const CfbRegularSeasonGames = sequelize.define("CfbRegularSeasonGames", {
         week: { type: DataTypes.INTEGER, allowNull: false },
-        home_team_nickname: { type: DataTypes.STRING, allowNull: false },
         home_team: { type: DataTypes.STRING, allowNull: false },
+        home_team_nickname: { type: DataTypes.STRING, allowNull: false },
+        home_team_id: { type: DataTypes.INTEGER, allowNull: false },
         home_team_conference: { type: DataTypes.STRING, allowNull: false },
         home_team_rank: { type: DataTypes.INTEGER, allowNull: true },
-        away_team_nickname: { type: DataTypes.STRING, allowNull: false },
         away_team: { type: DataTypes.STRING, allowNull: false },
+        away_team_nickname: { type: DataTypes.STRING, allowNull: false },
+        away_team_id: { type: DataTypes.INTEGER, allowNull: false },
         away_team_conference: { type: DataTypes.STRING, allowNull: false },
         away_team_rank: { type: DataTypes.INTEGER, allowNull: true },
         must_pick: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
