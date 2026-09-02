@@ -17,7 +17,7 @@ export default function CfbPickemAtsPicks() {
     const [poolTitle, setPoolTitle] = useState("");
     const [loading, setLoading] = useState(true);
     const [sortBy, setSortBy] = useState("kickoff");
-    
+
     const token = localStorage.getItem("token");
     const { teamColors, loading: colorsLoading, error: colorsError, refresh: refreshTeamColors } = useTeamColors(token);
 
@@ -384,6 +384,7 @@ export default function CfbPickemAtsPicks() {
 
                             const homeColor = homeTeamMeta.primaryColor || game.home_color || "#1e3a8a";
                             const homeSecondary = homeTeamMeta.secondaryColor || game.home_secondary_color || "#cbd5e1";
+                            console.log(homeColor, homeSecondary)
 
                             const favoriteTeam = game.favorite;
                             const favTeamMeta = teamColors[favoriteTeam] || {};
@@ -450,7 +451,7 @@ export default function CfbPickemAtsPicks() {
                                                 <span style={{ fontSize: "10px", color: "#000000", fontWeight: 700, textTransform: "uppercase", flexShrink: 0 }}>
                                                     {game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).toUpperCase() : "TBD"}
                                                 </span>
-                                                
+
                                                 <span style={{ fontSize: "10px", color: "#000000", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3, minWidth: 0 }}>
                                                     <span style={{ color: "#64748b" }}>Spread:</span>
                                                     {favoriteLogo && (
@@ -466,10 +467,10 @@ export default function CfbPickemAtsPicks() {
                                                             height: 15,
                                                             flexShrink: 0
                                                         }}>
-                                                            <img 
-                                                                src={favoriteLogo} 
-                                                                alt={favoriteTeam || "Favorite"} 
-                                                                style={{ width: 10, height: 10, objectFit: "contain", display: "block" }} 
+                                                            <img
+                                                                src={favoriteLogo}
+                                                                alt={favoriteTeam || "Favorite"}
+                                                                style={{ width: 10, height: 10, objectFit: "contain", display: "block" }}
                                                             />
                                                         </span>
                                                     )}
