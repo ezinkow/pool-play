@@ -139,28 +139,41 @@ module.exports = function (app) {
 
             const incomingGameIds = picks.map(p => Number(p.game_id));
 
-            let simulatedBestBetsCount = 0;
             const finalPicksMap = {};
 
+            // 1. Process locked existing picks first
             for (const ep of existingPicks) {
                 const game = gameMap[ep.game_id];
                 const isLocked = game && game.game_date && new Date() >= new Date(game.game_date);
                 if (isLocked) {
-                    finalPicksMap[ep.game_id] = { picked_team: ep.picked_team, is_best_bet: ep.is_best_bet };
-                    if (ep.is_best_bet) simulatedBestBetsCount++;
+                    finalPicksMap[ep.game_id] = {
+                        picked_team: ep.picked_team,
+                        is_best_bet: Boolean(ep.is_best_bet)
+                    };
                 }
             }
 
+            // 2. Process incoming client picks for unlocked games
             for (const p of picks) {
-                finalPicksMap[p.game_id] = { picked_team: p.picked_team, is_best_bet: p.is_best_bet || false };
-                if (p.is_best_bet) simulatedBestBetsCount++;
+                const game = gameMap[p.game_id];
+                const isLocked = game && game.game_date && new Date() >= new Date(game.game_date);
+                if (!isLocked) {
+                    finalPicksMap[p.game_id] = {
+                        picked_team: p.picked_team,
+                        is_best_bet: Boolean(p.is_best_bet)
+                    };
+                }
             }
+
+            // 3. Accurately count total simulated best bets from the combined map
+            const simulatedBestBetsCount = Object.values(finalPicksMap).filter(p => p.is_best_bet).length;
 
             if (simulatedBestBetsCount > 3) {
                 await t.rollback();
                 return res.status(400).json({ error: "You can only select a maximum of 3 Best Bets per week." });
             }
 
+            // 4. Destroy removed picks (only if not locked)
             for (const ep of existingPicks) {
                 const game = gameMap[ep.game_id];
                 const isLocked = game && game.game_date && new Date() >= new Date(game.game_date);
@@ -170,6 +183,7 @@ module.exports = function (app) {
                 }
             }
 
+            // 5. Upsert incoming picks
             for (const p of picks) {
                 const game = gameMap[p.game_id];
                 if (!game) continue;
@@ -181,7 +195,7 @@ module.exports = function (app) {
                 if (existingPick) {
                     await existingPick.update({
                         picked_team: p.picked_team,
-                        is_best_bet: p.is_best_bet || false
+                        is_best_bet: Boolean(p.is_best_bet)
                     }, { transaction: t });
                 } else {
                     await CfbPickemAtsPicks.create({
@@ -189,7 +203,7 @@ module.exports = function (app) {
                         week: targetWeek,
                         game_id: p.game_id,
                         picked_team: p.picked_team,
-                        is_best_bet: p.is_best_bet || false
+                        is_best_bet: Boolean(p.is_best_bet)
                     }, { transaction: t });
                 }
             }
@@ -198,8 +212,8 @@ module.exports = function (app) {
             res.json({ success: true, message: "Weekly picks saved successfully!" });
         } catch (err) {
             await t.rollback();
-            console.error("Error saving pick'em picks:", err);
-            res.status(500).json({ error: "Failed to save picks" });
+            console.error("CRITICAL Error saving pick'em picks:", err);
+            res.status(500).json({ error: err.message || "Failed to save picks" });
         }
     });
 
@@ -299,28 +313,28 @@ module.exports = function (app) {
                 replacements: { week }
             });
 
-    // Normalize result/status mapping for matrix cells so frontend sees explicit win/loss
-    const mappedResults = results.map(row => {
-        let pickStatus = (row.pick_status || row.status || "").toLowerCase();
-        const atsWinner = row.ats_winner;
-        const atsPick = row.ats_pick;
+            // Normalize result/status mapping for matrix cells so frontend sees explicit win/loss
+            const mappedResults = results.map(row => {
+                let pickStatus = (row.pick_status || row.status || "").toLowerCase();
+                const atsWinner = row.ats_winner;
+                const atsPick = row.ats_pick;
 
-        if (!pickStatus || pickStatus === "" || pickStatus === "pending") {
-            if (atsWinner && atsPick) {
-                if (atsWinner === "PUSH") {
-                    pickStatus = "push";
-                } else if (atsWinner === atsPick) {
-                    pickStatus = "win";
-                } else {
-                    pickStatus = "loss";
+                if (!pickStatus || pickStatus === "" || pickStatus === "pending") {
+                    if (atsWinner && atsPick) {
+                        if (atsWinner === "PUSH") {
+                            pickStatus = "push";
+                        } else if (atsWinner === atsPick) {
+                            pickStatus = "win";
+                        } else {
+                            pickStatus = "loss";
+                        }
+                    }
                 }
-            }
-        }
-        return {
-            ...row,
-            pick_status: pickStatus
-        };
-    });
+                return {
+                    ...row,
+                    pick_status: pickStatus
+                };
+            });
 
             res.json(mappedResults);
         } catch (err) {

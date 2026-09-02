@@ -78,7 +78,7 @@ export default function CfbPickemAtsPicks() {
             toast.error("This game has already started. Pick is locked.");
             return;
         }
-
+        console.log(gameId, team, gameDate)
         setPicks(prev => {
             const currentPickedTeam = prev[gameId]?.picked_team;
             if (currentPickedTeam === team) {
@@ -384,7 +384,6 @@ export default function CfbPickemAtsPicks() {
 
                             const homeColor = homeTeamMeta.primaryColor || game.home_color || "#1e3a8a";
                             const homeSecondary = homeTeamMeta.secondaryColor || game.home_secondary_color || "#cbd5e1";
-                            console.log(homeColor, homeSecondary)
 
                             const favoriteTeam = game.favorite;
                             const favTeamMeta = teamColors[favoriteTeam] || {};
