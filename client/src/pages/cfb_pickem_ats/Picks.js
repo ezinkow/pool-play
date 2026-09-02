@@ -157,44 +157,60 @@ export default function CfbPickemAtsPicks() {
     });
 
     const handleSubmitAll = async () => {
+        console.log("--- DEBUG: handleSubmitAll started ---");
+        console.log("Current Week:", currentWeek);
+        console.log("Raw Picks State:", picks);
+        console.log("Available Games Count:", availableGames.length);
+
         if (completedMustPicks !== totalMustPicks) {
+            console.log(`Validation failed: Must-picks incomplete (${completedMustPicks}/${totalMustPicks})`);
             toast.error(`You must select all ${totalMustPicks} must-pick games before saving!`);
             return;
         }
 
         if (bestBetCount > 3) {
+            console.log(`Validation failed: Too many best bets (${bestBetCount})`);
             toast.error(`You can select a maximum of 3 Best Bets! (Currently selected: ${bestBetCount})`);
             return;
         }
 
         if (totalSelectedCount === 15 && bestBetCount < 3) {
+            console.log("Validation failed: 15 total picks selected but fewer than 3 best bets.");
             toast.error("You must select 3 Best Bets when submitting 15 total picks.");
             return;
         }
 
         if (totalSelectedCount < 15 && bestBetCount < 3) {
+            console.log("Warning: Fewer than 3 Best Bets selected with < 15 picks.");
             toast("Note: You have fewer than 3 Best Bets selected.", { icon: '⚠️' });
         }
 
         const activeGameIds = new Set(availableGames.map(g => g.id));
+        console.log("Active Game IDs (unlocked):", Array.from(activeGameIds));
 
         const formattedPicks = Object.keys(picks)
             .filter(gameId => activeGameIds.has(Number(gameId)))
             .map(gameId => ({
                 game_id: Number(gameId),
                 picked_team: picks[gameId].picked_team,
-                is_best_bet: picks[gameId].is_best_bet
+                is_best_bet: Boolean(picks[gameId].is_best_bet)
             }));
 
+        console.log("Formatted Picks Payload:", formattedPicks);
+        console.log("Auth Token present:", !!token);
+
         try {
-            await axios.post("/api/cfb_pickem_ats/picks", {
+            const response = await axios.post("/api/cfb_pickem_ats/picks", {
                 week: currentWeek,
                 picks: formattedPicks
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            console.log("Save Response Success:", response.data);
             toast.success(`Week ${currentWeek} picks submitted successfully!`);
         } catch (err) {
+            console.error("Save Response Error:", err);
+            console.error("Error Response Data:", err.response?.data);
             toast.error(err.response?.data?.error || "Failed to submit picks");
         }
     };
