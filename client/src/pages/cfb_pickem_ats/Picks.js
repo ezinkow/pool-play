@@ -185,11 +185,11 @@ export default function CfbPickemAtsPicks() {
             toast("Note: You have fewer than 3 Best Bets selected.", { icon: '⚠️' });
         }
 
-        const activeGameIds = new Set(availableGames.map(g => g.id));
+        const activeGameIds = new Set(availableGames.map(g => String(g.id)));
         console.log("Active Game IDs (unlocked):", Array.from(activeGameIds));
 
         const formattedPicks = Object.keys(picks)
-            .filter(gameId => activeGameIds.has(Number(gameId)))
+            .filter(gameId => activeGameIds.has(String(gameId)))
             .map(gameId => ({
                 game_id: Number(gameId),
                 picked_team: picks[gameId].picked_team,
