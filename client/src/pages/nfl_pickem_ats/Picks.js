@@ -171,7 +171,7 @@ export default function NflPickemAtsPicks() {
                 if (updatedPicks[game.id]) {
                     delete updatedPicks[game.id].picked_team;
                     delete updatedPicks[game.id].over_under_pick;
-                    if (!updatedPicks[game.id].is_best_bet && !updatedPicks[game.id].picked_team) {
+                    if (!updatedPicks[game.id].is_best_bet && !updatedPicks[game.id].picked_team && !updatedPicks[game.id].over_under_pick) {
                         delete updatedPicks[game.id];
                     }
                 }
@@ -280,7 +280,7 @@ export default function NflPickemAtsPicks() {
                 is_best_bet: Boolean(picks[gameId].is_best_bet),
                 ou_pick: picks[gameId].over_under_pick || null
             }));
-        console.log(formattedPicks);
+
         try {
             await axios.post("/api/nfl_pickem_ats/picks", {
                 week: currentWeek,
@@ -540,7 +540,7 @@ export default function NflPickemAtsPicks() {
 
                             const isAwayPicked = userPick.picked_team === game.away_team;
                             const isHomePicked = userPick.picked_team === game.home_team;
-                            const ouPick = userPick.over_under_pick; // "over" or "under" (lowercase)
+                            const ouPick = userPick.over_under_pick; // "over" or "under"
 
                             return (
                                 <div key={game.id} style={{
@@ -580,7 +580,7 @@ export default function NflPickemAtsPicks() {
                                                         />
                                                     </span>
                                                 )}
-                                                <strong>{rawSpread}</strong>
+                                                <strong>{rawSpread}</strong> | O/U: <strong>{game.over_under}</strong>
                                             </span>
                                             {isLocked && <span style={{ fontSize: "9px", color: NFL_RED, fontWeight: 700 }}>🔒</span>}
                                         </div>
