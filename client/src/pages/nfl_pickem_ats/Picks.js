@@ -181,7 +181,7 @@ export default function NflPickemAtsPicks() {
             if (type === "over" || type === "under") {
                 updatedPicks[game.id] = {
                     ...updatedPicks[game.id],
-                    over_under_pick: type === "over" ? "OVER" : "UNDER"
+                    over_under_pick: type === "over" ? "over" : "under"
                 };
                 return;
             }
@@ -222,7 +222,7 @@ export default function NflPickemAtsPicks() {
         }
 
         if (type === "over" || type === "under") {
-            const targetVal = type === "over" ? "OVER" : "UNDER";
+            const targetVal = type === "over" ? "over" : "under";
             return availableGames.every(game => picks[game.id]?.over_under_pick === targetVal);
         }
 
@@ -278,9 +278,9 @@ export default function NflPickemAtsPicks() {
                 game_id: Number(gameId),
                 picked_team: picks[gameId].picked_team,
                 is_best_bet: Boolean(picks[gameId].is_best_bet),
-                over_under_pick: picks[gameId].over_under_pick || null
+                ou_pick: picks[gameId].over_under_pick || null
             }));
-
+        console.log(formattedPicks);
         try {
             await axios.post("/api/nfl_pickem_ats/picks", {
                 week: currentWeek,
@@ -540,7 +540,7 @@ export default function NflPickemAtsPicks() {
 
                             const isAwayPicked = userPick.picked_team === game.away_team;
                             const isHomePicked = userPick.picked_team === game.home_team;
-                            const ouPick = userPick.over_under_pick; // "OVER" or "UNDER"
+                            const ouPick = userPick.over_under_pick; // "over" or "under" (lowercase)
 
                             return (
                                 <div key={game.id} style={{
@@ -740,12 +740,12 @@ export default function NflPickemAtsPicks() {
                                         </span>
                                         <div style={{ display: "flex", gap: 4 }}>
                                             <button
-                                                onClick={() => !isLocked && handleOverUnderPick(game.id, "OVER", game.game_date)}
+                                                onClick={() => !isLocked && handleOverUnderPick(game.id, "over", game.game_date)}
                                                 disabled={isLocked}
                                                 style={{
-                                                    background: ouPick === "OVER" ? "#0284c7" : "#ffffff",
-                                                    color: ouPick === "OVER" ? "#ffffff" : "#334155",
-                                                    border: ouPick === "OVER" ? "1px solid #0284c7" : "1px solid #cbd5e1",
+                                                    background: ouPick === "over" ? "#0284c7" : "#ffffff",
+                                                    color: ouPick === "over" ? "#ffffff" : "#334155",
+                                                    border: ouPick === "over" ? "1px solid #0284c7" : "1px solid #cbd5e1",
                                                     padding: "3px 10px",
                                                     borderRadius: 4,
                                                     fontSize: "11px",
@@ -756,12 +756,12 @@ export default function NflPickemAtsPicks() {
                                                 Over
                                             </button>
                                             <button
-                                                onClick={() => !isLocked && handleOverUnderPick(game.id, "UNDER", game.game_date)}
+                                                onClick={() => !isLocked && handleOverUnderPick(game.id, "under", game.game_date)}
                                                 disabled={isLocked}
                                                 style={{
-                                                    background: ouPick === "UNDER" ? "#0284c7" : "#ffffff",
-                                                    color: ouPick === "UNDER" ? "#ffffff" : "#334155",
-                                                    border: ouPick === "UNDER" ? "1px solid #0284c7" : "1px solid #cbd5e1",
+                                                    background: ouPick === "under" ? "#0284c7" : "#ffffff",
+                                                    color: ouPick === "under" ? "#ffffff" : "#334155",
+                                                    border: ouPick === "under" ? "1px solid #0284c7" : "1px solid #cbd5e1",
                                                     padding: "3px 10px",
                                                     borderRadius: 4,
                                                     fontSize: "11px",
@@ -812,4 +812,4 @@ export default function NflPickemAtsPicks() {
             </div>
         </PoolGatekeeper>
     );
-}   
+}

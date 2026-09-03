@@ -147,7 +147,8 @@ module.exports = function (app) {
                 if (existingPick) {
                     await existingPick.update({
                         picked_team: p.picked_team,
-                        is_best_bet: p.is_best_bet || false
+                        is_best_bet: p.is_best_bet || false,
+                        ou_pick: p.ou_pick || null
                     });
                 } else {
                     await NflPickemAtsPicks.create({
@@ -155,7 +156,8 @@ module.exports = function (app) {
                         week: targetWeek,
                         game_id: p.game_id,
                         picked_team: p.picked_team,
-                        is_best_bet: p.is_best_bet || false
+                        is_best_bet: p.is_best_bet || false,
+                        ou_pick: p.ou_pick || null
                     });
                 }
             }
