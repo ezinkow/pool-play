@@ -78,7 +78,7 @@ export default function CfbPickemAtsPicks() {
             toast.error("This game has already started. Pick is locked.");
             return;
         }
-        console.log(gameId, team, gameDate)
+
         setPicks(prev => {
             const currentPickedTeam = prev[gameId]?.picked_team;
             if (currentPickedTeam === team) {
@@ -128,6 +128,22 @@ export default function CfbPickemAtsPicks() {
         }));
     };
 
+    const handleClearPicks = () => {
+        if (window.confirm("Are you sure you want to clear all unstarted picks for this week?")) {
+            const activeGameIds = new Set(availableGames.map(g => g.id));
+            setPicks(prev => {
+                const copy = { ...prev };
+                Object.keys(copy).forEach(gameId => {
+                    if (activeGameIds.has(Number(gameId))) {
+                        delete copy[gameId];
+                    }
+                });
+                return copy;
+            });
+            toast.success("Cleared picks for unlocked games");
+        }
+    };
+
     const sortedGames = [...availableGames].sort((a, b) => {
         if (a.must_pick && !b.must_pick) return -1;
         if (!a.must_pick && b.must_pick) return 1;
@@ -157,36 +173,31 @@ export default function CfbPickemAtsPicks() {
     });
 
     const handleSubmitAll = async () => {
-        console.log("--- DEBUG: handleSubmitAll started ---");
-        console.log("Current Week:", currentWeek);
-        console.log("Raw Picks State:", picks);
-        console.log("Available Games Count:", availableGames.length);
 
         if (completedMustPicks !== totalMustPicks) {
-            console.log(`Validation failed: Must-picks incomplete (${completedMustPicks}/${totalMustPicks})`);
             toast.error(`You must select all ${totalMustPicks} must-pick games before saving!`);
             return;
         }
 
         if (bestBetCount > 3) {
-            console.log(`Validation failed: Too many best bets (${bestBetCount})`);
             toast.error(`You can select a maximum of 3 Best Bets! (Currently selected: ${bestBetCount})`);
             return;
         }
 
         if (totalSelectedCount === 15 && bestBetCount < 3) {
-            console.log("Validation failed: 15 total picks selected but fewer than 3 best bets.");
             toast.error("You must select 3 Best Bets when submitting 15 total picks.");
             return;
         }
 
         if (totalSelectedCount < 15 && bestBetCount < 3) {
-            console.log("Warning: Fewer than 3 Best Bets selected with < 15 picks.");
-            toast("Note: You have fewer than 3 Best Bets selected.", { icon: '⚠️' });
+            toast("Note: You have fewer than 3 Best Bets selected!", { icon: '⚠️' });
+        }
+
+        if (totalSelectedCount < 15) {
+            toast("Note: You have fewer than 15 picks selected!", { icon: '⚠️' });
         }
 
         const activeGameIds = new Set(availableGames.map(g => String(g.id)));
-        console.log("Active Game IDs (unlocked):", Array.from(activeGameIds));
 
         const formattedPicks = Object.keys(picks)
             .filter(gameId => activeGameIds.has(String(gameId)))
@@ -196,9 +207,6 @@ export default function CfbPickemAtsPicks() {
                 is_best_bet: Boolean(picks[gameId].is_best_bet)
             }));
 
-        console.log("Formatted Picks Payload:", formattedPicks);
-        console.log("Auth Token present:", !!token);
-
         try {
             const response = await axios.post("/api/cfb_pickem_ats/picks", {
                 week: currentWeek,
@@ -206,7 +214,6 @@ export default function CfbPickemAtsPicks() {
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            console.log("Save Response Success:", response.data);
             toast.success(`Week ${currentWeek} picks submitted successfully!`);
         } catch (err) {
             console.error("Save Response Error:", err);
@@ -245,7 +252,7 @@ export default function CfbPickemAtsPicks() {
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
                             Select all {totalMustPicks} must-pick games & up to 15 total games (up to 3 Best Bets ⭐).
                         </p>
-                        <div style={{ display: "flex", justifyContent: "center", gap: 6, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 2 }}>
+                        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 2 }}>
                             {totalMustPicks > 0 && (
                                 <div style={{ background: completedMustPicks === totalMustPicks ? "#ecfdf5" : "#fff7ed", color: completedMustPicks === totalMustPicks ? "#047857" : "#c2410c", padding: "4px 8px", borderRadius: 6, fontWeight: 700, fontSize: "11px", whiteSpace: "nowrap" }}>
                                     Must-Picks: {completedMustPicks}/{totalMustPicks}
@@ -257,6 +264,25 @@ export default function CfbPickemAtsPicks() {
                             <div style={{ background: "#f8fafc", color: "#475569", padding: "4px 8px", borderRadius: 6, fontWeight: 700, fontSize: "11px", border: "1px solid #cbd5e1", whiteSpace: "nowrap" }}>
                                 Total: {totalSelectedCount}/15
                             </div>
+                            {sortedGames.length > 0 && (
+                                <button
+                                    onClick={handleSubmitAll}
+                                    style={{
+                                        background: "#16a34a",
+                                        color: "white",
+                                        border: "1px solid #15803d",
+                                        padding: "4px 10px",
+                                        borderRadius: 6,
+                                        fontSize: "11px",
+                                        fontWeight: 700,
+                                        cursor: "pointer",
+                                        whiteSpace: "nowrap",
+                                        boxShadow: "0 2px 4px rgba(22,163,74,0.25)"
+                                    }}
+                                >
+                                    Save
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -294,7 +320,7 @@ export default function CfbPickemAtsPicks() {
                     ))}
                 </div>
 
-                {/* Controls Bar: Sort Dropdown & Save Button */}
+                {/* Controls Bar: Sort Dropdown & Clear Button */}
                 <div style={{
                     display: "flex",
                     justifyContent: "space-between",
@@ -337,21 +363,20 @@ export default function CfbPickemAtsPicks() {
 
                     {sortedGames.length > 0 && (
                         <button
-                            onClick={handleSubmitAll}
+                            onClick={handleClearPicks}
                             style={{
-                                background: "#16a34a",
-                                color: "white",
-                                border: "none",
-                                padding: "6px 12px",
+                                background: "#fef2f2",
+                                color: "#dc2626",
+                                border: "1px solid #fecaca",
+                                padding: "5px 10px",
                                 borderRadius: 6,
                                 fontSize: "12px",
                                 fontWeight: 700,
                                 cursor: "pointer",
-                                whiteSpace: "nowrap",
-                                boxShadow: "0 2px 4px rgba(22,163,74,0.3)"
+                                whiteSpace: "nowrap"
                             }}
                         >
-                            Save
+                            Clear Picks
                         </button>
                     )}
                 </div>
@@ -521,7 +546,10 @@ export default function CfbPickemAtsPicks() {
                                             <div
                                                 onClick={() => !isLocked && handleTeamPick(game.id, game.away_team, game.game_date)}
                                                 style={{
-                                                    background: isAwayPicked ? awayColor : `linear-gradient(135deg, ${awayColor}26 0%, ${awaySecondary}26 50%, #f8fafc 100%)`,
+                                                    backgroundImage: isAwayPicked
+                                                        ? `linear-gradient(to right, ${awayColor} 100%, ${awayColor} 100%)`
+                                                        : `linear-gradient(to right, ${awayColor} 0%, ${awayColor} 0%, transparent 0%), linear-gradient(135deg, ${awayColor}26 0%, ${awaySecondary}26 50%, #f8fafc 100%)`,
+                                                    backgroundColor: isAwayPicked ? awayColor : "transparent",
                                                     borderRadius: 6,
                                                     border: isAwayPicked ? `2px solid #0284c7` : `1px solid ${awayColor}55`,
                                                     padding: "8px 6px",
@@ -532,7 +560,9 @@ export default function CfbPickemAtsPicks() {
                                                     textAlign: "center",
                                                     position: "relative",
                                                     boxShadow: isAwayPicked ? `0 0 10px rgba(2, 132, 199, 0.35), inset 0 0 8px ${awayColor}` : "none",
-                                                    transition: "all 0.15s ease",
+                                                    transition: "background-size 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border 0.2s ease",
+                                                    backgroundSize: isAwayPicked ? "100% 100%" : "0% 100%, 100% 100%",
+                                                    backgroundRepeat: "no-repeat",
                                                     minWidth: 0
                                                 }}
                                             >
@@ -559,11 +589,11 @@ export default function CfbPickemAtsPicks() {
                                                         boxShadow: `0 0 4px 1px ${awayColor}, 0 1px 3px rgba(0,0,0,0.15)`,
                                                         border: `1.5px solid ${awayColor}`,
                                                         marginBottom: 4,
-                                                        width: 26,
-                                                        height: 26,
+                                                        width: 35,
+                                                        height: 35,
                                                         flexShrink: 0
                                                     }}>
-                                                        <img src={awayLogo} alt={game.away_team} style={{ width: 18, height: 18, objectFit: "contain", display: "block" }} />
+                                                        <img src={awayLogo} alt={game.away_team} style={{ width: 25, height: 25, objectFit: "contain", display: "block" }} />
                                                     </div>
                                                 )}
                                                 <div style={{ fontWeight: isAwayPicked ? 800 : 600, fontSize: "12px", color: isAwayPicked ? "#ffffff" : "#0f172a", marginBottom: 2, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -579,7 +609,10 @@ export default function CfbPickemAtsPicks() {
                                             <div
                                                 onClick={() => !isLocked && handleTeamPick(game.id, game.home_team, game.game_date)}
                                                 style={{
-                                                    background: isHomePicked ? homeColor : `linear-gradient(135deg, ${homeColor}26 0%, ${homeSecondary}26 50%, #f8fafc 100%)`,
+                                                    backgroundImage: isHomePicked
+                                                        ? `linear-gradient(to right, ${homeColor} 100%, ${homeColor} 100%)`
+                                                        : `linear-gradient(to right, ${homeColor} 0%, ${homeColor} 0%, transparent 0%), linear-gradient(135deg, ${homeColor}26 0%, ${homeSecondary}26 50%, #f8fafc 100%)`,
+                                                    backgroundColor: isHomePicked ? homeColor : "transparent",
                                                     borderRadius: 6,
                                                     border: isHomePicked ? `2px solid #0284c7` : `1px solid ${homeColor}55`,
                                                     padding: "8px 6px",
@@ -590,7 +623,9 @@ export default function CfbPickemAtsPicks() {
                                                     textAlign: "center",
                                                     position: "relative",
                                                     boxShadow: isHomePicked ? `0 0 10px rgba(2, 132, 199, 0.35), inset 0 0 8px ${homeColor}` : "none",
-                                                    transition: "all 0.15s ease",
+                                                    transition: "background-size 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border 0.2s ease",
+                                                    backgroundSize: isHomePicked ? "100% 100%" : "0% 100%, 100% 100%",
+                                                    backgroundRepeat: "no-repeat",
                                                     minWidth: 0
                                                 }}
                                             >
@@ -617,11 +652,11 @@ export default function CfbPickemAtsPicks() {
                                                         boxShadow: `0 0 4px 1px ${homeColor}, 0 1px 3px rgba(0,0,0,0.15)`,
                                                         border: `1.5px solid ${homeColor}`,
                                                         marginBottom: 4,
-                                                        width: 26,
-                                                        height: 26,
+                                                        width: 35,
+                                                        height: 35,
                                                         flexShrink: 0
                                                     }}>
-                                                        <img src={homeLogo} alt={game.home_team} style={{ width: 18, height: 18, objectFit: "contain", display: "block" }} />
+                                                        <img src={homeLogo} alt={game.home_team} style={{ width: 25, height: 25, objectFit: "contain", display: "block" }} />
                                                     </div>
                                                 )}
                                                 <div style={{ fontWeight: isHomePicked ? 800 : 600, fontSize: "12px", color: isHomePicked ? "#ffffff" : "#0f172a", marginBottom: 2, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
