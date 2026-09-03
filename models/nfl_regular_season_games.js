@@ -1,5 +1,6 @@
 module.exports = function (sequelize, DataTypes) {
     const NflRegularSeasonGames = sequelize.define("NflRegularSeasonGames", {
+        id: { type: DataTypes.STRING, primaryKey: true, allowNull: false },
         week: { type: DataTypes.INTEGER, allowNull: false },
         home_team: { type: DataTypes.STRING, allowNull: false },
         away_team: { type: DataTypes.STRING, allowNull: false },

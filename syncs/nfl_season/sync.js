@@ -68,6 +68,7 @@ function extractMatchups(data) {
         const comp = event.competitions?.[0];
         if (!comp) return;
 
+        const gameId = event.id; // ESPN Game ID used as primary key
         const weekNum = event.week?.number || 1;
         const gameDate = event.date;
 
@@ -134,6 +135,7 @@ function extractMatchups(data) {
         }
 
         matchups.push({
+            id: gameId, // Set ESPN game ID as primary key
             week: weekNum,
             home_team: homeCompetitor.team.name,
             away_team: awayCompetitor.team.name,
@@ -282,13 +284,40 @@ async function evaluateSurvivorResults() {
 async function processMatchup(m) {
     const { NflRegularSeasonGames } = db;
     try {
-        const [game, created] = await NflRegularSeasonGames.findOrCreate({
-            where: { week: m.week, home_team: m.home_team, away_team: m.away_team },
-            defaults: m
+        const existingGame = await NflRegularSeasonGames.findOne({
+            where: { id: m.id }
         });
 
-        if (!created) {
-            await game.update(m);
+        if (!existingGame) {
+            await NflRegularSeasonGames.create(m);
+        } else {
+            let payloadToUpdate = { ...m };
+
+            if ((payloadToUpdate.spread === null || payloadToUpdate.spread === undefined) && existingGame.spread != null) {
+                payloadToUpdate.spread = existingGame.spread;
+                payloadToUpdate.adjusted_spread = existingGame.adjusted_spread;
+                payloadToUpdate.spread_odds = existingGame.spread_odds;
+                payloadToUpdate.away_spread_odds = existingGame.away_spread_odds;
+                payloadToUpdate.over_under = existingGame.over_under;
+                payloadToUpdate.favorite = existingGame.favorite;
+            }
+
+            if (existingGame.game_date) {
+                const kickoffTime = new Date(existingGame.game_date).getTime();
+                const now = Date.now();
+                const hoursUntilKickoff = (kickoffTime - now) / (1000 * 60 * 60);
+
+                if (hoursUntilKickoff <= 48) {
+                    payloadToUpdate.spread = existingGame.spread;
+                    payloadToUpdate.adjusted_spread = existingGame.adjusted_spread;
+                    payloadToUpdate.spread_odds = existingGame.spread_odds;
+                    payloadToUpdate.away_spread_odds = existingGame.away_spread_odds;
+                    payloadToUpdate.over_under = existingGame.over_under;
+                    payloadToUpdate.favorite = existingGame.favorite;
+                }
+            }
+
+            await existingGame.update(payloadToUpdate);
         }
     } catch (err) {
         console.error(`[NFL BTS sync] Error saving matchup Week ${m.week} (${m.away_team} @ ${m.home_team}):`, err.message);
