@@ -68,6 +68,7 @@ export default function NflPickemAtsPicks() {
 
     const bestBetCount = Object.values(picks).filter(p => p.is_best_bet).length;
     const selectedPicksCount = Object.values(picks).filter(p => p.picked_team).length;
+    const selectedOuCount = Object.values(picks).filter(p => p.over_under_pick).length;
     const totalGamesCount = games.length;
 
     const handleTeamPick = (gameId, team, gameDate) => {
@@ -329,6 +330,9 @@ export default function NflPickemAtsPicks() {
                             </div>
                             <div style={{ background: "#f8fafc", color: "#475569", padding: "4px 8px", borderRadius: 6, fontWeight: 700, fontSize: "11px", border: "1px solid #cbd5e1", whiteSpace: "nowrap" }}>
                                 Selected: {selectedPicksCount}/{totalGamesCount}
+                            </div>
+                            <div style={{ background: "#f8fafc", color: "#475569", padding: "4px 8px", borderRadius: 6, fontWeight: 700, fontSize: "11px", border: "1px solid #cbd5e1", whiteSpace: "nowrap" }}>
+                                O/U Selected: {selectedOuCount}/{totalGamesCount}
                             </div>
                             {sortedGames.length > 0 && (
                                 <button
@@ -808,4 +812,4 @@ export default function NflPickemAtsPicks() {
             </div>
         </PoolGatekeeper>
     );
-}
+}   
