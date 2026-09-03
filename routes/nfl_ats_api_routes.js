@@ -70,13 +70,11 @@ module.exports = function (app) {
         try {
             const week = parseInt(req.query.week) || 1;
 
-            // 1. Get all regular season games for the week
             const games = await NflRegularSeasonGames.findAll({
                 where: { week },
                 order: [["game_date", "ASC"]]
             });
 
-            // 2. Get user's current picks for this week
             const userPicks = await NflPickemAtsPicks.findAll({
                 where: { user_id: req.user.id, week }
             });
@@ -85,7 +83,8 @@ module.exports = function (app) {
             userPicks.forEach(p => {
                 pickMap[p.game_id] = {
                     picked_team: p.picked_team,
-                    is_best_bet: p.is_best_bet
+                    is_best_bet: p.is_best_bet,
+                    over_under_pick: p.ou_pick // 👈 Added database ou_pick mapping here
                 };
             });
 
@@ -176,13 +175,11 @@ module.exports = function (app) {
         try {
             const week = parseInt(req.query.week) || 1;
 
-            // 1. Get games for the week
             const games = await NflRegularSeasonGames.findAll({
                 where: { week },
                 order: [["game_date", "ASC"]]
             });
 
-            // 2. Get user's picks for this week
             const userPicks = await NflPickemAtsPicks.findAll({
                 where: { user_id: req.user.id, week }
             });
@@ -192,7 +189,8 @@ module.exports = function (app) {
                 pickMap[p.game_id] = {
                     picked_team: p.picked_team,
                     is_best_bet: p.is_best_bet,
-                    status: p.status // "win", "loss", "push", or null/pending
+                    over_under_pick: p.ou_pick, // 👈 Added database ou_pick mapping here
+                    status: p.status
                 };
             });
 

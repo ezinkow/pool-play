@@ -57,32 +57,51 @@ export default function NflPickemAtsMyPicks() {
             .finally(() => setLoading(false));
     }, [user, currentWeek, token]);
 
-    // Calculate total points and records dynamically using ats_winner from the game
+    // Calculate total points and records dynamically using ats_winner and ou_result from the game
     let totalPoints = 0;
     let wins = 0;
     let losses = 0;
     let pushes = 0;
+    let ouWins = 0;
+    let ouLosses = 0;
+    let ouPushes = 0;
 
     games.forEach(game => {
         const userPick = picks[game.id];
-        if (!userPick || !userPick.picked_team) return;
+        if (!userPick) return;
 
-        if (game.ats_winner !== null && game.ats_winner !== undefined) {
-            if (game.ats_winner === "PUSH") {
-                pushes++;
-            } else if (game.ats_winner === userPick.picked_team) {
-                wins++;
-                totalPoints += userPick.is_best_bet ? 2 : 1;
-            } else {
-                losses++;
+        // ATS Scoring
+        if (userPick.picked_team) {
+            if (game.ats_winner !== null && game.ats_winner !== undefined) {
+                if (game.ats_winner === "PUSH") {
+                    pushes++;
+                } else if (game.ats_winner === userPick.picked_team) {
+                    wins++;
+                    totalPoints += userPick.is_best_bet ? 2 : 1;
+                } else {
+                    losses++;
+                }
+            }
+        }
+
+        // O/U Scoring
+        if (userPick.over_under_pick) {
+            if (game.ou_result && game.ou_result !== "PENDING") {
+                if (game.ou_result === "PUSH") {
+                    ouPushes++;
+                } else if (game.ou_result === userPick.over_under_pick) {
+                    ouWins++;
+                } else {
+                    ouLosses++;
+                }
             }
         }
     });
 
-    // Filter games to ONLY show the ones the user has actually picked
+    // Filter games to ONLY show the ones the user has actually made a pick for (ATS or O/U)
     const pickedGames = games.filter(game => {
         const userPick = picks[game.id];
-        return userPick && userPick.picked_team;
+        return userPick && (userPick.picked_team || userPick.over_under_pick);
     });
 
     if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, -apple-system, sans-serif" }}>Loading your picks summary...</div>;
@@ -101,7 +120,10 @@ export default function NflPickemAtsMyPicks() {
                     {/* Score / Stats Banner */}
                     <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: 12, flexWrap: "wrap" }}>
                         <div style={{ background: "#f1f5f9", padding: "8px 16px", borderRadius: 8, fontWeight: 700, fontSize: "13px", color: "#334155" }}>
-                            Record: {wins} - {losses} {pushes > 0 ? `- ${pushes}` : ""}
+                            ATS Record: {wins} - {losses} {pushes > 0 ? `- ${pushes}` : ""}
+                        </div>
+                        <div style={{ background: "#f1f5f9", padding: "8px 16px", borderRadius: 8, fontWeight: 700, fontSize: "13px", color: "#334155" }}>
+                            O/U Record: {ouWins} - {ouLosses} {ouPushes > 0 ? `- ${ouPushes}` : ""}
                         </div>
                         <div style={{ background: "#ecfdf5", padding: "8px 16px", borderRadius: 8, fontWeight: 700, fontSize: "13px", color: "#047857" }}>
                             Total Points: {totalPoints} pts
@@ -162,10 +184,10 @@ export default function NflPickemAtsMyPicks() {
                 ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                         {pickedGames.map(game => {
-                            const userPick = picks[game.id];
-                            const pickedTeam = userPick?.picked_team;
-                            const isBestBet = userPick?.is_best_bet;
-                            const ouPick = userPick?.ou_pick;
+                            const userPick = picks[game.id] || {};
+                            const pickedTeam = userPick.picked_team;
+                            const isBestBet = userPick.is_best_bet;
+                            const ouPick = userPick.over_under_pick;
 
                             const teamMeta = teamColors[pickedTeam] || {};
                             const teamColor = teamMeta.color || NFL_BLUE;
@@ -175,20 +197,23 @@ export default function NflPickemAtsMyPicks() {
                             const awayLogo = game.away_logo || awayMeta.logo;
                             const homeLogo = game.home_logo || homeMeta.logo;
 
+                            const awayColor = game.away_color || awayMeta.color || NFL_BLUE;
+                            const homeColor = game.home_color || homeMeta.color || NFL_BLUE;
+
                             const awaySecondary = game.away_secondary_color || awayMeta.secondaryColor || "#cbd5e1";
                             const homeSecondary = game.home_secondary_color || homeMeta.secondaryColor || "#cbd5e1";
 
-                            const isPickedAway = pickedTeam === game.away_team;
-                            const isPickedHome = pickedTeam === game.home_team;
+                            const isAwayPicked = pickedTeam === game.away_team;
+                            const isHomePicked = pickedTeam === game.home_team;
 
-                            const pickedLogo = isPickedAway ? awayLogo : (isPickedHome ? homeLogo : teamMeta.logo);
-                            const pickedSecondary = isPickedAway
+                            const pickedLogo = isAwayPicked ? awayLogo : (isHomePicked ? homeLogo : teamMeta.logo);
+                            const pickedPrimary = isAwayPicked ? awayColor : (isHomePicked ? homeColor : teamColor);
+                            const pickedSecondary = isAwayPicked
                                 ? awaySecondary
-                                : (isPickedHome ? homeSecondary : (teamMeta.secondaryColor || "#cbd5e1"));
+                                : (isHomePicked ? homeSecondary : (teamMeta.secondaryColor || "#cbd5e1"));
 
                             const isFinished = game.ats_winner !== null && game.ats_winner !== undefined;
 
-                            // Stricter check to ensure scores are actually populated (greater than 0 or explicitly finalized status)
                             const hasValidScores =
                                 game.home_score !== null && game.home_score !== undefined &&
                                 game.away_score !== null && game.away_score !== undefined &&
@@ -196,35 +221,39 @@ export default function NflPickemAtsMyPicks() {
                                     game.status === "STATUS_FINAL" || game.status === "Final" || game.status === "completed" || isFinished);
 
                             // ATS Status Badge
-                            let statusBadge = <span style={{ color: "#64748b", fontWeight: 700, fontSize: "11px" }}>⏳ Pending</span>;
-                            if (isFinished) {
-                                if (game.ats_winner === "PUSH") {
-                                    statusBadge = <span style={{ color: "#d97706", fontWeight: 800, fontSize: "11px" }}>— PUSH</span>;
-                                } else if (game.ats_winner === pickedTeam) {
-                                    statusBadge = <span style={{ color: "#16a34a", fontWeight: 800, fontSize: "11px" }}>✓ WIN ({isBestBet ? "+2" : "+1"})</span>;
+                            let statusBadge = null;
+                            if (pickedTeam) {
+                                if (isFinished) {
+                                    if (game.ats_winner === "PUSH") {
+                                        statusBadge = <span style={{ color: "#d97706", fontWeight: 800, fontSize: "11px" }}>— ATS PUSH</span>;
+                                    } else if (game.ats_winner === pickedTeam) {
+                                        statusBadge = <span style={{ color: "#16a34a", fontWeight: 800, fontSize: "11px" }}>✓ ATS WIN ({isBestBet ? "+2" : "+1"})</span>;
+                                    } else {
+                                        statusBadge = <span style={{ color: NFL_RED, fontWeight: 800, fontSize: "11px" }}>✕ ATS LOSS</span>;
+                                    }
                                 } else {
-                                    statusBadge = <span style={{ color: NFL_RED, fontWeight: 800, fontSize: "11px" }}>✕ LOSS</span>;
+                                    statusBadge = <span style={{ color: "#64748b", fontWeight: 700, fontSize: "11px" }}>⏳ ATS Pending</span>;
                                 }
                             }
 
                             // O/U Result Badge
                             let ouBadge = null;
                             if (ouPick) {
-                                let ouText = `${ouPick} (${game.over_under})`;
+                                let ouText = `O/U: ${ouPick.toUpperCase()} (${game.over_under})`;
                                 let ouColor = "#64748b";
                                 if (game.ou_result && game.ou_result !== "PENDING") {
                                     if (game.ou_result === "PUSH") {
-                                        ouText = `O/U PUSH (${game.over_under})`;
+                                        ouText = `— O/U PUSH (${game.over_under})`;
                                         ouColor = "#d97706";
                                     } else if (game.ou_result === ouPick) {
-                                        ouText = `✓ O/U WIN`;
+                                        ouText = `✓ O/U WIN (${ouPick.toUpperCase()} ${game.over_under})`;
                                         ouColor = "#16a34a";
                                     } else {
-                                        ouText = `✕ O/U LOSS`;
+                                        ouText = `✕ O/U LOSS (${ouPick.toUpperCase()} ${game.over_under})`;
                                         ouColor = NFL_RED;
                                     }
                                 }
-                                ouBadge = <span style={{ color: ouColor, fontWeight: 700, fontSize: "10px", marginLeft: 4 }}>{ouText}</span>;
+                                ouBadge = <span style={{ color: ouColor, fontWeight: 700, fontSize: "11px", display: "block", marginTop: 2 }}>{ouText}</span>;
                             }
 
                             const absSpread = Math.abs(game.adjusted_spread || game.spread || 3.0);
@@ -232,16 +261,13 @@ export default function NflPickemAtsMyPicks() {
                             const awaySpreadStr = isAwayFav ? `-${absSpread}` : `+${absSpread}`;
                             const homeSpreadStr = isAwayFav ? `+${absSpread}` : `-${absSpread}`;
 
-                            const isAwayPicked = pickedTeam === game.away_team;
-                            const isHomePicked = pickedTeam === game.home_team;
-
                             return (
                                 <div key={game.id} style={{
                                     background: isBestBet ? "linear-gradient(135deg, #fffdf4 0%, #ffffff 100%)" : "white",
                                     borderRadius: 12,
                                     boxShadow: isBestBet ? "0 4px 12px rgba(200, 157, 60, 0.15)" : "0 2px 6px rgba(0,0,0,0.04)",
                                     padding: "12px 16px",
-                                    borderLeft: `5px solid ${isBestBet ? GOLD : (pickedTeam ? teamColor : "#cbd5e1")}`,
+                                    borderLeft: `5px solid ${isBestBet ? GOLD : (pickedTeam ? teamColor : "#0284c7")}`,
                                     borderTop: isBestBet ? `1px solid ${GOLD}40` : "1px solid #e2e8f0",
                                     borderRight: isBestBet ? `1px solid ${GOLD}40` : "1px solid #e2e8f0",
                                     borderBottom: isBestBet ? `1px solid ${GOLD}40` : "1px solid #e2e8f0",
@@ -252,8 +278,8 @@ export default function NflPickemAtsMyPicks() {
                                     gap: 12
                                 }}>
                                     {/* Left: Matchup & Final Score */}
-                                    <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, overflow: "hidden" }}>
-                                        <div className="matchup-header-row" style={{ fontSize: "14px", color: "#1e293b", fontWeight: 600, display: "flex", gap: 8, alignItems: "center", flexWrap: "nowrap", whiteSpace: "nowrap" }}>
+                                    <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, overflow: "visible" }}>
+                                        <div className="matchup-header-row" style={{ fontSize: "14px", color: "#1e293b", fontWeight: 600, display: "flex", gap: 8, alignItems: "center", flexWrap: "nowrap", whiteSpace: "nowrap", overflow: "visible" }}>
 
                                             {/* Away Team Section */}
                                             <span className="team-display" style={{
@@ -263,19 +289,22 @@ export default function NflPickemAtsMyPicks() {
                                                 background: isAwayPicked ? `${teamColor}12` : "transparent",
                                                 padding: isAwayPicked ? "2px 6px" : "0",
                                                 borderRadius: 6,
-                                                border: isAwayPicked ? `1px solid ${teamColor}30` : "1px solid transparent"
+                                                border: isAwayPicked ? `1px solid ${teamColor}30` : "1px solid transparent",
+                                                overflow: "visible"
                                             }}>
                                                 {awayLogo && (
                                                     <span style={{
                                                         background: awaySecondary,
-                                                        borderRadius: 4,
-                                                        padding: "2px 4px",
+                                                        borderRadius: 6,
+                                                        padding: "3px 5px",
                                                         display: "inline-flex",
                                                         alignItems: "center",
-                                                        boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                                                        border: "1px solid rgba(0,0,0,0.06)"
+                                                        boxShadow: `0 0 4px 1px ${awayColor}, 0 1px 2px rgba(0,0,0,0.15)`,
+                                                        border: `1.5px solid ${awayColor}`,
+                                                        overflow: "visible",
+                                                        flexShrink: 0
                                                     }}>
-                                                        <img src={awayLogo} alt={game.away_team} className="matchup-logo" style={{ width: 18, height: 18, objectFit: "contain" }} />
+                                                        <img src={awayLogo} alt={game.away_team} className="matchup-logo" style={{ width: 16, height: 16, objectFit: "contain", display: "block" }} />
                                                     </span>
                                                 )}
                                                 <span className="team-text" style={{ fontWeight: isAwayPicked ? 800 : 600, color: isAwayPicked ? teamColor : "#334155" }}>
@@ -294,19 +323,22 @@ export default function NflPickemAtsMyPicks() {
                                                 background: isHomePicked ? `${teamColor}12` : "transparent",
                                                 padding: isHomePicked ? "2px 6px" : "0",
                                                 borderRadius: 6,
-                                                border: isHomePicked ? `1px solid ${teamColor}30` : "1px solid transparent"
+                                                border: isHomePicked ? `1px solid ${teamColor}30` : "1px solid transparent",
+                                                overflow: "visible"
                                             }}>
                                                 {homeLogo && (
                                                     <span style={{
                                                         background: homeSecondary,
-                                                        borderRadius: 4,
-                                                        padding: "2px 4px",
+                                                        borderRadius: 6,
+                                                        padding: "3px 5px",
                                                         display: "inline-flex",
                                                         alignItems: "center",
-                                                        boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                                                        border: "1px solid rgba(0,0,0,0.06)"
+                                                        boxShadow: `0 0 4px 1px ${homeColor}, 0 1px 2px rgba(0,0,0,0.15)`,
+                                                        border: `1.5px solid ${homeColor}`,
+                                                        overflow: "visible",
+                                                        flexShrink: 0
                                                     }}>
-                                                        <img src={homeLogo} alt={game.home_team} className="matchup-logo" style={{ width: 18, height: 18, objectFit: "contain" }} />
+                                                        <img src={homeLogo} alt={game.home_team} className="matchup-logo" style={{ width: 16, height: 16, objectFit: "contain", display: "block" }} />
                                                     </span>
                                                 )}
                                                 <span className="team-text" style={{ fontWeight: isHomePicked ? 800 : 600, color: isHomePicked ? teamColor : "#334155" }}>
@@ -318,27 +350,31 @@ export default function NflPickemAtsMyPicks() {
                                         </div>
                                         {hasValidScores && (
                                             <span style={{ background: "#0f172a", color: "white", padding: "1px 6px", borderRadius: 4, fontSize: "11px", fontWeight: 700, marginTop: 4, width: "fit-content", letterSpacing: "0.3px" }}>
-                                                Final: {game.away_score} - {game.home_score}
+                                                Final: {game.away_score} - {game.home_score} (Total: {Number(game.away_score || 0) + Number(game.home_score || 0)})
                                             </span>
                                         )}
-                                        {ouBadge && <div style={{ marginTop: 3 }}>{ouBadge}</div>}
+                                        {ouBadge}
                                     </div>
 
                                     {/* Right: Pick Logo & Status / Best Bet Column */}
-                                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                                        <div style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            background: pickedSecondary,
-                                            padding: "3px 6px",
-                                            borderRadius: 8,
-                                            border: "1px solid rgba(0,0,0,0.08)",
-                                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-                                        }}>
-                                            {pickedLogo && <img src={pickedLogo} alt={pickedTeam} style={{ width: 30, height: 30, objectFit: "contain" }} />}
-                                        </div>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, overflow: "visible" }}>
+                                        {pickedTeam && (
+                                            <div style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                background: pickedSecondary,
+                                                padding: "3px 6px",
+                                                borderRadius: 6,
+                                                border: `1.5px solid ${pickedPrimary}`,
+                                                boxShadow: `0 0 4px 1px ${pickedPrimary}, 0 1px 2px rgba(0,0,0,0.15)`,
+                                                overflow: "visible",
+                                                flexShrink: 0
+                                            }}>
+                                                {pickedLogo && <img src={pickedLogo} alt={pickedTeam} style={{ width: 20, height: 20, objectFit: "contain", display: "block" }} />}
+                                            </div>
+                                        )}
 
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, minWidth: "75px" }}>
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, minWidth: "85px" }}>
                                             {statusBadge}
                                             {isBestBet && (
                                                 <span style={{ background: GOLD, color: "white", fontSize: "9px", padding: "2px 5px", borderRadius: 4, fontWeight: 900, letterSpacing: "0.5px", boxShadow: "0 1px 3px rgba(200, 157, 60, 0.4)" }}>
@@ -362,8 +398,8 @@ export default function NflPickemAtsMyPicks() {
                             font-size: 13px !important;
                         }
                         .matchup-logo {
-                            width: 16px !important;
-                            height: 16px !important;
+                            width: 14px !important;
+                            height: 14px !important;
                         }
                     }
                 `}</style>

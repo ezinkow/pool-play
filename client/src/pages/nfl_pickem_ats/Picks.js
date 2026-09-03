@@ -39,7 +39,7 @@ export default function NflPickemAtsPicks() {
             .catch(err => console.error("Failed to load NFL team colors", err));
     }, [token]);
 
-    // Fetch weekly schedule and user picks
+    // Fetch weekly schedule and user picks from database
     useEffect(() => {
         if (!user) return;
         setLoading(true);
@@ -49,7 +49,7 @@ export default function NflPickemAtsPicks() {
         })
             .then(res => {
                 setGames(res.data.games || []);
-                setPicks(res.data.userPicks || {});
+                setPicks(res.data.userPicks || {}); // Populates both picked_team & over_under_pick from DB
             })
             .catch(err => {
                 console.error("Failed to load pickem games", err);
@@ -275,7 +275,7 @@ export default function NflPickemAtsPicks() {
         const formattedPicks = Object.keys(picks)
             .filter(gameId => activeGameIds.has(String(gameId)))
             .map(gameId => ({
-                game_id: Number(gameId),
+                game_id: gameId,
                 picked_team: picks[gameId].picked_team,
                 is_best_bet: Boolean(picks[gameId].is_best_bet),
                 ou_pick: picks[gameId].over_under_pick || null
@@ -390,7 +390,7 @@ export default function NflPickemAtsPicks() {
                     ))}
                 </div>
 
-                {/* Controls Bar: Sort Dropdown, Select Buttons & Clear Button */}
+                {/* Controls Bar */}
                 <div style={{
                     display: "flex",
                     flexDirection: "column",
@@ -449,43 +449,44 @@ export default function NflPickemAtsPicks() {
                         )}
                     </div>
 
-                    {/* Bulk Select Action Buttons Row */}
+                    {/* Bulk Select Action Buttons Row - Fully wrapped layout for clean mobile fit */}
                     {sortedGames.length > 0 && (
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4, width: "100%", paddingTop: 2, flexWrap: "wrap" }}>
-                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#475569", marginRight: 2, flexShrink: 0 }}>Select:</span>
-                            {[
-                                { key: "favorites", label: "Faves" },
-                                { key: "underdogs", label: "Dogs" },
-                                { key: "home", label: "Home" },
-                                { key: "away", label: "Away" },
-                                { key: "over", label: "All Over" },
-                                { key: "under", label: "All Under" },
-                                { key: "none", label: "None" }
-                            ].map(action => {
-                                const active = isCriteriaActive(action.key);
-                                return (
-                                    <button
-                                        key={action.key}
-                                        onClick={() => handleSelectAll(action.key)}
-                                        style={{
-                                            flex: "1 1 auto",
-                                            minWidth: "50px",
-                                            background: active ? NFL_BLUE : "#f1f5f9",
-                                            color: active ? "white" : "#334155",
-                                            border: active ? `1px solid ${NFL_BLUE}` : "1px solid #cbd5e1",
-                                            padding: "5px 4px",
-                                            borderRadius: 6,
-                                            fontSize: "11px",
-                                            fontWeight: 700,
-                                            cursor: "pointer",
-                                            textAlign: "center",
-                                            whiteSpace: "nowrap"
-                                        }}
-                                    >
-                                        {action.label}
-                                    </button>
-                                );
-                            })}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4, width: "100%", paddingTop: 2 }}>
+                            <div style={{ fontSize: "12px", fontWeight: 700, color: "#475569" }}>Select:</div>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 4, width: "100%" }}>
+                                {[
+                                    { key: "favorites", label: "Faves" },
+                                    { key: "underdogs", label: "Dogs" },
+                                    { key: "home", label: "Home" },
+                                    { key: "away", label: "Away" },
+                                    { key: "over", label: "All Over" },
+                                    { key: "under", label: "All Under" },
+                                    { key: "none", label: "None" }
+                                ].map(action => {
+                                    const active = isCriteriaActive(action.key);
+                                    return (
+                                        <button
+                                            key={action.key}
+                                            onClick={() => handleSelectAll(action.key)}
+                                            style={{
+                                                background: active ? NFL_BLUE : "#f1f5f9",
+                                                color: active ? "white" : "#334155",
+                                                border: active ? `1px solid ${NFL_BLUE}` : "1px solid #cbd5e1",
+                                                padding: "6px 4px",
+                                                borderRadius: 6,
+                                                fontSize: "11px",
+                                                fontWeight: 700,
+                                                cursor: "pointer",
+                                                textAlign: "center",
+                                                whiteSpace: "nowrap",
+                                                width: "100%"
+                                            }}
+                                        >
+                                            {action.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -540,7 +541,7 @@ export default function NflPickemAtsPicks() {
 
                             const isAwayPicked = userPick.picked_team === game.away_team;
                             const isHomePicked = userPick.picked_team === game.home_team;
-                            const ouPick = userPick.over_under_pick; // "over" or "under"
+                            const ouPick = userPick.over_under_pick;
 
                             return (
                                 <div key={game.id} style={{
