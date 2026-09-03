@@ -2,21 +2,32 @@ const axios = require("axios");
 const db = require("../../models");
 
 /**
- * 🧠 DYNAMIC SATURDAY-TO-FRIDAY CFB WEEKLY WINDOW CALCULATOR
+ * 🧠 DYNAMIC CFB WEEKLY WINDOW CALCULATOR
  * Week 1: August 22, 2026 – September 7, 2026
- * Subsequent Weeks: Saturday to Friday rolling window
+ * Week 2: September 8, 2026 – September 13, 2026 (Tuesday to Saturday)
+ * Subsequent Weeks: Monday to Sunday rolling window
  */
 function getCfbDateRange(weekNumber) {
-    if (weekNumber === 1 || !weekNumber) {
+    const weekNum = parseInt(weekNumber, 10) || 1;
+
+    // Week 1: Custom extended window
+    if (weekNum === 1) {
         return "20260822-20260907";
     }
 
-    const baseSaturday = new Date("2026-09-08T00:00:00");
-    const weekStart = new Date(baseSaturday);
-    weekStart.setDate(baseSaturday.getDate() + (weekNumber - 2) * 7);
+    // Week 2: Specific Tuesday to Saturday window (Sep 8 - Sep 13, 2026)
+    if (weekNum === 2) {
+        return "20260908-20260913";
+    }
+
+    // Week 3 onward: Standard Monday to Sunday rolling window
+    // Week 3 starts the Monday following Week 2's Saturday (Sept 14, 2026)
+    const baseMonday = new Date("2026-09-14T00:00:00");
+    const weekStart = new Date(baseMonday);
+    weekStart.setDate(baseMonday.getDate() + (weekNum - 3) * 7);
 
     const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setDate(weekStart.getDate() + 6); // Monday + 6 days = Sunday
 
     const formatDate = (date) => {
         const year = date.getFullYear();
@@ -26,6 +37,46 @@ function getCfbDateRange(weekNumber) {
     };
 
     return `${formatDate(weekStart)}-${formatDate(weekEnd)}`;
+}
+
+/**
+ * 🧠 DYNAMIC CURRENT & NEXT WEEK CALCULATOR
+ * Maps date boundaries to determine current active week and next upcoming week.
+ */
+function getCurrentAndNextCfbWeeks() {
+    const now = new Date();
+
+    const weeks = [
+        { week: 1, start: new Date("2026-08-22T00:00:00"), end: new Date("2026-09-07T23:59:59") },
+        { week: 2, start: new Date("2026-09-08T00:00:00"), end: new Date("2026-09-13T23:59:59") },
+        { week: 3, start: new Date("2026-09-14T00:00:00"), end: new Date("2026-09-20T23:59:59") },
+        { week: 4, start: new Date("2026-09-21T00:00:00"), end: new Date("2026-09-27T23:59:59") },
+        { week: 5, start: new Date("2026-09-28T00:00:00"), end: new Date("2026-10-04T23:59:59") },
+        { week: 6, start: new Date("2026-10-05T00:00:00"), end: new Date("2026-10-11T23:59:59") },
+        { week: 7, start: new Date("2026-10-12T00:00:00"), end: new Date("2026-10-18T23:59:59") },
+        { week: 8, start: new Date("2026-10-19T00:00:00"), end: new Date("2026-10-25T23:59:59") },
+        { week: 9, start: new Date("2026-10-26T00:00:00"), end: new Date("2026-11-01T23:59:59") },
+        { week: 10, start: new Date("2026-11-02T00:00:00"), end: new Date("2026-11-08T23:59:59") },
+        { week: 11, start: new Date("2026-11-09T00:00:00"), end: new Date("2026-11-15T23:59:59") },
+        { week: 12, start: new Date("2026-11-16T00:00:00"), end: new Date("2026-11-22T23:59:59") },
+        { week: 13, start: new Date("2026-11-23T00:00:00"), end: new Date("2026-11-29T23:59:59") },
+        { week: 14, start: new Date("2026-11-30T00:00:00"), end: new Date("2026-12-06T23:59:59") }
+    ];
+
+    let activeIndex = weeks.findIndex(w => now >= w.start && now <= w.end);
+
+    if (activeIndex === -1) {
+        if (now < weeks[0].start) activeIndex = 0;
+        else activeIndex = weeks.length - 1;
+    }
+
+    const currentWeekObj = weeks[activeIndex];
+    const nextWeekObj = weeks[activeIndex + 1] || currentWeekObj;
+
+    return {
+        currentWeek: currentWeekObj.week,
+        nextWeek: nextWeekObj.week
+    };
 }
 
 function applyHookRule(spread, odds) {
@@ -47,7 +98,6 @@ function applyHookRule(spread, odds) {
 
 /**
  * 🧠 FETCH TEAM RANKINGS FROM ESPN CORE API BY WEEK
- * Dereferences team $ref and maps using the team's unique ESPN $ref ID (extracted directly from the URL string).
  */
 async function fetchTeamRankings(weekNumber) {
     const rankingsMap = {};
@@ -99,7 +149,7 @@ async function extractMatchups(data, weekNum) {
         const comp = event.competitions?.[0];
         if (!comp) continue;
 
-        const gameId = event.id; // ESPN Game ID used as PK
+        const gameId = event.id;
         const gameDate = event.date;
 
         const homeCompetitor = comp.competitors.find(c => c.homeAway === "home");
@@ -113,7 +163,6 @@ async function extractMatchups(data, weekNum) {
 
         if (!isPower4Game) continue;
 
-        // --- CORE IDENTIFIERS & COLORS ---
         const homeTeamId = homeCompetitor.team.id;
         const awayTeamId = awayCompetitor.team.id;
         
@@ -128,7 +177,6 @@ async function extractMatchups(data, weekNum) {
         
         const awayColor = awayCompetitor.team.color ? `#${awayCompetitor.team.color.replace('#', '')}` : null;
         const awaySecondaryColor = awayCompetitor.team.alternateColor ? `#${awayCompetitor.team.alternateColor.replace('#', '')}` : (awayCompetitor.team.secondaryColor ? `#${awayCompetitor.team.secondaryColor.replace('#', '')}` : null);
-        // ---------------------------------
 
         const existingGame = await CfbRegularSeasonGames.findOne({
             where: { id: gameId }
@@ -220,7 +268,7 @@ async function extractMatchups(data, weekNum) {
         const awayTeamRank = getTeamRank(awayCompetitor.team);
 
         matchups.push({
-            id: gameId, // Set ESPN game ID as primary key
+            id: gameId,
             week: weekNum,
             home_team_id: homeTeamId,
             home_team: homeTeamSchool, 
@@ -335,7 +383,7 @@ async function processMatchup(m) {
     }
 }
 
-async function syncCfbSeason(targetWeek = 1) {
+async function syncCfbSeason(targetWeek) {
     try {
         const dateRange = getCfbDateRange(targetWeek);
         const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?dates=${dateRange}`;
@@ -354,4 +402,21 @@ async function syncCfbSeason(targetWeek = 1) {
     }
 }
 
-module.exports = syncCfbSeason;
+/**
+ * 🧠 MAIN EXPORTED WRAPPER: Syncs both current active week and next upcoming week automatically
+ */
+async function syncCurrentAndNextWeeks() {
+    const { currentWeek, nextWeek } = getCurrentAndNextCfbWeeks();
+
+    console.log(`[CFB Sync Job] Current Active Week: Week ${currentWeek} | Next Upcoming Week: Week ${nextWeek}`);
+
+    // Sync current active week
+    await syncCfbSeason(currentWeek);
+
+    // Sync next week if it differs from current week
+    if (nextWeek !== currentWeek) {
+        await syncCfbSeason(nextWeek);
+    }
+}
+
+module.exports = syncCurrentAndNextWeeks;

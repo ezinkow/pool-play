@@ -299,7 +299,7 @@ export default function CfbPickemAtsPicks() {
                     paddingBottom: 4,
                     width: "100%"
                 }}>
-                    {[...Array(18)].map((_, i) => (
+                    {[...Array(15)].map((_, i) => (
                         <button
                             key={i + 1}
                             onClick={() => setCurrentWeek(i + 1)}
