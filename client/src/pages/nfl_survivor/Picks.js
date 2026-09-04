@@ -6,6 +6,7 @@ import PoolGatekeeper from "../../components/PoolGatekeeper";
 
 const NFL_BLUE = "#013369";
 const NFL_RED = "#D50A0A";
+const GOLD = "#c89d3c";
 
 export default function NflSurvivorPicks() {
     const { user, loading: authLoading } = useAuth();
@@ -30,7 +31,7 @@ export default function NflSurvivorPicks() {
                 (res.data || []).forEach(t => {
                     map[t.name] = {
                         primaryColor: t.color || t.primary_color || NFL_BLUE,
-                        secondaryColor: t.secondary_color || t.alt_color || "#475569",
+                        secondaryColor: t.secondaryColor || t.secondary_color || t.alt_color || "#cbd5e1",
                         logo: t.logo
                     };
                 });
@@ -135,70 +136,88 @@ export default function NflSurvivorPicks() {
         });
     };
 
-    if (authLoading || loading) return <div style={{ textAlign: "center", padding: 30 }}>Loading survivor dashboard...</div>;
+    if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50 }}>Loading survivor dashboard...</div>;
 
     const currentWeekPick = userPicks[currentWeek];
     const pickedTeamMeta = teamColors[currentWeekPick] || {};
-    const bannerBg = currentWeekPick && pickedTeamMeta.primaryColor && pickedTeamMeta.secondaryColor 
-        ? `linear-gradient(135deg, ${pickedTeamMeta.primaryColor}, ${pickedTeamMeta.secondaryColor})` 
-        : (currentWeekPick ? (pickedTeamMeta.primaryColor || "#f0fdf4") : "#fffbeb");
+    const pickedPrimary = pickedTeamMeta.primaryColor || NFL_BLUE;
+    const pickedSecondary = pickedTeamMeta.secondaryColor || "#cbd5e1";
+
+    const bannerBg = currentWeekPick 
+        ? `linear-gradient(135deg, ${pickedPrimary}, ${pickedSecondary})` 
+        : "#fffbeb";
 
     return (
         <PoolGatekeeper user={user} gameKey="nfl_survivor" className='page-content'>
-            <div style={{ maxWidth: 800, margin: "0 auto", padding: "12px 10px", paddingBottom: 60 }}>
+            <div style={{ maxWidth: 800, margin: "0 auto", padding: "12px 10px", paddingBottom: 80 }}>
                 <Toaster />
 
-                <div style={{ textAlign: "center", marginBottom: 14 }}>
-                    <h2 style={{ color: NFL_BLUE, fontSize: "22px", margin: 0 }}>NFL Survivor: Week {currentWeek}</h2>
-                    <p style={{ color: "#666", marginTop: 4, fontSize: "13px" }}>
+                <div style={{ textAlign: "center", marginBottom: 12, padding: "0 8px" }}>
+                    <h2 style={{ color: NFL_BLUE, fontSize: "20px", margin: 0 }}>🏈 NFL Survivor: Week {currentWeek}</h2>
+                    <p style={{ color: "#64748b", marginTop: 4, fontSize: "12px" }}>
                         Pick one team straight up. Click your selected team again to de-select.
                     </p>
+                </div>
+
+                <div style={{ textAlign: "center", marginBottom: 2 }}>
+                    <h3 style={{ color: "#0f172a", fontSize: "13px", margin: 0 }}>Select Week:</h3>
                 </div>
 
                 {/* Restricted Week Selector Bar */}
                 <div style={{
                     display: "flex",
-                    justifyContent: "flex-start",
-                    gap: 4,
+                    justifyContent: "center",
+                    width: "100%",
                     marginBottom: 14,
-                    flexWrap: "nowrap",
-                    overflowX: "auto",
-                    WebkitOverflowScrolling: "touch",
-                    paddingBottom: 4,
-                    width: "100%"
+                    marginTop: 4
                 }}>
-                    {[...Array(maxAvailableWeek)].map((_, i) => (
-                        <button
-                            key={i + 1}
-                            onClick={() => handleWeekChange(i + 1)}
-                            style={{
-                                padding: "4px 10px",
-                                borderRadius: 4,
-                                border: "1px solid #ddd",
-                                backgroundColor: currentWeek === i + 1 ? NFL_BLUE : "white",
-                                color: currentWeek === i + 1 ? "white" : "#333",
-                                cursor: "pointer",
-                                fontWeight: 600,
-                                flexShrink: 0,
-                                fontSize: "13px"
-                            }}
-                        >
-                            Week {i + 1}
-                        </button>
-                    ))}
+                    <div style={{
+                        display: "flex",
+                        gap: 6,
+                        flexWrap: "nowrap",
+                        overflowX: "auto",
+                        WebkitOverflowScrolling: "touch",
+                        paddingBottom: 6,
+                        maxWidth: "100%",
+                        paddingLeft: 8,
+                        paddingRight: 8
+                    }}>
+                        {[...Array(maxAvailableWeek)].map((_, i) => (
+                            <button
+                                key={i + 1}
+                                onClick={() => handleWeekChange(i + 1)}
+                                style={{
+                                    padding: "6px 12px",
+                                    borderRadius: 6,
+                                    border: "1px solid #cbd5e1",
+                                    backgroundColor: currentWeek === i + 1 ? NFL_BLUE : "white",
+                                    color: currentWeek === i + 1 ? "white" : "#0f172a",
+                                    cursor: "pointer",
+                                    fontWeight: 700,
+                                    flexShrink: 0,
+                                    fontSize: "13px",
+                                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                                    transition: "all 0.2s"
+                                }}
+                            >
+                                Week {i + 1}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Current Week Pick Banner */}
                 <div style={{
                     background: bannerBg,
-                    color: currentWeekPick ? "#ffffff" : "#92400e",
-                    border: `1px solid ${currentWeekPick ? (pickedTeamMeta.secondaryColor || "#16a34a") : "#fde68a"}`,
+                    color: currentWeekPick ? "#ffffff" : "#b45309",
+                    border: `1px solid ${currentWeekPick ? pickedSecondary : "#fde68a"}`,
                     borderRadius: 8,
                     padding: "10px 14px",
                     marginBottom: 16,
                     textAlign: "center",
                     fontWeight: 700,
                     fontSize: "13px",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -207,21 +226,38 @@ export default function NflSurvivorPicks() {
                     {currentWeekPick ? (
                         <>
                             {pickedTeamMeta.logo && (
-                                <span style={{ background: "rgba(255,255,255,0.25)", borderRadius: 4, padding: "1px 4px", display: "inline-flex", alignItems: "center" }}>
-                                    <img src={pickedTeamMeta.logo} alt={currentWeekPick} style={{ width: 20, height: 20, objectFit: "contain" }} />
+                                <span style={{ 
+                                    background: pickedSecondary, 
+                                    borderRadius: 4, 
+                                    padding: "2px 4px", 
+                                    display: "inline-flex", 
+                                    alignItems: "center",
+                                    border: `2px solid ${pickedPrimary}`,
+                                    boxShadow: `0 0 4px 1px ${pickedPrimary}, 0 1px 3px rgba(0,0,0,0.3)`
+                                }}>
+                                    <img src={pickedTeamMeta.logo} alt={currentWeekPick} style={{ width: 18, height: 18, objectFit: "contain", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))" }} />
                                 </span>
                             )}
-                            <span>✓ Week {currentWeek} Selection: {currentWeekPick}</span>
+                            <span style={{ textShadow: "0 1px 2px rgba(0,0,0,0.2)" }}>✓ Week {currentWeek} Selection: {currentWeekPick}</span>
                         </>
                     ) : (
                         `⚠️ No selection made for Week ${currentWeek} yet.`
                     )}
                 </div>
 
-                {/* Games List (Compact Grid) */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {/* Games List Container */}
+                <div style={{
+                    background: "white",
+                    borderRadius: 8,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+                    border: "1px solid #e2e8f0",
+                    padding: "12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8
+                }}>
                     {games.length === 0 ? (
-                        <div style={{ textAlign: "center", padding: "30px", color: "#666", background: "white", borderRadius: 8, fontSize: "13px" }}>
+                        <div style={{ textAlign: "center", padding: "30px", color: "#666", fontSize: "13px" }}>
                             No games found for Week {currentWeek}.
                         </div>
                     ) : (
@@ -265,105 +301,153 @@ export default function NflSurvivorPicks() {
                                 }
                             }
 
-                            const awayPrimary = awayMeta.primaryColor || "#013369";
-                            const awaySecondary = awayMeta.secondaryColor || "#475569";
-                            const awayBg = isAwayPicked
-                                ? `linear-gradient(135deg, ${awayPrimary}, ${awaySecondary})`
-                                : (awayUsed ? "#f1f5f9" : `linear-gradient(135deg, ${awayPrimary}10, ${awaySecondary}16)`);
+                            const awayPrimary = awayMeta.primaryColor || NFL_BLUE;
+                            const awaySecondary = awayMeta.secondaryColor || "#cbd5e1";
+                            const homePrimary = homeMeta.primaryColor || NFL_BLUE;
+                            const homeSecondary = homeMeta.secondaryColor || "#cbd5e1";
 
-                            const homePrimary = homeMeta.primaryColor || "#013369";
-                            const homeSecondary = homeMeta.secondaryColor || "#475569";
-                            const homeBg = isHomePicked
-                                ? `linear-gradient(135deg, ${homePrimary}, ${homeSecondary})`
-                                : (homeUsed ? "#f1f5f9" : `linear-gradient(135deg, ${homePrimary}10, ${homeSecondary}16)`);
+                            // Badge styling matching the pick'em reference style (with drop-shadow and border glow)
+                            const getBadgeStyle = (primaryColor, secondaryColor, isPicked, isUsedState) => ({
+                                background: isPicked ? secondaryColor : (isUsedState ? "#f1f5f9" : secondaryColor),
+                                borderRadius: 6,
+                                padding: "3px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                boxShadow: `0 0 4px 1px ${primaryColor}, 0 1px 3px rgba(0,0,0,0.3)`,
+                                border: `1.5px solid ${primaryColor}`,
+                                width: 35,
+                                height: 35,
+                                flexShrink: 0
+                            });
+
+                            const awayBadgeStyle = getBadgeStyle(awayPrimary, awaySecondary, isAwayPicked, awayUsed);
+                            const homeBadgeStyle = getBadgeStyle(homePrimary, homeSecondary, isHomePicked, homeUsed);
+
+                            // Faded primary to secondary gradient shading matching the pick'em reference style
+                            const awayTileBg = isAwayPicked
+                                ? `linear-gradient(to right, ${awayPrimary} 100%, ${awayPrimary} 100%)`
+                                : `linear-gradient(to right, ${awayPrimary} 0%, ${awayPrimary} 0%, transparent 0%), linear-gradient(135deg, ${awayPrimary}12 0%, ${awaySecondary}22 100%)`;
+
+                            const homeTileBg = isHomePicked
+                                ? `linear-gradient(to right, ${homePrimary} 100%, ${homePrimary} 100%)`
+                                : `linear-gradient(to right, ${homePrimary} 0%, ${homePrimary} 0%, transparent 0%), linear-gradient(135deg, ${homePrimary}12 0%, ${homeSecondary}22 100%)`;
 
                             return (
                                 <div key={game.id} style={{
                                     background: "#ffffff",
-                                    borderRadius: 8,
-                                    boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-                                    padding: "8px 12px",
-                                    border: "1px solid #e2e8f0",
+                                    borderRadius: 10,
+                                    boxShadow: "0 2px 5px rgba(0, 0, 0, 0.06)",
+                                    padding: "8px 10px",
+                                    border: "1px solid #cbd5e1",
                                     display: "flex",
                                     flexDirection: "column",
                                     gap: 6
                                 }}>
                                     {/* Game Header / Date */}
                                     {formattedDate && (
-                                        <div style={{ fontSize: "11px", fontWeight: 600, color: "#64748b", textAlign: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: 4 }}>
-                                            {formattedDate} {locked && <span style={{ color: NFL_RED, marginLeft: 6 }}>🔒 Locked</span>}
+                                        <div style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textAlign: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: 4, display: "flex", justifyContent: "center", alignItems: "center", gap: 6 }}>
+                                            <span>{formattedDate}</span>
+                                            {locked && <span style={{ backgroundColor: NFL_RED, color: "white", padding: "1px 6px", borderRadius: 3, fontSize: "9px" }}>LOCKED</span>}
                                         </div>
                                     )}
 
-                                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                        {/* Away Team Tile */}
+                                    {/* Side-by-Side Team Selection Box Container */}
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                                        {/* Away Team Option Box */}
                                         <div
                                             onClick={() => handleMakePick(game.id, game.away_team, awayUsed, locked, isAwayPicked)}
                                             style={{
-                                                flex: 1,
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "space-between",
-                                                background: awayBg,
-                                                color: isAwayPicked ? "#ffffff" : (awayUsed ? "#94a3b8" : "#0f172a"),
-                                                padding: "8px 10px",
+                                                backgroundImage: awayTileBg,
+                                                backgroundColor: isAwayPicked ? awayPrimary : "transparent",
                                                 borderRadius: 6,
-                                                border: `1px solid ${isAwayPicked ? awaySecondary : (awayUsed ? "#cbd5e1" : `${awayPrimary}35`)}`,
+                                                border: isAwayPicked ? `2px solid #0284c7` : `1px solid ${awayPrimary}40`,
+                                                padding: "6px 6px",
                                                 cursor: (locked || awayUsed) ? "not-allowed" : "pointer",
                                                 opacity: awayUsed ? 0.65 : 1,
-                                                transition: "all 0.15s ease"
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                alignItems: "center",
+                                                textAlign: "center",
+                                                position: "relative",
+                                                boxShadow: isAwayPicked ? `0 0 10px rgba(2, 132, 199, 0.35), inset 0 0 8px ${awayPrimary}` : "0 1px 2px rgba(0,0,0,0.02)",
+                                                transition: "background-size 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border 0.2s ease",
+                                                backgroundSize: isAwayPicked ? "100% 100%" : "0% 100%, 100% 100%",
+                                                backgroundRepeat: "no-repeat",
+                                                minWidth: 0
                                             }}
                                         >
-                                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                                {awayLogo && (
-                                                    <span style={{ background: isAwayPicked ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.6)", borderRadius: 3, padding: "1px 2px", display: "inline-flex", alignItems: "center" }}>
-                                                        <img src={awayLogo} alt={game.away_team} style={{ width: 18, height: 18, objectFit: "contain" }} />
-                                                    </span>
-                                                )}
-                                                <div style={{ display: "flex", flexDirection: "column" }}>
-                                                    <span style={{ fontWeight: 700, fontSize: "13px", lineHeight: "1.2" }}>{game.away_team}</span>
-                                                    <span style={{ fontSize: "10px", opacity: isAwayPicked ? 0.9 : 0.7, fontWeight: 600 }}>{awaySpreadStr}</span>
+                                            {isAwayPicked && (
+                                                <span style={{
+                                                    position: "absolute",
+                                                    top: 4,
+                                                    right: 6,
+                                                    fontSize: "10px",
+                                                    color: "#ffffff",
+                                                    fontWeight: 900
+                                                }}>
+                                                    ✓
+                                                </span>
+                                            )}
+                                            {awayLogo && (
+                                                <div style={{ ...awayBadgeStyle, marginBottom: 2 }}>
+                                                    <img src={awayLogo} alt={game.away_team} style={{ width: 25, height: 25, objectFit: "contain", display: "block", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))" }} />
                                                 </div>
+                                            )}
+                                            <div style={{ fontWeight: isAwayPicked ? 800 : 600, fontSize: "12px", color: isAwayPicked ? "#ffffff" : "#0f172a", marginBottom: 1, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                {game.away_team}
                                             </div>
-                                            <span style={{ fontSize: "11px", fontWeight: 700, color: isAwayPicked ? "#fff" : "#64748b" }}>
-                                                {isAwayPicked ? "✓" : (awayUsed ? "Used" : "Select")}
-                                            </span>
+                                            <div style={{ fontSize: "10px", fontWeight: 700, color: isAwayPicked ? "#fef08a" : "#475569" }}>
+                                                {awaySpreadStr}
+                                            </div>
                                         </div>
 
-                                        <span style={{ fontWeight: 600, color: "#94a3b8", fontSize: "11px" }}>@</span>
-
-                                        {/* Home Team Tile */}
+                                        {/* Home Team Option Box */}
                                         <div
                                             onClick={() => handleMakePick(game.id, game.home_team, homeUsed, locked, isHomePicked)}
                                             style={{
-                                                flex: 1,
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "space-between",
-                                                background: homeBg,
-                                                color: isHomePicked ? "#ffffff" : (homeUsed ? "#94a3b8" : "#0f172a"),
-                                                padding: "8px 10px",
+                                                backgroundImage: homeTileBg,
+                                                backgroundColor: isHomePicked ? homePrimary : "transparent",
                                                 borderRadius: 6,
-                                                border: `1px solid ${isHomePicked ? homeSecondary : (homeUsed ? "#cbd5e1" : `${homePrimary}35`)}`,
+                                                border: isHomePicked ? `2px solid #0284c7` : `1px solid ${homePrimary}40`,
+                                                padding: "6px 6px",
                                                 cursor: (locked || homeUsed) ? "not-allowed" : "pointer",
                                                 opacity: homeUsed ? 0.65 : 1,
-                                                transition: "all 0.15s ease"
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                alignItems: "center",
+                                                textAlign: "center",
+                                                position: "relative",
+                                                boxShadow: isHomePicked ? `0 0 10px rgba(2, 132, 199, 0.35), inset 0 0 8px ${homePrimary}` : "0 1px 2px rgba(0,0,0,0.02)",
+                                                transition: "background-size 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border 0.2s ease",
+                                                backgroundSize: isHomePicked ? "100% 100%" : "0% 100%, 100% 100%",
+                                                backgroundRepeat: "no-repeat",
+                                                minWidth: 0
                                             }}
                                         >
-                                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                                {homeLogo && (
-                                                    <span style={{ background: isHomePicked ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.6)", borderRadius: 3, padding: "1px 2px", display: "inline-flex", alignItems: "center" }}>
-                                                        <img src={homeLogo} alt={game.home_team} style={{ width: 18, height: 18, objectFit: "contain" }} />
-                                                    </span>
-                                                )}
-                                                <div style={{ display: "flex", flexDirection: "column" }}>
-                                                    <span style={{ fontWeight: 700, fontSize: "13px", lineHeight: "1.2" }}>{game.home_team}</span>
-                                                    <span style={{ fontSize: "10px", opacity: isHomePicked ? 0.9 : 0.7, fontWeight: 600 }}>{homeSpreadStr}</span>
+                                            {isHomePicked && (
+                                                <span style={{
+                                                    position: "absolute",
+                                                    top: 4,
+                                                    right: 6,
+                                                    fontSize: "10px",
+                                                    color: "#ffffff",
+                                                    fontWeight: 900
+                                                }}>
+                                                    ✓
+                                                </span>
+                                            )}
+                                            {homeLogo && (
+                                                <div style={{ ...homeBadgeStyle, marginBottom: 2 }}>
+                                                    <img src={homeLogo} alt={game.home_team} style={{ width: 25, height: 25, objectFit: "contain", display: "block", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))" }} />
                                                 </div>
+                                            )}
+                                            <div style={{ fontWeight: isHomePicked ? 800 : 600, fontSize: "12px", color: isHomePicked ? "#ffffff" : "#0f172a", marginBottom: 1, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                {game.home_team}
                                             </div>
-                                            <span style={{ fontSize: "11px", fontWeight: 700, color: isHomePicked ? "#fff" : "#64748b" }}>
-                                                {isHomePicked ? "✓" : (homeUsed ? "Used" : "Select")}
-                                            </span>
+                                            <div style={{ fontSize: "10px", fontWeight: 700, color: isHomePicked ? "#fef08a" : "#475569" }}>
+                                                {homeSpreadStr}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
