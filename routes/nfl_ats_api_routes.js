@@ -249,28 +249,28 @@ module.exports = function (app) {
     app.get("/api/nfl_pickem_ats/standings", requireAuth, async (req, res) => {
         try {
             const query = `
-                SELECT 
-                    e.user_id,
-                    e.entry_name,
-                    SUM(CASE 
-                        WHEN g.ats_winner IS NOT NULL AND g.ats_winner = p.picked_team 
-                        THEN (CASE WHEN p.is_best_bet = 1 THEN 2 ELSE 1 END) 
-                        ELSE 0 
-                    END) as total_points,
-                    SUM(CASE WHEN g.ats_winner IS NOT NULL AND g.ats_winner = p.picked_team THEN 1 ELSE 0 END) as wins,
-                    SUM(CASE WHEN g.ats_winner IS NOT NULL AND g.ats_winner != 'PUSH' AND g.ats_winner != p.picked_team THEN 1 ELSE 0 END) as losses,
-                    SUM(CASE WHEN g.ats_winner IS NOT NULL AND g.ats_winner = 'PUSH' THEN 1 ELSE 0 END) as pushes,
-                    SUM(CASE WHEN p.is_best_bet = 1 AND g.ats_winner = p.picked_team THEN 1 ELSE 0 END) as best_bet_wins,
-                    SUM(CASE WHEN p.is_best_bet = 1 AND g.ats_winner IS NOT NULL AND g.ats_winner != 'PUSH' AND g.ats_winner != p.picked_team THEN 1 ELSE 0 END) as best_bet_losses,
-                    SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result = p.ou_pick THEN 1 ELSE 0 END) as ou_wins,
-                    SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result != 'PUSH' AND g.ou_result != p.ou_pick THEN 1 ELSE 0 END) as ou_losses,
-                    SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result = 'PUSH' THEN 1 ELSE 0 END) as ou_pushes
-                FROM nfl_pickem_ats_entries e
-                LEFT JOIN nfl_pickem_ats_picks p ON e.user_id = p.user_id
-                LEFT JOIN nfl_regular_season_games g ON p.game_id = g.id
-                GROUP BY e.user_id, e.entry_name
-                ORDER BY total_points DESC, wins DESC;
-            `;
+    SELECT 
+        e.user_id,
+        e.entry_name,
+        SUM(CASE 
+            WHEN g.ats_winner IS NOT NULL AND g.ats_winner COLLATE utf8mb4_unicode_ci = p.picked_team COLLATE utf8mb4_unicode_ci 
+            THEN (CASE WHEN p.is_best_bet = 1 THEN 2 ELSE 1 END) 
+            ELSE 0 
+        END) as total_points,
+        SUM(CASE WHEN g.ats_winner IS NOT NULL AND g.ats_winner COLLATE utf8mb4_unicode_ci = p.picked_team COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as wins,
+        SUM(CASE WHEN g.ats_winner IS NOT NULL AND g.ats_winner != 'PUSH' AND g.ats_winner COLLATE utf8mb4_unicode_ci != p.picked_team COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as losses,
+        SUM(CASE WHEN g.ats_winner IS NOT NULL AND g.ats_winner = 'PUSH' THEN 1 ELSE 0 END) as pushes,
+        SUM(CASE WHEN p.is_best_bet = 1 AND g.ats_winner COLLATE utf8mb4_unicode_ci = p.picked_team COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as best_bet_wins,
+        SUM(CASE WHEN p.is_best_bet = 1 AND g.ats_winner IS NOT NULL AND g.ats_winner != 'PUSH' AND g.ats_winner COLLATE utf8mb4_unicode_ci != p.picked_team COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as best_bet_losses,
+        SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result COLLATE utf8mb4_unicode_ci = p.ou_pick COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as ou_wins,
+        SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result != 'PUSH' AND g.ou_result COLLATE utf8mb4_unicode_ci != p.ou_pick COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as ou_losses,
+        SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result = 'PUSH' THEN 1 ELSE 0 END) as ou_pushes
+    FROM cfb_pickem_ats_entries e
+    LEFT JOIN cfb_pickem_ats_picks p ON e.user_id = p.user_id
+    LEFT JOIN cfb_regular_season_games g ON p.game_id = g.id
+    GROUP BY e.user_id, e.entry_name
+    ORDER BY total_points DESC, wins DESC;
+`;
 
             const [results] = await db.sequelize.query(query);
             res.json(results);
