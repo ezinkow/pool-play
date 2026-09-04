@@ -251,7 +251,7 @@ export default function CfbPickemAtsHome() {
           margin: "24px auto 80px auto"
         }}>
           <h3 style={{ color: NFL_BLUE, marginTop: 0, marginBottom: 16, fontSize: "1.2rem", textAlign: 'center' }}>
-            📋 FBS ATS Pick'em: <br />Rules & Overview
+            📋 CFB ATS Pick'em: <br />Rules & Overview
           </h3>
           <ol style={{ paddingLeft: 20, lineHeight: "1.7", fontSize: "14px" }}>
             <li><strong>15 Picks:</strong> Select a side Against The Spread (ATS) for 15 matchups among the Power 4 Conferenes each week.</li>
