@@ -19,7 +19,7 @@ export default function NflPickemAtsPicks() {
 
     const token = localStorage.getItem("token");
 
-    // Fetch team primary/secondary colors and branding mapping
+    // Fetch team primary/secondary colors and branding mapping identical to the matrix view
     useEffect(() => {
         if (!token) return;
         axios.get("/api/nfl_teams", {
@@ -29,8 +29,8 @@ export default function NflPickemAtsPicks() {
                 const map = {};
                 (res.data || []).forEach(t => {
                     map[t.name] = {
-                        color: t.color || t.primary_color || NFL_BLUE,
-                        secondaryColor: t.secondary_color || t.alt_color || "#cbd5e1",
+                        color: t.color || t.primary_color || "#0f172a",
+                        secondaryColor: t.secondaryColor || t.bg_color || t.alt_color || t.secondary_color || "#cbd5e1",
                         logo: t.logo
                     };
                 });
@@ -529,10 +529,10 @@ export default function NflPickemAtsPicks() {
                             const awayLogo = game.away_logo || awayTeamMeta.logo || null;
                             const homeLogo = game.home_logo || homeTeamMeta.logo || null;
 
-                            const awayColor = game.away_color || awayTeamMeta.color || "#1e3a8a";
+                            const awayColor = game.away_color || awayTeamMeta.color || "#0f172a";
                             const awaySecondary = game.away_secondary_color || awayTeamMeta.secondaryColor || "#cbd5e1";
 
-                            const homeColor = game.home_color || homeTeamMeta.color || "#1e3a8a";
+                            const homeColor = game.home_color || homeTeamMeta.color || "#0f172a";
                             const homeSecondary = game.home_secondary_color || homeTeamMeta.secondaryColor || "#cbd5e1";
 
                             const favoriteTeam = game.favorite;
@@ -569,7 +569,7 @@ export default function NflPickemAtsPicks() {
                                                         display: "inline-flex",
                                                         alignItems: "center",
                                                         justifyContent: "center",
-                                                        border: `1px solid ${favTeamMeta.primaryColor || homeColor}`,
+                                                        border: `1px solid ${favTeamMeta.color || homeColor}`,
                                                         width: 15,
                                                         height: 15,
                                                         flexShrink: 0

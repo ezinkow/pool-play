@@ -8,6 +8,17 @@ const CFB_BLUE = "#013369";
 const GOLD = "#c89d3c";
 const CFB_RED = "#D50A0A";
 
+// ✨ Condensation-optimized pulsing live indicator
+const PULSE_STYLE = {
+    width: "6px",
+    height: "6px",
+    backgroundColor: "#22c55e",
+    borderRadius: "50%",
+    display: "inline-block",
+    boxShadow: "0 0 0 rgba(34, 197, 94, 0.4)",
+    animation: "pulse 2s infinite"
+};
+
 export default function CfbPickemAtsMatrix() {
     const { user, loading: authLoading } = useAuth();
     const [currentWeek, setCurrentWeek] = useState(1);
@@ -44,9 +55,13 @@ export default function CfbPickemAtsMatrix() {
         return () => clearInterval(interval);
     }, [user, currentWeek, token]);
 
-    const canRevealPick = (gameDate) => {
-        if (!gameDate) return false;
-        return new Date() >= new Date(gameDate);
+    // ✨ Reveal check logic for individual cells (reveals if game is live/final or past kickoff, plus user's own picks)
+    const canRevealPick = (game) => {
+        if (!game || !game.game_date) return false;
+        const rawStatus = (game.status || "").toUpperCase();
+        const isLive = rawStatus.includes("HALF") || rawStatus.includes("PROGRESS") || rawStatus.includes("LIVE") || rawStatus.includes("IN_PROGRESS");
+        const isFinal = rawStatus.includes("FINAL") || rawStatus.includes("COMPLETED");
+        return isLive || isFinal || new Date() >= new Date(game.game_date);
     };
 
     const { gamesList, sortedPlayers } = React.useMemo(() => {
@@ -116,7 +131,20 @@ export default function CfbPickemAtsMatrix() {
             };
         });
 
-        const gamesArr = Array.from(gamesMap.values());
+        // ✨ Filter games to ONLY include live or completed games, then sort newest first (descending by game date)
+        const gamesArr = Array.from(gamesMap.values())
+            .filter(game => {
+                const rawStatus = (game.status || "").toUpperCase();
+                const isLive = rawStatus.includes("HALF") || rawStatus.includes("PROGRESS") || rawStatus.includes("LIVE") || rawStatus.includes("IN_PROGRESS");
+                const isFinal = rawStatus.includes("FINAL") || rawStatus.includes("COMPLETED");
+                return isLive || isFinal;
+            })
+            .sort((a, b) => {
+                const dateA = a.game_date ? new Date(a.game_date).getTime() : 0;
+                const dateB = b.game_date ? new Date(b.game_date).getTime() : 0;
+                return dateB - dateA;
+            });
+
         const playersArr = Object.values(playersMap).map(player => {
             let totalPoints = 0;
             gamesArr.forEach(game => {
@@ -163,7 +191,7 @@ export default function CfbPickemAtsMatrix() {
     const GameHeader = ({ game }) => {
         const rawStatus = (game.status || "").toUpperCase();
         const isFinal = rawStatus === "STATUS_FINAL" || rawStatus === "FINAL" || rawStatus === "COMPLETED";
-        const isLive = rawStatus === "STATUS_IN_PROGRESS" || rawStatus === "IN_PROGRESS" || rawStatus === "HALFTIME" || rawStatus === "STATUS_HALFTIME" || rawStatus === "LIVE";
+        const isLive = rawStatus === "STATUS_IN_PROGRESS" || rawStatus === "IN_PROGRESS" || rawStatus === "HALFTIME" || rawStatus === "STATUS_HALFTIME" || rawStatus === "LIVE" || rawStatus.includes("HALF") || rawStatus.includes("PROGRESS");
         const hasScores = game.home_score !== null && game.home_score !== undefined && game.away_score !== null && game.away_score !== undefined;
 
         const coveredTeam = game.ats_winner || game.winner;
@@ -230,11 +258,14 @@ export default function CfbPickemAtsMatrix() {
                     </div>
                 </div>
 
-                <div style={{ fontSize: 9, fontWeight: 700, margin: "3px 0" }}>
+                <div style={{ fontSize: 9, fontWeight: 700, margin: "3px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 3 }}>
                     {isFinal ? (
                         <span style={{ backgroundColor: "#16a34a", color: "white", padding: "1px 6px", borderRadius: 3 }}>FINAL</span>
                     ) : isLive ? (
-                        <span style={{ backgroundColor: CFB_RED, color: "white", padding: "1px 6px", borderRadius: 3 }}>LIVE</span>
+                        <>
+                            <span style={PULSE_STYLE} />
+                            <span style={{ backgroundColor: CFB_RED, color: "white", padding: "1px 6px", borderRadius: 3 }}>LIVE</span>
+                        </>
                     ) : (
                         <span style={{ color: "#cbd5e1" }}>
                             {game.game_date ? new Date(game.game_date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : "TBD"}
@@ -273,11 +304,21 @@ export default function CfbPickemAtsMatrix() {
 
     return (
         <PoolGatekeeper user={user} gameKey="cfb_pickem_ats" className='page-content'>
-            <div style={{ maxWidth: "100%", margin: "0 auto", padding: "12px 4px", paddingBottom: 80 }}>
+            <div style={{ width: "100%", margin: "0 auto", padding: "12px 4px", paddingBottom: 80 }}>
+                <style>{`
+                    @keyframes pulse { 
+                        0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 
+                        70% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0); } 
+                        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } 
+                    }
+                    .matrix-container::-webkit-scrollbar { height: 5px; }
+                    .matrix-container::-webkit-scrollbar-track { background: #f1f5f9; }
+                    .matrix-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+                `}</style>
 
                 <div style={{ textAlign: "center", marginBottom: 12, padding: "0 8px" }}>
                     <h2 style={{ color: CFB_BLUE, fontSize: "20px", margin: 0 }}>🏈 Weekly Group Matrix</h2>
-                    <p style={{ color: "#64748b", marginTop: 4, fontSize: "12px" }}>Picks unlock at game kickoff. Scores update live.</p>
+                    <p style={{ color: "#64748b", marginTop: 4, fontSize: "12px" }}>Showing live & completed games (newest first).</p>
                 </div>
 
                 <div style={{ textAlign: "center", marginBottom: 2 }}>
@@ -326,7 +367,7 @@ export default function CfbPickemAtsMatrix() {
                     </div>
                 </div>
 
-                <div style={{
+                <div className="matrix-container" style={{
                     background: "white",
                     borderRadius: 8,
                     boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
@@ -338,9 +379,9 @@ export default function CfbPickemAtsMatrix() {
                     {loading ? (
                         <div style={{ padding: 30, textAlign: "center", color: "#666" }}>Loading Week {currentWeek} matrix...</div>
                     ) : gamesList.length === 0 || sortedPlayers.length === 0 ? (
-                        <div style={{ padding: 30, textAlign: "center", color: "#666" }}>No entries or games found for Week {currentWeek}.</div>
+                        <div style={{ padding: 30, textAlign: "center", color: "#666" }}>No live or completed games found for Week {currentWeek}.</div>
                     ) : (
-                        <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, whiteSpace: "nowrap", tableLayout: "fixed" }}>
+                        <table style={{ width: "max-content", minWidth: "100%", borderCollapse: "separate", borderSpacing: 0, whiteSpace: "nowrap", tableLayout: "fixed" }}>
                             <thead>
                                 <tr style={{ backgroundColor: CFB_BLUE, color: "white" }}>
                                     <th style={{
@@ -417,7 +458,7 @@ export default function CfbPickemAtsMatrix() {
 
                                             {gamesList.map((game) => {
                                                 const pickObj = player.picks[game.game_id];
-                                                const isRevealed = canRevealPick(game.game_date);
+                                                const isRevealed = canRevealPick(game);
                                                 const showPick = isRevealed || isCurrentUser;
 
                                                 const pickedTeam = pickObj?.ats_pick;
