@@ -349,7 +349,27 @@ module.exports = function (app) {
                 replacements: { week }
             });
 
-            // Normalize result/status mapping for matrix cells so frontend sees explicit win/loss
+            // Fetch team metadata to override raw game table colors consistently
+            const teamNames = new Set();
+            results.forEach(row => {
+                if (row.home_team) teamNames.add(row.home_team);
+                if (row.away_team) teamNames.add(row.away_team);
+            });
+
+            const teamsData = await CfbTeams.findAll({
+                where: { name: Array.from(teamNames) }
+            });
+
+            const teamColorMap = {};
+            teamsData.forEach(t => {
+                teamColorMap[t.name] = {
+                    primaryColor: t.primary_color,
+                    secondaryColor: t.secondary_color,
+                    logo: t.logo
+                };
+            });
+
+            // Normalize result/status mapping for matrix cells and override with correct team metadata colors
             const mappedResults = results.map(row => {
                 let pickStatus = (row.pick_status || row.status || "").toLowerCase();
                 const atsWinner = row.ats_winner;
@@ -366,8 +386,18 @@ module.exports = function (app) {
                         }
                     }
                 }
+
+                const homeTeamMeta = teamColorMap[row.home_team] || {};
+                const awayTeamMeta = teamColorMap[row.away_team] || {};
+
                 return {
                     ...row,
+                    home_color: homeTeamMeta.primaryColor || row.home_color,
+                    home_secondary_color: homeTeamMeta.secondaryColor || row.home_secondary_color,
+                    home_logo: homeTeamMeta.logo || row.home_logo,
+                    away_color: awayTeamMeta.primaryColor || row.away_color,
+                    away_secondary_color: awayTeamMeta.secondaryColor || row.away_secondary_color,
+                    away_logo: awayTeamMeta.logo || row.away_logo,
                     pick_status: pickStatus
                 };
             });

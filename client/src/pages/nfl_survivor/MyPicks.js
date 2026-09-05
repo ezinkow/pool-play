@@ -160,9 +160,10 @@ export default function NflSurvivorMyPicks() {
                                                 padding: "6px 10px",
                                                 borderRadius: 8,
                                                 boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-                                                border: "1px solid rgba(255,255,255,0.2)"
+                                                border: `3px solid ${pickedTeamMeta.secondaryColor || "#ffffff"}`,
+                                                outline: "1px solid rgba(0,255,255,0.2)"
                                             }}>
-                                                <img src={pickedTeamMeta.logo} alt={pickedTeam} style={{ width: 38, height: 38, objectFit: "contain" }} />
+                                                <img src={pickedTeamMeta.logo} alt={pickedTeam} style={{ width: 38, height: 38, objectFit: "contain", display: "block" }} />
                                             </div>
                                         )}
                                     </div>
