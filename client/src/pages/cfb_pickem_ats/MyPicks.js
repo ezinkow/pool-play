@@ -16,9 +16,8 @@ export default function CdbPickemAtsMyPicks() {
     const [picks, setPicks] = useState({});
     const [loading, setLoading] = useState(true);
 
-    const { teamColors, loading: colorsLoading } = useTeamColors(token);
-
     const token = localStorage.getItem("token");
+    const { teamColors, loading: colorsLoading } = useTeamColors(token);
 
     // Fetch weekly schedule and user picks summary
     useEffect(() => {
@@ -166,9 +165,10 @@ export default function CdbPickemAtsMyPicks() {
                             const isHomePicked = pickedTeam === game.home_team;
 
                             const isFinished = game.ats_winner !== null && game.ats_winner !== undefined;
+                            const isGameActuallyFinal = game.status === "STATUS_FINAL" || game.status === "Final" || game.status === "final" || game.status === "completed";
                             const hasScores = game.home_score !== null && game.home_score !== undefined &&
                                 game.away_score !== null && game.away_score !== undefined &&
-                                (game.home_score > 0 || game.away_score > 0 || game.status === "STATUS_FINAL" || game.status === "Final" || game.status === "completed");
+                                (game.home_score > 0 || game.away_score > 0);
 
                             // ATS Status Badge
                             let statusBadge = <span style={{ color: "#64748b", fontWeight: 700, fontSize: "11px" }}>⏳ Pending</span>;
@@ -320,8 +320,8 @@ export default function CdbPickemAtsMyPicks() {
 
                                         </div>
                                         {hasScores && (
-                                            <span style={{ background: "#0f172a", color: "white", padding: "1px 6px", borderRadius: 4, fontSize: "11px", fontWeight: 700, marginTop: 4, width: "fit-content", letterSpacing: "0.3px" }}>
-                                                Final: {game.away_score} - {game.home_score}
+                                            <span style={{ background: isGameActuallyFinal ? "#0f172a" : "#d97706", color: "white", padding: "1px 6px", borderRadius: 4, fontSize: "11px", fontWeight: 700, marginTop: 4, width: "fit-content", letterSpacing: "0.3px" }}>
+                                                {isGameActuallyFinal ? "Final" : "Live"}: {game.away_score} - {game.home_score}
                                             </span>
                                         )}
                                         {ouBadge && <div style={{ marginTop: 3 }}>{ouBadge}</div>}
