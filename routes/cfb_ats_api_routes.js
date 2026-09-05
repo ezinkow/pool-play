@@ -244,7 +244,43 @@ module.exports = function (app) {
 
             const games = await CfbRegularSeasonGames.findAll({
                 where: { week },
-                order: [["game_date", "ASC"]]
+                order: [[["game_date", "ASC"]]]
+            });
+
+            // Map game colors using CfbTeams lookup to ensure primary/secondary consistency
+            const teamNames = new Set();
+            games.forEach(g => {
+                if (g.home_team) teamNames.add(g.home_team);
+                if (g.away_team) teamNames.add(g.away_team);
+            });
+
+            const teamsData = await CfbTeams.findAll({
+                where: { name: Array.from(teamNames) }
+            });
+
+            const teamColorMap = {};
+            teamsData.forEach(t => {
+                teamColorMap[t.name] = {
+                    primaryColor: t.primary_color,
+                    secondaryColor: t.secondary_color,
+                    logo: t.logo
+                };
+            });
+
+            const enhancedGames = games.map(g => {
+                const gameJson = g.toJSON();
+                const homeTeamMeta = teamColorMap[gameJson.home_team] || {};
+                const awayTeamMeta = teamColorMap[gameJson.away_team] || {};
+
+                return {
+                    ...gameJson,
+                    home_color: homeTeamMeta.primaryColor || gameJson.home_color,
+                    home_secondary_color: homeTeamMeta.secondaryColor || gameJson.home_secondary_color,
+                    home_logo: homeTeamMeta.logo || gameJson.home_logo,
+                    away_color: awayTeamMeta.primaryColor || gameJson.away_color,
+                    away_secondary_color: awayTeamMeta.secondaryColor || gameJson.away_secondary_color,
+                    away_logo: awayTeamMeta.logo || gameJson.away_logo
+                };
             });
 
             const userPicks = await CfbPickemAtsPicks.findAll({
@@ -260,7 +296,7 @@ module.exports = function (app) {
                 };
             });
 
-            res.json({ games, userPicks: pickMap });
+            res.json({ games: enhancedGames, userPicks: pickMap });
         } catch (err) {
             console.error("Error fetching user pickem summary:", err);
             res.status(500).json({ error: "Failed to load pick summary" });

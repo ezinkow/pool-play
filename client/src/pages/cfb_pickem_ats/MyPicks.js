@@ -16,7 +16,7 @@ export default function CdbPickemAtsMyPicks() {
     const [picks, setPicks] = useState({});
     const [loading, setLoading] = useState(true);
 
-    const { teamColors, loading: colorsLoading } = useTeamColors();
+    const { teamColors, loading: colorsLoading } = useTeamColors(token);
 
     const token = localStorage.getItem("token");
 
@@ -150,29 +150,20 @@ export default function CdbPickemAtsMyPicks() {
                             const ouPick = userPick?.ou_pick;
                             const isMustPick = game.must_pick;
 
-                            // Canonical metadata lookup using useCFBTeamColors hook
-                            const teamMeta = teamColors[pickedTeam] || {};
-                            const teamColor = teamMeta.primaryColor || CFB_BLUE;
+                            const awayTeamMeta = teamColors[game.away_team] || {};
+                            const homeTeamMeta = teamColors[game.home_team] || {};
 
-                            const awayMeta = teamColors[game.away_team] || {};
-                            const homeMeta = teamColors[game.home_team] || {};
-                            const awayLogo = game.away_logo || awayMeta.logo;
-                            const homeLogo = game.home_logo || homeMeta.logo;
+                            const awayLogo = awayTeamMeta.logo || game.away_logo || null;
+                            const homeLogo = homeTeamMeta.logo || game.home_logo || null;
 
-                            const awayColor = game.away_color || awayMeta.primaryColor || CFB_BLUE;
-                            const homeColor = game.home_color || homeMeta.primaryColor || CFB_BLUE;
+                            const awayColor = awayTeamMeta.primaryColor || game.away_color || "#1e3a8a";
+                            const awaySecondary = awayTeamMeta.secondaryColor || game.away_secondary_color || "#cbd5e1";
 
-                            const awaySecondary = game.away_secondary_color || awayMeta.secondaryColor || "#cbd5e1";
-                            const homeSecondary = game.home_secondary_color || homeMeta.secondaryColor || "#cbd5e1";
+                            const homeColor = homeTeamMeta.primaryColor || game.home_color || "#1e3a8a";
+                            const homeSecondary = homeTeamMeta.secondaryColor || game.home_secondary_color || "#cbd5e1";
 
                             const isAwayPicked = pickedTeam === game.away_team;
                             const isHomePicked = pickedTeam === game.home_team;
-
-                            const pickedLogo = isAwayPicked ? awayLogo : (isHomePicked ? homeLogo : teamMeta.logo);
-                            const pickedPrimary = isAwayPicked ? awayColor : (isHomePicked ? homeColor : teamColor);
-                            const pickedSecondary = isAwayPicked
-                                ? awaySecondary
-                                : (isHomePicked ? homeSecondary : (teamMeta.secondaryColor || "#cbd5e1"));
 
                             const isFinished = game.ats_winner !== null && game.ats_winner !== undefined;
                             const hasScores = game.home_score !== null && game.home_score !== undefined &&
@@ -216,13 +207,17 @@ export default function CdbPickemAtsMyPicks() {
                             const awaySpreadStr = isAwayFav ? `-${absSpread}` : `+${absSpread}`;
                             const homeSpreadStr = isAwayFav ? `+${absSpread}` : `-${absSpread}`;
 
+                            const pickedPrimary = isAwayPicked ? awayColor : (isHomePicked ? homeColor : CFB_BLUE);
+                            const pickedSecondary = isAwayPicked ? awaySecondary : (isHomePicked ? homeSecondary : "#cbd5e1");
+                            const pickedLogo = isAwayPicked ? awayLogo : (isHomePicked ? homeLogo : null);
+
                             return (
                                 <div key={game.id} style={{
                                     background: isBestBet ? "linear-gradient(135deg, #fffdf4 0%, #ffffff 100%)" : (isMustPick ? "#fffbeb" : "white"),
                                     borderRadius: 12,
                                     boxShadow: isBestBet ? "0 4px 12px rgba(200, 157, 60, 0.15)" : "0 2px 6px rgba(0,0,0,0.04)",
                                     padding: "12px 16px",
-                                    borderLeft: `5px solid ${isBestBet ? GOLD : (isMustPick ? "#f59e0b" : (pickedTeam ? teamColor : "#cbd5e1"))}`,
+                                    borderLeft: `5px solid ${isBestBet ? GOLD : (isMustPick ? "#f59e0b" : (pickedTeam ? pickedPrimary : "#cbd5e1"))}`,
                                     borderTop: isBestBet ? `1px solid ${GOLD}40` : (isMustPick ? "1px solid #f59e0b40" : "1px solid #e2e8f0"),
                                     borderRight: isBestBet ? `1px solid ${GOLD}40` : (isMustPick ? "1px solid #f59e0b40" : "1px solid #e2e8f0"),
                                     borderBottom: isBestBet ? `1px solid ${GOLD}40` : (isMustPick ? "1px solid #f59e0b40" : "1px solid #e2e8f0"),
@@ -248,31 +243,38 @@ export default function CdbPickemAtsMyPicks() {
                                                 display: "inline-flex",
                                                 alignItems: "center",
                                                 gap: 5,
-                                                background: isAwayPicked ? `${teamColor}12` : "transparent",
-                                                padding: isAwayPicked ? "2px 6px" : "0",
+                                                backgroundImage: isAwayPicked
+                                                    ? `linear-gradient(to right, ${awayColor} 100%, ${awayColor} 100%)`
+                                                    : `linear-gradient(to right, ${awayColor} 0%, ${awayColor} 0%, transparent 0%), linear-gradient(135deg, ${awayColor}26 0%, ${awaySecondary}26 50%, #f8fafc 100%)`,
+                                                backgroundColor: isAwayPicked ? awayColor : "transparent",
+                                                padding: isAwayPicked ? "4px 8px" : "2px 4px",
                                                 borderRadius: 6,
-                                                border: isAwayPicked ? `1px solid ${teamColor}30` : "1px solid transparent",
+                                                border: isAwayPicked ? `2px solid #0284c7` : `1px solid ${awayColor}30`,
+                                                boxShadow: isAwayPicked ? `0 0 10px rgba(2, 132, 199, 0.35), inset 0 0 8px ${awayColor}` : "none",
                                                 overflow: "visible"
                                             }}>
                                                 {awayLogo && (
                                                     <span style={{
                                                         background: awaySecondary,
                                                         borderRadius: 6,
-                                                        padding: "3px 5px",
-                                                        display: "inline-flex",
+                                                        padding: "3px",
+                                                        display: "flex",
                                                         alignItems: "center",
-                                                        boxShadow: `0 0 4px 1px ${awayColor}, 0 1px 2px rgba(0,0,0,0.15)`,
+                                                        justifyContent: "center",
+                                                        boxShadow: `0 0 4px 1px ${awayColor}, 0 1px 3px rgba(0,0,0,0.15)`,
                                                         border: `1.5px solid ${awayColor}`,
+                                                        width: 24,
+                                                        height: 24,
                                                         overflow: "visible",
                                                         flexShrink: 0
                                                     }}>
                                                         <img src={awayLogo} alt={game.away_team} className="matchup-logo" style={{ width: 16, height: 16, objectFit: "contain", display: "block" }} />
                                                     </span>
                                                 )}
-                                                <span className="team-text" style={{ fontWeight: isAwayPicked ? 800 : 600, color: isAwayPicked ? teamColor : "#334155" }}>
+                                                <span className="team-text" style={{ fontWeight: isAwayPicked ? 800 : 600, color: isAwayPicked ? "#ffffff" : "#0f172a" }}>
                                                     {game.away_team}
                                                 </span>
-                                                <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 700 }}>({awaySpreadStr})</span>
+                                                <span style={{ fontSize: "12px", color: isAwayPicked ? "#e2e8f0" : "#475569", fontWeight: 700 }}>({awaySpreadStr})</span>
                                             </span>
 
                                             <span style={{ color: "#94a3b8", fontWeight: 700, fontSize: "12px" }}>@</span>
@@ -282,31 +284,38 @@ export default function CdbPickemAtsMyPicks() {
                                                 display: "inline-flex",
                                                 alignItems: "center",
                                                 gap: 5,
-                                                background: isHomePicked ? `${teamColor}12` : "transparent",
-                                                padding: isHomePicked ? "2px 6px" : "0",
+                                                backgroundImage: isHomePicked
+                                                    ? `linear-gradient(to right, ${homeColor} 100%, ${homeColor} 100%)`
+                                                    : `linear-gradient(to right, ${homeColor} 0%, ${homeColor} 0%, transparent 0%), linear-gradient(135deg, ${homeColor}26 0%, ${homeSecondary}26 50%, #f8fafc 100%)`,
+                                                backgroundColor: isHomePicked ? homeColor : "transparent",
+                                                padding: isHomePicked ? "4px 8px" : "2px 4px",
                                                 borderRadius: 6,
-                                                border: isHomePicked ? `1px solid ${teamColor}30` : "1px solid transparent",
+                                                border: isHomePicked ? `2px solid #0284c7` : `1px solid ${homeColor}30`,
+                                                boxShadow: isHomePicked ? `0 0 10px rgba(2, 132, 199, 0.35), inset 0 0 8px ${homeColor}` : "none",
                                                 overflow: "visible"
                                             }}>
                                                 {homeLogo && (
                                                     <span style={{
                                                         background: homeSecondary,
                                                         borderRadius: 6,
-                                                        padding: "3px 5px",
-                                                        display: "inline-flex",
+                                                        padding: "3px",
+                                                        display: "flex",
                                                         alignItems: "center",
-                                                        boxShadow: `0 0 4px 1px ${homeColor}, 0 1px 2px rgba(0,0,0,0.15)`,
+                                                        justifyContent: "center",
+                                                        boxShadow: `0 0 4px 1px ${homeColor}, 0 1px 3px rgba(0,0,0,0.15)`,
                                                         border: `1.5px solid ${homeColor}`,
+                                                        width: 24,
+                                                        height: 24,
                                                         overflow: "visible",
                                                         flexShrink: 0
                                                     }}>
                                                         <img src={homeLogo} alt={game.home_team} className="matchup-logo" style={{ width: 16, height: 16, objectFit: "contain", display: "block" }} />
                                                     </span>
                                                 )}
-                                                <span className="team-text" style={{ fontWeight: isHomePicked ? 800 : 600, color: isHomePicked ? teamColor : "#334155" }}>
+                                                <span className="team-text" style={{ fontWeight: isHomePicked ? 800 : 600, color: isHomePicked ? "#ffffff" : "#0f172a" }}>
                                                     {game.home_team}
                                                 </span>
-                                                <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 700 }}>({homeSpreadStr})</span>
+                                                <span style={{ fontSize: "12px", color: isHomePicked ? "#e2e8f0" : "#475569", fontWeight: 700 }}>({homeSpreadStr})</span>
                                             </span>
 
                                         </div>
@@ -324,14 +333,17 @@ export default function CdbPickemAtsMyPicks() {
                                             display: "flex",
                                             alignItems: "center",
                                             background: pickedSecondary,
-                                            padding: "3px 6px",
+                                            padding: "3px",
                                             borderRadius: 6,
                                             border: `1.5px solid ${pickedPrimary}`,
-                                            boxShadow: `0 0 4px 1px ${pickedPrimary}, 0 1px 2px rgba(0,0,0,0.15)`,
+                                            boxShadow: `0 0 4px 1px ${pickedPrimary}, 0 1px 3px rgba(0,0,0,0.15)`,
+                                            width: 35,
+                                            height: 35,
                                             overflow: "visible",
-                                            flexShrink: 0
+                                            flexShrink: 0,
+                                            justifyContent: "center"
                                         }}>
-                                            {pickedLogo && <img src={pickedLogo} alt={pickedTeam} style={{ width: 20, height: 20, objectFit: "contain", display: "block" }} />}
+                                            {pickedLogo && <img src={pickedLogo} alt={pickedTeam} style={{ width: 25, height: 25, objectFit: "contain", display: "block" }} />}
                                         </div>
 
                                         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, minWidth: "75px" }}>
