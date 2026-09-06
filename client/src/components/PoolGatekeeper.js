@@ -78,40 +78,36 @@ export default function PoolGatekeeper({
                     return new Date() < new Date(dStr);
                 });
                 setOtherActivePools(unexpiredPools);
-            })
-            .catch(err => console.error("Error pulling system active configs:", err));
 
-        if (!user?.id) {
-            setChecking(false);
-            return;
-        }
-
-        // Dynamically choose the correct entry endpoint based on gameKey
-        let entriesUrl = `/api/${gameKey}/entries/me`;
-        if (gameKey === "nfl_survivor") {
-            entriesUrl = "/api/nfl_survivor/roster";
-        } else if (gameKey === "cfb_pickem_ats") {
-            entriesUrl = "/api/cfb_pickem_ats/entries/me";
-        }
-
-        const token = localStorage.getItem("token");
-
-        axios.get(entriesUrl, {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(res => {
-                let userHasEntry = false;
-                if (gameKey === "nfl_survivor") {
-                    userHasEntry = (res.data || []).some(entry => Number(entry.user_id) === Number(user.id));
-                } else {
-                    // Handles standard format { entry: {...} } or { entries: [...] }
-                    userHasEntry = !!res.data?.entry || (res.data?.entries && res.data.entries.length > 0);
+                if (!user?.id) {
+                    setChecking(false);
+                    return;
                 }
-                setHasAnyEntry(userHasEntry);
-                setChecking(false);
+
+                // Dynamically resolve entry endpoint from state or fallback convention without hardcoding game keys
+                const entriesUrl = currentPool?.entries_endpoint || `/api/${gameKey}/entries/me`;
+                const token = localStorage.getItem("token");
+
+                axios.get(entriesUrl, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+                    .then(res => {
+                        let userHasEntry = false;
+                        if (Array.isArray(res.data)) {
+                            userHasEntry = res.data.some(entry => Number(entry.user_id) === Number(user.id));
+                        } else {
+                            userHasEntry = !!res.data?.entry || (res.data?.entries && res.data.entries.length > 0);
+                        }
+                        setHasAnyEntry(userHasEntry);
+                        setChecking(false);
+                    })
+                    .catch(err => {
+                        console.error(`Error checking entry status for user_id ${user.id}:`, err);
+                        setChecking(false);
+                    });
             })
             .catch(err => {
-                console.error(`Error checking entry status for user_id ${user.id}:`, err);
+                console.error("Error pulling system active configs:", err);
                 setChecking(false);
             });
     }, [user, gameKey, isUserAdmin]);
