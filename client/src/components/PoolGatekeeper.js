@@ -86,10 +86,15 @@ export default function PoolGatekeeper({
             return;
         }
 
-        // Strict user_id validation via secure endpoint lookup
+        // Dynamically choose the correct entry endpoint based on gameKey
+        let entriesUrl = `/api/${gameKey}/entries/me`;
+        if (gameKey === "nfl_survivor") {
+            entriesUrl = "/api/nfl_survivor/roster";
+        } else if (gameKey === "cfb_pickem_ats") {
+            entriesUrl = "/api/cfb_pickem_ats/entries/me";
+        }
+
         const token = localStorage.getItem("token");
-        // Adapt endpoint based on your gameKey or general entries route
-        const entriesUrl = gameKey === "nfl_survivor" ? "/api/nfl_survivor/roster" : "/api/nfl_bts/entries/me";
 
         axios.get(entriesUrl, {
             headers: { Authorization: `Bearer ${token}` }
@@ -99,8 +104,8 @@ export default function PoolGatekeeper({
                 if (gameKey === "nfl_survivor") {
                     userHasEntry = (res.data || []).some(entry => Number(entry.user_id) === Number(user.id));
                 } else {
-                    const entries = res.data.entries || [];
-                    userHasEntry = entries.length > 0;
+                    // Handles standard format { entry: {...} } or { entries: [...] }
+                    userHasEntry = !!res.data?.entry || (res.data?.entries && res.data.entries.length > 0);
                 }
                 setHasAnyEntry(userHasEntry);
                 setChecking(false);
@@ -129,6 +134,8 @@ export default function PoolGatekeeper({
         return <div style={{ color: "white", padding: 20, textAlign: "center" }}>Verifying registration status...</div>;
     }
 
+    // If the user does NOT have an entry AND the pool is closed, show registration closed.
+    // If they already have an entry, they bypass this lock and can view their picks/matrix.
     if (!hasAnyEntry && !isPoolOpen) {
         return (
             <div style={{ maxWidth: 600, margin: "40px auto", padding: "16px", fontFamily: "system-ui, -apple-system, sans-serif" }}>
