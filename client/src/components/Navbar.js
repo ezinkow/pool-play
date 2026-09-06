@@ -26,6 +26,7 @@ export default function Navbar() {
     const handleLogout = () => {
         logout();
         setMenuOpen(false);
+        window.location.reload();
     };
 
     useEffect(() => {
@@ -178,7 +179,7 @@ export default function Navbar() {
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0, flex: "0 1 auto" }}>
                         <Link to="/" style={{ display: "flex", alignItems: "center" }}>
                             <img
-                                src={logo} // Replace with your actual file path
+                                src={logo}
                                 alt="POOL PLAY"
                                 style={{
                                     width: "32px",
@@ -397,11 +398,10 @@ export default function Navbar() {
                         </div>
                     </nav>
                 </>
-            )
-            }
+            )}
 
             {/* 🧠 RE-MOUNTED AUTHENTICATION STEP PANEL PORTAL LINK */}
-            <AuthModal show={showLogin} onClose={() => setShowLogin(false)} />
+            <AuthModal show={showLogin} onClose={() => { setShowLogin(false); window.location.reload(); }} />
 
             <BanterDrawer
                 isOpen={chatOpen}

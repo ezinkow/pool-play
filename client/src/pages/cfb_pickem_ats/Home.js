@@ -52,14 +52,28 @@ export default function CfbPickemAtsHome() {
   }, [activeToken]);
 
   const isPoolStarted = useMemo(() => {
-    if (!poolData?.lock_date) return false;
-    return new Date() >= new Date(poolData.lock_date);
+    if (!poolData) return false;
+    const dbActive = !!poolData.is_active;
+    let isPastLockTime = false;
+    if (poolData.lock_date) {
+      let lockDateStr = poolData.lock_date;
+      if (typeof lockDateStr === 'string' && !lockDateStr.endsWith('Z') && !lockDateStr.includes('+')) {
+        lockDateStr = lockDateStr.replace(' ', 'T') + 'Z';
+      }
+      isPastLockTime = new Date() >= new Date(lockDateStr);
+    }
+    return !dbActive || isPastLockTime;
   }, [poolData]);
 
   const handleJoinPool = async () => {
     if (!activeToken) {
       toast.error("Please log in or create an account to join a pool.");
       navigate("/login");
+      return;
+    }
+
+    if (isPoolStarted) {
+      toast.error("Registration is closed. The pool has already started or locked.");
       return;
     }
 
@@ -86,6 +100,11 @@ export default function CfbPickemAtsHome() {
     if (!activeToken) {
       toast.error("Please log in first.");
       navigate("/login");
+      return;
+    }
+
+    if (isPoolStarted) {
+      toast.error("Cannot leave pool after registration has closed or games have started.");
       return;
     }
 
@@ -187,6 +206,12 @@ export default function CfbPickemAtsHome() {
                 </div>
               )}
             </div>
+          ) : isPoolStarted ? (
+            <div style={{ textAlign: "center", padding: "10px 0" }}>
+              <span style={{ fontSize: 32 }}>🔒</span>
+              <p style={{ fontSize: "15px", color: "#b91c1c", fontWeight: "bold", marginTop: 8 }}>Registration is Closed</p>
+              <p style={{ fontSize: "13px", color: "#64748b", margin: "4px 0 0 0" }}>This pool has already started or reached its lock time. New entries are no longer accepted.</p>
+            </div>
           ) : (
             <div>
               <p style={{ fontSize: "13px", color: "#64748b", textAlign: "center", marginBottom: 16 }}>Pick 15 games against the spread each week and select your 3 Best Bets, plus up to 3 must-pick games.</p>
@@ -254,7 +279,7 @@ export default function CfbPickemAtsHome() {
             📋 CFB ATS Pick'em: <br />Rules & Overview
           </h3>
           <ol style={{ paddingLeft: 20, lineHeight: "1.7", fontSize: "14px" }}>
-            <li><strong>15 Picks:</strong> Select a side Against The Spread (ATS) for 15 matchups among the Power 4 Conferenes each week.</li>
+            <li><strong>15 Picks:</strong> Select a side Against The Spread (ATS) for 15 matchups among the Power 4 Conferences each week.</li>
             <li><strong>The Hook Rule:</strong> Whole number spreads are adjusted up or down based on their juice. -110 and lower moves down (ex. -3 to -2.5), while anything above -110 moves up (ex. -3 to -3.5)</li>
             <li><strong>Best Bets:</strong> Designate exactly 3 games each week as your <strong>Best Bets ⭐</strong> for extra weight/points.</li>
             <li><strong>Must Picks:</strong> Every week up to 3 games will be designated as <strong>Must pick ⭐</strong> games, where everyone will need to pick them. These will include top-ranked matchups and Saturday Night prime time games.</li>
