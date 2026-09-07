@@ -99,7 +99,7 @@ export default function NflPickemAtsMatrix() {
                     away_team: row.away_team,
                     home_team: row.home_team,
                     away_logo: row.away_logo || teamColors[row.away_team]?.logo,
-                    home_logo: row.home_logo || teamColors[row.home_logo]?.logo,
+                    home_logo: row.home_logo || teamColors[row.home_team]?.logo,
                     home_color: row.home_color,
                     home_secondary_color: row.home_secondary_color,
                     away_color: row.away_color,
@@ -501,30 +501,42 @@ export default function NflPickemAtsMatrix() {
                                                     }}>
                                                         {showPick ? (
                                                             pickedTeam ? (
-                                                                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, overflow: "visible" }}>
-                                                                    <div style={{ display: "flex", alignItems: "center", gap: 4, overflow: "visible" }}>
-                                                                        <span style={{
-                                                                            background: pickedSecondary,
-                                                                            borderRadius: 4,
-                                                                            padding: "2px 4px",
-                                                                            display: "inline-flex",
-                                                                            alignItems: "center",
-                                                                            boxShadow: `0 0 4px 1px ${pickedPrimary}, 0 1px 2px rgba(0,0,0,0.15)`,
-                                                                            border: `2px solid ${pickedPrimary}`,
-                                                                            margin: "2px"
-                                                                        }}>
-                                                                            {pickedLogo ? (
-                                                                                <img src={pickedLogo} alt={pickedTeam} style={{ width: 20, height: 20, objectFit: "contain" }} />
-                                                                            ) : (
-                                                                                <span style={{ fontSize: 10 }}>{pickedTeam}</span>
-                                                                            )}
-                                                                        </span>
-                                                                        {pickObj.is_best_bet && (
-                                                                            <span style={{ fontSize: "9px", background: GOLD, color: "white", padding: "1px 3px", borderRadius: 3, fontWeight: 900, boxShadow: "0 1px 2px rgba(0,0,0,0.2)" }}>
-                                                                                ★
-                                                                            </span>
+                                                                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", position: "relative", minHeight: "24px" }}>
+                                                                    <span style={{
+                                                                        background: pickedSecondary,
+                                                                        borderRadius: 4,
+                                                                        padding: "2px 4px",
+                                                                        display: "inline-flex",
+                                                                        alignItems: "center",
+                                                                        boxShadow: pickObj.is_best_bet
+                                                                            ? `0 0 10px 3px rgba(200, 157, 60, 0.9), 0 0 4px 1px ${pickedPrimary}, 0 1px 2px rgba(0,0,0,0.15)`
+                                                                            : `0 0 4px 1px ${pickedPrimary}, 0 1px 2px rgba(0,0,0,0.15)`,
+                                                                        border: `2px solid ${pickObj.is_best_bet ? GOLD : pickedPrimary}`
+                                                                    }}>
+                                                                        {pickedLogo ? (
+                                                                            <img src={pickedLogo} alt={pickedTeam} style={{ width: 20, height: 20, objectFit: "contain", display: "block" }} />
+                                                                        ) : (
+                                                                            <span style={{ fontSize: 10 }}>{pickedTeam}</span>
                                                                         )}
-                                                                    </div>
+                                                                    </span>
+                                                                    {pickObj.is_best_bet && (
+                                                                        <span style={{
+                                                                            position: "absolute",
+                                                                            top: "-6px",
+                                                                            right: "20px",
+                                                                            fontSize: "10px",
+                                                                            background: GOLD,
+                                                                            color: "white",
+                                                                            padding: "1px 4px",
+                                                                            borderRadius: 4,
+                                                                            fontWeight: 900,
+                                                                            boxShadow: "0 2px 6px rgba(200, 157, 60, 0.9)",
+                                                                            zIndex: 2,
+                                                                            border: "1px solid white"
+                                                                        }}>
+                                                                            ★
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                             ) : (
                                                                 <span style={{ color: "#94a3b8", fontWeight: 400, fontSize: "11px" }}>-</span>
