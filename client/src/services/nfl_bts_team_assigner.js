@@ -1,4 +1,4 @@
-const { NflBtsTeamAssignments, NflTeams } = require('../models');
+const { NflBtsTeamAssignments, NflTeams } = require('../../../models');
 
 function shuffleArray(array) {
     let arr = [...array];
