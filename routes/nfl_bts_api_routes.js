@@ -416,21 +416,15 @@ module.exports = function (app) {
             const roomId = parseInt(room_id) || 1;
 
             const entries = await NflBtsEntries.findAll({
-                where: { room_id: roomId },
-                include: [{ model: Users, attributes: ['id', 'name'] }]
+                where: { room_id: roomId }
             });
 
             if (entries.length === 0) {
                 return res.status(400).json({ error: `Room ${roomId} has no entries yet.` });
             }
 
-            // if (entries.length < 16) {
-            //     return res.status(400).json({ error: `Room ${roomId} needs 16 users. Currently has ${entries.length}.` });
-            // }
-
             const usersList = entries.map(e => ({
-                id: e.user_id,
-                name: e.entry_name || (e.User ? e.User.name : "Unknown")
+                id: e.user_id
             }));
 
             // Clear existing team assignments for this room before re-assigning
@@ -439,7 +433,7 @@ module.exports = function (app) {
             const success = await assignTeamsToRoom(usersList, roomId);
 
             if (success) {
-                return res.json({ success: true, message: `Room ${roomId} successfully randomized with 1 NFC and 1 AFC team per user!` });
+                return res.json({ success: true, message: `Room ${roomId} successfully randomized with 1 NFC and 1 AFC team per user ID!` });
             } else {
                 return res.status(500).json({ error: "Team assignment execution failed." });
             }

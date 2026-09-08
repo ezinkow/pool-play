@@ -10,15 +10,13 @@ function shuffleArray(array) {
 }
 
 async function assignTeamsToRoom(usersList, roomId = 1) {
-    if (usersList.length < 16) {
-        console.log(`⚠️ Room needs 16 users. Currently has ${usersList.length}.`);
+    if (!usersList || usersList.length === 0) {
+        console.log(`⚠️ No users provided for Room ${roomId}.`);
         return false;
     }
 
-    // Fetch all teams directly from the database
     const allTeams = await NflTeams.findAll();
-
-    // Separate into NFC and AFC pools based on the team's conference or division field
+    
     const nfcPool = allTeams
         .filter(t => t.division && t.division.startsWith("NFC"))
         .map(t => ({ team: t.name, division: t.division }));
@@ -31,14 +29,24 @@ async function assignTeamsToRoom(usersList, roomId = 1) {
     const shuffledAfc = shuffleArray(afcPool);
     const shuffledUsers = shuffleArray(usersList);
 
-    for (let i = 0; i < 16; i++) {
-        const user = shuffledUsers[i];
+    const assignCount = Math.min(shuffledUsers.length, shuffledNfc.length);
+
+    for (let i = 0; i < assignCount; i++) {
+        const userItem = shuffledUsers[i];
+        // Handle both object payload ({ id: ... }) or direct primitive ID value
+        const userId = typeof userItem === 'object' && userItem !== null ? (userItem.id || userItem.user_id) : userItem;
+
+        if (!userId) {
+            console.error(`❌ Invalid user identifier found at index ${i}:`, userItem);
+            continue;
+        }
+
         const nfcAssignment = shuffledNfc[i];
         const afcAssignment = shuffledAfc[i];
 
         await NflBtsTeamAssignments.create({
             room_id: roomId,
-            user_id: user.id,
+            user_id: userId,
             team_name_1: nfcAssignment.team,
             division_1: nfcAssignment.division,
             team_name_2: afcAssignment.team,
@@ -46,7 +54,7 @@ async function assignTeamsToRoom(usersList, roomId = 1) {
         });
     }
 
-    console.log(`✅ Successfully assigned one NFC team and one AFC team to ${usersList.length} users in Room ${roomId}!`);
+    console.log(`✅ Successfully assigned one NFC team and one AFC team to ${assignCount} users in Room ${roomId}!`);
     return true;
 }
 
