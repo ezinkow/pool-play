@@ -37,7 +37,7 @@ export default function LoginPage() {
       <Toaster />
       <div style={containerStyle}>
         <h2 style={{ color: "#13447a", marginBottom: 8 }}>Welcome Back</h2>
-        <p style={{ color: "#6b7280", marginBottom: 24, fontSize: 14 }}>Log in to access your picks</p>
+        <p style={{ color: "#6b7280", marginBottom: 24, fontSize: 14 }}>Log in to join us in the pool!</p>
         
         <form onSubmit={handleLogin}>
           <input
@@ -70,9 +70,11 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div style={{ marginTop: 20, fontSize: 13 }}>
+        <div style={{ marginTop: 20, fontSize: 13, display: "flex", justifyContent: "center", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
           <a href="#/changepassword" style={{ color: "#13447a", textDecoration: "none" }}>Forgot Password?</a>
-          <span style={{ margin: "0 8px", color: "#d1d5db" }}>|</span>
+          <span style={{ color: "#d1d5db" }}>|</span>
+          <a href="#/forgotusername" style={{ color: "#13447a", textDecoration: "none" }}>Forgot Username?</a>
+          <span style={{ color: "#d1d5db" }}>|</span>
           <a href="#/signup" style={{ color: "#13447a", textDecoration: "none" }}>Create Account</a>
         </div>
       </div>
