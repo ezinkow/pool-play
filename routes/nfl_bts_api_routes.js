@@ -417,20 +417,20 @@ module.exports = function (app) {
 
             const entries = await NflBtsEntries.findAll({
                 where: { room_id: roomId },
-                include: [{ model: Users, attributes: ['id', 'username'] }]
+                include: [{ model: Users, attributes: ['id', 'name'] }]
             });
 
             if (entries.length === 0) {
                 return res.status(400).json({ error: `Room ${roomId} has no entries yet.` });
             }
 
-            if (entries.length < 32) {
-                return res.status(400).json({ error: `Room ${roomId} needs 32 users. Currently has ${entries.length}.` });
+            if (entries.length < 16) {
+                return res.status(400).json({ error: `Room ${roomId} needs 16 users. Currently has ${entries.length}.` });
             }
 
             const usersList = entries.map(e => ({
                 id: e.user_id,
-                name: e.entry_name || (e.User ? e.User.username : "Unknown")
+                name: e.entry_name || (e.User ? e.User.name : "Unknown")
             }));
 
             // Clear existing team assignments for this room before re-assigning
