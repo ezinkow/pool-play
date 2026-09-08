@@ -265,9 +265,9 @@ module.exports = function (app) {
         SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result COLLATE utf8mb4_unicode_ci = p.ou_pick COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as ou_wins,
         SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result != 'PUSH' AND g.ou_result COLLATE utf8mb4_unicode_ci != p.ou_pick COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as ou_losses,
         SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result = 'PUSH' THEN 1 ELSE 0 END) as ou_pushes
-    FROM cfb_pickem_ats_entries e
-    LEFT JOIN cfb_pickem_ats_picks p ON e.user_id = p.user_id
-    LEFT JOIN cfb_regular_season_games g ON p.game_id = g.id
+    FROM nfl_pickem_ats_entries e
+    LEFT JOIN nfl_pickem_ats_picks p ON e.user_id = p.user_id
+    LEFT JOIN nfl_regular_season_games g ON p.game_id = g.id
     GROUP BY e.user_id, e.entry_name
     ORDER BY total_points DESC, wins DESC;
 `;
