@@ -2,7 +2,7 @@ const { NflBtsTeamAssignments, NflRegularSeasonGames, NflBtsPicks, NflBtsEntries
 const db = require("../models");
 const requireAuth = require("../middleware/Requireauth");
 const { Op } = require("sequelize");
-const assignTeamsToRoom = require("../service/nfl_bts_team_assigner");
+const assignTeamsToRoom = require("../client/src/services/nfl_bts_team_assigner");
 
 module.exports = function (app) {
 
