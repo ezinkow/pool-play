@@ -424,9 +424,9 @@ module.exports = function (app) {
                 return res.status(400).json({ error: `Room ${roomId} has no entries yet.` });
             }
 
-            if (entries.length < 16) {
-                return res.status(400).json({ error: `Room ${roomId} needs 16 users. Currently has ${entries.length}.` });
-            }
+            // if (entries.length < 16) {
+            //     return res.status(400).json({ error: `Room ${roomId} needs 16 users. Currently has ${entries.length}.` });
+            // }
 
             const usersList = entries.map(e => ({
                 id: e.user_id,
