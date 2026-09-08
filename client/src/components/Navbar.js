@@ -401,7 +401,7 @@ export default function Navbar() {
             )}
 
             {/* 🧠 RE-MOUNTED AUTHENTICATION STEP PANEL PORTAL LINK */}
-            <AuthModal show={showLogin} onClose={() => { setShowLogin(false); window.location.reload(); }} />
+            <AuthModal show={showLogin} onClose={() => setShowLogin(false)} />
 
             <BanterDrawer
                 isOpen={chatOpen}

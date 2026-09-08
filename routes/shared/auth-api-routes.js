@@ -1,5 +1,6 @@
 const { Users, Tokens } = require("../../models");
 const crypto = require("crypto");
+const { Op } = require("sequelize");
 
 module.exports = function (app) {
 
@@ -122,15 +123,23 @@ module.exports = function (app) {
         }
     });
 
-    // POST /api/auth/change-password — lookup by email, update password
+    // POST /api/auth/change-password — lookup by email or username, update password
     app.post("/api/auth/changepassword", async (req, res) => {
         try {
-            const { email, newPassword } = req.body;
+            const { email, newPassword } = req.body; // 'email' field holds either email or username from frontend input
             if (!email || !newPassword) {
-                return res.status(400).json({ error: "Email and new password required" });
+                return res.status(400).json({ error: "Username or email and new password required" });
             }
-            const user = await Users.findOne({ where: { email } });
-            if (!user) return res.status(404).json({ error: "No account found with that email" });
+            const identifier = email.trim();
+            const user = await Users.findOne({
+                where: {
+                    [Op.or]: [
+                        { email: identifier },
+                        { name: identifier }
+                    ]
+                }
+            });
+            if (!user) return res.status(404).json({ error: "No account found with that username or email" });
 
             // 🧠 The `beforeUpdate` model hook automatically detects the password change and hashes it
             await user.update({ password: newPassword });
@@ -138,6 +147,29 @@ module.exports = function (app) {
         } catch (err) {
             console.error(err);
             res.status(500).json({ error: "Password change failed" });
+        }
+    });
+
+    // GET or POST /api/auth/forgot-username
+    app.post("/api/auth/forgot-username", async (req, res) => {
+        try {
+            const { email } = req.body;
+            if (!email) {
+                return res.status(400).json({ error: "Email address is required." });
+            }
+
+            const user = await Users.findOne({ where: { email: email.trim() } });
+
+            // For security reasons, you can choose whether or not to reveal if an email exists, 
+            // but for a straightforward recovery tool, returning the username or a generic success message works best:
+            if (!user) {
+                return res.status(404).json({ error: "No account found with that email address." });
+            }
+
+            res.json({ success: true, username: user.name });
+        } catch (err) {
+            console.error("Error recovering username:", err);
+            res.status(500).json({ error: "Failed to retrieve username." });
         }
     });
 };

@@ -8,6 +8,7 @@ import SignUp from './pages/SignUp';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ChangePassword from './pages/ChangePassword';
+import ForgotUsername from './pages/ForgotUsername';
 import LoginPage from "./pages/LogIn";
 import MyAccount from "./pages/MyAccount";
 import Comments from "./pages/Comments";
@@ -148,6 +149,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/changepassword" element={<ChangePassword />} />
+          <Route path="/forgotusername" element={<ForgotUsername />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/myaccount" element={<MyAccount />} />
           <Route path="/contact" element={<Comments />} />

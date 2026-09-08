@@ -3,7 +3,7 @@ import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function ChangePassword() {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [done, setDone] = useState(false);
@@ -18,18 +18,18 @@ export default function ChangePassword() {
   };
 
   const handleSubmit = async () => {
-    if (!email || !newPassword || !confirmPassword)
+    if (!identifier || !newPassword || !confirmPassword)
       return toast.error("All fields required");
     if (newPassword !== confirmPassword)
       return toast.error("Passwords don't match");
 
     try {
-      // Logic to ensure we hit the 3001 backend in dev, or root in prod
       const apiUrl = window.location.hostname === "localhost" 
         ? "http://localhost:3001/api/auth/changepassword" 
         : "/api/auth/changepassword";
 
-      const res = await axios.post(apiUrl, { email, newPassword });
+      // Passing identifier (can be username or email depending on backend setup)
+      const res = await axios.post(apiUrl, { email: identifier, newPassword });
       
       if (res.data.success) {
         setDone(true);
@@ -52,7 +52,7 @@ export default function ChangePassword() {
           🔑 Change Password
         </h2>
         <p style={{ color: "#6b7280", fontSize: 13, textAlign: "center", marginBottom: 24 }}>
-          Enter your email to update your password
+          Enter your username <strong>OR</strong> email address to update your password
         </p>
 
         {done ? (
@@ -69,13 +69,13 @@ export default function ChangePassword() {
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4, display: "block" }}>
-                Email Address
+                Username <strong>OR</strong> Email Address
               </label>
               <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="your@email.com"
+                type="text"
+                value={identifier}
+                onChange={e => setIdentifier(e.target.value)}
+                placeholder="Enter username OR email"
                 style={inputStyle}
               />
             </div>
