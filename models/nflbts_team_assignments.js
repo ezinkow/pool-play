@@ -1,28 +1,30 @@
 module.exports = function (sequelize, DataTypes) {
     const NflBtsTeamAssignments = sequelize.define("NflBtsTeamAssignments", {
         room_id: {
-            type: DataTypes.STRING,
-            defaultValue: "room_1",
-            allowNull: false
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 1
         },
         user_id: {
             type: DataTypes.INTEGER,
             allowNull: false
         },
-        team_name: {
+        team_name_1: {
             type: DataTypes.STRING,
             allowNull: false
         },
-        division: {
-            type: DataTypes.STRING, // e.g., "NFC North", "AFC East"
+        division_1: {
+            type: DataTypes.STRING,
             allowNull: false
         },
-        room_id: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            defaultValue: 1
+        team_name_2: {
+            type: DataTypes.STRING,
+            allowNull: false
         },
-
+        division_2: {
+            type: DataTypes.STRING,
+            allowNull: false
+        }
     }, {
         tableName: "nfl_bts_team_assignments",
         timestamps: true

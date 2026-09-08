@@ -1,10 +1,13 @@
 const { FootballAssignments } = require('../models');
 
-const NFL_TEAMS_BY_DIVISION = {
+const NFC_TEAMS_BY_DIVISION = {
     "NFC North": ["Packers", "Vikings", "Lions", "Bears"],
     "NFC East": ["Cowboys", "Eagles", "Giants", "Commanders"],
     "NFC South": ["Saints", "Buccaneers", "Falcons", "Panthers"],
-    "NFC West": ["49ers", "Cardinals", "Seahawks", "Rams"],
+    "NFC West": ["49ers", "Cardinals", "Seahawks", "Rams"]
+};
+
+const AFC_TEAMS_BY_DIVISION = {
     "AFC North": ["Ravens", "Steelers", "Bengals", "Browns"],
     "AFC East": ["Dolphins", "Bills", "Patriots", "Jets"],
     "AFC South": ["Colts", "Texans", "Titans", "Jaguars"],
@@ -27,24 +30,36 @@ async function assignTeamsToRoom(usersList, roomId = "room_1") {
         return false;
     }
 
-    let allTeams = [];
-    Object.entries(NFL_TEAMS_BY_DIVISION).forEach(([division, teams]) => {
-        teams.forEach(team => allTeams.push({ team, division }));
+    let nfcPool = [];
+    Object.entries(NFC_TEAMS_BY_DIVISION).forEach(([division, teams]) => {
+        teams.forEach(team => nfcPool.push({ team, division }));
     });
 
-    const shuffledTeams = shuffleArray(allTeams);
+    let afcPool = [];
+    Object.entries(AFC_TEAMS_BY_DIVISION).forEach(([division, teams]) => {
+        teams.forEach(team => afcPool.push({ team, division }));
+    });
+
+    const shuffledNfc = shuffleArray(nfcPool);
+    const shuffledAfc = shuffleArray(afcPool);
     const shuffledUsers = shuffleArray(usersList);
 
     for (let i = 0; i < 32; i++) {
+        const user = shuffledUsers[i];
+        const nfcAssignment = shuffledNfc[i];
+        const afcAssignment = shuffledAfc[i];
+
         await FootballAssignments.create({
             room_id: roomId,
-            user_id: shuffledUsers[i].id, // Anchored to user_id
-            team_name: shuffledTeams[i].team,
-            division: shuffledTeams[i].division
+            user_id: user.id,
+            team_name_1: nfcAssignment.team,
+            division_1: nfcAssignment.division,
+            team_name_2: afcAssignment.team,
+            division_2: afcAssignment.division
         });
     }
 
-    console.log("✅ Successfully assigned 32 random teams using user_ids!");
+    console.log("✅ Successfully assigned one NFC team and one AFC team per user!");
     return true;
 }
 

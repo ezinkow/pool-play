@@ -35,7 +35,13 @@ module.exports = function (sequelize, DataTypes) {
         }
     }, {
         tableName: "nfl_bts_picks",
-        timestamps: true
+        timestamps: true,
+        indexes: [
+            {
+                unique: true,
+                fields: ['user_id', 'week', 'room_id', 'team_name']
+            }
+        ]
     });
 
     return NflBtsPicks;

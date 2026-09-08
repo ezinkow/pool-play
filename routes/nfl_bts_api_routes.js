@@ -2,6 +2,7 @@ const { NflBtsTeamAssignments, NflRegularSeasonGames, NflBtsPicks, NflBtsEntries
 const db = require("../models");
 const requireAuth = require("../middleware/Requireauth");
 const { Op } = require("sequelize");
+const assignTeamsToRoom = require("../service/nfl_bts_team_assigner");
 
 module.exports = function (app) {
 
@@ -41,6 +42,11 @@ module.exports = function (app) {
                 if (poolSetting && poolSetting.lock_date && new Date() >= new Date(poolSetting.lock_date)) {
                     return res.status(403).json({ error: "The pool has already started. Cannot join." });
                 }
+            }
+
+            const currentRoomCount = await NflBtsEntries.count({ where: { room_id } });
+            if (currentRoomCount >= 16) {
+                return res.status(400).json({ error: "This room is full (max 16 players)." });
             }
 
             const nameTaken = await NflBtsEntries.findOne({ where: { entry_name, room_id } });
@@ -121,7 +127,7 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
-    // GET /api/nfl_bts/assignment
+    // GET /api/nfl_bts/assignment (Returns both assigned teams for the user)
     // --------------------------------------------------------
     app.get("/api/nfl_bts/assignment", requireAuth, async (req, res) => {
         try {
@@ -130,27 +136,33 @@ module.exports = function (app) {
                 where: { user_id: req.user.id, room_id }
             });
 
-            if (!assignment || !assignment.team_name) {
-                return res.json({ team_name: null, logo: null, primary_color: null, secondary_color: null });
+            if (!assignment || !assignment.team_name_1) {
+                return res.json({
+                    team_name_1: null, logo_1: null, primary_color_1: null, secondary_color_1: null,
+                    team_name_2: null, logo_2: null, primary_color_2: null, secondary_color_2: null
+                });
             }
 
-            const teamMeta = await db.NflTeams.findOne({
-                where: { name: assignment.team_name }
-            });
+            const teamMeta1 = await db.NflTeams.findOne({ where: { name: assignment.team_name_1 } });
+            const teamMeta2 = await db.NflTeams.findOne({ where: { name: assignment.team_name_2 } });
 
             res.json({
-                team_name: assignment.team_name,
-                logo: teamMeta ? teamMeta.logo : null,
-                primary_color: teamMeta ? teamMeta.primary_color : null,
-                secondary_color: teamMeta ? teamMeta.secondary_color : null
+                team_name_1: assignment.team_name_1,
+                division_1: assignment.division_1,
+                logo_1: teamMeta1 ? teamMeta1.logo : null,
+                primary_color_1: teamMeta1 ? teamMeta1.primary_color : null,
+                secondary_color_1: teamMeta1 ? teamMeta1.secondary_color : null,
+                team_name_2: assignment.team_name_2,
+                division_2: assignment.division_2,
+                logo_2: teamMeta2 ? teamMeta2.logo : null,
+                primary_color_2: teamMeta2 ? teamMeta2.primary_color : null,
+                secondary_color_2: teamMeta2 ? teamMeta2.secondary_color : null
             });
         } catch (err) {
             console.error("Error fetching assignment branding:", err);
             res.status(500).json({ error: "Failed to fetch assignment" });
         }
     });
-
- 
 
     // --------------------------------------------------------
     // GET /api/nfl_bts/picks
@@ -159,67 +171,91 @@ module.exports = function (app) {
         try {
             const { week, room_id, room_number } = req.query;
             const targetRoom = parseInt(room_id || room_number) || 1;
-            const pick = await NflBtsPicks.findOne({
-                where: { user_id: req.user.id, week: parseInt(week), room_id: targetRoom }
+            const targetWeek = parseInt(week) || 1;
+
+            const picks = await NflBtsPicks.findAll({
+                where: { user_id: req.user.id, week: targetWeek, room_id: targetRoom }
             });
-            res.json(pick || null);
+            res.json(picks || []);
         } catch (err) {
             console.error(err);
-            res.status(500).json({ error: "Failed to fetch pick" });
+            res.status(500).json({ error: "Failed to fetch picks" });
         }
     });
 
     // --------------------------------------------------------
-    // POST /api/nfl_bts/picks
+    // POST /api/nfl_bts/picks (Supports batch array or single pick payload)
     // --------------------------------------------------------
     app.post("/api/nfl_bts/picks", requireAuth, async (req, res) => {
         try {
-            const { week, team_name, ats_pick, ou_pick, room_id, room_number } = req.body;
+            const { week, room_id, room_number, picks } = req.body;
             const targetRoom = parseInt(room_id || room_number) || 1;
+            const targetWeek = parseInt(week) || 1;
 
-            if (!team_name) {
-                return res.status(400).json({ error: "No team assigned for this room." });
+            // Normalize payload to always be an array of picks
+            const picksArray = Array.isArray(picks) ? picks : [req.body];
+
+            if (picksArray.length === 0) {
+                return res.status(400).json({ error: "No picks provided." });
             }
 
-            const matchup = await NflRegularSeasonGames.findOne({
-                where: {
-                    week: parseInt(week),
-                    [Op.or]: [{ home_team: team_name }, { away_team: team_name }]
+            // Verify team assignment
+            const assignment = await NflBtsTeamAssignments.findOne({
+                where: { user_id: req.user.id, room_id: targetRoom }
+            });
+
+            if (!assignment) {
+                return res.status(400).json({ error: "No teams assigned for this room." });
+            }
+
+            const allowedTeams = [assignment.team_name_1, assignment.team_name_2];
+
+            for (const p of picksArray) {
+                const { team_name, ats_pick, ou_pick } = p;
+
+                if (!team_name || !allowedTeams.includes(team_name)) {
+                    return res.status(400).json({ error: `Invalid team selection: ${team_name}` });
                 }
-            });
 
-            if (!matchup) return res.status(404).json({ error: "Matchup not found." });
-
-            if (new Date() >= new Date(matchup.game_date)) {
-                return res.status(403).json({ error: "This game has already kicked off. Picks are locked." });
-            }
-
-            let pick = await NflBtsPicks.findOne({
-                where: { user_id: req.user.id, week: parseInt(week), room_id: targetRoom }
-            });
-
-            if (pick) {
-                await pick.update({ ats_pick, ou_pick });
-            } else {
-                await NflBtsPicks.create({
-                    user_id: req.user.id,
-                    week: parseInt(week),
-                    room_id: targetRoom,
-                    team_name,
-                    ats_pick,
-                    ou_pick
+                const matchup = await NflRegularSeasonGames.findOne({
+                    where: {
+                        week: targetWeek,
+                        [Op.or]: [{ home_team: team_name }, { away_team: team_name }]
+                    }
                 });
+
+                if (!matchup) return res.status(404).json({ error: `Matchup not found for ${team_name}.` });
+
+                if (new Date() >= new Date(matchup.game_date)) {
+                    return res.status(403).json({ error: `Game for ${team_name} has already kicked off. Picks are locked.` });
+                }
+
+                let existingPick = await NflBtsPicks.findOne({
+                    where: { user_id: req.user.id, week: targetWeek, room_id: targetRoom, team_name }
+                });
+
+                if (existingPick) {
+                    await existingPick.update({ ats_pick, ou_pick });
+                } else {
+                    await NflBtsPicks.create({
+                        user_id: req.user.id,
+                        week: targetWeek,
+                        room_id: targetRoom,
+                        team_name,
+                        ats_pick,
+                        ou_pick
+                    });
+                }
             }
 
-            res.json({ success: true });
+            res.json({ success: true, message: "Picks saved successfully!" });
         } catch (err) {
             console.error(err);
-            res.status(500).json({ error: "Failed to save pick" });
+            res.status(500).json({ error: "Failed to save picks" });
         }
     });
 
-
-    //  --------------------------------------------------------
+    // --------------------------------------------------------
     // GET /api/nfl_bts/matrix
     // --------------------------------------------------------
     app.get("/api/nfl_bts/matrix", requireAuth, async (req, res) => {
@@ -228,7 +264,6 @@ module.exports = function (app) {
             const targetRoom = parseInt(room_id || room_number) || 1;
             const targetWeek = parseInt(week) || 1;
 
-            // Fetch all entries for this room
             const entries = await NflBtsEntries.findAll({
                 where: { room_id: targetRoom },
                 include: [{ model: Users, attributes: ["id", "name"] }],
@@ -242,74 +277,78 @@ module.exports = function (app) {
                 const userId = entry.user_id;
                 const userName = entry.entry_name || (entry.User ? entry.User.name : "Unknown");
 
-                // Get user's assigned team for this room
                 const assignment = await NflBtsTeamAssignments.findOne({
                     where: { user_id: userId, room_id: targetRoom }
                 });
 
-                const teamName = assignment ? assignment.team_name : null;
+                const team1 = assignment ? assignment.team_name_1 : null;
+                const team2 = assignment ? assignment.team_name_2 : null;
 
-                // Get team logo metadata
-                let teamLogo = null;
-                if (teamName) {
-                    const teamMeta = await NflTeams.findOne({ where: { name: teamName } });
-                    if (teamMeta) teamLogo = teamMeta.logo;
+                let logo1 = null, logo2 = null;
+                if (team1) {
+                    const m1 = await NflTeams.findOne({ where: { name: team1 } });
+                    if (m1) logo1 = m1.logo;
+                }
+                if (team2) {
+                    const m2 = await NflTeams.findOne({ where: { name: team2 } });
+                    if (m2) logo2 = m2.logo;
                 }
 
-                // Get game details for their assigned team this week
-                let game = null;
-                if (teamName) {
-                    game = await NflRegularSeasonGames.findOne({
+                // Helper to build team matchup data object
+                const getTeamGameData = async (teamName) => {
+                    if (!teamName) return null;
+                    const game = await NflRegularSeasonGames.findOne({
                         where: {
                             week: targetWeek,
                             [Op.or]: [{ home_team: teamName }, { away_team: teamName }]
                         }
                     });
-                }
+                    const pick = await NflBtsPicks.findOne({
+                        where: { user_id: userId, week: targetWeek, room_id: targetRoom, team_name: teamName }
+                    });
 
-                // Get user's pick for this week
-                const pick = await NflBtsPicks.findOne({
-                    where: { user_id: userId, week: targetWeek, room_id: targetRoom }
-                });
-
-                // Get logos for teams in the matchup
-                let awayLogo = null;
-                let homeLogo = null;
-                let favoriteLogo = null;
-                let favoriteTeam = null;
-
-                if (game) {
-                    favoriteTeam = game.favorite || null;
-
-                    const awayMeta = await NflTeams.findOne({ where: { name: game.away_team } });
-                    const homeMeta = await NflTeams.findOne({ where: { name: game.home_team } });
-                    if (awayMeta) awayLogo = awayMeta.logo;
-                    if (homeMeta) homeLogo = homeMeta.logo;
-
-                    if (favoriteTeam) {
-                        const favMeta = await NflTeams.findOne({ where: { name: favoriteTeam } });
-                        if (favMeta) favoriteLogo = favMeta.logo;
+                    let awayLogo = null, homeLogo = null, favoriteLogo = null, favoriteTeam = null;
+                    if (game) {
+                        favoriteTeam = game.favorite || null;
+                        const awayMeta = await NflTeams.findOne({ where: { name: game.away_team } });
+                        const homeMeta = await NflTeams.findOne({ where: { name: game.home_team } });
+                        if (awayMeta) awayLogo = awayMeta.logo;
+                        if (homeMeta) homeLogo = homeMeta.logo;
+                        if (favoriteTeam) {
+                            const favMeta = await NflTeams.findOne({ where: { name: favoriteTeam } });
+                            if (favMeta) favoriteLogo = favMeta.logo;
+                        }
                     }
-                }
 
+                    return {
+                        team_name: teamName,
+                        game_date: game ? game.game_date : null,
+                        away_team: game ? game.away_team : null,
+                        home_team: game ? game.home_team : null,
+                        away_logo: awayLogo,
+                        home_logo: homeLogo,
+                        favorite_team: favoriteTeam,
+                        favorite_logo: favoriteLogo,
+                        adjusted_spread: game ? game.adjusted_spread : null,
+                        over_under: game ? game.over_under : null,
+                        ats_pick: pick ? pick.ats_pick : null,
+                        ou_pick: pick ? pick.ou_pick : null,
+                        status: pick ? pick.status : null
+                    };
+                };
+
+                const team1Data = await getTeamGameData(team1);
+                const team2Data = await getTeamGameData(team2);
 
                 matrix.push({
                     user_id: userId,
                     user_name: userName,
-                    team_name: teamName,
-                    logo: teamLogo,
-                    game_date: game ? game.game_date : null,
-                    away_team: game ? game.away_team : null,
-                    home_team: game ? game.home_team : null,
-                    away_logo: awayLogo,
-                    home_logo: homeLogo,
-                    favorite_team: favoriteTeam,
-                    favorite_logo: favoriteLogo,
-                    adjusted_spread: game ? game.adjusted_spread : null,
-                    over_under: game ? game.over_under : null,
-                    ats_pick: pick ? pick.ats_pick : null,
-                    ou_pick: pick ? pick.ou_pick : null,
-                    status: pick ? pick.status : null
+                    team_name_1: team1,
+                    logo_1: logo1,
+                    team_name_2: team2,
+                    logo_2: logo2,
+                    team1_game: team1Data,
+                    team2_game: team2Data
                 });
             }
 
@@ -330,9 +369,12 @@ module.exports = function (app) {
             SELECT 
                 fa.user_id,
                 u.entry_name as user_name,
-                fa.team_name,
-                fa.division,
-                t.logo,
+                fa.team_name_1,
+                fa.division_1,
+                t1.logo as logo_1,
+                fa.team_name_2,
+                fa.division_2,
+                t2.logo as logo_2,
                 SUM(CASE WHEN fp.ats_status = 'win' THEN 1 ELSE 0 END) as ats_wins,
                 SUM(CASE WHEN fp.ats_status = 'loss' THEN 1 ELSE 0 END) as ats_losses,
                 SUM(CASE WHEN fp.ou_status = 'win' THEN 1 ELSE 0 END) as ou_wins,
@@ -340,11 +382,12 @@ module.exports = function (app) {
                 SUM(CASE WHEN fp.ou_status = 'push' THEN 1 ELSE 0 END) as ou_pushes
             FROM nfl_bts_team_assignments fa
             JOIN nfl_bts_entries u ON fa.user_id = u.user_id AND fa.room_id = u.room_id
-            LEFT JOIN nfl_teams t ON fa.team_name = t.name
+            LEFT JOIN nfl_teams t1 ON fa.team_name_1 = t1.name
+            LEFT JOIN nfl_teams t2 ON fa.team_name_2 = t2.name
             LEFT JOIN nfl_bts_picks fp ON fa.user_id = fp.user_id AND fa.room_id = fp.room_id
             WHERE fa.room_id = :room_id
-            GROUP BY fa.user_id, u.entry_name, fa.team_name, fa.division, t.logo
-            ORDER BY fa.division ASC, ats_wins DESC, ou_wins DESC;
+            GROUP BY fa.user_id, u.entry_name, fa.team_name_1, fa.division_1, t1.logo, fa.team_name_2, fa.division_2, t2.logo
+            ORDER BY fa.division_1 ASC, ats_wins DESC, ou_wins DESC;
         `;
 
             const [results] = await db.sequelize.query(query, {
@@ -358,7 +401,7 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
-    // POST /api/nfl_bts/admin/randomize-room-teams
+    // POST /api/nfl_bts/admin/randomize-room-teams (Assigns 1 NFC and 1 AFC team to each user)
     // --------------------------------------------------------
     app.post("/api/nfl_bts/admin/randomize-room-teams", requireAuth, async (req, res) => {
         try {
@@ -370,83 +413,36 @@ module.exports = function (app) {
             }
 
             const { room_id } = req.body;
-            if (!room_id) {
-                return res.status(400).json({ error: "Room ID is required." });
-            }
+            const roomId = parseInt(room_id) || 1;
 
-            const allTeams = await NflTeams.findAll();
-            if (!allTeams || allTeams.length === 0) {
-                return res.status(400).json({ error: "No teams found in the database." });
-            }
-
-            // Fetch entries for this specific room
-            const entries = await NflBtsEntries.findAll({ where: { room_id } });
+            const entries = await NflBtsEntries.findAll({
+                where: { room_id: roomId },
+                include: [{ model: Users, attributes: ['id', 'username'] }]
+            });
 
             if (entries.length === 0) {
-                return res.status(400).json({ error: `Room ${room_id} has no entries yet. At least one player must join before randomizing.` });
+                return res.status(400).json({ error: `Room ${roomId} has no entries yet.` });
             }
 
-            if (allTeams.length < entries.length) {
-                return res.status(400).json({ error: `Not enough teams in the database (${allTeams.length}) to cover all entries (${entries.length}).` });
+            if (entries.length < 32) {
+                return res.status(400).json({ error: `Room ${roomId} needs 32 users. Currently has ${entries.length}.` });
             }
 
-            // Fetch existing assignments in OTHER rooms to prevent duplicate team assignments for multi-room users
-            const otherAssignments = await NflBtsTeamAssignments.findAll({
-                where: {
-                    room_id: { [db.Sequelize.Op.ne]: room_id }
-                }
-            });
-
-            const userBlockedTeams = {};
-            otherAssignments.forEach(a => {
-                if (!userBlockedTeams[a.user_id]) {
-                    userBlockedTeams[a.user_id] = new Set();
-                }
-                userBlockedTeams[a.user_id].add(a.team_name);
-            });
-
-            const teamNames = allTeams.map(t => t.name);
-            let shuffledTeams = [...teamNames].sort(() => Math.random() - 0.5);
+            const usersList = entries.map(e => ({
+                id: e.user_id,
+                name: e.entry_name || (e.User ? e.User.username : "Unknown")
+            }));
 
             // Clear existing team assignments for this room before re-assigning
-            await NflBtsTeamAssignments.destroy({ where: { room_id } });
+            await NflBtsTeamAssignments.destroy({ where: { room_id: roomId } });
 
-            for (const entry of entries) {
-                const userId = entry.user_id;
-                if (!userBlockedTeams[userId]) {
-                    userBlockedTeams[userId] = new Set();
-                }
+            const success = await assignTeamsToRoom(usersList, roomId);
 
-                let assignedTeam = null;
-                let teamIndex = -1;
-
-                for (let i = 0; i < shuffledTeams.length; i++) {
-                    if (!userBlockedTeams[userId].has(shuffledTeams[i])) {
-                        assignedTeam = shuffledTeams[i];
-                        teamIndex = i;
-                        break;
-                    }
-                }
-
-                if (!assignedTeam) {
-                    assignedTeam = shuffledTeams[0];
-                    teamIndex = 0;
-                }
-
-                shuffledTeams.splice(teamIndex, 1);
-                userBlockedTeams[userId].add(assignedTeam);
-
-                const teamMeta = allTeams.find(t => t.name === assignedTeam);
-
-                await NflBtsTeamAssignments.create({
-                    user_id: userId,
-                    room_id: room_id,
-                    team_name: assignedTeam,
-                    division: teamMeta ? teamMeta.division : "NFC North"
-                });
+            if (success) {
+                return res.json({ success: true, message: `Room ${roomId} successfully randomized with 1 NFC and 1 AFC team per user!` });
+            } else {
+                return res.status(500).json({ error: "Team assignment execution failed." });
             }
-
-            res.json({ success: true, message: `Teams successfully randomized for Room ${room_id} (${entries.length} users assigned)!` });
         } catch (err) {
             console.error("Error randomizing room teams:", err);
             res.status(500).json({ error: "Failed to randomize room teams" });

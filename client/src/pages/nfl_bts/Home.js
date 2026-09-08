@@ -181,7 +181,7 @@ export default function NflBtsHome() {
             🏟️ Pool Rooms Selection
           </h3>
           <p style={{ margin: "0 0 4px 0" }}>Choose one or multiple!</p>
-          <p style={{ margin: "0 0 16px 0" }}>Guaranteed to not have the same team!</p>
+          <p style={{ margin: "0 0 16px 0" }}>Everyone gets <strong>2 assigned teams</strong> per room, 1 per conference (16 spots available per room)!</p>
 
           <div style={{ display: "flex", justifyContent: "center", gap: "20px", flexWrap: "wrap" }}>
 
@@ -189,7 +189,7 @@ export default function NflBtsHome() {
             <div style={{ flex: "1 1 260px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
               <h4 style={{ margin: "0 0 4px 0", color: NFL_BLUE, textAlign: "center" }}>Room 1: 50 Credit Pool</h4>
               <p style={{ textAlign: "center", fontSize: "12px", color: "#64748b", margin: "0 0 12px 0" }}>
-                Current Count: <strong style={{ color: NFL_BLUE }}>{roomCounts[1]} / 32</strong>
+                Current Count: <strong style={{ color: NFL_BLUE }}>{roomCounts[1]} / 16</strong>
               </p>
 
               {entryRoom1 ? (
@@ -246,7 +246,7 @@ export default function NflBtsHome() {
             <div style={{ flex: "1 1 260px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
               <h4 style={{ margin: "0 0 4px 0", color: NFL_BLUE, textAlign: "center" }}>Room 2: 100 Credit Pool A</h4>
               <p style={{ textAlign: "center", fontSize: "12px", color: "#64748b", margin: "0 0 12px 0" }}>
-                Current Count: <strong style={{ color: NFL_BLUE }}>{roomCounts[2]} / 32</strong>
+                Current Count: <strong style={{ color: NFL_BLUE }}>{roomCounts[2]} / 16</strong>
               </p>
 
               {entryRoom2 ? (
@@ -303,7 +303,7 @@ export default function NflBtsHome() {
             <div style={{ flex: "1 1 260px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
               <h4 style={{ margin: "0 0 4px 0", color: NFL_BLUE, textAlign: "center" }}>Room 3: 100 Credit Pool B</h4>
               <p style={{ textAlign: "center", fontSize: "12px", color: "#64748b", margin: "0 0 12px 0" }}>
-                Current Count: <strong style={{ color: NFL_BLUE }}>{roomCounts[3]} / 32</strong>
+                Current Count: <strong style={{ color: NFL_BLUE }}>{roomCounts[3]} / 16</strong>
               </p>
 
               {entryRoom3 ? (
@@ -409,11 +409,11 @@ export default function NflBtsHome() {
           margin: "24px auto 80px auto"
         }}>
           <h3 style={{ color: NFL_BLUE, marginTop: 0, marginBottom: 16, fontSize: "1.2rem", textAlign: 'center' }}>
-            📋 Beat The Spread: <br />Assigned Team
+            📋 Beat The Spread: <br />Assigned Teams
           </h3>
           <ol style={{ paddingLeft: 20, lineHeight: "1.7", fontSize: "14px" }}>
-            <li><strong>Assigned Team:</strong> You are randomly assigned one NFL team for the entire season once the 32-player room fills up.</li>
-            <li><strong>Weekly Commitment:</strong> Every week, you must pick your assigned team's game Against The Spread (ATS) and make an Over/Under guess (used for tiebreakers).</li>
+            <li><strong>Assigned Teams:</strong> You are randomly assigned <strong>two NFL teams</strong> for the entire season once the 16-player room fills up.</li>
+            <li><strong>Weekly Commitment:</strong> Every week, you must pick both of your assigned teams' games Against The Spread (ATS) and make Over/Under guesses (used for tiebreakers).</li>
             <li><strong>The Hook Rule:</strong> Whole number spreads are adjusted up or down based on their juice. -110 and lower moves down (ex. -3 to -2.5), while anything above -110 moves up (ex. -3 to -3.5)</li>
             <li><strong>Divisions:</strong> Compete directly within your assigned NFL division based on ATS record (W-L).</li>
             <li><strong>Privacy:</strong> Group picks on the matrix remain hidden until that specific team's game kicks off.</li>

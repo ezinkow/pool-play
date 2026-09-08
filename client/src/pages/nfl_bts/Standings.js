@@ -5,6 +5,7 @@ import PoolGatekeeper from "../../components/PoolGatekeeper";
 
 const NFL_BLUE = "#013369";
 const NFL_RED = "#D50A0A";
+const FALLBACK_BLUE = "#013369";
 
 const DIVISIONS = [
     "NFC North", "NFC East", "NFC South", "NFC West",
@@ -16,9 +17,36 @@ export default function NflBtsStandings() {
     const [userEntries, setUserEntries] = useState([]);
     const [selectedRoomId, setSelectedRoomId] = useState(1);
     const [standings, setStandings] = useState({});
+    const [teamColorsMap, setTeamColorsMap] = useState({});
     const [loading, setLoading] = useState(true);
 
-    // 1. Fetch user entries to check room memberships
+    const logoStyle = {
+        objectFit: "contain",
+        display: "block"
+    };
+
+    // 1. Fetch team metadata for colors and logos
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        axios.get("/api/nfl_teams", {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => {
+                const map = {};
+                (res.data || []).forEach(t => {
+                    map[t.name] = {
+                        color: t.color || t.primary_color || "#0f172a",
+                        secondaryColor: t.secondaryColor || t.bg_color || t.alt_color || t.secondary_color || "#cbd5e1",
+                        logo: t.logo
+                    };
+                });
+                setTeamColorsMap(map);
+            })
+            .catch(err => console.error("Failed to load NFL team colors", err));
+    }, []);
+
+    // 2. Fetch user entries to check room memberships
     useEffect(() => {
         if (!user) return;
         const token = localStorage.getItem("token");
@@ -37,7 +65,7 @@ export default function NflBtsStandings() {
             .catch(err => console.error("Error loading user entries", err));
     }, [user]);
 
-    // 2. Fetch standings for the selected room
+    // 3. Fetch standings for the selected room
     useEffect(() => {
         if (!user) return;
         const token = localStorage.getItem("token");
@@ -48,16 +76,43 @@ export default function NflBtsStandings() {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => {
-                const grouped = res.data.reduce((acc, player) => {
-                    if (!acc[player.division]) acc[player.division] = [];
-                    acc[player.division].push(player);
-                    return acc;
-                }, {});
+                const data = res.data;
+                const rawList = Array.isArray(data) ? data : (data.standings || data.data || []);
+
+                const grouped = {};
+                DIVISIONS.forEach(d => { grouped[d] = []; });
+
+                // Split each user row into respective divisional entries using division_1 / division_2
+                rawList.forEach(player => {
+                    if (player.team_name_1 && player.division_1) {
+                        if (!grouped[player.division_1]) grouped[player.division_1] = [];
+                        grouped[player.division_1].push({
+                            ...player,
+                            display_team: player.team_name_1,
+                            display_logo: player.logo_1,
+                            display_division: player.division_1
+                        });
+                    }
+                    if (player.team_name_2 && player.division_2) {
+                        if (!grouped[player.division_2]) grouped[player.division_2] = [];
+                        grouped[player.division_2].push({
+                            ...player,
+                            display_team: player.team_name_2,
+                            display_logo: player.logo_2,
+                            display_division: player.division_2
+                        });
+                    }
+                });
 
                 Object.keys(grouped).forEach(div => {
                     grouped[div].sort((a, b) => {
-                        if (b.ats_wins !== a.ats_wins) return b.ats_wins - a.ats_wins;
-                        return b.ou_wins - a.ou_wins;
+                        const aAtsWins = Number(a.ats_wins) || 0;
+                        const bAtsWins = Number(b.ats_wins) || 0;
+                        if (bAtsWins !== aAtsWins) return bAtsWins - aAtsWins;
+
+                        const aOuWins = Number(a.ou_wins) || 0;
+                        const bOuWins = Number(b.ou_wins) || 0;
+                        return bOuWins - aOuWins;
                     });
                 });
 
@@ -78,11 +133,11 @@ export default function NflBtsStandings() {
                     <p style={{ color: "#666", marginTop: 8 }}>Ranked by ATS Record (W-L). Tiebreaker: Over/Under Record.</p>
                 </div>
 
-                {/* Room Selector Tab Bar (Shown if user joined multiple rooms) */}
+                {/* Room Selector Tab Bar */}
                 {userEntries.length > 1 && (
                     <div style={{
                         display: "flex",
-                        justifyContent: "flex-start", // Allows proper scrolling room starting from the left edge
+                        justifyContent: "flex-start",
                         gap: 8,
                         marginBottom: 20,
                         flexWrap: "nowrap",
@@ -125,72 +180,116 @@ export default function NflBtsStandings() {
 
                 <div style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
                     gap: "20px"
                 }}>
-                    {DIVISIONS.map(division => (
-                        <div key={division} style={{
-                            background: "white",
-                            borderRadius: "8px",
-                            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-                            overflow: "hidden",
-                            border: `1px solid #e5e7eb`
-                        }}>
+                    {DIVISIONS.map(division => {
+                        const divisionPlayers = standings[division] || [];
 
-                            <div style={{
-                                background: division.includes("NFC") ? NFL_BLUE : NFL_RED,
-                                color: "white",
-                                padding: "10px 16px",
-                                display: "flex",
-                                justifyContent: "space-between",
-                                fontWeight: 700,
-                                fontSize: "14px"
+                        return (
+                            <div key={division} style={{
+                                background: "white",
+                                borderRadius: "10px",
+                                boxShadow: "0 4px 10px rgba(0,0,0,0.06)",
+                                overflow: "hidden",
+                                border: `1px solid #e5e7eb`
                             }}>
-                                <span>{division}</span>
-                                <div style={{ display: "flex", gap: "24px" }}>
-                                    <span style={{ width: "50px", textAlign: "center" }}>W-L</span>
-                                    <span style={{ width: "50px", textAlign: "center" }}>O/U</span>
-                                </div>
-                            </div>
 
-                            <div style={{ display: "flex", flexDirection: "column" }}>
-                                {standings[division] && standings[division].length > 0 ? (
-                                    standings[division].map((player, idx) => (
-                                        <div key={`${player.user_id}-${player.team_name}`} style={{
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            alignItems: "center",
-                                            padding: "8px 16px",
-                                            borderBottom: idx < standings[division].length - 1 ? "1px solid #f3f4f6" : "none",
-                                            backgroundColor: Number(player.user_id) === Number(user?.id) ? "#fef08a" : "transparent"
-                                        }}>
-                                            <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1, minWidth: 0 }}>
-                                                {player.logo && (
-                                                    <img src={player.logo} alt={player.team_name} style={{ width: 20, height: 20, objectFit: "contain", flexShrink: 0 }} />
-                                                )}
-                                                <span style={{ fontWeight: 600, fontSize: "14px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{player.user_name}</span>
-                                                <span style={{ fontSize: "12px", color: "#6b7280", whiteSpace: "nowrap" }}>({player.team_name})</span>
-                                            </div>
-
-                                            <div style={{ display: "flex", gap: "24px", fontSize: "14px", fontWeight: 500, flexShrink: 0 }}>
-                                                <span style={{ width: "50px", textAlign: "center" }}>
-                                                    {player.ats_wins}-{player.ats_losses}
-                                                </span>
-                                                <span style={{ width: "50px", textAlign: "center", color: "#4b5563" }}>
-                                                    {player.ou_wins}-{player.ou_losses}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div style={{ padding: "20px", textAlign: "center", color: "#9ca3af", fontSize: "13px" }}>
-                                        Awaiting 32-player assignment...
+                                <div style={{
+                                    background: division.includes("NFC") ? NFL_BLUE : NFL_RED,
+                                    color: "white",
+                                    padding: "10px 16px",
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    fontWeight: 700,
+                                    fontSize: "14px"
+                                }}>
+                                    <span>{division}</span>
+                                    <div style={{ display: "flex", gap: "24px" }}>
+                                        <span style={{ width: "50px", textAlign: "center" }}>W-L</span>
+                                        <span style={{ width: "50px", textAlign: "center" }}>O/U</span>
                                     </div>
-                                )}
-                            </div>
+                                </div>
 
-                        </div>
-                    ))}
+                                <div style={{ display: "flex", flexDirection: "column" }}>
+                                    {divisionPlayers.length > 0 ? (
+                                        divisionPlayers.map((player, idx) => {
+                                            const isCurrentUser = Number(player.user_id) === Number(user?.id);
+
+                                            const teamName = player.display_team;
+                                            const teamLogo = player.display_logo;
+
+                                            const tMeta = teamColorsMap[teamName] || {};
+                                            const teamColor = tMeta.color || FALLBACK_BLUE;
+                                            const teamSec = tMeta.secondaryColor || "#cbd5e1";
+                                            const finalLogo = teamLogo || tMeta.logo;
+
+                                            const rowBackground = isCurrentUser
+                                                ? `linear-gradient(135deg, ${teamColor}18 0%, ${teamSec}18 100%)`
+                                                : (idx % 2 === 0 ? "#fafafa" : "white");
+
+                                            const atsWins = player.ats_wins ?? 0;
+                                            const atsLosses = player.ats_losses ?? 0;
+                                            const ouWins = player.ou_wins ?? 0;
+                                            const ouLosses = player.ou_losses ?? 0;
+
+                                            return (
+                                                <div key={`${player.user_id}-${division}-${teamName}-${idx}`} style={{
+                                                    display: "flex",
+                                                    justifyContent: "space-between",
+                                                    alignItems: "center",
+                                                    padding: "10px 16px",
+                                                    borderBottom: idx < divisionPlayers.length - 1 ? "1px solid #f3f4f6" : "none",
+                                                    background: rowBackground
+                                                }}>
+                                                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, minWidth: 0 }}>
+                                                        <span style={{ fontWeight: 600, fontSize: "14px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                                            {player.user_name} {isCurrentUser && "(You)"}
+                                                        </span>
+
+                                                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                                                            {finalLogo ? (
+                                                                <div style={{
+                                                                    background: teamSec,
+                                                                    borderRadius: 5,
+                                                                    padding: "2px",
+                                                                    display: "flex",
+                                                                    alignItems: "center",
+                                                                    justifyContent: "center",
+                                                                    boxShadow: `0 0 3px 1px ${teamColor}, 0 1px 2px rgba(0,0,0,0.15)`,
+                                                                    border: `1.2px solid ${teamColor}`,
+                                                                    width: 24,
+                                                                    height: 24,
+                                                                    flexShrink: 0
+                                                                }}>
+                                                                    <img src={finalLogo} alt={teamName} style={{ width: 16, height: 16, ...logoStyle }} />
+                                                                </div>
+                                                            ) : null}
+                                                            <span style={{ fontSize: "11px", color: "#6b7280", whiteSpace: "nowrap" }}>{teamName}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div style={{ display: "flex", gap: "24px", fontSize: "14px", fontWeight: 600, flexShrink: 0 }}>
+                                                        <span style={{ width: "50px", textAlign: "center" }}>
+                                                            {atsWins}-{atsLosses}
+                                                        </span>
+                                                        <span style={{ width: "50px", textAlign: "center", color: "#4b5563" }}>
+                                                            {ouWins}-{ouLosses}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
+                                        <div style={{ padding: "20px", textAlign: "center", color: "#9ca3af", fontSize: "13px" }}>
+                                            No entries in this division yet.
+                                        </div>
+                                    )}
+                                </div>
+
+                            </div>
+                        );
+                    })}
                 </div>
 
             </div>

@@ -70,7 +70,7 @@ export default function AdminTeamRandomizer() {
         <div style={{ padding: "24px", background: "white", borderRadius: "12px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", margin: "20px auto", maxWidth: "600px", textAlign: "center" }}>
             <h3 style={{ color: NFL_BLUE, marginTop: 0 }}>🎲 Room Team Assignment Randomizer</h3>
             <p style={{ fontSize: "14px", color: "#666", marginBottom: "20px" }}>
-                Randomly assign NFL teams for an individual room. Automatically avoids duplicate team assignments across rooms for multi-room users.
+                Randomly assign 1 NFC and 1 AFC team per user for an individual room (requires 16 players).
             </p>
 
             <div style={{ marginBottom: "16px" }}>
@@ -89,8 +89,8 @@ export default function AdminTeamRandomizer() {
             {/* Room Participant Counter Display */}
             <div style={{ marginBottom: "24px", fontSize: "14px", fontWeight: "600", color: "#475569" }}>
                 Current Room Capacity:{" "}
-                <span style={{ color: entryCounts[selectedRoom] === 32 ? "#16a34a" : NFL_BLUE }}>
-                    {fetchingCount ? "Loading..." : `${entryCounts[selectedRoom]} / 32 entries joined`}
+                <span style={{ color: entryCounts[selectedRoom] === 16 ? "#16a34a" : NFL_BLUE }}>
+                    {fetchingCount ? "Loading..." : `${entryCounts[selectedRoom]} / 16 entries joined`}
                 </span>
             </div>
 
