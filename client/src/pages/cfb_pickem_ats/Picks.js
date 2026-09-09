@@ -108,6 +108,7 @@ export default function CfbPickemAtsPicks() {
             return {
                 ...prev,
                 [gameId]: {
+                    ...prev[gameId],
                     picked_team: team,
                     is_best_bet: prev[gameId]?.is_best_bet || false
                 }
@@ -221,7 +222,7 @@ export default function CfbPickemAtsPicks() {
             }));
 
         try {
-            const response = await axios.post("/api/cfb_pickem_ats/picks", {
+            await axios.post("/api/cfb_pickem_ats/picks", {
                 week: currentWeek,
                 picks: formattedPicks
             }, {
@@ -527,7 +528,12 @@ export default function CfbPickemAtsPicks() {
                                                             />
                                                         </span>
                                                     )}
-                                                    <strong>{rawSpread}</strong> | O/U: <strong>{game.over_under}</strong>
+                                                    <strong>{rawSpread}</strong>
+                                                    {game.over_under !== null && game.over_under !== undefined && (
+                                                        <span style={{ marginLeft: 6, color: "#475569" }}>
+                                                            | O/U: <strong>{game.over_under}</strong>
+                                                        </span>
+                                                    )}
                                                 </span>
                                                 {isLocked && <span style={{ fontSize: "9px", color: CFB_RED, fontWeight: 700 }}>🔒</span>}
                                             </div>

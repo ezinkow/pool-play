@@ -95,6 +95,23 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
+    // GET /api/cfb_regular_season_matchups (Fetch upcoming games publicly for countdown/settings)
+    // --------------------------------------------------------
+    app.get("/api/cfb_regular_season_matchups", async (req, res) => {
+        try {
+            const week = parseInt(req.query.week) || 1;
+            const games = await CfbRegularSeasonGames.findAll({
+                where: { week },
+                order: [["game_date", "ASC"]]
+            });
+            res.json(games);
+        } catch (err) {
+            console.error("Error fetching regular season matchups:", err);
+            res.status(500).json({ error: "Failed to load matchups" });
+        }
+    });
+
+    // --------------------------------------------------------
     // GET /api/cfb_teams (Fetch all CFB teams and colors)
     // --------------------------------------------------------
     app.get("/api/cfb_teams", requireAuth, async (req, res) => {
@@ -141,7 +158,6 @@ module.exports = function (app) {
 
             const finalPicksMap = {};
 
-            // 1. Process locked existing picks first
             for (const ep of existingPicks) {
                 const game = gameMap[ep.game_id];
                 const isLocked = game && game.game_date && new Date() >= new Date(game.game_date);
@@ -153,7 +169,6 @@ module.exports = function (app) {
                 }
             }
 
-            // 2. Process incoming client picks for unlocked games
             for (const p of picks) {
                 const game = gameMap[p.game_id];
                 const isLocked = game && game.game_date && new Date() >= new Date(game.game_date);
@@ -165,7 +180,6 @@ module.exports = function (app) {
                 }
             }
 
-            // 3. Accurately count total simulated best bets from the combined map
             const simulatedBestBetsCount = Object.values(finalPicksMap).filter(p => p.is_best_bet).length;
 
             if (simulatedBestBetsCount > 3) {
@@ -173,7 +187,6 @@ module.exports = function (app) {
                 return res.status(400).json({ error: "You can only select a maximum of 3 Best Bets per week." });
             }
 
-            // 4. Destroy removed picks (only if not locked)
             for (const ep of existingPicks) {
                 const game = gameMap[ep.game_id];
                 const isLocked = game && game.game_date && new Date() >= new Date(game.game_date);
@@ -183,7 +196,6 @@ module.exports = function (app) {
                 }
             }
 
-            // 5. Upsert incoming picks
             for (const p of picks) {
                 const game = gameMap[p.game_id];
                 if (!game) continue;
@@ -222,14 +234,11 @@ module.exports = function (app) {
     // --------------------------------------------------------
     app.get("/api/cfb_pickem_ats/settings", requireAuth, async (req, res) => {
         try {
-            const settings = await db.game_settings?.findOne({
+            const settingsModel = db.game_settings || db.GameSettings || db.GameSetting;
+            const settings = settingsModel ? await settingsModel.findOne({
                 where: { game_key: "cfb_pickem_ats" }
-            }) || await db.GameSettings?.findOne({
-                where: { game_key: "cfb_pickem_ats" }
-            });
+            }) : null;
 
-            // Find the current week dynamically if not explicitly stored in settings
-            // For example: find the earliest week containing a game that hasn't started yet, or default to 1
             let currentWeek = settings?.current_week;
 
             if (!currentWeek) {
@@ -251,7 +260,7 @@ module.exports = function (app) {
             res.status(500).json({ error: "Failed to fetch settings" });
         }
     });
-    
+
     // --------------------------------------------------------
     // GET /api/cfb_pickem_ats/mypicks (Fetch user's picks and results for a week)
     // --------------------------------------------------------
@@ -261,10 +270,9 @@ module.exports = function (app) {
 
             const games = await CfbRegularSeasonGames.findAll({
                 where: { week },
-                order: [[["game_date", "ASC"]]]
+                order: [["game_date", "ASC"]]
             });
 
-            // Map game colors using CfbTeams lookup to ensure primary/secondary consistency
             const teamNames = new Set();
             games.forEach(g => {
                 if (g.home_team) teamNames.add(g.home_team);
@@ -366,7 +374,6 @@ module.exports = function (app) {
                 replacements: { week }
             });
 
-            // Fetch team metadata to override raw game table colors consistently
             const teamNames = new Set();
             results.forEach(row => {
                 if (row.home_team) teamNames.add(row.home_team);
@@ -386,7 +393,6 @@ module.exports = function (app) {
                 };
             });
 
-            // Normalize result/status mapping for matrix cells and override with correct team metadata colors
             const mappedResults = results.map(row => {
                 let pickStatus = (row.pick_status || row.status || "").toLowerCase();
                 const atsWinner = row.ats_winner;

@@ -188,7 +188,7 @@ export default function CfbPickemAtsHome() {
           {userEntry ? (
             <div style={{ textAlign: "center" }}>
               <p style={{ fontSize: "15px", color: "#16a34a", fontWeight: "bold" }}>✓ You are officially registered!</p>
-              <p style={{ fontSize: "13px", color: "#475569", margin: "4px 0 16px 0" }}>Display Name: <strong>{userEntry.entry_name}</strong></p>
+              <p style={{ fontSize: "13px", color: "#475569", margin: "4px 0 16px 0" }}>Display Name: <strong>{userEntry?.entry_name}</strong></p>
 
               {!isPoolStarted && (
                 <div>

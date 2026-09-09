@@ -64,6 +64,28 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
+    // GET /api/nfl_pickem_ats/settings (Fetch current pool settings / active week)
+    // --------------------------------------------------------
+    app.get("/api/nfl_pickem_ats/settings", async (req, res) => {
+        try {
+            const SettingsModel = db.GameSettings || db.gameSettings || db.GameSetting || db.game_settings;
+            const setting = SettingsModel ? await SettingsModel.findOne({ where: { game_key: "nfl_pickem_ats" } }) : null;
+
+            if (!setting) {
+                return res.json({ current_week: 1 });
+            }
+
+            return res.json({
+                current_week: setting.current_week || 1,
+                is_active: setting.is_active
+            });
+        } catch (err) {
+            console.error("Failed to fetch pool settings:", err);
+            return res.status(500).json({ error: "Failed to load pool settings" });
+        }
+    });
+
+    // --------------------------------------------------------
     // GET /api/nfl_pickem_ats/games (Fetch schedule & user picks for a week)
     // --------------------------------------------------------
     app.get("/api/nfl_pickem_ats/games", requireAuth, async (req, res) => {
@@ -84,7 +106,7 @@ module.exports = function (app) {
                 pickMap[p.game_id] = {
                     picked_team: p.picked_team,
                     is_best_bet: p.is_best_bet,
-                    over_under_pick: p.ou_pick // 👈 Added database ou_pick mapping here
+                    over_under_pick: p.ou_pick
                 };
             });
 
@@ -115,30 +137,26 @@ module.exports = function (app) {
     // --------------------------------------------------------
     app.post("/api/nfl_pickem_ats/picks", requireAuth, async (req, res) => {
         try {
-            const { week, picks } = req.body; // picks is an array: [{ game_id, picked_team, is_best_bet }]
+            const { week, picks } = req.body;
             const targetWeek = parseInt(week);
 
             if (!Array.isArray(picks)) {
                 return res.status(400).json({ error: "Invalid picks payload." });
             }
 
-            // 1. Count best bets and validate max 3
             const bestBetCount = picks.filter(p => p.is_best_bet === true).length;
             if (bestBetCount > 3) {
                 return res.status(400).json({ error: "You can only select a maximum of 3 Best Bets per week." });
             }
 
-            // 2. Process each pick with kickoff check
             for (const p of picks) {
                 const game = await NflRegularSeasonGames.findByPk(p.game_id);
                 if (!game) continue;
 
-                // Check if game has kicked off
                 if (game.game_date && new Date() >= new Date(game.game_date)) {
                     return res.status(403).json({ error: `Game (${game.away_team} @ ${game.home_team}) has already kicked off. Picks are locked.` });
                 }
 
-                // Upsert pick
                 let existingPick = await NflPickemAtsPicks.findOne({
                     where: { user_id: req.user.id, week: targetWeek, game_id: p.game_id }
                 });
@@ -189,7 +207,7 @@ module.exports = function (app) {
                 pickMap[p.game_id] = {
                     picked_team: p.picked_team,
                     is_best_bet: p.is_best_bet,
-                    over_under_pick: p.ou_pick, // 👈 Added database ou_pick mapping here
+                    over_under_pick: p.ou_pick,
                     status: p.status
                 };
             });
@@ -249,28 +267,28 @@ module.exports = function (app) {
     app.get("/api/nfl_pickem_ats/standings", requireAuth, async (req, res) => {
         try {
             const query = `
-    SELECT 
-        e.user_id,
-        e.entry_name,
-        SUM(CASE 
-            WHEN g.ats_winner IS NOT NULL AND g.ats_winner COLLATE utf8mb4_unicode_ci = p.picked_team COLLATE utf8mb4_unicode_ci 
-            THEN (CASE WHEN p.is_best_bet = 1 THEN 2 ELSE 1 END) 
-            ELSE 0 
-        END) as total_points,
-        SUM(CASE WHEN g.ats_winner IS NOT NULL AND g.ats_winner COLLATE utf8mb4_unicode_ci = p.picked_team COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as wins,
-        SUM(CASE WHEN g.ats_winner IS NOT NULL AND g.ats_winner != 'PUSH' AND g.ats_winner COLLATE utf8mb4_unicode_ci != p.picked_team COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as losses,
-        SUM(CASE WHEN g.ats_winner IS NOT NULL AND g.ats_winner = 'PUSH' THEN 1 ELSE 0 END) as pushes,
-        SUM(CASE WHEN p.is_best_bet = 1 AND g.ats_winner COLLATE utf8mb4_unicode_ci = p.picked_team COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as best_bet_wins,
-        SUM(CASE WHEN p.is_best_bet = 1 AND g.ats_winner IS NOT NULL AND g.ats_winner != 'PUSH' AND g.ats_winner COLLATE utf8mb4_unicode_ci != p.picked_team COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as best_bet_losses,
-        SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result COLLATE utf8mb4_unicode_ci = p.ou_pick COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as ou_wins,
-        SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result != 'PUSH' AND g.ou_result COLLATE utf8mb4_unicode_ci != p.ou_pick COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as ou_losses,
-        SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result = 'PUSH' THEN 1 ELSE 0 END) as ou_pushes
-    FROM nfl_pickem_ats_entries e
-    LEFT JOIN nfl_pickem_ats_picks p ON e.user_id = p.user_id
-    LEFT JOIN nfl_regular_season_games g ON p.game_id = g.id
-    GROUP BY e.user_id, e.entry_name
-    ORDER BY total_points DESC, wins DESC;
-`;
+                SELECT 
+                    e.user_id,
+                    e.entry_name,
+                    SUM(CASE 
+                        WHEN g.ats_winner IS NOT NULL AND g.ats_winner COLLATE utf8mb4_unicode_ci = p.picked_team COLLATE utf8mb4_unicode_ci 
+                        THEN (CASE WHEN p.is_best_bet = 1 THEN 2 ELSE 1 END) 
+                        ELSE 0 
+                    END) as total_points,
+                    SUM(CASE WHEN g.ats_winner IS NOT NULL AND g.ats_winner COLLATE utf8mb4_unicode_ci = p.picked_team COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as wins,
+                    SUM(CASE WHEN g.ats_winner IS NOT NULL AND g.ats_winner != 'PUSH' AND g.ats_winner COLLATE utf8mb4_unicode_ci != p.picked_team COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as losses,
+                    SUM(CASE WHEN g.ats_winner IS NOT NULL AND g.ats_winner = 'PUSH' THEN 1 ELSE 0 END) as pushes,
+                    SUM(CASE WHEN p.is_best_bet = 1 AND g.ats_winner COLLATE utf8mb4_unicode_ci = p.picked_team COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as best_bet_wins,
+                    SUM(CASE WHEN p.is_best_bet = 1 AND g.ats_winner IS NOT NULL AND g.ats_winner != 'PUSH' AND g.ats_winner COLLATE utf8mb4_unicode_ci != p.picked_team COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as best_bet_losses,
+                    SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result COLLATE utf8mb4_unicode_ci = p.ou_pick COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as ou_wins,
+                    SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result != 'PUSH' AND g.ou_result COLLATE utf8mb4_unicode_ci != p.ou_pick COLLATE utf8mb4_unicode_ci THEN 1 ELSE 0 END) as ou_losses,
+                    SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result = 'PUSH' THEN 1 ELSE 0 END) as ou_pushes
+                FROM nfl_pickem_ats_entries e
+                LEFT JOIN nfl_pickem_ats_picks p ON e.user_id = p.user_id
+                LEFT JOIN nfl_regular_season_games g ON p.game_id = g.id
+                GROUP BY e.user_id, e.entry_name
+                ORDER BY total_points DESC, wins DESC;
+            `;
 
             const [results] = await db.sequelize.query(query);
             res.json(results);

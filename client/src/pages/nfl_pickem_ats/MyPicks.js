@@ -77,14 +77,11 @@ export default function NflPickemAtsMyPicks() {
             .finally(() => setLoading(false));
     }, [user, currentWeek, token]);
 
-    // Calculate total points and records dynamically using ats_winner and ou_result from the game
+    // Calculate total points and records dynamically using ats_winner from the game
     let totalPoints = 0;
     let wins = 0;
     let losses = 0;
     let pushes = 0;
-    let ouWins = 0;
-    let ouLosses = 0;
-    let ouPushes = 0;
 
     games.forEach(game => {
         const userPick = picks[game.id];
@@ -103,25 +100,12 @@ export default function NflPickemAtsMyPicks() {
                 }
             }
         }
-
-        // O/U Scoring
-        if (userPick.over_under_pick) {
-            if (game.ou_result && game.ou_result !== "PENDING") {
-                if (game.ou_result === "PUSH") {
-                    ouPushes++;
-                } else if (game.ou_result === userPick.over_under_pick) {
-                    ouWins++;
-                } else {
-                    ouLosses++;
-                }
-            }
-        }
     });
 
-    // Filter games to ONLY show the ones the user has actually made a pick for (ATS or O/U)
+    // Filter games to ONLY show the ones the user has actually made a pick for
     const pickedGames = games.filter(game => {
         const userPick = picks[game.id];
-        return userPick && (userPick.picked_team || userPick.over_under_pick);
+        return userPick && userPick.picked_team;
     });
 
     if (authLoading || loading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, -apple-system, sans-serif" }}>Loading your picks summary...</div>;
@@ -134,16 +118,13 @@ export default function NflPickemAtsMyPicks() {
                 <div style={{ textAlign: "center", marginBottom: 20 }}>
                     <h2 style={{ color: NFL_BLUE, fontSize: "26px", margin: 0, fontWeight: 800, letterSpacing: "-0.025em" }}>My Week {currentWeek} Summary</h2>
                     <p style={{ color: "#64748b", marginTop: 6, fontSize: "14px", fontWeight: 500 }}>
-                        Review your ATS selections, Best Bet outcomes, and Over/Under picks.
+                        Review your ATS selections and Best Bet outcomes.
                     </p>
 
                     {/* Score / Stats Banner */}
                     <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: 12, flexWrap: "wrap" }}>
                         <div style={{ background: "#f1f5f9", padding: "8px 16px", borderRadius: 8, fontWeight: 700, fontSize: "13px", color: "#334155" }}>
                             ATS Record: {wins} - {losses} {pushes > 0 ? `- ${pushes}` : ""}
-                        </div>
-                        <div style={{ background: "#f1f5f9", padding: "8px 16px", borderRadius: 8, fontWeight: 700, fontSize: "13px", color: "#334155" }}>
-                            O/U Record: {ouWins} - {ouLosses} {ouPushes > 0 ? `- ${ouPushes}` : ""}
                         </div>
                         <div style={{ background: "#ecfdf5", padding: "8px 16px", borderRadius: 8, fontWeight: 700, fontSize: "13px", color: "#047857" }}>
                             Total Points: {totalPoints} pts
@@ -207,7 +188,6 @@ export default function NflPickemAtsMyPicks() {
                             const userPick = picks[game.id] || {};
                             const pickedTeam = userPick.picked_team;
                             const isBestBet = userPick.is_best_bet;
-                            const ouPick = userPick.over_under_pick;
 
                             const teamMeta = teamColors[pickedTeam] || {};
                             const teamColor = teamMeta.color || NFL_BLUE;
@@ -254,26 +234,6 @@ export default function NflPickemAtsMyPicks() {
                                 } else {
                                     statusBadge = <span style={{ color: "#64748b", fontWeight: 700, fontSize: "11px" }}>⏳ ATS Pending</span>;
                                 }
-                            }
-
-                            // O/U Result Badge
-                            let ouBadge = null;
-                            if (ouPick) {
-                                let ouText = `O/U: ${ouPick.toUpperCase()} (${game.over_under})`;
-                                let ouColor = "#64748b";
-                                if (game.ou_result && game.ou_result !== "PENDING") {
-                                    if (game.ou_result === "PUSH") {
-                                        ouText = `— O/U PUSH (${game.over_under})`;
-                                        ouColor = "#d97706";
-                                    } else if (game.ou_result === ouPick) {
-                                        ouText = `✓ O/U WIN (${ouPick.toUpperCase()} ${game.over_under})`;
-                                        ouColor = "#16a34a";
-                                    } else {
-                                        ouText = `✕ O/U LOSS (${ouPick.toUpperCase()} ${game.over_under})`;
-                                        ouColor = NFL_RED;
-                                    }
-                                }
-                                ouBadge = <span style={{ color: ouColor, fontWeight: 700, fontSize: "11px", display: "block", marginTop: 2 }}>{ouText}</span>;
                             }
 
                             const absSpread = Math.abs(game.adjusted_spread || game.spread || 3.0);
@@ -373,7 +333,6 @@ export default function NflPickemAtsMyPicks() {
                                                 Final: {game.away_score} - {game.home_score} (Total: {Number(game.away_score || 0) + Number(game.home_score || 0)})
                                             </span>
                                         )}
-                                        {ouBadge}
                                     </div>
 
                                     {/* Right: Pick Logo & Status / Best Bet Column */}

@@ -12,14 +12,14 @@ export default function NflPickemAtsPicks() {
     const { user, loading: authLoading } = useAuth();
     const [currentWeek, setCurrentWeek] = useState(null);
     const [games, setGames] = useState([]);
-    const [picks, setPicks] = useState({}); // { game_id: { picked_team, is_best_bet, over_under_pick } }
-    const [teamColors, setTeamColors] = useState({}); // { teamName: { color, secondaryColor, logo } }
+    const [picks, setPicks] = useState({}); 
+    const [teamColors, setTeamColors] = useState({}); 
     const [loading, setLoading] = useState(true);
-    const [sortBy, setSortBy] = useState("kickoff"); // "kickoff", "team_asc", "team_desc", "fav_desc", "fav_asc"
+    const [sortBy, setSortBy] = useState("kickoff"); 
 
     const token = localStorage.getItem("token");
 
-    // Fetch team primary/secondary colors and branding mapping identical to the matrix view
+    // Fetch team primary/secondary colors and branding mapping
     useEffect(() => {
         if (!token) return;
         axios.get("/api/nfl_teams", {
@@ -39,7 +39,7 @@ export default function NflPickemAtsPicks() {
             .catch(err => console.error("Failed to load NFL team colors", err));
     }, [token]);
 
-    // Fetch pool settings first to default to the current active week
+    // Fetch pool settings for current active week
     useEffect(() => {
         if (!token) return;
 
@@ -53,13 +53,12 @@ export default function NflPickemAtsPicks() {
                     setCurrentWeek(1);
                 }
             })
-            .catch(err => {
-                console.error("Failed to load pool settings", err);
+            .catch(() => {
                 setCurrentWeek(1);
             });
     }, [token]);
 
-    // Fetch weekly schedule and user picks from database only after currentWeek is initialized
+    // Fetch weekly schedule and user picks from database
     useEffect(() => {
         if (!user || currentWeek === null) return;
         setLoading(true);
@@ -69,7 +68,7 @@ export default function NflPickemAtsPicks() {
         })
             .then(res => {
                 setGames(res.data.games || []);
-                setPicks(res.data.userPicks || {}); // Populates both picked_team & over_under_pick from DB
+                setPicks(res.data.userPicks || {});
             })
             .catch(err => {
                 console.error("Failed to load pickem games", err);
@@ -78,7 +77,6 @@ export default function NflPickemAtsPicks() {
             .finally(() => setLoading(false));
     }, [user, currentWeek, token]);
 
-    // Filter out any games that have already kicked off (only show future games)
     const availableGames = games.filter(game => {
         if (!game.game_date) return true;
         const kickoffTime = new Date(game.game_date).getTime();
@@ -88,7 +86,6 @@ export default function NflPickemAtsPicks() {
 
     const bestBetCount = Object.values(picks).filter(p => p.is_best_bet).length;
     const selectedPicksCount = Object.values(picks).filter(p => p.picked_team).length;
-    const selectedOuCount = Object.values(picks).filter(p => p.over_under_pick).length;
     const totalGamesCount = games.length;
 
     const handleTeamPick = (gameId, team, gameDate) => {
@@ -111,26 +108,6 @@ export default function NflPickemAtsPicks() {
                     ...prev[gameId],
                     picked_team: team,
                     is_best_bet: prev[gameId]?.is_best_bet || false
-                }
-            };
-        });
-    };
-
-    const handleOverUnderPick = (gameId, ouChoice, gameDate) => {
-        if (gameDate && new Date() >= new Date(gameDate)) {
-            toast.error("This game has already started. Pick is locked.");
-            return;
-        }
-
-        setPicks(prev => {
-            const currentOu = prev[gameId]?.over_under_pick;
-            const newOu = currentOu === ouChoice ? null : ouChoice;
-
-            return {
-                ...prev,
-                [gameId]: {
-                    ...prev[gameId],
-                    over_under_pick: newOu
                 }
             };
         });
@@ -178,7 +155,6 @@ export default function NflPickemAtsPicks() {
         }
     };
 
-    // Bulk Select Helpers (only applies to unlocked games)
     const handleSelectAll = (type) => {
         const updatedPicks = { ...picks };
         const now = new Date();
@@ -186,14 +162,6 @@ export default function NflPickemAtsPicks() {
         availableGames.forEach(game => {
             const isLocked = game.game_date && now >= new Date(game.game_date);
             if (isLocked) return;
-
-            if (type === "over" || type === "under") {
-                updatedPicks[game.id] = {
-                    ...updatedPicks[game.id],
-                    over_under_pick: type === "over" ? "over" : "under"
-                };
-                return;
-            }
 
             let targetTeam = null;
             const isAwayFav = game.favorite === game.away_team;
@@ -226,11 +194,6 @@ export default function NflPickemAtsPicks() {
     const isCriteriaActive = (type) => {
         if (availableGames.length === 0) return false;
 
-        if (type === "over" || type === "under") {
-            const targetVal = type === "over" ? "over" : "under";
-            return availableGames.every(game => picks[game.id]?.over_under_pick === targetVal);
-        }
-
         return availableGames.every(game => {
             const userPick = picks[game.id]?.picked_team;
             if (!userPick) return false;
@@ -247,7 +210,6 @@ export default function NflPickemAtsPicks() {
         });
     };
 
-    // Sorting Logic
     const sortedGames = [...availableGames].sort((a, b) => {
         if (sortBy === "kickoff") {
             const dateA = a.game_date ? new Date(a.game_date) : new Date(0);
@@ -283,7 +245,7 @@ export default function NflPickemAtsPicks() {
                 game_id: gameId,
                 picked_team: picks[gameId].picked_team,
                 is_best_bet: Boolean(picks[gameId].is_best_bet),
-                ou_pick: picks[gameId].over_under_pick || null
+                ou_pick: picks[gameId].ou_pick || null
             }));
 
         try {
@@ -306,7 +268,6 @@ export default function NflPickemAtsPicks() {
             <div style={{ maxWidth: 850, margin: "0 auto", padding: "12px 8px", paddingBottom: 100, paddingTop: 16, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 <Toaster />
 
-                {/* Sticky Header Summary Bar optimized for mobile */}
                 <div style={{
                     position: "sticky",
                     top: "48px",
@@ -327,7 +288,7 @@ export default function NflPickemAtsPicks() {
                             <span>🏈</span> NFL Pick'em ATS <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span>
                         </h2>
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
-                            Make your ATS/O-U picks & assign exactly 3 Best Bets ⭐ (worth 2 points).
+                            Make your ATS picks & assign exactly 3 Best Bets ⭐ (worth 2 points).
                         </p>
                         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 2 }}>
                             <div style={{ background: bestBetCount === 3 ? "#ecfdf5" : "#fef3c2", color: bestBetCount === 3 ? "#047857" : "#b45309", padding: "4px 8px", borderRadius: 6, fontWeight: 700, fontSize: "11px", whiteSpace: "nowrap" }}>
@@ -335,9 +296,6 @@ export default function NflPickemAtsPicks() {
                             </div>
                             <div style={{ background: "#f8fafc", color: "#475569", padding: "4px 8px", borderRadius: 6, fontWeight: 700, fontSize: "11px", border: "1px solid #cbd5e1", whiteSpace: "nowrap" }}>
                                 Selected: {selectedPicksCount}/{totalGamesCount}
-                            </div>
-                            <div style={{ background: "#f8fafc", color: "#475569", padding: "4px 8px", borderRadius: 6, fontWeight: 700, fontSize: "11px", border: "1px solid #cbd5e1", whiteSpace: "nowrap" }}>
-                                O/U Selected: {selectedOuCount}/{totalGamesCount}
                             </div>
                             {sortedGames.length > 0 && (
                                 <button
@@ -362,7 +320,6 @@ export default function NflPickemAtsPicks() {
                     </div>
                 </div>
 
-                {/* Week Selector Bar */}
                 <div style={{
                     display: "flex",
                     justifyContent: "flex-start",
@@ -395,7 +352,6 @@ export default function NflPickemAtsPicks() {
                     ))}
                 </div>
 
-                {/* Controls Bar */}
                 <div style={{
                     display: "flex",
                     flexDirection: "column",
@@ -454,12 +410,10 @@ export default function NflPickemAtsPicks() {
                         )}
                     </div>
 
-                    {/* Bulk Select Action Buttons Rows - Split by functionality */}
                     {sortedGames.length > 0 && (
                         <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%", paddingTop: 2 }}>
                             <div style={{ fontSize: "12px", fontWeight: 700, color: "#475569" }}>Select:</div>
                             
-                            {/* Row 1: Game ATS Picks (Faves, Dogs, Home, Away) */}
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 4, width: "100%" }}>
                                 {[
                                     { key: "favorites", label: "Faves" },
@@ -491,42 +445,10 @@ export default function NflPickemAtsPicks() {
                                     );
                                 })}
                             </div>
-
-                            {/* Row 2: Over/Under Picks (All Over, All Under) */}
-                            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 4, width: "100%" }}>
-                                {[
-                                    { key: "over", label: "All Over" },
-                                    { key: "under", label: "All Under" }
-                                ].map(action => {
-                                    const active = isCriteriaActive(action.key);
-                                    return (
-                                        <button
-                                            key={action.key}
-                                            onClick={() => handleSelectAll(action.key)}
-                                            style={{
-                                                background: active ? NFL_BLUE : "#f1f5f9",
-                                                color: active ? "white" : "#334155",
-                                                border: active ? `1px solid ${NFL_BLUE}` : "1px solid #cbd5e1",
-                                                padding: "6px 4px",
-                                                borderRadius: 6,
-                                                fontSize: "11px",
-                                                fontWeight: 700,
-                                                cursor: "pointer",
-                                                textAlign: "center",
-                                                whiteSpace: "nowrap",
-                                                width: "100%"
-                                            }}
-                                        >
-                                            {action.label}
-                                        </button>
-                                    );
-                                })}
-                            </div>
                         </div>
                     )}
                 </div>
 
-                {/* Compact Games List or Notice */}
                 {sortedGames.length === 0 ? (
                     <div style={{
                         background: "white",
@@ -576,7 +498,6 @@ export default function NflPickemAtsPicks() {
 
                             const isAwayPicked = userPick.picked_team === game.away_team;
                             const isHomePicked = userPick.picked_team === game.home_team;
-                            const ouPick = userPick.over_under_pick;
 
                             return (
                                 <div key={game.id} style={{
@@ -587,7 +508,6 @@ export default function NflPickemAtsPicks() {
                                     overflow: "hidden",
                                     padding: "10px 10px"
                                 }}>
-                                    {/* Card Header Info */}
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 4 }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", minWidth: 0, flex: 1 }}>
                                             <span style={{ fontSize: "10px", color: "#000000", fontWeight: 700, textTransform: "uppercase", flexShrink: 0 }}>
@@ -616,7 +536,12 @@ export default function NflPickemAtsPicks() {
                                                         />
                                                     </span>
                                                 )}
-                                                <strong>{rawSpread}</strong> | O/U: <strong>{game.over_under}</strong>
+                                                <strong>{rawSpread}</strong>
+                                                {game.over_under !== null && game.over_under !== undefined && (
+                                                    <span style={{ marginLeft: 6, color: "#475569" }}>
+                                                        | O/U: <strong>{game.over_under}</strong>
+                                                    </span>
+                                                )}
                                             </span>
                                             {isLocked && <span style={{ fontSize: "9px", color: NFL_RED, fontWeight: 700 }}>🔒</span>}
                                         </div>
@@ -642,9 +567,7 @@ export default function NflPickemAtsPicks() {
                                         </div>
                                     </div>
 
-                                    {/* Side-by-Side Team Selection Box Container */}
-                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 8 }}>
-                                        {/* Away Team Option Box */}
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                                         <div
                                             onClick={() => !isLocked && handleTeamPick(game.id, game.away_team, game.game_date)}
                                             style={{
@@ -706,7 +629,6 @@ export default function NflPickemAtsPicks() {
                                             </div>
                                         </div>
 
-                                        {/* Home Team Option Box */}
                                         <div
                                             onClick={() => !isLocked && handleTeamPick(game.id, game.home_team, game.game_date)}
                                             style={{
@@ -766,47 +688,6 @@ export default function NflPickemAtsPicks() {
                                             <div style={{ fontSize: "11px", fontWeight: 700, color: isHomePicked ? "#e2e8f0" : "#475569" }}>
                                                 {hasLine ? homeSpreadStr : "No Line"}
                                             </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Over / Under Selection Row */}
-                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#f8fafc", padding: "6px 8px", borderRadius: 6, border: "1px solid #e2e8f0" }}>
-                                        <span style={{ fontSize: "11px", fontWeight: 700, color: "#475569" }}>
-                                            O/U: <strong>{game.over_under}</strong>
-                                        </span>
-                                        <div style={{ display: "flex", gap: 4 }}>
-                                            <button
-                                                onClick={() => !isLocked && handleOverUnderPick(game.id, "over", game.game_date)}
-                                                disabled={isLocked}
-                                                style={{
-                                                    background: ouPick === "over" ? "#0284c7" : "#ffffff",
-                                                    color: ouPick === "over" ? "#ffffff" : "#334155",
-                                                    border: ouPick === "over" ? "1px solid #0284c7" : "1px solid #cbd5e1",
-                                                    padding: "3px 10px",
-                                                    borderRadius: 4,
-                                                    fontSize: "11px",
-                                                    fontWeight: 700,
-                                                    cursor: isLocked ? "not-allowed" : "pointer"
-                                                }}
-                                            >
-                                                Over
-                                            </button>
-                                            <button
-                                                onClick={() => !isLocked && handleOverUnderPick(game.id, "under", game.game_date)}
-                                                disabled={isLocked}
-                                                style={{
-                                                    background: ouPick === "under" ? "#0284c7" : "#ffffff",
-                                                    color: ouPick === "under" ? "#ffffff" : "#334155",
-                                                    border: ouPick === "under" ? "1px solid #0284c7" : "1px solid #cbd5e1",
-                                                    padding: "3px 10px",
-                                                    borderRadius: 4,
-                                                    fontSize: "11px",
-                                                    fontWeight: 700,
-                                                    cursor: isLocked ? "not-allowed" : "pointer"
-                                                }}
-                                            >
-                                                Under
-                                            </button>
                                         </div>
                                     </div>
                                 </div>
