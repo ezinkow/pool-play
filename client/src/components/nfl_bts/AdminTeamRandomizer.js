@@ -7,7 +7,7 @@ const NFL_RED = "#D50A0A";
 
 export default function AdminTeamRandomizer() {
     const [selectedRoom, setSelectedRoom] = useState(1);
-    const [entryCounts, setEntryCounts] = useState({ 1: 0, 2: 0, 3: 0 });
+    const [entryCounts, setEntryCounts] = useState({ 1: 0, 2: 0 });
     const [loading, setLoading] = useState(false);
     const [fetchingCount, setFetchingCount] = useState(true);
 
@@ -18,7 +18,7 @@ export default function AdminTeamRandomizer() {
         setFetchingCount(true);
         try {
             const counts = {};
-            for (let rId of [1, 2, 3]) {
+            for (let rId of [1, 2]) {
                 const res = await axios.get("/api/nfl_bts/matrix", {
                     params: { week: 1, room_id: rId },
                     headers: { Authorization: `Bearer ${token}` }
@@ -80,9 +80,8 @@ export default function AdminTeamRandomizer() {
                     onChange={(e) => setSelectedRoom(Number(e.target.value))}
                     style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px", fontWeight: "600" }}
                 >
-                    <option value={1}>Room 1 (50 Credit Pool)</option>
-                    <option value={2}>Room 2 (100-Credit Pool A)</option>
-                    <option value={3}>Room 3 (100-Credit Pool B)</option>
+                    <option value={1}>Room 1 (100 Credit Pool A)</option>
+                    <option value={2}>Room 2 (100 Credit Pool B)</option>
                 </select>
             </div>
 
