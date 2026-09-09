@@ -29,7 +29,7 @@ module.exports = function (app) {
             const room_id = parseInt(req.body.room_id || req.body.room_number) || 1;
             const entry_name = (req.body.entry_name || req.user.name).trim();
 
-            if (![1, 2, 3].includes(room_id)) {
+            if (![1, 2].includes(room_id)) {
                 return res.status(400).json({ error: "Invalid room selection" });
             }
 
@@ -82,7 +82,7 @@ module.exports = function (app) {
         try {
             const room_id = parseInt(req.body.room_id || req.body.room_number);
 
-            if (![1, 2, 3].includes(room_id)) {
+            if (![1, 2].includes(room_id)) {
                 return res.status(400).json({ error: "Invalid room selection" });
             }
 
