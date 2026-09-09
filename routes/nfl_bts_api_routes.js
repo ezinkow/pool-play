@@ -191,12 +191,21 @@ module.exports = function (app) {
             const targetRoom = parseInt(room_id || room_number) || 1;
             const targetWeek = parseInt(week) || 1;
 
+            // Ensure user has an active assignment or entry in this room before querying picks
+            const assignment = await NflBtsTeamAssignments.findOne({
+                where: { user_id: req.user.id, room_id: targetRoom }
+            });
+
+            if (!assignment) {
+                return res.json([]);
+            }
+
             const picks = await NflBtsPicks.findAll({
                 where: { user_id: req.user.id, week: targetWeek, room_id: targetRoom }
             });
             res.json(picks || []);
         } catch (err) {
-            console.error(err);
+            console.error("Error loading nflbts pick data:", err);
             res.status(500).json({ error: "Failed to fetch picks" });
         }
     });
