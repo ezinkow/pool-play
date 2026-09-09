@@ -169,16 +169,18 @@ export default function NflBtsMyPicks() {
         const pickedLogo = pickedTeamMeta.logo || null;
 
         let spreadDisplay = "";
-        if (game && atsPick) {
+        if (game) {
+            const targetTeam = (atsPick === game.home_team || atsPick === game.away_team) ? atsPick : assignedTeamName;
+            
             const rawSpread = game.adjusted_spread !== null && game.adjusted_spread !== undefined ? game.adjusted_spread : game.spread;
             const hasLine = rawSpread !== null && rawSpread !== undefined;
             const absSpread = hasLine ? (Object.is(Math.abs(rawSpread), -0) ? 0 : Math.abs(rawSpread)) : null;
             const isAwayFav = hasLine && game.favorite === game.away_team;
 
             if (absSpread !== null) {
-                if (atsPick === game.away_team) {
+                if (targetTeam === game.away_team) {
                     spreadDisplay = absSpread === 0 ? "0" : (isAwayFav ? `-${absSpread}` : `+${absSpread}`);
-                } else if (atsPick === game.home_team) {
+                } else if (targetTeam === game.home_team) {
                     spreadDisplay = absSpread === 0 ? "0" : (isAwayFav ? `+${absSpread}` : `-${absSpread}`);
                 }
             }
@@ -306,11 +308,11 @@ export default function NflBtsMyPicks() {
                     <div style={{
                         display: "flex", justifyContent: "center", gap: 8, marginBottom: 24, flexWrap: "wrap"
                     }}>
-                        {[1, 2, 3].map(rId => {
+                        {[1, 2].map(rId => {
                             const isJoined = userEntries.some(e => Number(e.room_id) === rId);
                             if (!isJoined) return null;
                             const isSelected = selectedRoomId === rId;
-                            const label = rId === 1 ? "Room 1 (50 Cr)" : rId === 2 ? "Room 2 (100 Cr A)" : "Room 3 (100 Cr B)";
+                            const label = rId === 1 ? "Room 1 (100 Credit Pool A)" : "Room 2 (100 Credit Pool B)";
                             return (
                                 <button
                                     key={rId}

@@ -137,23 +137,18 @@ export default function NflBtsStandings() {
                 {userEntries.length > 1 && (
                     <div style={{
                         display: "flex",
-                        justifyContent: "flex-start",
+                        justifyContent: "center",
                         gap: 8,
                         marginBottom: 20,
-                        flexWrap: "nowrap",
-                        overflowX: "auto",
-                        WebkitOverflowScrolling: "touch",
-                        paddingLeft: "16px",
-                        paddingRight: "16px",
-                        paddingBottom: 6,
+                        flexWrap: "wrap",
                         width: "100%",
                         boxSizing: "border-box"
                     }}>
-                        {[1, 2, 3].map(rId => {
+                        {[1, 2].map(rId => {
                             const isJoined = userEntries.some(e => Number(e.room_id) === rId);
                             if (!isJoined) return null;
                             const isSelected = selectedRoomId === rId;
-                            const label = rId === 1 ? "Room 1 (50 Cr)" : rId === 2 ? "Room 2 (100 Cr A)" : "Room 3 (100 Cr B)";
+                            const label = rId === 1 ? "Room 1 (100 Credit Pool A)" : "Room 2 (100 Credit Pool B)";
                             return (
                                 <button
                                     key={rId}

@@ -15,9 +15,9 @@ export default function NflBtsHome() {
   const navigate = useNavigate();
   const [poolData, setPoolData] = useState(null);
   const [userEntries, setUserEntries] = useState([]);
-  const [roomCounts, setRoomCounts] = useState({ 1: 0, 2: 0, 3: 0 });
+  const [roomCounts, setRoomCounts] = useState({ 2: 0, 3: 0 });
   const [confirmLeaveRoom, setConfirmLeaveRoom] = useState(null);
-  const [customEntryNames, setCustomEntryNames] = useState({ 1: "", 2: "", 3: "" });
+  const [customEntryNames, setCustomEntryNames] = useState({ 2: "", 3: "" });
 
   const activeToken = token || localStorage.getItem("token");
 
@@ -32,7 +32,7 @@ export default function NflBtsHome() {
     axios.get("/api/nfl_bts/entries")
       .then(res => {
         const allEntries = res.data || [];
-        const counts = { 1: 0, 2: 0, 3: 0 };
+        const counts = { 2: 0, 3: 0 };
         allEntries.forEach(entry => {
           const rId = Number(entry.room_id);
           if (counts[rId] !== undefined) {
@@ -115,7 +115,6 @@ export default function NflBtsHome() {
 
   if (authLoading) return null;
 
-  const entryRoom1 = userEntries.find(e => Number(e.room_id) === 1);
   const entryRoom2 = userEntries.find(e => Number(e.room_id) === 2);
   const entryRoom3 = userEntries.find(e => Number(e.room_id) === 3);
   const hasAnyEntry = userEntries.length > 0;
@@ -185,73 +184,16 @@ export default function NflBtsHome() {
 
           <div style={{ display: "flex", justifyContent: "center", gap: "20px", flexWrap: "wrap" }}>
 
-            {/* Room 1 (50 Credits) */}
+            {/* Room 1 (100 Credits A) */}
             <div style={{ flex: "1 1 260px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
-              <h4 style={{ margin: "0 0 4px 0", color: NFL_BLUE, textAlign: "center" }}>Room 1: 50 Credit Pool</h4>
-              <p style={{ textAlign: "center", fontSize: "12px", color: "#64748b", margin: "0 0 12px 0" }}>
-                Current Count: <strong style={{ color: NFL_BLUE }}>{roomCounts[1]} / 16</strong>
-              </p>
-
-              {entryRoom1 ? (
-                <div style={{ textAlign: "center" }}>
-                  <p style={{ fontSize: "14px", color: "#16a34a", fontWeight: "bold" }}>✓ You are in Room 1</p>
-                  <p style={{ fontSize: "13px", color: "#475569", margin: "4px 0 12px 0" }}>Display Name: <strong>{entryRoom1.entry_name}</strong></p>
-                  {!isPoolStarted && (
-                    <div>
-                      {confirmLeaveRoom === 1 ? (
-                        <div style={{ marginTop: 12, background: "#fee2e2", padding: 10, borderRadius: 8, textAlign: "center" }}>
-                          <p style={{ fontSize: "13px", margin: "0 0 8px 0", color: "#b91c1c", fontWeight: "bold" }}>Are you sure you want to leave?</p>
-                          <button onClick={() => handleLeavePool(1)} style={{ background: NFL_RED, color: WHITE, border: "none", padding: "6px 12px", borderRadius: 6, marginRight: 8, cursor: "pointer", fontWeight: "bold" }}>Yes, Leave</button>
-                          <button onClick={() => setConfirmLeaveRoom(null)} style={{ background: "#cbd5e1", border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>Cancel</button>
-                        </div>
-                      ) : (
-                        <button onClick={() => setConfirmLeaveRoom(1)} style={{ background: "transparent", color: NFL_RED, border: `1px solid ${NFL_RED}`, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: "13px", fontWeight: "bold", display: "block", margin: "0 auto" }}>
-                          Leave Pool
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div>
-                  <div style={{ marginBottom: 12 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                      <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE }}>Entry / Display Name:</label>
-                      {user?.name && (
-                        <button
-                          type="button"
-                          onClick={() => setCustomEntryNames({ ...customEntryNames, 1: user.name })}
-                          style={{ background: "none", border: "none", color: "#2563eb", fontSize: "11px", cursor: "pointer", padding: 0, fontWeight: 600 }}
-                        >
-                          Use Username ({user.name})
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      type="text"
-                      value={customEntryNames[1] !== undefined ? customEntryNames[1] : ""}
-                      onChange={(e) => setCustomEntryNames({ ...customEntryNames, 1: e.target.value })}
-                      placeholder={user?.name || "Enter display name"}
-                      style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #cbd5e1", boxSizing: "border-box" }}
-                    />
-                  </div>
-                  <button onClick={() => handleJoinPool(1, 50)} className="btn-fb-secondary" style={{ width: "100%", padding: "10px 20px", fontSize: "14px" }}>
-                    Join 50 Credit Pool
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Room 2 (100 Credits A) */}
-            <div style={{ flex: "1 1 260px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
-              <h4 style={{ margin: "0 0 4px 0", color: NFL_BLUE, textAlign: "center" }}>Room 2: 100 Credit Pool A</h4>
+              <h4 style={{ margin: "0 0 4px 0", color: NFL_BLUE, textAlign: "center" }}>Room 1: 100 Credit Pool A</h4>
               <p style={{ textAlign: "center", fontSize: "12px", color: "#64748b", margin: "0 0 12px 0" }}>
                 Current Count: <strong style={{ color: NFL_BLUE }}>{roomCounts[2]} / 16</strong>
               </p>
 
               {entryRoom2 ? (
                 <div style={{ textAlign: "center" }}>
-                  <p style={{ fontSize: "14px", color: "#16a34a", fontWeight: "bold" }}>✓ You are in Room 2</p>
+                  <p style={{ fontSize: "14px", color: "#16a34a", fontWeight: "bold" }}>✓ You are in Room 1</p>
                   <p style={{ fontSize: "13px", color: "#475569", margin: "4px 0 12px 0" }}>Display Name: <strong>{entryRoom2.entry_name}</strong></p>
                   {!isPoolStarted && (
                     <div>
@@ -299,16 +241,16 @@ export default function NflBtsHome() {
               )}
             </div>
 
-            {/* Room 3 (100 Credits B) */}
+            {/* Room 2 (100 Credits B) */}
             <div style={{ flex: "1 1 260px", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", background: "#f8fafc", textAlign: "left" }}>
-              <h4 style={{ margin: "0 0 4px 0", color: NFL_BLUE, textAlign: "center" }}>Room 3: 100 Credit Pool B</h4>
+              <h4 style={{ margin: "0 0 4px 0", color: NFL_BLUE, textAlign: "center" }}>Room 2: 100 Credit Pool B</h4>
               <p style={{ textAlign: "center", fontSize: "12px", color: "#64748b", margin: "0 0 12px 0" }}>
                 Current Count: <strong style={{ color: NFL_BLUE }}>{roomCounts[3]} / 16</strong>
               </p>
 
               {entryRoom3 ? (
                 <div style={{ textAlign: "center" }}>
-                  <p style={{ fontSize: "14px", color: "#16a34a", fontWeight: "bold" }}>✓ You are in Room 3</p>
+                  <p style={{ fontSize: "14px", color: "#16a34a", fontWeight: "bold" }}>✓ You are in Room 2</p>
                   <p style={{ fontSize: "13px", color: "#475569", margin: "4px 0 12px 0" }}>Display Name: <strong>{entryRoom3.entry_name}</strong></p>
                   {!isPoolStarted && (
                     <div>
