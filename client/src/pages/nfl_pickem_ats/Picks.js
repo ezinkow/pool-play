@@ -10,7 +10,7 @@ const GOLD = "#c89d3c";
 
 export default function NflPickemAtsPicks() {
     const { user, loading: authLoading } = useAuth();
-    const [currentWeek, setCurrentWeek] = useState(1);
+    const [currentWeek, setCurrentWeek] = useState(null);
     const [games, setGames] = useState([]);
     const [picks, setPicks] = useState({}); // { game_id: { picked_team, is_best_bet, over_under_pick } }
     const [teamColors, setTeamColors] = useState({}); // { teamName: { color, secondaryColor, logo } }
@@ -39,9 +39,29 @@ export default function NflPickemAtsPicks() {
             .catch(err => console.error("Failed to load NFL team colors", err));
     }, [token]);
 
-    // Fetch weekly schedule and user picks from database
+    // Fetch pool settings first to default to the current active week
     useEffect(() => {
-        if (!user) return;
+        if (!token) return;
+
+        axios.get("/api/nfl_pickem_ats/settings", {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => {
+                if (res.data && res.data.current_week) {
+                    setCurrentWeek(Number(res.data.current_week));
+                } else {
+                    setCurrentWeek(1);
+                }
+            })
+            .catch(err => {
+                console.error("Failed to load pool settings", err);
+                setCurrentWeek(1);
+            });
+    }, [token]);
+
+    // Fetch weekly schedule and user picks from database only after currentWeek is initialized
+    useEffect(() => {
+        if (!user || currentWeek === null) return;
         setLoading(true);
         axios.get("/api/nfl_pickem_ats/games", {
             params: { week: currentWeek },
@@ -167,17 +187,6 @@ export default function NflPickemAtsPicks() {
             const isLocked = game.game_date && now >= new Date(game.game_date);
             if (isLocked) return;
 
-            if (type === "none") {
-                if (updatedPicks[game.id]) {
-                    delete updatedPicks[game.id].picked_team;
-                    delete updatedPicks[game.id].over_under_pick;
-                    if (!updatedPicks[game.id].is_best_bet && !updatedPicks[game.id].picked_team && !updatedPicks[game.id].over_under_pick) {
-                        delete updatedPicks[game.id];
-                    }
-                }
-                return;
-            }
-
             if (type === "over" || type === "under") {
                 updatedPicks[game.id] = {
                     ...updatedPicks[game.id],
@@ -211,15 +220,11 @@ export default function NflPickemAtsPicks() {
         });
 
         setPicks(updatedPicks);
-        toast.success(type === "none" ? "Cleared all unlocked picks!" : `Applied bulk selection for all unlocked games!`);
+        toast.success(`Applied bulk selection for all unlocked games!`);
     };
 
     const isCriteriaActive = (type) => {
         if (availableGames.length === 0) return false;
-
-        if (type === "none") {
-            return availableGames.every(game => !picks[game.id]?.picked_team && !picks[game.id]?.over_under_pick);
-        }
 
         if (type === "over" || type === "under") {
             const targetVal = type === "over" ? "over" : "under";
@@ -294,7 +299,7 @@ export default function NflPickemAtsPicks() {
         }
     };
 
-    if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, -apple-system, sans-serif" }}>Loading matchups...</div>;
+    if (authLoading || loading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, -apple-system, sans-serif" }}>Loading matchups...</div>;
 
     return (
         <PoolGatekeeper user={user} gameKey="nfl_pickem_ats" className='page-content'>
@@ -449,19 +454,49 @@ export default function NflPickemAtsPicks() {
                         )}
                     </div>
 
-                    {/* Bulk Select Action Buttons Row - Fully wrapped layout for clean mobile fit */}
+                    {/* Bulk Select Action Buttons Rows - Split by functionality */}
                     {sortedGames.length > 0 && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 4, width: "100%", paddingTop: 2 }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%", paddingTop: 2 }}>
                             <div style={{ fontSize: "12px", fontWeight: 700, color: "#475569" }}>Select:</div>
+                            
+                            {/* Row 1: Game ATS Picks (Faves, Dogs, Home, Away) */}
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 4, width: "100%" }}>
                                 {[
                                     { key: "favorites", label: "Faves" },
                                     { key: "underdogs", label: "Dogs" },
                                     { key: "home", label: "Home" },
-                                    { key: "away", label: "Away" },
+                                    { key: "away", label: "Away" }
+                                ].map(action => {
+                                    const active = isCriteriaActive(action.key);
+                                    return (
+                                        <button
+                                            key={action.key}
+                                            onClick={() => handleSelectAll(action.key)}
+                                            style={{
+                                                background: active ? NFL_BLUE : "#f1f5f9",
+                                                color: active ? "white" : "#334155",
+                                                border: active ? `1px solid ${NFL_BLUE}` : "1px solid #cbd5e1",
+                                                padding: "6px 4px",
+                                                borderRadius: 6,
+                                                fontSize: "11px",
+                                                fontWeight: 700,
+                                                cursor: "pointer",
+                                                textAlign: "center",
+                                                whiteSpace: "nowrap",
+                                                width: "100%"
+                                            }}
+                                        >
+                                            {action.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Row 2: Over/Under Picks (All Over, All Under) */}
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 4, width: "100%" }}>
+                                {[
                                     { key: "over", label: "All Over" },
-                                    { key: "under", label: "All Under" },
-                                    { key: "none", label: "None" }
+                                    { key: "under", label: "All Under" }
                                 ].map(action => {
                                     const active = isCriteriaActive(action.key);
                                     return (

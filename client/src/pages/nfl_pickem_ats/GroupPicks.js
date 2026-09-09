@@ -20,7 +20,7 @@ const PULSE_STYLE = {
 
 export default function NflPickemAtsMatrix() {
     const { user, loading: authLoading } = useAuth();
-    const [currentWeek, setCurrentWeek] = useState(1);
+    const [currentWeek, setCurrentWeek] = useState(null);
     const [matrixData, setMatrixData] = useState([]);
     const [teamColors, setTeamColors] = useState({});
     const [loading, setLoading] = useState(true);
@@ -47,9 +47,29 @@ export default function NflPickemAtsMatrix() {
             .catch(err => console.error("Failed to load NFL team colors", err));
     }, [token]);
 
-    // Fetch matrix data for the selected week
+    // Fetch pool settings first to default to current active week
     useEffect(() => {
-        if (!user) return;
+        if (!token) return;
+
+        axios.get("/api/nfl_pickem_ats/settings", {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => {
+                if (res.data && res.data.current_week) {
+                    setCurrentWeek(Number(res.data.current_week));
+                } else {
+                    setCurrentWeek(1);
+                }
+            })
+            .catch(err => {
+                console.error("Failed to load pool settings", err);
+                setCurrentWeek(1);
+            });
+    }, [token]);
+
+    // Fetch matrix data for the selected week only after currentWeek is initialized
+    useEffect(() => {
+        if (!user || currentWeek === null) return;
         
         const fetchMatrix = (isInitial = false) => {
             if (isInitial) setLoading(true);
@@ -316,7 +336,7 @@ export default function NflPickemAtsMatrix() {
         );
     };
 
-    if (authLoading) return <div style={{ textAlign: "center", padding: 50 }}>Verifying session...</div>;
+    if (authLoading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50 }}>Verifying session...</div>;
 
     return (
         <PoolGatekeeper user={user} gameKey="nfl_pickem_ats" className='page-content'>

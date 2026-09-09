@@ -10,7 +10,7 @@ const GOLD = "#c89d3c";
 
 export default function NflPickemAtsMyPicks() {
     const { user, loading: authLoading } = useAuth();
-    const [currentWeek, setCurrentWeek] = useState(1);
+    const [currentWeek, setCurrentWeek] = useState(null);
     const [games, setGames] = useState([]);
     const [picks, setPicks] = useState({});
     const [teamColors, setTeamColors] = useState({});
@@ -38,9 +38,29 @@ export default function NflPickemAtsMyPicks() {
             .catch(err => console.error("Failed to load NFL team colors", err));
     }, [token]);
 
-    // Fetch weekly schedule and user picks summary
+    // Fetch pool settings first to default to the current active week
     useEffect(() => {
-        if (!user) return;
+        if (!token) return;
+
+        axios.get("/api/nfl_pickem_ats/settings", {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => {
+                if (res.data && res.data.current_week) {
+                    setCurrentWeek(Number(res.data.current_week));
+                } else {
+                    setCurrentWeek(1);
+                }
+            })
+            .catch(err => {
+                console.error("Failed to load pool settings", err);
+                setCurrentWeek(1);
+            });
+    }, [token]);
+
+    // Fetch weekly schedule and user picks summary only after currentWeek is initialized
+    useEffect(() => {
+        if (!user || currentWeek === null) return;
         setLoading(true);
         axios.get("/api/nfl_pickem_ats/mypicks", {
             params: { week: currentWeek },
@@ -104,7 +124,7 @@ export default function NflPickemAtsMyPicks() {
         return userPick && (userPick.picked_team || userPick.over_under_pick);
     });
 
-    if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, -apple-system, sans-serif" }}>Loading your picks summary...</div>;
+    if (authLoading || loading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, -apple-system, sans-serif" }}>Loading your picks summary...</div>;
 
     return (
         <PoolGatekeeper user={user} gameKey="nfl_pickem_ats" className='page-content'>

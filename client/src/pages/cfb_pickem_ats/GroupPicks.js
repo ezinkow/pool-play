@@ -21,16 +21,36 @@ const PULSE_STYLE = {
 
 export default function CfbPickemAtsMatrix() {
     const { user, loading: authLoading } = useAuth();
-    const [currentWeek, setCurrentWeek] = useState(1);
+    const [currentWeek, setCurrentWeek] = useState(null);
     const [matrixData, setMatrixData] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const token = localStorage.getItem("token");
     const { teamColors, loading: colorsLoading, error: colorsError, refresh: refreshTeamColors } = useTeamColors(token);
 
-    // Fetch weekly group matrix data
+    // Fetch pool settings first to default to the current active week
     useEffect(() => {
-        if (!user) return;
+        if (!token) return;
+
+        axios.get("/api/cfb_pickem_ats/settings", {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => {
+                if (res.data && res.data.current_week) {
+                    setCurrentWeek(Number(res.data.current_week));
+                } else {
+                    setCurrentWeek(1);
+                }
+            })
+            .catch(err => {
+                console.error("Failed to load pool settings", err);
+                setCurrentWeek(1);
+            });
+    }, [token]);
+
+    // Fetch weekly group matrix data only after currentWeek is initialized
+    useEffect(() => {
+        if (!user || currentWeek === null) return;
 
         const fetchMatrix = (isInitial = false) => {
             if (isInitial) setLoading(true);
@@ -300,7 +320,7 @@ export default function CfbPickemAtsMatrix() {
         );
     };
 
-    if (authLoading || colorsLoading) return <div style={{ textAlign: "center", padding: 50 }}>Loading matrix...</div>;
+    if (authLoading || colorsLoading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50 }}>Loading matrix...</div>;
 
     return (
         <PoolGatekeeper user={user} gameKey="cfb_pickem_ats" className='page-content'>

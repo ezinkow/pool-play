@@ -218,7 +218,7 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
-    // GET /api/cfb_pickem_ats/settings (Fetch pool settings/title)
+    // GET /api/cfb_pickem_ats/settings (Fetch pool settings/title & current week)
     // --------------------------------------------------------
     app.get("/api/cfb_pickem_ats/settings", requireAuth, async (req, res) => {
         try {
@@ -228,13 +228,30 @@ module.exports = function (app) {
                 where: { game_key: "cfb_pickem_ats" }
             });
 
-            res.json({ title: settings?.title });
+            // Find the current week dynamically if not explicitly stored in settings
+            // For example: find the earliest week containing a game that hasn't started yet, or default to 1
+            let currentWeek = settings?.current_week;
+
+            if (!currentWeek) {
+                const upcomingGame = await CfbRegularSeasonGames.findOne({
+                    where: {
+                        game_date: { [Op.gte]: new Date() }
+                    },
+                    order: [["game_date", "ASC"]]
+                });
+                currentWeek = upcomingGame ? upcomingGame.week : 1;
+            }
+
+            res.json({
+                title: settings?.title,
+                current_week: Number(currentWeek) || 1
+            });
         } catch (err) {
             console.error("Error fetching pool settings:", err);
             res.status(500).json({ error: "Failed to fetch settings" });
         }
     });
-
+    
     // --------------------------------------------------------
     // GET /api/cfb_pickem_ats/mypicks (Fetch user's picks and results for a week)
     // --------------------------------------------------------

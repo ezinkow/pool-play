@@ -11,7 +11,7 @@ const GOLD = "#c89d3c";
 
 export default function CfbPickemAtsPicks() {
     const { user, loading: authLoading } = useAuth();
-    const [currentWeek, setCurrentWeek] = useState(1);
+    const [currentWeek, setCurrentWeek] = useState(null);
     const [games, setGames] = useState([]);
     const [picks, setPicks] = useState({}); // { game_id: { picked_team, is_best_bet } }
     const [poolTitle, setPoolTitle] = useState("");
@@ -21,7 +21,7 @@ export default function CfbPickemAtsPicks() {
     const token = localStorage.getItem("token");
     const { teamColors, loading: colorsLoading, error: colorsError, refresh: refreshTeamColors } = useTeamColors(token);
 
-    // Fetch pool settings (title) and team colors mapping on mount
+    // Fetch pool settings (title and current/active week) and team colors mapping on mount
     useEffect(() => {
         if (!token) return;
 
@@ -29,16 +29,29 @@ export default function CfbPickemAtsPicks() {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => {
-                if (res.data && res.data.title) {
-                    setPoolTitle(res.data.title);
+                if (res.data) {
+                    if (res.data.title) {
+                        setPoolTitle(res.data.title);
+                    }
+                    // Automatically default to the current active week returned by settings if available
+                    if (res.data.current_week) {
+                        setCurrentWeek(Number(res.data.current_week));
+                    } else {
+                        setCurrentWeek(1);
+                    }
+                } else {
+                    setCurrentWeek(1);
                 }
             })
-            .catch(err => console.error("Failed to load pool settings", err));
+            .catch(err => {
+                console.error("Failed to load pool settings", err);
+                setCurrentWeek(1);
+            });
     }, [token]);
 
-    // Fetch weekly schedule and user picks
+    // Fetch weekly schedule and user picks only after currentWeek is initialized
     useEffect(() => {
-        if (!user) return;
+        if (!user || currentWeek === null) return;
         setLoading(true);
         axios.get("/api/cfb_pickem_ats/games", {
             params: { week: currentWeek },
@@ -222,7 +235,7 @@ export default function CfbPickemAtsPicks() {
         }
     };
 
-    if (authLoading || loading || colorsLoading) return <div style={{ textAlign: "center", padding: 50 }}>Loading matchups...</div>;
+    if (authLoading || loading || colorsLoading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50 }}>Loading matchups...</div>;
 
     return (
         <PoolGatekeeper user={user} gameKey="cfb_pickem_ats" className='page-content'>

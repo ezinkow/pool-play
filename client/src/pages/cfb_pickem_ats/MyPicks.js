@@ -11,7 +11,7 @@ const GOLD = "#c89d3c";
 
 export default function CdbPickemAtsMyPicks() {
     const { user, loading: authLoading } = useAuth();
-    const [currentWeek, setCurrentWeek] = useState(1);
+    const [currentWeek, setCurrentWeek] = useState(null);
     const [games, setGames] = useState([]);
     const [picks, setPicks] = useState({});
     const [loading, setLoading] = useState(true);
@@ -19,9 +19,29 @@ export default function CdbPickemAtsMyPicks() {
     const token = localStorage.getItem("token");
     const { teamColors, loading: colorsLoading } = useTeamColors(token);
 
-    // Fetch weekly schedule and user picks summary
+    // Fetch pool settings first to default to the current active week
     useEffect(() => {
-        if (!user) return;
+        if (!token) return;
+
+        axios.get("/api/cfb_pickem_ats/settings", {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => {
+                if (res.data && res.data.current_week) {
+                    setCurrentWeek(Number(res.data.current_week));
+                } else {
+                    setCurrentWeek(1);
+                }
+            })
+            .catch(err => {
+                console.error("Failed to load pool settings", err);
+                setCurrentWeek(1);
+            });
+    }, [token]);
+
+    // Fetch weekly schedule and user picks summary only after currentWeek is initialized
+    useEffect(() => {
+        if (!user || currentWeek === null) return;
         setLoading(true);
         axios.get("/api/cfb_pickem_ats/mypicks", {
             params: { week: currentWeek },
@@ -66,7 +86,7 @@ export default function CdbPickemAtsMyPicks() {
         return userPick && userPick.picked_team;
     });
 
-    if (authLoading || loading || colorsLoading) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, -apple-system, sans-serif" }}>Loading your picks summary...</div>;
+    if (authLoading || loading || colorsLoading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, -apple-system, sans-serif" }}>Loading your picks summary...</div>;
 
     return (
         <PoolGatekeeper user={user} gameKey="cfb_pickem_ats" className='page-content'>
