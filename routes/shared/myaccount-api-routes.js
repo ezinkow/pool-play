@@ -8,48 +8,39 @@ module.exports = function (app) {
         }
 
         try {
-            // 1. Grab EVERY game settings row so we can look up cross-game profiles cleanly
             const SettingsModel = db.GameSettings || db.gameSettings || db.GameSetting || db.game_settings;
             const allGames = await SettingsModel.findAll();
 
             const activePoolsSummary = [];
 
-            // 2. Loop and inspect entries across models
             for (const game of allGames) {
+                const gameKey = game.game_key;
                 let entryRecord = null;
 
-                const gameKey = game.game_key;
-                const lookupPrefix = game.prefix || game.route || "";
-
                 try {
-                    // Use plural model references and target the correct column (user_id: userId)
-                    if ((gameKey === "world_cup" || lookupPrefix.includes("worldcup")) && (db.WorldCupEntries || db.WorldCupEntry)) {
-                        const Model = db.WorldCupEntries || db.WorldCupEntry;
-                        entryRecord = await Model.findOne({ where: { user_id: userId } });
+                    // Dynamically map camelCase model names from game_key (e.g., nfl_pickem_ats -> NflPickemAtsEntry or NflPickemAtsEntries)
+                    const normalizedKey = gameKey
+                        .split('_')
+                        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+                        .join('');
+                    
+                    const possibleModelNames = [
+                        `${normalizedKey}Entries`,
+                        `${normalizedKey}Entry`,
+                        `${gameKey}Entries`,
+                        `${gameKey}Entry`
+                    ];
 
-                    } else if ((gameKey === "nba" || lookupPrefix.includes("nba")) && (db.NbaEntries || db.NbaEntry)) {
-                        const Model = db.NbaEntries || db.NbaEntry;
-                        entryRecord = await Model.findOne({ where: { user_id: userId } });
+                    let TargetModel = null;
+                    for (const modelName of possibleModelNames) {
+                        if (db[modelName]) {
+                            TargetModel = db[modelName];
+                            break;
+                        }
+                    }
 
-                    } else if ((gameKey === "champ_week" || lookupPrefix.includes("tourneypickem")) && (db.TourneyPickemEntries || db.TourneyPickemEntry)) {
-                        const Model = db.TourneyPickemEntries || db.TourneyPickemEntry;
-                        entryRecord = await Model.findOne({ where: { user_id: userId } });
-
-                    } else if (gameKey === "bracket" && (db.BracketEntries || db.BracketEntry)) {
-                        const Model = db.BracketEntries || db.BracketEntry;
-                        entryRecord = await Model.findOne({ where: { user_id: userId } });
-
-                    } else if (gameKey === "tourneysquares" && (db.TourneySquaresEntries || db.TourneySquaresEntry)) {
-                        const Model = db.TourneySquaresEntries || db.TourneySquaresEntry;
-                        entryRecord = await Model.findOne({ where: { user_id: userId } });
-
-                    } else if (gameKey === "nfl" && (db.NflEntries || db.NflEntry)) {
-                        const Model = db.NflEntries || db.NflEntry;
-                        entryRecord = await Model.findOne({ where: { user_id: userId } });
-
-                    } else if (gameKey === "olympics" && (db.OlympicsEntries || db.OlympicsEntry)) {
-                        const Model = db.OlympicsEntries || db.OlympicsEntry;
-                        entryRecord = await Model.findOne({ where: { user_id: userId } });
+                    if (TargetModel) {
+                        entryRecord = await TargetModel.findOne({ where: { user_id: userId } });
                     }
 
                     if (entryRecord) {
@@ -64,7 +55,7 @@ module.exports = function (app) {
                         });
                     }
                 } catch (scanErr) {
-                    // Silently absorb individual missing/unmigrated table failures in production
+                    console.error(`Failed scanning entries for ${gameKey}:`, scanErr);
                 }
             }
 

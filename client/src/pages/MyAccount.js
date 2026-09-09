@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import useAuth from "../hooks/useAuth";
-import ChangePassword from '../components/ChangePassword'
+import ChangePassword from '../components/ChangePassword';
 
 const NAVY = "#13447a";
 const GOLD = "#c89d3c";
@@ -13,29 +13,50 @@ export default function MyAccount() {
     const [myPools, setMyPools] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const token = localStorage.getItem("token");
+
     useEffect(() => {
         if (authLoading) return;
-        if (!user?.id) {
+
+        if (!token) {
             setLoading(false);
             return;
         }
 
-        axios.get("/api/users/my-pools", { params: { user_id: user.id } })
+        axios.get("/api/users/my-pools", {
+            params: { user_id: user?.id },
+            headers: { Authorization: `Bearer ${token}` }
+        })
             .then(res => {
+                console.log("✅ [MyAccount] Raw response data from /api/users/my-pools:", res.data);
                 setMyPools(res.data || []);
                 setLoading(false);
             })
             .catch(err => {
-                console.error("❌ Failed gathering user entry sheets maps:", err);
+                console.error("❌ [MyAccount] Failed gathering user entry sheets maps:", err);
                 setLoading(false);
             });
-    }, [user, authLoading]);
+    }, [authLoading, token, user?.id]);
 
-    // Split pools into two lists for cleaner UI
+    // Split pools into active and inactive based on database game settings (`game.is_active`)
     const { active, inactive } = useMemo(() => {
+        console.log("📊 [MyAccount] Processing raw myPools array for filtering:", myPools);
+        
+        myPools.forEach((p, idx) => {
+            console.log(`Pool [${idx}]:`, p, "is_active value:", p.is_active, "type:", typeof p.is_active);
+        });
+
+        // The database returns `is_active` as a boolean (`false` for ended pools like NBA Playoffs and World Cup).
+        // To show them under active entries if they are currently ongoing or if `is_active` is true/1/truthy, 
+        // we check standard boolean values. If `is_active` is explicitly false/0, it goes to archive.
+        const activePools = myPools.filter(p => p.is_active === true || p.is_active === 1 || p.is_active === "true");
+        const inactivePools = myPools.filter(p => p.is_active === false || p.is_active === 0 || p.is_active === "false");
+
+        console.log("🏃 [MyAccount] Filtered Active Pools:", activePools);
+        console.log("📜 [MyAccount] Filtered Inactive Pools:", inactivePools);
         return {
-            active: myPools.filter(p => p.is_active === true),
-            inactive: myPools.filter(p => p.is_active !== true)
+            active: activePools,
+            inactive: inactivePools
         };
     }, [myPools]);
 
@@ -45,7 +66,7 @@ export default function MyAccount() {
 
     const renderPoolCard = (pool, isActive) => (
         <div
-            key={pool.key}
+            key={pool.key || pool.id}
             style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 backgroundColor: isActive ? "white" : "#f1f5f9",
@@ -57,12 +78,12 @@ export default function MyAccount() {
             }}
         >
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <span style={{ fontSize: 32 }}>{pool.emoji}</span>
+                <span style={{ fontSize: 32 }}>{pool.emoji || "🏈"}</span>
                 <div>
                     <h4 style={{ margin: 0, color: "#1e293b", fontWeight: 800 }}>
-                        {pool.label} {!isActive && <span style={{ fontSize: 10, color: "#64748b" }}>(Ended)</span>}
+                        {pool.label || pool.name} {!isActive && <span style={{ fontSize: 10, color: "#64748b" }}>(Ended)</span>}
                     </h4>
-                    <p style={{ margin: "2px 0 0", color: "#64748b", fontSize: 12 }}>{pool.title}</p>
+                    <p style={{ margin: "2px 0 0", color: "#64748b", fontSize: 12 }}>{pool.title || pool.description}</p>
                 </div>
             </div>
 
