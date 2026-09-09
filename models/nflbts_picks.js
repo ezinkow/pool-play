@@ -12,6 +12,10 @@ module.exports = function (sequelize, DataTypes) {
             type: DataTypes.STRING,
             allowNull: false
         },
+        game_id: {
+            type: DataTypes.STRING, // ESPN game ID reference
+            allowNull: true
+        },
         ats_pick: {
             type: DataTypes.STRING, // The team they picked to cover
             allowNull: true

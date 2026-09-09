@@ -127,6 +127,24 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
+    // GET /api/nfl_bts/games
+    // --------------------------------------------------------
+    app.get("/api/nfl_bts/games", requireAuth, async (req, res) => {
+        try {
+            const { week } = req.query;
+            const whereClause = week ? { week: parseInt(week) } : {};
+            const games = await NflRegularSeasonGames.findAll({
+                where: whereClause,
+                order: [['game_date', 'ASC']]
+            });
+            res.json(games || []);
+        } catch (err) {
+            console.error("Failed to fetch regular season games:", err);
+            res.status(500).json({ error: "Failed to fetch games" });
+        }
+    });
+
+    // --------------------------------------------------------
     // GET /api/nfl_bts/assignment (Returns both assigned teams for the user)
     // --------------------------------------------------------
     app.get("/api/nfl_bts/assignment", requireAuth, async (req, res) => {
@@ -192,14 +210,12 @@ module.exports = function (app) {
             const targetRoom = parseInt(room_id || room_number) || 1;
             const targetWeek = parseInt(week) || 1;
 
-            // Normalize payload to always be an array of picks
             const picksArray = Array.isArray(picks) ? picks : [req.body];
 
             if (picksArray.length === 0) {
                 return res.status(400).json({ error: "No picks provided." });
             }
 
-            // Verify team assignment
             const assignment = await NflBtsTeamAssignments.findOne({
                 where: { user_id: req.user.id, room_id: targetRoom }
             });
@@ -235,13 +251,18 @@ module.exports = function (app) {
                 });
 
                 if (existingPick) {
-                    await existingPick.update({ ats_pick, ou_pick });
+                    await existingPick.update({
+                        game_id: matchup.id || matchup.game_id,
+                        ats_pick,
+                        ou_pick
+                    });
                 } else {
                     await NflBtsPicks.create({
                         user_id: req.user.id,
                         week: targetWeek,
                         room_id: targetRoom,
                         team_name,
+                        game_id: matchup.id || matchup.game_id,
                         ats_pick,
                         ou_pick
                     });

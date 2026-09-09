@@ -27,16 +27,26 @@ export default function NflBtsPicks() {
     });
     const [teamColorsMap, setTeamColorsMap] = useState({});
 
-    const logoStyle = {
-        objectFit: "contain",
-        border: "1px solid rgba(255,255,255,0.4)",
-        boxShadow: "0 2px 5px rgba(0,0,0,0.3)"
-    };
-
-    const darkLogoStyle = {
-        objectFit: "contain",
-        border: "1px solid rgba(0,0,0,0.15)",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.15)"
+    // Unified Logo Wrapper Style matching your matrix view layout perfectly
+    const renderTeamLogo = (logoUrl, altText, size = 25, containerSize = 35, customColor = FALLBACK_BLUE, customSecondary = "#cbd5e1") => {
+        if (!logoUrl) return null;
+        return (
+            <span style={{
+                background: customSecondary,
+                borderRadius: 6,
+                padding: "3px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: `0 0 4px 1px ${customColor}, 0 1px 3px rgba(0,0,0,0.15)`,
+                border: `1.5px solid ${customColor}`,
+                width: containerSize,
+                height: containerSize,
+                flexShrink: 0
+            }}>
+                <img src={logoUrl} alt={altText} style={{ width: size, height: size, objectFit: "contain", display: "block" }} />
+            </span>
+        );
     };
 
     useEffect(() => {
@@ -94,16 +104,19 @@ export default function NflBtsPicks() {
                 const t2 = assignmentRes.data.team_name_2;
                 setAssignedTeams({ team_1: t1, team_2: t2 });
 
+                const t1MetaFromMap = teamColorsMap[t1] || {};
+                const t2MetaFromMap = teamColorsMap[t2] || {};
+
                 setTeamsMeta({
                     team_1: {
-                        logo: assignmentRes.data.logo_1 || null,
-                        primary_color: assignmentRes.data.primary_color_1 || FALLBACK_BLUE,
-                        secondary_color: assignmentRes.data.secondary_color_1 || GOLD
+                        logo: assignmentRes.data.logo_1 || t1MetaFromMap.logo || null,
+                        primary_color: assignmentRes.data.primary_color_1 || t1MetaFromMap.color || FALLBACK_BLUE,
+                        secondary_color: assignmentRes.data.secondary_color_1 || t1MetaFromMap.secondaryColor || GOLD
                     },
                     team_2: {
-                        logo: assignmentRes.data.logo_2 || null,
-                        primary_color: assignmentRes.data.primary_color_2 || FALLBACK_BLUE,
-                        secondary_color: assignmentRes.data.secondary_color_2 || GOLD
+                        logo: assignmentRes.data.logo_2 || t2MetaFromMap.logo || null,
+                        primary_color: assignmentRes.data.primary_color_2 || t2MetaFromMap.color || FALLBACK_BLUE,
+                        secondary_color: assignmentRes.data.secondary_color_2 || t2MetaFromMap.secondaryColor || GOLD
                     }
                 });
 
@@ -145,7 +158,7 @@ export default function NflBtsPicks() {
             }
         }
         fetchData();
-    }, [user, currentWeek, selectedRoomId]);
+    }, [user, currentWeek, selectedRoomId, teamColorsMap]);
 
     const handlePickChange = (teamKey, field, value, matchup) => {
         if (matchup?.game_date && new Date() >= new Date(matchup.game_date)) {
@@ -217,7 +230,7 @@ export default function NflBtsPicks() {
             return (
                 <div style={{ textAlign: "center", padding: 24, background: "white", borderRadius: 12, border: "1px solid #e2e8f0", height: "100%" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 8 }}>
-                        {teamMetaInfo.logo && <img src={teamMetaInfo.logo} alt={teamName} style={{ width: 24, height: 24, ...darkLogoStyle }} />}
+                        {renderTeamLogo(teamMetaInfo.logo, teamName, 20, 30, teamMetaInfo.primary_color, teamMetaInfo.secondary_color)}
                         <h4 style={{ margin: 0, color: FALLBACK_BLUE, fontSize: "15px" }}>{teamName}</h4>
                     </div>
                     <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>Bye week or matchup not scheduled for Week {currentWeek}.</p>
@@ -254,6 +267,8 @@ export default function NflBtsPicks() {
         const isHomePicked = pickData.ats_pick === matchupData.home_team;
         const ouPick = pickData.ou_pick;
 
+        const resolvedTeamLogo = teamMetaInfo.logo || (teamColorsMap[teamName] ? teamColorsMap[teamName].logo : null);
+
         return (
             <div style={{
                 background: "white",
@@ -265,6 +280,7 @@ export default function NflBtsPicks() {
                 flexDirection: "column",
                 height: "100%"
             }}>
+                {/* Top Assigned Team Banner */}
                 <div style={{
                     background: `linear-gradient(135deg, ${teamMetaInfo.primary_color} 0%, ${teamMetaInfo.secondary_color} 100%)`,
                     padding: "10px 14px",
@@ -273,10 +289,11 @@ export default function NflBtsPicks() {
                     alignItems: "center",
                     gap: 10
                 }}>
-                    {teamMetaInfo.logo && <img src={teamMetaInfo.logo} alt={teamName} style={{ width: 28, height: 28, ...logoStyle }} />}
+                    {renderTeamLogo(resolvedTeamLogo, teamName, 22, 32, teamMetaInfo.primary_color, teamMetaInfo.secondary_color)}
                     <span style={{ fontSize: "15px", fontWeight: 800, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>Assigned: {teamName}</span>
                 </div>
 
+                {/* Matchup Header Banner */}
                 <div style={{
                     background: `linear-gradient(135deg, ${awayColor} 0%, ${awayColor} 48%, ${homeColor} 52%, ${homeColor} 100%)`,
                     padding: "10px 14px",
@@ -286,12 +303,12 @@ export default function NflBtsPicks() {
                     alignItems: "center"
                 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0, flex: 1 }}>
-                        {matchupData.away_logo && <img src={matchupData.away_logo} alt={matchupData.away_team} style={{ width: 22, height: 22, ...logoStyle, flexShrink: 0 }} />}
+                        {renderTeamLogo(awayLogo, matchupData.away_team, 18, 26, awayColor, awaySecondary)}
                         <span style={{ fontSize: 12, fontWeight: 800, textShadow: "0 1px 3px rgba(0,0,0,0.6)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{matchupData.away_team}</span>
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 700, background: "rgba(0,0,0,0.4)", padding: "2px 6px", borderRadius: 20, flexShrink: 0, margin: "0 4px" }}>@</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, flexDirection: "row-reverse", minWidth: 0, flex: 1, textAlign: "right" }}>
-                        {matchupData.home_logo && <img src={matchupData.home_logo} alt={matchupData.home_team} style={{ width: 22, height: 22, ...logoStyle, flexShrink: 0 }} />}
+                        {renderTeamLogo(homeLogo, matchupData.home_team, 18, 26, homeColor, homeSecondary)}
                         <span style={{ fontSize: 12, fontWeight: 800, textShadow: "0 1px 3px rgba(0,0,0,0.6)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{matchupData.home_team}</span>
                     </div>
                 </div>
@@ -307,22 +324,7 @@ export default function NflBtsPicks() {
 
                         <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "11px", fontWeight: 600, background: "#f8fafc", padding: "6px 8px", borderRadius: 8, marginBottom: 12, border: "1px solid #e2e8f0" }}>
                             <span>Spread:</span>
-                            {favoriteLogo && (
-                                <span style={{
-                                    background: favTeamMeta.secondaryColor || homeSecondary,
-                                    borderRadius: 3,
-                                    padding: "1px",
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    border: `1px solid ${favTeamMeta.color || homeColor}`,
-                                    width: 15,
-                                    height: 15,
-                                    flexShrink: 0
-                                }}>
-                                    <img src={favoriteLogo} alt={favoriteTeam || "Favorite"} style={{ width: 10, height: 10, ...darkLogoStyle, display: "block" }} />
-                                </span>
-                            )}
+                            {favoriteLogo && renderTeamLogo(favoriteLogo, favoriteTeam || "Favorite", 10, 15, favTeamMeta.color || homeColor, favTeamMeta.secondaryColor || homeSecondary)}
                             <strong style={{ color: "#1e293b" }}>{rawSpread}</strong> | O/U: <strong>{matchupData.over_under}</strong>
                         </div>
 
@@ -360,25 +362,8 @@ export default function NflBtsPicks() {
                                         {item.isPicked && (
                                             <span style={{ position: "absolute", top: 4, right: 6, fontSize: "10px", color: "#ffffff", fontWeight: 900 }}>✓</span>
                                         )}
-                                        {item.logo && (
-                                            <div style={{
-                                                background: item.secondary,
-                                                borderRadius: 6,
-                                                padding: "3px",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                boxShadow: `0 0 4px 1px ${item.color}, 0 1px 3px rgba(0,0,0,0.15)`,
-                                                border: `1.5px solid ${item.color}`,
-                                                marginBottom: 4,
-                                                width: 35,
-                                                height: 35,
-                                                flexShrink: 0
-                                            }}>
-                                                <img src={item.logo} alt={item.team} style={{ width: 25, height: 25, objectFit: "contain", display: "block" }} />
-                                            </div>
-                                        )}
-                                        <div style={{ fontWeight: item.isPicked ? 800 : 600, fontSize: "12px", color: item.isPicked ? "#ffffff" : "#0f172a", marginBottom: 2, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                        {renderTeamLogo(item.logo, item.team, 25, 35, item.color, item.secondary)}
+                                        <div style={{ fontWeight: item.isPicked ? 800 : 600, fontSize: "12px", color: item.isPicked ? "#ffffff" : "#0f172a", marginBottom: 2, marginTop: 4, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                             {item.team}
                                         </div>
                                         <div style={{ fontSize: "11px", fontWeight: 700, color: item.isPicked ? "#e2e8f0" : "#475569" }}>
@@ -517,7 +502,6 @@ export default function NflBtsPicks() {
                         Room {selectedRoomId} - Week {currentWeek} Team Matchups
                     </h2>
 
-                    {/* Two-Column Side-by-Side Grid */}
                     <div className="bts-picks-grid" style={{
                         display: "grid",
                         gridTemplateColumns: "1fr 1fr",

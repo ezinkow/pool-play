@@ -67,7 +67,7 @@ export default function NflBtsMyPicks() {
                         params: { week, room_id: selectedRoomId },
                         headers: { Authorization: `Bearer ${token}` }
                     }).catch(() => ({ data: [] })),
-                    axios.get("/api/nfl_regular_season_games", {
+                    axios.get("/api/nfl_bts/games", {
                         params: { week },
                         headers: { Authorization: `Bearer ${token}` }
                     }).catch(() => ({ data: [] })),
@@ -79,7 +79,10 @@ export default function NflBtsMyPicks() {
 
                 const rawPicks = pickRes.data;
                 const picksList = Array.isArray(rawPicks) ? rawPicks : (rawPicks ? [rawPicks] : []);
-                const gamesList = Array.isArray(matchupRes.data) ? matchupRes.data : [matchupRes.data].filter(Boolean);
+                const gamesData = matchupRes.data;
+                const gamesList = Array.isArray(gamesData)
+                    ? gamesData
+                    : (gamesData?.games && Array.isArray(gamesData.games) ? gamesData.games : [gamesData].filter(Boolean));
                 const assignment = assignmentRes.data;
 
                 if (picksList.length === 0 || !picksList.some(p => p.ats_pick || p.ou_pick)) {
@@ -92,10 +95,37 @@ export default function NflBtsMyPicks() {
                 const pick1 = picksList.find(p => p.team_name === team1Name) || picksList[0] || null;
                 const pick2 = picksList.find(p => p.team_name === team2Name) || (picksList.length > 1 ? picksList[1] : null);
 
+                const getGameForPick = (pickItem, assignedName) => {
+                    if (!gamesList || gamesList.length === 0) return null;
+
+                    if (pickItem?.game_id) {
+                        const foundById = gamesList.find(g =>
+                            String(g.id) === String(pickItem.game_id) ||
+                            String(g.game_id) === String(pickItem.game_id)
+                        );
+                        if (foundById) return foundById;
+                    }
+
+                    const searchTeam1 = pickItem?.team_name || assignedName;
+                    const searchTeam2 = pickItem?.ats_pick;
+
+                    return gamesList.find(g => {
+                        const home = g.home_team?.toLowerCase();
+                        const away = g.away_team?.toLowerCase();
+                        return (
+                            (searchTeam1 && (home === searchTeam1.toLowerCase() || away === searchTeam1.toLowerCase())) ||
+                            (searchTeam2 && (home === searchTeam2.toLowerCase() || away === searchTeam2.toLowerCase()))
+                        );
+                    });
+                };
+
+                const game1 = getGameForPick(pick1, team1Name);
+                const game2 = getGameForPick(pick2, team2Name);
+
                 return {
                     week,
-                    team1: team1Name ? { name: team1Name, pick: pick1, game: gamesList.find(g => g.away_team === team1Name || g.home_team === team1Name) } : null,
-                    team2: team2Name ? { name: team2Name, pick: pick2, game: gamesList.find(g => g.away_team === team2Name || g.home_team === team2Name) } : null
+                    team1: team1Name ? { name: team1Name, pick: pick1, game: game1 } : null,
+                    team2: team2Name ? { name: team2Name, pick: pick2, game: game2 } : null
                 };
             } catch (err) {
                 return null;
@@ -125,30 +155,34 @@ export default function NflBtsMyPicks() {
             );
         }
 
-        const { name: teamName, pick, game } = slotData;
-        const teamMeta = teamColors[teamName] || {};
-        const primaryColor = teamMeta.primaryColor || NFL_BLUE;
-        const secondaryColor = teamMeta.secondaryColor || GOLD;
-        const logoBgColor = teamMeta.logoBg || "rgba(255,255,255,0.2)";
+        const { name: assignedTeamName, pick, game } = slotData;
+        const assignedMeta = teamColors[assignedTeamName] || {};
+        const assignedPrimary = assignedMeta.primaryColor || NFL_BLUE;
+        const assignedSecondary = assignedMeta.secondaryColor || GOLD;
 
         const atsPick = pick.ats_pick || "";
         const ouPick = pick.ou_pick || "";
 
+        const pickedTeamMeta = teamColors[atsPick] || assignedMeta;
+        const boxPrimary = pickedTeamMeta.primaryColor || assignedPrimary;
+        const boxSecondary = pickedTeamMeta.secondaryColor || assignedSecondary;
+        const pickedLogo = pickedTeamMeta.logo || null;
+
         let spreadDisplay = "";
         if (game && atsPick) {
-            const absSpread = Math.abs(game.adjusted_spread ?? game.spread ?? 3.0);
-            const favoriteTeam = game.favorite || game.home_team;
-            const isAwayFav = favoriteTeam === game.away_team;
-            
-            if (game.away_team === atsPick) {
-                spreadDisplay = isAwayFav ? `-${absSpread}` : `+${absSpread}`;
-            } else {
-                spreadDisplay = !isAwayFav ? `-${absSpread}` : `+${absSpread}`;
+            const rawSpread = game.adjusted_spread !== null && game.adjusted_spread !== undefined ? game.adjusted_spread : game.spread;
+            const hasLine = rawSpread !== null && rawSpread !== undefined;
+            const absSpread = hasLine ? (Object.is(Math.abs(rawSpread), -0) ? 0 : Math.abs(rawSpread)) : null;
+            const isAwayFav = hasLine && game.favorite === game.away_team;
+
+            if (absSpread !== null) {
+                if (atsPick === game.away_team) {
+                    spreadDisplay = absSpread === 0 ? "0" : (isAwayFav ? `-${absSpread}` : `+${absSpread}`);
+                } else if (atsPick === game.home_team) {
+                    spreadDisplay = absSpread === 0 ? "0" : (isAwayFav ? `+${absSpread}` : `-${absSpread}`);
+                }
             }
         }
-
-        const opponentTeam = game ? (game.away_team === teamName ? game.home_team : game.away_team) : null;
-        const opponentMeta = teamColors[opponentTeam] || {};
 
         const renderStatusBadge = (status) => {
             if (status === "win") return <span style={{ color: "#16a34a", fontWeight: 800, fontSize: "12px" }}>✓ WIN</span>;
@@ -162,86 +196,89 @@ export default function NflBtsMyPicks() {
 
         return (
             <div style={{
-                background: primaryColor,
+                backgroundImage: `linear-gradient(to right, ${boxPrimary} 100%, ${boxPrimary} 100%)`,
+                backgroundColor: boxPrimary,
                 color: "#ffffff",
-                borderRadius: 10,
-                boxShadow: `0 4px 12px ${primaryColor}25`,
-                padding: "14px 16px",
-                border: `2px solid ${secondaryColor}`,
+                borderRadius: 12,
+                boxShadow: `0 4px 15px rgba(0,0,0,0.15), inset 0 0 10px ${boxPrimary}`,
+                overflow: "hidden",
+                border: `2px solid ${boxSecondary}`,
                 display: "flex",
                 flexDirection: "column",
-                gap: 10,
                 height: "100%"
             }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                    <div>
-                        <span style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.5px", opacity: 0.85, fontWeight: 700 }}>
-                            Assigned Team
-                        </span>
-                        <h4 style={{ margin: "2px 0 0 0", fontSize: "16px", fontWeight: 800 }}>
-                            {teamName}
-                        </h4>
-                    </div>
+                <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
+                    {game && (
+                        <div style={{
+                            background: "rgba(0, 0, 0, 0.25)", borderRadius: 6, padding: "6px 10px",
+                            display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px",
+                            border: "1px solid rgba(255,255,255,0.15)"
+                        }}>
+                            <span>{game.away_team} @ {game.home_team}</span>
+                            {game.home_score !== null && game.away_score !== null && (game.home_score > 0 || game.away_score > 0 || game.status === "final") ? (
+                                <span style={{ background: "#0f172a", color: "white", padding: "2px 5px", borderRadius: 4, fontSize: "10px", fontWeight: 700 }}>
+                                    {game.status === "final" ? "Final" : "Live"} {game.away_score}-{game.home_score}
+                                </span>
+                            ) : (
+                                <span style={{ background: "rgba(255,255,255,0.2)", color: "#fff", padding: "2px 5px", borderRadius: 4, fontSize: "10px", fontWeight: 600 }}>
+                                    Upcoming
+                                </span>
+                            )}
+                        </div>
+                    )}
 
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        {game && opponentTeam && (
-                            <div style={{
-                                display: "flex", alignItems: "center", gap: 4,
-                                background: "rgba(0,0,0,0.25)", padding: "4px 8px", borderRadius: 6,
-                                border: "1px solid rgba(255,255,255,0.15)", fontSize: "11px", fontWeight: 700
-                            }}>
-                                {teamMeta.logo && <img src={teamMeta.logo} alt={teamName} style={{ width: 16, height: 16, objectFit: "contain" }} />}
-                                <span>vs</span>
-                                {opponentMeta.logo && <img src={opponentMeta.logo} alt={opponentTeam} style={{ width: 16, height: 16, objectFit: "contain" }} />}
-                            </div>
-                        )}
-
-                        {teamMeta.logo && (
-                            <div style={{ background: logoBgColor, padding: "4px 6px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.2)" }}>
-                                <img src={teamMeta.logo} alt={teamName} style={{ width: 26, height: 26, objectFit: "contain" }} />
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {game && (
                     <div style={{
-                        background: "rgba(0, 0, 0, 0.2)", borderRadius: 6, padding: "6px 10px",
-                        display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px"
+                        background: "white", color: "#0f172a", padding: "10px 12px", borderRadius: 6,
+                        display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: "12px", fontWeight: 700,
+                        border: "1px solid #cbd5e1"
                     }}>
-                        <span>{game.away_team} @ {game.home_team}</span>
-                        {game.home_score !== null && game.away_score !== null && (game.home_score > 0 || game.away_score > 0 || game.status === "final") ? (
-                            <span style={{ background: "#0f172a", color: "white", padding: "2px 5px", borderRadius: 4, fontSize: "10px", fontWeight: 700 }}>
-                                {game.status === "final" ? "Final" : "Live"} {game.away_score}-{game.home_score}
+                        <div>
+                            <span style={{ color: "#64748b", display: "block", fontSize: "10px", fontWeight: 600, marginBottom: 2 }}>ATS Selection:</span>
+                            <span style={{ color: NFL_BLUE, fontSize: "13px", display: "flex", alignItems: "center", gap: 6 }}>
+                                {pickedLogo && (
+                                    <span style={{
+                                        background: pickedTeamMeta.secondaryColor || "#cbd5e1",
+                                        borderRadius: 6,
+                                        padding: "3px",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        boxShadow: `0 0 4px 1px ${boxPrimary}, 0 1px 3px rgba(0,0,0,0.15)`,
+                                        border: `1.5px solid ${boxPrimary}`,
+                                        width: 25,
+                                        height: 25,
+                                        flexShrink: 0
+                                    }}>
+                                        <img src={pickedLogo} alt={atsPick} style={{ width: 16, height: 16, objectFit: "contain", display: "block" }} />
+                                    </span>
+                                )}
+                                {atsPick ? (
+                                    <>
+                                        <strong>{atsPick}</strong>
+                                        {spreadDisplay !== "" && (
+                                            <span style={{ background: "#f1f5f9", padding: "1px 5px", borderRadius: 4, border: "1px solid #cbd5e1", fontSize: "11px", color: "#334155" }}>
+                                                {spreadDisplay}
+                                            </span>
+                                        )}
+                                    </>
+                                ) : "None"}
                             </span>
-                        ) : (
-                            <span style={{ background: "rgba(255,255,255,0.15)", color: "#fff", padding: "2px 5px", borderRadius: 4, fontSize: "10px", fontWeight: 600 }}>
-                                Upcoming
+                        </div>
+                        <div>
+                            <span style={{ color: "#64748b", display: "block", fontSize: "10px", fontWeight: 600, marginBottom: 2 }}>O/U Selection:</span>
+                            <span style={{ color: NFL_BLUE, fontSize: "13px" }}>
+                                {ouPick ? `${ouPick === 'Over' ? '⬆️ Over' : '⬇️ Under'}` : "None"}
                             </span>
-                        )}
+                        </div>
                     </div>
-                )}
 
-                <div style={{
-                    background: "white", color: "#0f172a", padding: "8px 10px", borderRadius: 6,
-                    display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: "11px", fontWeight: 700
-                }}>
-                    <div>
-                        <span style={{ color: "#64748b", display: "block", fontSize: "9px", fontWeight: 600 }}>ATS Selection:</span>
-                        <span style={{ color: NFL_BLUE }}>{atsPick ? `${atsPick} (${spreadDisplay})` : "None"}</span>
+                    <div style={{
+                        background: "white", color: "#0f172a", padding: "8px 12px", borderRadius: 6,
+                        display: "flex", justifyContent: "space-between", alignItems: "center", fontWeight: 700, fontSize: "11px"
+                    }}>
+                        <span>ATS Result:</span>
+                        {renderStatusBadge(pick.ats_status)}
                     </div>
-                    <div>
-                        <span style={{ color: "#64748b", display: "block", fontSize: "9px", fontWeight: 600 }}>O/U Selection:</span>
-                        <span style={{ color: NFL_BLUE }}>{ouPick ? `${ouPick === 'Over' ? '⬆️ Over' : '⬇️ Under'}` : "None"}</span>
-                    </div>
-                </div>
-
-                <div style={{
-                    background: "white", color: "#0f172a", padding: "6px 10px", borderRadius: 6,
-                    display: "flex", justifyContent: "space-between", alignItems: "center", fontWeight: 700, fontSize: "11px"
-                }}>
-                    <span>ATS Result:</span>
-                    {renderStatusBadge(pick.ats_status)}
                 </div>
             </div>
         );
@@ -298,35 +335,135 @@ export default function NflBtsMyPicks() {
                     }}>
                         <p style={{ margin: 0, fontSize: "15px", fontWeight: 600 }}>You haven't made any Beat The Spread picks for Room {selectedRoomId} yet!</p>
                     </div>
-                ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-                        {weeksData.map(({ week, team1, team2 }) => (
-                            <div key={week} style={{
-                                background: "white", borderRadius: 14,
-                                boxShadow: "0 4px 16px rgba(0,0,0,0.08)", border: "1px solid #e2e8f0", overflow: "hidden"
+                ) : (() => {
+                    const firstTeam1 = weeksData.find(w => w.team1)?.team1?.name || "Slot 1";
+                    const firstTeam2 = weeksData.find(w => w.team2)?.team2?.name || "Slot 2";
+
+                    const meta1 = teamColors[firstTeam1] || {};
+                    const meta2 = teamColors[firstTeam2] || {};
+
+                    const col1Primary = meta1.primaryColor || NFL_BLUE;
+                    const col1Secondary = meta1.secondaryColor || GOLD;
+                    const col2Primary = meta2.primaryColor || NFL_BLUE;
+                    const col2Secondary = meta2.secondaryColor || GOLD;
+
+                    return (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                            <div className="bts-history-grid" style={{
+                                display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16
                             }}>
                                 <div style={{
-                                    background: NFL_BLUE, color: "white", padding: "12px 20px",
-                                    display: "flex", justifyContent: "space-between", alignItems: "center"
+                                    background: `linear-gradient(135deg, ${col1Primary} 0%, ${col1Primary} 48%, ${col1Secondary} 52%, ${col1Secondary} 100%)`,
+                                    padding: "12px 16px",
+                                    color: "white",
+                                    borderRadius: "12px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                                    border: `2px solid ${col1Primary}`
                                 }}>
-                                    <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 800, letterSpacing: "0.5px" }}>
-                                        WEEK {week} <span style={{ fontSize: "12px", fontWeight: 500, opacity: 0.8 }}>(Room {selectedRoomId})</span>
-                                    </h3>
-                                    <span style={{ fontSize: "12px", background: "rgba(255,255,255,0.15)", padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>
-                                        Side-by-Side View
-                                    </span>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                        {meta1.logo && (
+                                            <div style={{
+                                                background: col1Secondary,
+                                                borderRadius: 6,
+                                                padding: "3px",
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                boxShadow: `0 0 4px 1px ${col1Primary}, 0 1px 3px rgba(0,0,0,0.15)`,
+                                                border: `1.5px solid ${col1Primary}`,
+                                                width: 32,
+                                                height: 32,
+                                                flexShrink: 0
+                                            }}>
+                                                <img src={meta1.logo} alt={firstTeam1} style={{ width: 22, height: 22, objectFit: "contain", display: "block" }} />
+                                            </div>
+                                        )}
+                                        <div>
+                                            <span style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.5px", opacity: 0.9, fontWeight: 700, display: "block", textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}>
+                                                Assigned Team (Slot 1)
+                                            </span>
+                                            <span style={{ fontSize: "16px", fontWeight: 800, textShadow: "0 1px 3px rgba(0,0,0,0.6)" }}>
+                                                {firstTeam1}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div className="bts-history-grid" style={{
-                                    padding: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, background: "#f8fafc"
+                                <div style={{
+                                    background: `linear-gradient(135deg, ${col2Primary} 0%, ${col2Primary} 48%, ${col2Secondary} 52%, ${col2Secondary} 100%)`,
+                                    padding: "12px 16px",
+                                    color: "white",
+                                    borderRadius: "12px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                                    border: `2px solid ${col2Primary}`
                                 }}>
-                                    <div>{renderHistoryCard(team1)}</div>
-                                    <div>{renderHistoryCard(team2)}</div>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                        {meta2.logo && (
+                                            <div style={{
+                                                background: col2Secondary,
+                                                borderRadius: 6,
+                                                padding: "3px",
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                boxShadow: `0 0 4px 1px ${col2Primary}, 0 1px 3px rgba(0,0,0,0.15)`,
+                                                border: `1.5px solid ${col2Primary}`,
+                                                width: 32,
+                                                height: 32,
+                                                flexShrink: 0
+                                            }}>
+                                                <img src={meta2.logo} alt={firstTeam2} style={{ width: 22, height: 22, objectFit: "contain", display: "block" }} />
+                                            </div>
+                                        )}
+                                        <div>
+                                            <span style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.5px", opacity: 0.9, fontWeight: 700, display: "block", textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}>
+                                                Assigned Team (Slot 2)
+                                            </span>
+                                            <span style={{ fontSize: "16px", fontWeight: 800, textShadow: "0 1px 3px rgba(0,0,0,0.6)" }}>
+                                                {firstTeam2}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )}
+
+                            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                                {weeksData.map(({ week, team1, team2 }) => (
+                                    <div key={week} style={{
+                                        background: "white", borderRadius: 14,
+                                        boxShadow: "0 4px 16px rgba(0,0,0,0.08)", border: "1px solid #e2e8f0", overflow: "hidden"
+                                    }}>
+                                        <div style={{
+                                            background: NFL_BLUE, color: "white", padding: "10px 20px",
+                                            display: "flex", justifyContent: "space-between", alignItems: "center"
+                                        }}>
+                                            <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 800, letterSpacing: "0.5px" }}>
+                                                WEEK {week} <span style={{ fontSize: "12px", fontWeight: 500, opacity: 0.8 }}>(Room {selectedRoomId})</span>
+                                            </h3>
+                                            <span style={{ fontSize: "11px", background: "rgba(255,255,255,0.15)", padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>
+                                                Side-by-Side View
+                                            </span>
+                                        </div>
+
+                                        <div className="bts-history-grid" style={{
+                                            padding: 16, display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 16, background: "#f8fafc", alignItems: "stretch"
+                                        }}>
+                                            <div>{renderHistoryCard(team1)}</div>
+                                            <div style={{ width: "2px", background: "#cbd5e1", margin: "0 4px", borderRadius: 2 }} />
+                                            <div>{renderHistoryCard(team2)}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    );
+                })()}
             </div>
         </PoolGatekeeper>
     );
