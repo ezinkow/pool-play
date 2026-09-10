@@ -12,10 +12,10 @@ export default function NflPickemAtsPicks() {
     const { user, loading: authLoading } = useAuth();
     const [currentWeek, setCurrentWeek] = useState(null);
     const [games, setGames] = useState([]);
-    const [picks, setPicks] = useState({}); 
-    const [teamColors, setTeamColors] = useState({}); 
+    const [picks, setPicks] = useState({});
+    const [teamColors, setTeamColors] = useState({});
     const [loading, setLoading] = useState(true);
-    const [sortBy, setSortBy] = useState("kickoff"); 
+    const [sortBy, setSortBy] = useState("kickoff");
 
     const token = localStorage.getItem("token");
 
@@ -58,21 +58,28 @@ export default function NflPickemAtsPicks() {
             });
     }, [token]);
 
-    // Fetch weekly schedule and user picks from database
+    // Fetch weekly schedule and user picks independently
     useEffect(() => {
         if (!user || currentWeek === null) return;
         setLoading(true);
-        axios.get("/api/nfl_pickem_ats/games", {
-            params: { week: currentWeek },
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(res => {
-                setGames(res.data.games || []);
-                setPicks(res.data.userPicks || {});
+
+        Promise.all([
+            axios.get("/api/nfl_regular_season_matchups", {
+                params: { week: currentWeek },
+                headers: { Authorization: `Bearer ${token}` }
+            }),
+            axios.get("/api/nfl_pickem_ats/mypicks", {
+                params: { week: currentWeek },
+                headers: { Authorization: `Bearer ${token}` }
+            })
+        ])
+            .then(([gamesRes, picksRes]) => {
+                setGames(gamesRes.data || []);
+                setPicks(picksRes.data.userPicks || {});
             })
             .catch(err => {
-                console.error("Failed to load pickem games", err);
-                toast.error("Failed to load matchups");
+                console.error("Failed to load pickem data", err);
+                toast.error("Failed to load matchups or picks");
             })
             .finally(() => setLoading(false));
     }, [user, currentWeek, token]);
@@ -413,7 +420,7 @@ export default function NflPickemAtsPicks() {
                     {sortedGames.length > 0 && (
                         <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%", paddingTop: 2 }}>
                             <div style={{ fontSize: "12px", fontWeight: 700, color: "#475569" }}>Select:</div>
-                            
+
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 4, width: "100%" }}>
                                 {[
                                     { key: "favorites", label: "Faves" },

@@ -122,11 +122,11 @@ export default function NflBtsPicks() {
 
                 let m1 = null, m2 = null;
                 if (t1) {
-                    const matchRes1 = await axios.get("/api/nfl_regular_season_games", { ...config, params: { week: currentWeek, team: t1 } });
+                    const matchRes1 = await axios.get("/api/nfl_regular_season_matchups", { ...config, params: { week: currentWeek, team: t1 } });
                     m1 = matchRes1.data;
                 }
                 if (t2) {
-                    const matchRes2 = await axios.get("/api/nfl_regular_season_games", { ...config, params: { week: currentWeek, team: t2 } });
+                    const matchRes2 = await axios.get("/api/nfl_regular_season_matchups", { ...config, params: { week: currentWeek, team: t2 } });
                     m2 = matchRes2.data;
                 }
                 setMatchups({ match_1: m1, match_2: m2 });

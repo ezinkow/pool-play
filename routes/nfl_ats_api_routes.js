@@ -86,23 +86,6 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
-    // GET /api/nfl_regular_season_matchups (Fetch upcoming games publicly for countdown/settings)
-    // --------------------------------------------------------
-    app.get("/api/nfl_regular_season_matchups", async (req, res) => {
-        try {
-            const week = parseInt(req.query.week) || 1;
-            const games = await NflRegularSeasonGames.findAll({
-                where: { week },
-                order: [["game_date", "ASC"]]
-            });
-            res.json(games);
-        } catch (err) {
-            console.error("Error fetching regular season matchups:", err);
-            res.status(500).json({ error: "Failed to load matchups" });
-        }
-    });
-
-    // --------------------------------------------------------
     // GET /api/nfl_teams (Fetch all NFL teams and colors)
     // --------------------------------------------------------
     app.get("/api/nfl_teams", requireAuth, async (req, res) => {
