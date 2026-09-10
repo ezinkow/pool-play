@@ -9,6 +9,17 @@ const CFB_BLUE = "#013369";
 const CFB_RED = "#D50A0A";
 const GOLD = "#c89d3c";
 
+// ✨ Condensation-optimized pulsing live indicator
+const PULSE_STYLE = {
+    width: "6px",
+    height: "6px",
+    backgroundColor: "#22c55e",
+    borderRadius: "50%",
+    display: "inline-block",
+    boxShadow: "0 0 0 rgba(34, 197, 94, 0.4)",
+    animation: "pulse 2s infinite"
+};
+
 export default function CdbPickemAtsMyPicks() {
     const { user, loading: authLoading } = useAuth();
     const [currentWeek, setCurrentWeek] = useState(null);
@@ -92,6 +103,14 @@ export default function CdbPickemAtsMyPicks() {
         <PoolGatekeeper user={user} gameKey="cfb_pickem_ats" className='page-content'>
             <div style={{ maxWidth: 850, margin: "0 auto", padding: "20px 12px", paddingBottom: 90, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 <Toaster />
+
+                <style>{`
+                    @keyframes pulse { 
+                        0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 
+                        70% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0); } 
+                        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } 
+                    }
+                `}</style>
 
                 <div style={{ textAlign: "center", marginBottom: 20 }}>
                     <h2 style={{ color: CFB_BLUE, fontSize: "26px", margin: 0, fontWeight: 800, letterSpacing: "-0.025em" }}>My Week {currentWeek} Summary</h2>
@@ -185,13 +204,14 @@ export default function CdbPickemAtsMyPicks() {
                             const isHomePicked = pickedTeam === game.home_team;
 
                             const isFinished = game.ats_winner !== null && game.ats_winner !== undefined;
-                            const isGameActuallyFinal = game.status === "STATUS_FINAL" || game.status === "Final" || game.status === "final" || game.status === "completed";
+                            const rawStatus = (game.status || "").toUpperCase();
+                            const isLive = rawStatus === "STATUS_IN_PROGRESS" || rawStatus === "IN_PROGRESS" || rawStatus === "HALFTIME" || rawStatus === "STATUS_HALFTIME" || rawStatus === "LIVE" || rawStatus.includes("HALF") || rawStatus.includes("PROGRESS");
+                            const hasStarted = isLive || isFinished || (game.game_date && new Date() >= new Date(game.game_date));
                             const hasScores = game.home_score !== null && game.home_score !== undefined &&
-                                game.away_score !== null && game.away_score !== undefined &&
-                                (game.home_score > 0 || game.away_score > 0);
+                                game.away_score !== null && game.away_score !== undefined;
 
-                            // ATS Status Badge
-                            let statusBadge = <span style={{ color: "#64748b", fontWeight: 700, fontSize: "11px" }}>⏳ Pending</span>;
+                            // Right-side Status / Live Score display
+                            let statusBadge = null;
                             if (isFinished) {
                                 if (game.ats_winner === "PUSH") {
                                     statusBadge = <span style={{ color: "#d97706", fontWeight: 800, fontSize: "11px" }}>— PUSH</span>;
@@ -200,6 +220,23 @@ export default function CdbPickemAtsMyPicks() {
                                 } else {
                                     statusBadge = <span style={{ color: CFB_RED, fontWeight: 800, fontSize: "11px" }}>✕ LOSS</span>;
                                 }
+                            } else if (hasStarted) {
+                                statusBadge = (
+                                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                            <span style={PULSE_STYLE} />
+                                            <span style={{ backgroundColor: CFB_RED, color: "white", padding: "1px 5px", borderRadius: 3, fontSize: "9px", fontWeight: 700 }}>LIVE</span>
+                                        </div>
+                                        {hasScores && (
+                                            <span style={{ fontSize: "11px", fontWeight: 700, color: "#d97706" }}>
+                                                {game.away_score} - {game.home_score}
+                                            </span>
+                                        )}
+                                    </div>
+                                );
+                            } else {
+                                const formattedKickoff = game.game_date ? new Date(game.game_date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : "TBD";
+                                statusBadge = <span style={{ color: "#64748b", fontWeight: 700, fontSize: "11px" }}>🕒 {formattedKickoff}</span>;
                             }
 
                             // O/U Result Badge
@@ -219,7 +256,7 @@ export default function CdbPickemAtsMyPicks() {
                                         ouColor = CFB_RED;
                                     }
                                 }
-                                ouBadge = <span style={{ color: ouColor, fontWeight: 700, fontSize: "10px", marginLeft: 4 }}>{ouText}</span>;
+                                ouBadge = <span style={{ color: ouColor, fontWeight: 700, fontSize: "10px", marginTop: 2, display: "inline-block" }}>{ouText}</span>;
                             }
 
                             const absSpread = Math.abs(game.adjusted_spread || game.spread || 3.0);
@@ -247,7 +284,7 @@ export default function CdbPickemAtsMyPicks() {
                                     flexWrap: "nowrap",
                                     gap: 12
                                 }}>
-                                    {/* Left: Matchup & Final Score */}
+                                    {/* Left: Matchup */}
                                     <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, overflow: "visible" }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                                             {isMustPick && (
@@ -339,38 +376,58 @@ export default function CdbPickemAtsMyPicks() {
                                             </span>
 
                                         </div>
-                                        {hasScores && (
-                                            <span style={{ background: isGameActuallyFinal ? "#0f172a" : "#d97706", color: "white", padding: "1px 6px", borderRadius: 4, fontSize: "11px", fontWeight: 700, marginTop: 4, width: "fit-content", letterSpacing: "0.3px" }}>
-                                                {isGameActuallyFinal ? "Final" : "Live"}: {game.away_score} - {game.home_score}
-                                            </span>
-                                        )}
-                                        {ouBadge && <div style={{ marginTop: 3 }}>{ouBadge}</div>}
+                                        {ouBadge && <div>{ouBadge}</div>}
                                     </div>
 
-                                    {/* Right: Pick Logo & Status / Best Bet Column */}
-                                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, overflow: "visible" }}>
+                                    {/* Right: Status/Live Score first, then Pick Logo with unblocked Star badge */}
+                                    <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0, overflow: "visible" }}>
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center", minWidth: "85px" }}>
+                                            {statusBadge}
+                                        </div>
+
                                         <div style={{
                                             display: "flex",
                                             alignItems: "center",
-                                            background: pickedSecondary,
-                                            padding: "3px",
-                                            borderRadius: 6,
-                                            border: `1.5px solid ${pickedPrimary}`,
-                                            boxShadow: `0 0 4px 1px ${pickedPrimary}, 0 1px 3px rgba(0,0,0,0.15)`,
-                                            width: 35,
-                                            height: 35,
-                                            overflow: "visible",
-                                            flexShrink: 0,
-                                            justifyContent: "center"
+                                            justifyContent: "center",
+                                            position: "relative",
+                                            width: 47,
+                                            height: 41,
+                                            flexShrink: 0
                                         }}>
-                                            {pickedLogo && <img src={pickedLogo} alt={pickedTeam} style={{ width: 25, height: 25, objectFit: "contain", display: "block" }} />}
-                                        </div>
-
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, minWidth: "75px" }}>
-                                            {statusBadge}
+                                            <div style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                background: pickedSecondary,
+                                                padding: "3px",
+                                                borderRadius: 6,
+                                                border: `1.5px solid ${pickedPrimary}`,
+                                                boxShadow: isBestBet 
+                                                    ? `0 0 10px 3px rgba(200, 157, 60, 0.9), 0 0 4px 1px ${pickedPrimary}, 0 1px 3px rgba(0,0,0,0.15)`
+                                                    : `0 0 4px 1px ${pickedPrimary}, 0 1px 3px rgba(0,0,0,0.15)`,
+                                                width: 35,
+                                                height: 35,
+                                                justifyContent: "center",
+                                                boxSizing: "border-box"
+                                            }}>
+                                                {pickedLogo && <img src={pickedLogo} alt={pickedTeam} style={{ width: 25, height: 25, objectFit: "contain", display: "block" }} />}
+                                            </div>
                                             {isBestBet && (
-                                                <span style={{ background: GOLD, color: "white", fontSize: "9px", padding: "2px 5px", borderRadius: 4, fontWeight: 900, letterSpacing: "0.5px", boxShadow: "0 1px 3px rgba(200, 157, 60, 0.4)" }}>
-                                                    ★ BEST BET
+                                                <span style={{
+                                                    position: "absolute",
+                                                    top: 0,
+                                                    right: 0,
+                                                    fontSize: "10px",
+                                                    background: GOLD,
+                                                    color: "white",
+                                                    padding: "1px 4px",
+                                                    borderRadius: 4,
+                                                    fontWeight: 900,
+                                                    boxShadow: "0 2px 6px rgba(200, 157, 60, 0.9)",
+                                                    zIndex: 10,
+                                                    border: "1px solid white",
+                                                    lineHeight: "1"
+                                                }}>
+                                                    ★
                                                 </span>
                                             )}
                                         </div>
