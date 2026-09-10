@@ -86,34 +86,19 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
-    // GET /api/nfl_pickem_ats/games (Fetch schedule & user picks for a week)
+    // GET /api/nfl_regular_season_matchups (Fetch upcoming games publicly for countdown/settings)
     // --------------------------------------------------------
-    app.get("/api/nfl_pickem_ats/games", requireAuth, async (req, res) => {
+    app.get("/api/nfl_regular_season_matchups", async (req, res) => {
         try {
             const week = parseInt(req.query.week) || 1;
-
             const games = await NflRegularSeasonGames.findAll({
                 where: { week },
                 order: [["game_date", "ASC"]]
             });
-
-            const userPicks = await NflPickemAtsPicks.findAll({
-                where: { user_id: req.user.id, week }
-            });
-
-            const pickMap = {};
-            userPicks.forEach(p => {
-                pickMap[p.game_id] = {
-                    picked_team: p.picked_team,
-                    is_best_bet: p.is_best_bet,
-                    over_under_pick: p.ou_pick
-                };
-            });
-
-            res.json({ games, userPicks: pickMap });
+            res.json(games);
         } catch (err) {
-            console.error("Error fetching pick'em games:", err);
-            res.status(500).json({ error: "Failed to load weekly schedule" });
+            console.error("Error fetching regular season matchups:", err);
+            res.status(500).json({ error: "Failed to load matchups" });
         }
     });
 
@@ -236,13 +221,19 @@ module.exports = function (app) {
                     g.away_team,
                     g.home_logo,
                     g.away_logo,
+                    g.home_score,
+                    g.away_score,
                     g.game_date,
                     g.adjusted_spread,
                     g.favorite,
+                    g.status,
+                    g.winner,
+                    g.ats_winner,
+                    g.ou_result,
                     p.picked_team as ats_pick,
                     p.is_best_bet,
-                    p.status,
-                    g.winner
+                    p.ou_pick,
+                    p.status as pick_status
                 FROM nfl_pickem_ats_entries e
                 CROSS JOIN nfl_regular_season_games g
                 LEFT JOIN nfl_pickem_ats_picks p ON e.user_id = p.user_id AND g.id = p.game_id
@@ -254,7 +245,27 @@ module.exports = function (app) {
                 replacements: { week }
             });
 
-            res.json(results);
+            // Optional: If you want the backend to mask picks for games that haven't started yet 
+            // while fully revealing them once game_date <= now, you can handle it here or let frontend do it.
+            const now = new Date();
+            const processedResults = results.map(row => {
+                const kickoff = row.game_date ? new Date(row.game_date) : null;
+                const hasStarted = kickoff ? now >= kickoff : false;
+
+                // If the game hasn't started yet, you can mask opponent picks if privacy rules demand it, 
+                // otherwise clear fields if they should remain hidden pre-kickoff:
+                if (!hasStarted && row.user_id !== req.user.id) {
+                    return {
+                        ...row,
+                        ats_pick: null,
+                        is_best_bet: null,
+                        ou_pick: null
+                    };
+                }
+                return row;
+            });
+
+            res.json(processedResults);
         } catch (err) {
             console.error("Error fetching pickem matrix:", err);
             res.status(500).json({ error: "Failed to fetch group matrix" });

@@ -250,7 +250,7 @@ export default function NflBtsHome() {
                 <div style={{ textAlign: "center" }}>
                   <p style={{ fontSize: "14px", color: "#16a34a", fontWeight: "bold" }}>✓ You are in Room 2</p>
                   <p style={{ fontSize: "13px", color: "#475569", margin: "4px 0 12px 0" }}>Display Name: <strong>{entryRoom2.entry_name}</strong></p>
-                  <div>
+                  {/* <div>
                     {confirmLeaveRoom === 2 ? (
                       <div style={{ marginTop: 12, background: "#fee2e2", padding: 10, borderRadius: 8, textAlign: "center" }}>
                         <p style={{ fontSize: "13px", margin: "0 0 8px 0", color: "#b91c1c", fontWeight: "bold" }}>Are you sure you want to leave?</p>
@@ -262,7 +262,7 @@ export default function NflBtsHome() {
                         Leave Pool
                       </button>
                     )}
-                  </div>
+                  </div> */}
                 </div>
               ) : (
                 <div>
