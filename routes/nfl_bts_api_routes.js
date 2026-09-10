@@ -345,7 +345,6 @@ module.exports = function (app) {
                     if (m2) logo2 = m2.logo;
                 }
 
-                // Helper to build team matchup data object
                 const getTeamGameData = async (teamName) => {
                     if (!teamName) return null;
                     const game = await NflRegularSeasonGames.findOne({
@@ -371,20 +370,61 @@ module.exports = function (app) {
                         }
                     }
 
+                    // Calculate individual pick statuses if game is final
+                    let calculatedStatus = pick ? pick.status : null;
+                    let atsStatus = null;
+                    let ouStatus = null;
+
+                    if (game && pick) {
+                        const isFinal = game.status === 'STATUS_FINAL' || game.game_status === 'STATUS_FINAL';
+
+                        if (pick.ats_pick && game.ats_winner) {
+                            const wonAts = pick.ats_pick.trim().toLowerCase() === game.ats_winner.trim().toLowerCase();
+                            atsStatus = wonAts ? 'win' : (game.ats_winner.trim().toLowerCase() === 'push' ? 'push' : 'loss');
+                        }
+
+                        if (pick.ou_pick && game.ou_result) {
+                            const pickClean = pick.ou_pick.replace(/^[⬆️⬇️\s]+/g, '').trim().toLowerCase();
+                            const resultClean = game.ou_result.trim().toLowerCase();
+                            const wonOu = pickClean === resultClean;
+                            ouStatus = wonOu ? 'win' : (resultClean === 'push' ? 'push' : 'loss');
+                        }
+
+                        if (isFinal) {
+                            // Aggregate win/loss default for row display
+                            let wCount = 0;
+                            let lCount = 0;
+                            if (atsStatus === 'win') wCount++;
+                            if (atsStatus === 'loss') lCount++;
+                            if (ouStatus === 'win') wCount++;
+                            if (ouStatus === 'loss') lCount++;
+
+                            calculatedStatus = wCount > lCount ? 'win' : (lCount > wCount ? 'loss' : (wCount > 0 ? 'push' : null));
+                        }
+                    }
+
                     return {
                         team_name: teamName,
                         game_date: game ? game.game_date : null,
                         away_team: game ? game.away_team : null,
                         home_team: game ? game.home_team : null,
+                        away_score: game ? (game.away_score ?? game.awayTeamScore) : null,
+                        home_score: game ? (game.home_score ?? game.homeTeamScore) : null,
                         away_logo: awayLogo,
                         home_logo: homeLogo,
-                        favorite_team: favoriteTeam,
+                        favorite: favoriteTeam,
                         favorite_logo: favoriteLogo,
+                        spread: game ? game.spread : null,
                         adjusted_spread: game ? game.adjusted_spread : null,
                         over_under: game ? game.over_under : null,
+                        ats_winner: game ? game.ats_winner : null,
+                        ou_result: game ? game.ou_result : null,
+                        game_status: game ? (game.status || game.game_status) : null,
                         ats_pick: pick ? pick.ats_pick : null,
                         ou_pick: pick ? pick.ou_pick : null,
-                        status: pick ? pick.status : null
+                        ats_status: atsStatus,
+                        ou_status: ouStatus,
+                        status: calculatedStatus
                     };
                 };
 
@@ -416,37 +456,98 @@ module.exports = function (app) {
     app.get("/api/nfl_bts/standings", requireAuth, async (req, res) => {
         try {
             const room_id = parseInt(req.query.room_id) || 1;
-            const query = `
-            SELECT 
-                fa.user_id,
-                u.entry_name as user_name,
-                fa.team_name_1,
-                fa.division_1,
-                t1.logo as logo_1,
-                fa.team_name_2,
-                fa.division_2,
-                t2.logo as logo_2,
-                SUM(CASE WHEN fp.ats_status = 'win' THEN 1 ELSE 0 END) as ats_wins,
-                SUM(CASE WHEN fp.ats_status = 'loss' THEN 1 ELSE 0 END) as ats_losses,
-                SUM(CASE WHEN fp.ou_status = 'win' THEN 1 ELSE 0 END) as ou_wins,
-                SUM(CASE WHEN fp.ou_status = 'loss' THEN 1 ELSE 0 END) as ou_losses,
-                SUM(CASE WHEN fp.ou_status = 'push' THEN 1 ELSE 0 END) as ou_pushes
-            FROM nfl_bts_team_assignments fa
-            JOIN nfl_bts_entries u ON fa.user_id = u.user_id AND fa.room_id = u.room_id
-            LEFT JOIN nfl_teams t1 ON fa.team_name_1 = t1.name
-            LEFT JOIN nfl_teams t2 ON fa.team_name_2 = t2.name
-            LEFT JOIN nfl_bts_picks fp ON fa.user_id = fp.user_id AND fa.room_id = fp.room_id
-            WHERE fa.room_id = :room_id
-            GROUP BY fa.user_id, u.entry_name, fa.team_name_1, fa.division_1, t1.logo, fa.team_name_2, fa.division_2, t2.logo
-            ORDER BY fa.division_1 ASC, ats_wins DESC, ou_wins DESC;
-        `;
 
-            const [results] = await db.sequelize.query(query, {
+            const query = `
+                SELECT 
+                    fa.user_id,
+                    u.entry_name as user_name,
+                    fa.team_name_1,
+                    fa.division_1,
+                    t1.logo as logo_1,
+                    fa.team_name_2,
+                    fa.division_2,
+                    t2.logo as logo_2
+                FROM nfl_bts_team_assignments fa
+                JOIN nfl_bts_entries u ON fa.user_id = u.user_id AND fa.room_id = u.room_id
+                LEFT JOIN nfl_teams t1 ON fa.team_name_1 = t1.name
+                LEFT JOIN nfl_teams t2 ON fa.team_name_2 = t2.name
+                WHERE fa.room_id = :room_id
+            `;
+
+            const [assignments] = await db.sequelize.query(query, {
                 replacements: { room_id }
             });
+
+            const picks = await NflBtsPicks.findAll({
+                where: { room_id },
+                raw: true
+            });
+
+            const games = await NflRegularSeasonGames.findAll({ raw: true });
+
+            // Helper function to calculate record for a specific team name
+            const getTeamRecord = (userId, teamName) => {
+                const userTeamPicks = picks.filter(p => Number(p.user_id) === Number(userId) && p.team_name === teamName);
+
+                let ats_wins = 0, ats_losses = 0, ou_wins = 0, ou_losses = 0, ou_pushes = 0;
+
+                userTeamPicks.forEach(p => {
+                    const game = games.find(g => String(g.id) === String(p.game_id) || String(g.game_id) === String(p.game_id));
+
+                    if (game && game.status === 'STATUS_FINAL') {
+                        if (p.ats_pick && game.ats_winner) {
+                            if (p.ats_pick.trim().toLowerCase() === game.ats_winner.trim().toLowerCase()) {
+                                ats_wins++;
+                            } else {
+                                ats_losses++;
+                            }
+                        }
+
+                        if (p.ou_pick && game.ou_result) {
+                            const pickedOu = p.ou_pick.trim().toLowerCase();
+                            const gameOu = game.ou_result.trim().toLowerCase();
+                            if (gameOu === 'push') {
+                                ou_pushes++;
+                            } else if (pickedOu === gameOu) {
+                                ou_wins++;
+                            } else {
+                                ou_losses++;
+                            }
+                        }
+                    }
+                });
+
+                return { ats_wins, ats_losses, ou_wins, ou_losses, ou_pushes };
+            };
+
+            const results = assignments.map(row => {
+                const team1Stats = getTeamRecord(row.user_id, row.team_name_1);
+                const team2Stats = getTeamRecord(row.user_id, row.team_name_2);
+
+                return {
+                    ...row,
+                    // Pass individual records per team slot so the frontend maps them accurately
+                    ats_wins_1: team1Stats.ats_wins,
+                    ats_losses_1: team1Stats.ats_losses,
+                    ou_wins_1: team1Stats.ou_wins,
+                    ou_losses_1: team1Stats.ou_losses,
+
+                    ats_wins_2: team2Stats.ats_wins,
+                    ats_losses_2: team2Stats.ats_losses,
+                    ou_wins_2: team2Stats.ou_wins,
+                    ou_losses_2: team2Stats.ou_losses,
+
+                    // Combined total fallback for sorting rows
+                    ats_wins: team1Stats.ats_wins + team2Stats.ats_wins,
+                    ats_losses: team1Stats.ats_losses + team2Stats.ats_losses,
+                    ou_wins: team1Stats.ou_wins + team2Stats.ou_wins,
+                    ou_losses: team1Stats.ou_losses + team2Stats.ou_losses
+                };
+            });
+
             res.json(results);
         } catch (err) {
-            console.error(err);
+            console.error("Error fetching standings:", err);
             res.status(500).json({ error: "Failed to fetch standings" });
         }
     });

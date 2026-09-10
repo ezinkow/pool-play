@@ -86,21 +86,6 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
-    // GET /api/nfl_teams (Fetch all NFL teams and colors)
-    // --------------------------------------------------------
-    app.get("/api/nfl_teams", requireAuth, async (req, res) => {
-        try {
-            const teams = await NflTeams.findAll({
-                order: [["name", "ASC"]]
-            });
-            res.json(teams);
-        } catch (err) {
-            console.error("Error fetching NFL teams:", err);
-            res.status(500).json({ error: "Failed to fetch NFL teams" });
-        }
-    });
-
-    // --------------------------------------------------------
     // POST /api/nfl_pickem_ats/picks (Save batch picks for the week)
     // --------------------------------------------------------
     app.post("/api/nfl_pickem_ats/picks", requireAuth, async (req, res) => {

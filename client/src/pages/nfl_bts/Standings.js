@@ -106,12 +106,15 @@ export default function NflBtsStandings() {
 
                 Object.keys(grouped).forEach(div => {
                     grouped[div].sort((a, b) => {
-                        const aAtsWins = Number(a.ats_wins) || 0;
-                        const bAtsWins = Number(b.ats_wins) || 0;
+                        const isTeam1A = a.display_team === a.team_name_1;
+                        const isTeam1B = b.display_team === b.team_name_1;
+
+                        const aAtsWins = Number(isTeam1A ? a.ats_wins_1 : a.ats_wins_2) || 0;
+                        const bAtsWins = Number(isTeam1B ? b.ats_wins_1 : b.ats_wins_2) || 0;
                         if (bAtsWins !== aAtsWins) return bAtsWins - aAtsWins;
 
-                        const aOuWins = Number(a.ou_wins) || 0;
-                        const bOuWins = Number(b.ou_wins) || 0;
+                        const aOuWins = Number(isTeam1A ? a.ou_wins_1 : a.ou_wins_2) || 0;
+                        const bOuWins = Number(isTeam1B ? b.ou_wins_1 : b.ou_wins_2) || 0;
                         return bOuWins - aOuWins;
                     });
                 });
@@ -223,10 +226,11 @@ export default function NflBtsStandings() {
                                                 ? `linear-gradient(135deg, ${teamColor}18 0%, ${teamSec}18 100%)`
                                                 : (idx % 2 === 0 ? "#fafafa" : "white");
 
-                                            const atsWins = player.ats_wins ?? 0;
-                                            const atsLosses = player.ats_losses ?? 0;
-                                            const ouWins = player.ou_wins ?? 0;
-                                            const ouLosses = player.ou_losses ?? 0;
+                                            const isTeam1 = teamName === player.team_name_1;
+                                            const atsWins = isTeam1 ? (player.ats_wins_1 ?? 0) : (player.ats_wins_2 ?? 0);
+                                            const atsLosses = isTeam1 ? (player.ats_losses_1 ?? 0) : (player.ats_losses_2 ?? 0);
+                                            const ouWins = isTeam1 ? (player.ou_wins_1 ?? 0) : (player.ou_wins_2 ?? 0);
+                                            const ouLosses = isTeam1 ? (player.ou_losses_1 ?? 0) : (player.ou_losses_2 ?? 0);
 
                                             return (
                                                 <div key={`${player.user_id}-${division}-${teamName}-${idx}`} style={{

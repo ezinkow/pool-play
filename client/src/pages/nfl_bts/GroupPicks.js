@@ -17,17 +17,6 @@ export default function NflBtsMatrix() {
     const [teamColorsMap, setTeamColorsMap] = useState({});
     const [loading, setLoading] = useState(true);
 
-    const logoStyle = {
-        objectFit: "contain",
-        display: "block"
-    };
-
-    const darkLogoStyle = {
-        objectFit: "contain",
-        filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.15))"
-    };
-
-    // 1. Fetch team metadata for colors and logos
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (!token) return;
@@ -48,7 +37,6 @@ export default function NflBtsMatrix() {
             .catch(err => console.error("Failed to load NFL team colors", err));
     }, []);
 
-    // 2. Fetch user entries to check room memberships
     useEffect(() => {
         if (!user) return;
         const token = localStorage.getItem("token");
@@ -67,7 +55,6 @@ export default function NflBtsMatrix() {
             .catch(err => console.error("Error loading user entries", err));
     }, [user]);
 
-    // 3. Fetch matrix data for the selected room and week
     useEffect(() => {
         if (!user) return;
         const token = localStorage.getItem("token");
@@ -79,18 +66,43 @@ export default function NflBtsMatrix() {
         })
             .then(res => {
                 const data = res.data;
-                if (Array.isArray(data)) {
-                    setMatrixData(data);
-                } else if (data && Array.isArray(data.data)) {
-                    setMatrixData(data.data);
-                } else if (data && Array.isArray(data.matrix)) {
-                    setMatrixData(data.matrix);
-                } else {
-                    setMatrixData([]);
-                }
+                const rawList = Array.isArray(data) ? data : (data?.data || data?.matrix || []);
+                
+                const processed = rawList.map(row => {
+                    let atsWins = 0;
+                    let atsLosses = 0;
+                    let ouWins = 0;
+                    let ouLosses = 0;
+
+                    const slots = [row.team1_game, row.team2_game].filter(Boolean);
+                    slots.forEach(slot => {
+                        if (slot.ats_status === 'win') atsWins++;
+                        if (slot.ats_status === 'loss') atsLosses++;
+                        if (slot.ou_status === 'win') ouWins++;
+                        if (slot.ou_status === 'loss') ouLosses++;
+                    });
+
+                    const totalWins = atsWins + ouWins;
+                    const totalLosses = atsLosses + ouLosses;
+
+                    return {
+                        ...row,
+                        atsWins,
+                        atsLosses,
+                        ouWins,
+                        ouLosses,
+                        totalWins,
+                        totalLosses
+                    };
+                });
+
+                // Sort by total wins descending
+                processed.sort((a, b) => b.totalWins - a.totalWins || a.totalLosses - b.totalLosses);
+
+                setMatrixData(processed);
             })
             .catch(err => {
-                console.error("Failed to load user picks", err);
+                console.error("Failed to load matrix data:", err);
                 setMatrixData([]);
             })
             .finally(() => setLoading(false));
@@ -99,6 +111,43 @@ export default function NflBtsMatrix() {
     const canRevealPick = (gameDate) => {
         if (!gameDate) return false;
         return new Date() >= new Date(gameDate);
+    };
+
+    const renderTeamWithLogo = (teamName, customSize = 14) => {
+        if (!teamName) return <span>None</span>;
+        const meta = teamColorsMap[teamName] || {};
+        const logo = meta.logo;
+        const bg = meta.secondaryColor || "#cbd5e1";
+        const border = meta.color || NFL_BLUE;
+
+        return (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                {logo && (
+                    <span style={{
+                        background: bg,
+                        borderRadius: 4,
+                        padding: "2px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        border: `1px solid ${border}`,
+                        width: customSize + 8,
+                        height: customSize + 8,
+                        flexShrink: 0
+                    }}>
+                        <img src={logo} alt={teamName} style={{ width: customSize, height: customSize, objectFit: "contain", display: "block" }} />
+                    </span>
+                )}
+                <strong>{teamName}</strong>
+            </span>
+        );
+    };
+
+    const renderResultBadge = (status) => {
+        if (status === "win") return <span style={{ color: "#16a34a", fontWeight: 700 }}>Win</span>;
+        if (status === "loss") return <span style={{ color: NFL_RED, fontWeight: 700 }}>Loss</span>;
+        if (status === "push") return <span style={{ color: "#ca8a04", fontWeight: 700 }}>Push</span>;
+        return <span style={{ color: "#9ca3af" }}>--</span>;
     };
 
     if (authLoading) return <div style={{ textAlign: "center", padding: 50 }}>Verifying session...</div>;
@@ -112,7 +161,6 @@ export default function NflBtsMatrix() {
                     <p style={{ color: "#666", marginTop: 8 }}>Picks are hidden until individual game kickoff.</p>
                 </div>
 
-                {/* Room Selector Tab Bar */}
                 {userEntries.length > 1 && (
                     <div style={{
                         display: "flex",
@@ -156,7 +204,6 @@ export default function NflBtsMatrix() {
                     <h3 style={{ color: NFL_BLUE, fontSize: "15px", margin: 0 }}>Select Week:</h3>
                 </div>
 
-                {/* Week Selector Tabs */}
                 <div style={{
                     display: "flex",
                     justifyContent: "center",
@@ -196,7 +243,6 @@ export default function NflBtsMatrix() {
                     </div>
                 </div>
 
-                {/* Matrix Table */}
                 <div style={{ background: "white", borderRadius: 12, boxShadow: "0 2px 10px rgba(0,0,0,0.05)", overflowX: "auto" }}>
                     {loading ? (
                         <div style={{ padding: 40, textAlign: "center", color: "#666" }}>Loading Week {currentWeek} picks for Room {selectedRoomId}...</div>
@@ -211,7 +257,7 @@ export default function NflBtsMatrix() {
                                     <th style={{ padding: "12px 16px", textAlign: "center", fontSize: 14 }}>Matchups</th>
                                     <th style={{ padding: "12px 16px", textAlign: "center", fontSize: 14 }}>ATS Picks</th>
                                     <th style={{ padding: "12px 16px", textAlign: "center", fontSize: 14 }}>O/U Picks</th>
-                                    <th style={{ padding: "12px 16px", textAlign: "center", fontSize: 14 }}>Results</th>
+                                    <th style={{ padding: "12px 16px", textAlign: "center", fontSize: 14 }}>Results (ATS / O/U)</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -234,15 +280,11 @@ export default function NflBtsMatrix() {
                                         {
                                             team_name: row.team_name_1,
                                             logo: row.logo_1,
-                                            primary_color: t1Color,
-                                            secondary_color: t1Sec,
                                             game: row.team1_game || {}
                                         },
                                         {
                                             team_name: row.team_name_2,
                                             logo: row.logo_2,
-                                            primary_color: t2Color,
-                                            secondary_color: t2Sec,
                                             game: row.team2_game || {}
                                         }
                                     ].filter(s => s.team_name);
@@ -254,58 +296,40 @@ export default function NflBtsMatrix() {
                                         }}>
                                             <td style={{ padding: "14px 16px", fontWeight: 600, fontSize: 14, verticalAlign: "top" }}>
                                                 {row.user_name} {isCurrentUser && "(You)"}
-                                            </td>
-
-                                            {/* Assigned Teams Column */}
-                                            <td style={{ padding: "14px 16px", fontSize: 14, fontWeight: 500, verticalAlign: "top" }}>
-                                                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                                                    {slots.map((slot, sIdx) => {
-                                                        const teamLogo = slot.logo || teamColorsMap[slot.team_name]?.logo;
-
-                                                        return (
-                                                            <div key={sIdx} style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 32 }}>
-                                                                {teamLogo ? (
-                                                                    <div style={{
-                                                                        background: slot.secondary_color,
-                                                                        borderRadius: 6,
-                                                                        padding: "3px",
-                                                                        display: "flex",
-                                                                        alignItems: "center",
-                                                                        justifyContent: "center",
-                                                                        boxShadow: `0 0 4px 1px ${slot.primary_color}, 0 1px 3px rgba(0,0,0,0.15)`,
-                                                                        border: `1.5px solid ${slot.primary_color}`,
-                                                                        width: 32,
-                                                                        height: 32,
-                                                                        flexShrink: 0
-                                                                    }}>
-                                                                        <img src={teamLogo} alt={slot.team_name} style={{ width: 22, height: 22, ...logoStyle }} />
-                                                                    </div>
-                                                                ) : (
-                                                                    <div style={{ width: 32, height: 32, flexShrink: 0 }} />
-                                                                )}
-                                                                <span style={{ fontWeight: 600 }}>{slot.team_name || "Unassigned"}</span>
-                                                            </div>
-                                                        );
-                                                    })}
+                                                <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 600, marginTop: 4, display: "flex", flexDirection: "column", gap: 1 }}>
+                                                    <span>ATS Record: {row.atsWins}-{row.atsLosses}</span>
+                                                    <span>O/U Record: {row.ouWins}-{row.ouLosses}</span>
                                                 </div>
                                             </td>
 
-                                            {/* Matchups Column */}
+                                            <td style={{ padding: "14px 16px", fontSize: 14, fontWeight: 500, verticalAlign: "top" }}>
+                                                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                                                    {slots.map((slot, sIdx) => (
+                                                        <div key={sIdx} style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 32 }}>
+                                                            {renderTeamWithLogo(slot.team_name, 16)}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </td>
+
                                             <td style={{ padding: "14px 16px", fontSize: 13, verticalAlign: "top" }}>
                                                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                                                     {slots.map((slot, sIdx) => {
                                                         const g = slot.game;
+                                                        const isFinalOrLive = g.game_status === 'STATUS_FINAL' || (g.home_score !== null && g.away_score !== null && (g.home_score > 0 || g.away_score > 0));
+                                                        
                                                         return (
                                                             <div key={sIdx} style={{ minHeight: 32, display: "flex", flexDirection: "column", justifyContent: "center" }}>
                                                                 {g.away_team && g.home_team ? (
                                                                     <>
-                                                                        <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600 }}>
-                                                                            {g.away_logo && (
-                                                                                <img src={g.away_logo} alt={g.away_team} style={{ width: 14, height: 14, ...darkLogoStyle, display: "block", flexShrink: 0 }} />
-                                                                            )}
-                                                                            <span>{g.away_team} @ {g.home_team}</span>
-                                                                            {g.home_logo && (
-                                                                                <img src={g.home_logo} alt={g.home_team} style={{ width: 14, height: 14, ...darkLogoStyle, display: "block", flexShrink: 0 }} />
+                                                                        <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, justifyContent: "space-between" }}>
+                                                                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                                                                {renderTeamWithLogo(g.away_team, 12)} @ {renderTeamWithLogo(g.home_team, 12)}
+                                                                            </div>
+                                                                            {isFinalOrLive && (
+                                                                                <span style={{ background: g.game_status === 'STATUS_FINAL' ? "#334155" : "#0284c7", color: "white", padding: "1px 6px", borderRadius: 4, fontSize: "10px", fontWeight: 700 }}>
+                                                                                    {g.game_status === 'STATUS_FINAL' ? `Final ${g.away_score}-${g.home_score}` : `Live ${g.away_score}-${g.home_score}`}
+                                                                                </span>
                                                                             )}
                                                                         </div>
                                                                         <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#666", fontSize: 11, marginTop: 2, flexWrap: "wrap" }}>
@@ -320,9 +344,7 @@ export default function NflBtsMatrix() {
                                                                             <span>|</span>
                                                                             <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
                                                                                 <span>Line:</span>
-                                                                                {g.favorite_logo && (
-                                                                                    <img src={g.favorite_logo} alt="Fav" style={{ width: 12, height: 12, ...darkLogoStyle, display: "block" }} />
-                                                                                )}
+                                                                                {g.favorite && renderTeamWithLogo(g.favorite, 10)}
                                                                                 <span>{g.adjusted_spread ?? g.spread}</span>
                                                                             </div>
                                                                             <span>|</span>
@@ -338,44 +360,18 @@ export default function NflBtsMatrix() {
                                                 </div>
                                             </td>
 
-                                            {/* ATS Picks Column */}
                                             <td style={{ padding: "14px 16px", textAlign: "center", fontSize: 14, fontWeight: 600, verticalAlign: "top" }}>
                                                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                                                     {slots.map((slot, sIdx) => {
                                                         const g = slot.game;
                                                         const isRevealed = canRevealPick(g.game_date);
                                                         const pickVal = g.ats_pick;
-                                                        const pickLogo = pickVal && (pickVal.toLowerCase() === g.away_team?.toLowerCase() ? g.away_logo : g.home_logo);
-                                                        const pMeta = pickVal ? (teamColorsMap[pickVal] || {}) : {};
-                                                        const pickColor = pMeta.color || FALLBACK_BLUE;
-                                                        const pickSec = pMeta.secondaryColor || "#cbd5e1";
 
                                                         return (
                                                             <div key={sIdx} style={{ minHeight: 32, display: "flex", alignItems: "center", justifyContent: "center" }}>
                                                                 {isRevealed || isCurrentUser ? (
                                                                     pickVal ? (
-                                                                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                                                            {pickLogo && (
-                                                                                <div style={{
-                                                                                    background: pickSec,
-                                                                                    borderRadius: 6,
-                                                                                    padding: "3px",
-                                                                                    display: "flex",
-                                                                                    alignItems: "center",
-                                                                                    justifyContent: "center",
-                                                                                    boxShadow: `0 0 4px 1px ${pickColor}, 0 1px 3px rgba(0,0,0,0.15)`,
-                                                                                    border: `1.5px solid ${pickColor}`,
-                                                                                    width: 28,
-                                                                                    height: 28,
-                                                                                    flexShrink: 0
-                                                                                }}>
-                                                                                    <img src={pickLogo} alt={pickVal} style={{ width: 20, height: 20, ...logoStyle }} />
-                                                                                </div>
-                                                                            )}
-                                                                            <span style={{ color: NFL_BLUE, fontWeight: 700 }}>
-                                                                                {pickVal}
-                                                                            </span>
-                                                                        </div>
+                                                                        renderTeamWithLogo(pickVal, 16)
                                                                     ) : (
                                                                         <span style={{ color: "#9ca3af" }}>No Pick</span>
                                                                     )
@@ -388,7 +384,6 @@ export default function NflBtsMatrix() {
                                                 </div>
                                             </td>
 
-                                            {/* O/U Picks Column */}
                                             <td style={{ padding: "14px 16px", textAlign: "center", fontSize: 14, fontWeight: 600, verticalAlign: "top" }}>
                                                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                                                     {slots.map((slot, sIdx) => {
@@ -415,17 +410,20 @@ export default function NflBtsMatrix() {
                                                 </div>
                                             </td>
 
-                                            {/* Results Column */}
-                                            <td style={{ padding: "14px 16px", textAlign: "center", fontSize: 14, fontWeight: 700, verticalAlign: "top" }}>
+                                            <td style={{ padding: "14px 16px", textAlign: "center", fontSize: 13, fontWeight: 600, verticalAlign: "top" }}>
                                                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                                                     {slots.map((slot, sIdx) => {
-                                                        const status = slot.game.status;
+                                                        const g = slot.game;
                                                         return (
-                                                            <div key={sIdx} style={{ minHeight: 32, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                                                {status === "win" && <span style={{ color: "#16a34a" }}>Win</span>}
-                                                                {status === "loss" && <span style={{ color: NFL_RED }}>Loss</span>}
-                                                                {status === "push" && <span style={{ color: "#ca8a04" }}>Push</span>}
-                                                                {!status && <span style={{ color: "#9ca3af" }}>--</span>}
+                                                            <div key={sIdx} style={{ minHeight: 32, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2 }}>
+                                                                <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                                                                    <span style={{ fontSize: "11px", color: "#64748b" }}>ATS:</span>
+                                                                    {renderResultBadge(g.ats_status)}
+                                                                </div>
+                                                                <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                                                                    <span style={{ fontSize: "11px", color: "#64748b" }}>O/U:</span>
+                                                                    {renderResultBadge(g.ou_status)}
+                                                                </div>
                                                             </div>
                                                         );
                                                     })}
