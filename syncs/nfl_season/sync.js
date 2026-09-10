@@ -179,10 +179,14 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
         const favTeam = isHomeFav ? m.home_team : m.away_team;
         const dogTeam = isHomeFav ? m.away_team : m.home_team;
 
-        const margin = favScore + spreadVal;
-        if (margin > dogScore) {
+        // Use absolute spread magnitude or handle negative spread properly:
+        // Favorite wins ATS if their score minus the spread value is greater than the underdog's score.
+        const absSpread = Math.abs(spreadVal);
+        const favMargin = favScore - absSpread;
+    
+        if (favMargin > dogScore) {
             ats_winner = favTeam;
-        } else if (margin < dogScore) {
+        } else if (favMargin < dogScore) {
             ats_winner = dogTeam;
         } else {
             ats_winner = "PUSH";
@@ -293,28 +297,27 @@ async function processMatchup(m) {
         } else {
             let payloadToUpdate = { ...m };
 
-            if ((payloadToUpdate.spread === null || payloadToUpdate.spread === undefined) && existingGame.spread != null) {
-                payloadToUpdate.spread = existingGame.spread;
-                payloadToUpdate.adjusted_spread = existingGame.adjusted_spread;
-                payloadToUpdate.spread_odds = existingGame.spread_odds;
-                payloadToUpdate.away_spread_odds = existingGame.away_spread_odds;
-                payloadToUpdate.over_under = existingGame.over_under;
-                payloadToUpdate.favorite = existingGame.favorite;
-            }
+            // Always preserve the locked-in spread/favorite from the DB if it exists
+            const lockedSpread = existingGame.adjusted_spread !== null ? existingGame.adjusted_spread : existingGame.spread;
+            const lockedFavorite = existingGame.favorite;
 
-            if (existingGame.game_date) {
-                const kickoffTime = new Date(existingGame.game_date).getTime();
-                const now = Date.now();
-                const hoursUntilKickoff = (kickoffTime - now) / (1000 * 60 * 60);
+            payloadToUpdate.spread = existingGame.spread;
+            payloadToUpdate.adjusted_spread = existingGame.adjusted_spread;
+            payloadToUpdate.spread_odds = existingGame.spread_odds;
+            payloadToUpdate.away_spread_odds = existingGame.away_spread_odds;
+            payloadToUpdate.over_under = existingGame.over_under;
+            payloadToUpdate.favorite = existingGame.favorite;
 
-                if (hoursUntilKickoff <= 48) {
-                    payloadToUpdate.spread = existingGame.spread;
-                    payloadToUpdate.adjusted_spread = existingGame.adjusted_spread;
-                    payloadToUpdate.spread_odds = existingGame.spread_odds;
-                    payloadToUpdate.away_spread_odds = existingGame.away_spread_odds;
-                    payloadToUpdate.over_under = existingGame.over_under;
-                    payloadToUpdate.favorite = existingGame.favorite;
-                }
+            // If the game is final or live, calculate outcomes using the DB's locked spread
+            const statusType = payloadToUpdate.status;
+            if (statusType === "STATUS_FINAL" || statusType === "Final" || statusType === "completed" || statusType === "FINAL") {
+                const gameObjForCalc = {
+                    ...payloadToUpdate,
+                    adjusted_spread: lockedSpread,
+                    favorite: lockedFavorite
+                };
+                const calculatedOutcomes = calculateGameOutcomes(gameObjForCalc, payloadToUpdate.home_score, payloadToUpdate.away_score);
+                payloadToUpdate = { ...payloadToUpdate, ...calculatedOutcomes };
             }
 
             await existingGame.update(payloadToUpdate);
