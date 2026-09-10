@@ -15,6 +15,7 @@ export default function NflBtsHome() {
   const navigate = useNavigate();
   const [poolData, setPoolData] = useState(null);
   const [userEntries, setUserEntries] = useState([]);
+  const [roomAssignments, setRoomAssignments] = useState({ 1: null, 2: null });
   const [roomCounts, setRoomCounts] = useState({ 1: 0, 2: 0 });
   const [confirmLeaveRoom, setConfirmLeaveRoom] = useState(null);
   const [customEntryNames, setCustomEntryNames] = useState({ 1: "", 2: "" });
@@ -56,6 +57,27 @@ export default function NflBtsHome() {
             toast.error("Session expired. Please log in again.");
           }
         });
+
+      // Fetch team assignments for both rooms to see if teams have been assigned
+      axios.get("/api/nfl_bts/assignment?room_id=1", {
+        headers: { Authorization: `Bearer ${activeToken}` }
+      })
+        .then(res => {
+          if (res.data && res.data.team_name_1) {
+            setRoomAssignments(prev => ({ ...prev, 1: res.data }));
+          }
+        })
+        .catch(err => console.error("Failed to fetch room 1 assignment", err));
+
+      axios.get("/api/nfl_bts/assignment?room_id=2", {
+        headers: { Authorization: `Bearer ${activeToken}` }
+      })
+        .then(res => {
+          if (res.data && res.data.team_name_1) {
+            setRoomAssignments(prev => ({ ...prev, 2: res.data }));
+          }
+        })
+        .catch(err => console.error("Failed to fetch room 2 assignment", err));
     }
   };
 
@@ -99,9 +121,10 @@ export default function NflBtsHome() {
     }
   };
 
-  const handleLeavePool = async (roomId, entry) => {
-    // Check if teams have already been randomized/assigned
-    if (entry?.team1_id || entry?.team2_id || entry?.team_one || entry?.team_two) {
+  const handleLeavePool = async (roomId) => {
+    const assignment = roomAssignments[roomId];
+    // Check if teams have already been randomized/assigned based on the backend assignment check
+    if (assignment && assignment.team_name_1) {
       toast.error("You cannot leave this room anymore because teams have already been randomized/assigned!");
       return;
     }
@@ -118,6 +141,8 @@ export default function NflBtsHome() {
       });
       toast.success(`Successfully left Room ${roomId}.`);
       setConfirmLeaveRoom(null);
+      // Clear assignment locally
+      setRoomAssignments(prev => ({ ...prev, [roomId]: null }));
       loadData();
     } catch (err) {
       toast.error(err.response?.data?.error || "Failed to leave pool");
@@ -129,6 +154,12 @@ export default function NflBtsHome() {
   const entryRoom1 = userEntries.find(e => Number(e.room_id) === 1);
   const entryRoom2 = userEntries.find(e => Number(e.room_id) === 2);
   const hasAnyEntry = userEntries.length > 0;
+
+  const assignment1 = roomAssignments[1];
+  const assignment2 = roomAssignments[2];
+
+  const room1HasTeams = assignment1 && (assignment1.team_name_1 || assignment1.team_name_2);
+  const room2HasTeams = assignment2 && (assignment2.team_name_1 || assignment2.team_name_2);
 
   return (
     <div style={{ width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative" }} className='page-content'>
@@ -216,11 +247,11 @@ export default function NflBtsHome() {
                     {confirmLeaveRoom === 1 ? (
                       <div style={{ marginTop: 12, background: "#fee2e2", padding: 10, borderRadius: 8, textAlign: "center" }}>
                         <p style={{ fontSize: "13px", margin: "0 0 8px 0", color: "#b91c1c", fontWeight: "bold" }}>Are you sure you want to leave?</p>
-                        <button onClick={() => handleLeavePool(1, entryRoom1)} style={{ background: NFL_RED, color: WHITE, border: "none", padding: "6px 12px", borderRadius: 6, marginRight: 8, cursor: "pointer", fontWeight: "bold" }}>Yes, Leave</button>
+                        <button onClick={() => handleLeavePool(1)} style={{ background: NFL_RED, color: WHITE, border: "none", padding: "6px 12px", borderRadius: 6, marginRight: 8, cursor: "pointer", fontWeight: "bold" }}>Yes, Leave</button>
                         <button onClick={() => setConfirmLeaveRoom(null)} style={{ background: "#cbd5e1", border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>Cancel</button>
                       </div>
                     ) : (
-                      !entryRoom1.team1_id && !entryRoom1.team_one ? (
+                      !room1HasTeams ? (
                         <button onClick={() => setConfirmLeaveRoom(1)} style={{ background: "transparent", color: NFL_RED, border: `1px solid ${NFL_RED}`, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: "13px", fontWeight: "bold", display: "block", margin: "0 auto" }}>
                           Leave Pool
                         </button>
@@ -273,6 +304,23 @@ export default function NflBtsHome() {
                 <div style={{ textAlign: "center" }}>
                   <p style={{ fontSize: "14px", color: "#16a34a", fontWeight: "bold" }}>✓ You are in Room 2</p>
                   <p style={{ fontSize: "13px", color: "#475569", margin: "4px 0 12px 0" }}>Display Name: <strong>{entryRoom2.entry_name}</strong></p>
+                  <div>
+                    {confirmLeaveRoom === 2 ? (
+                      <div style={{ marginTop: 12, background: "#fee2e2", padding: 10, borderRadius: 8, textAlign: "center" }}>
+                        <p style={{ fontSize: "13px", margin: "0 0 8px 0", color: "#b91c1c", fontWeight: "bold" }}>Are you sure you want to leave?</p>
+                        <button onClick={() => handleLeavePool(2)} style={{ background: NFL_RED, color: WHITE, border: "none", padding: "6px 12px", borderRadius: 6, marginRight: 8, cursor: "pointer", fontWeight: "bold" }}>Yes, Leave</button>
+                        <button onClick={() => setConfirmLeaveRoom(null)} style={{ background: "#cbd5e1", border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>Cancel</button>
+                      </div>
+                    ) : (
+                      !room2HasTeams ? (
+                        <button onClick={() => setConfirmLeaveRoom(2)} style={{ background: "transparent", color: NFL_RED, border: `1px solid ${NFL_RED}`, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: "13px", fontWeight: "bold", display: "block", margin: "0 auto" }}>
+                          Leave Pool
+                        </button>
+                      ) : (
+                        <p style={{ fontSize: "12px", color: "#b91c1c", fontStyle: "italic" }}>🔒 Locked (Teams assigned)</p>
+                      )
+                    )}
+                  </div>
                 </div>
               ) : (
                 !isPoolStarted && (

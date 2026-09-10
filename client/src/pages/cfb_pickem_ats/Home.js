@@ -24,7 +24,13 @@ export default function CfbPickemAtsHome() {
     axios.get("/api/settings/active-states")
       .then(res => {
         const pickemPool = res.data.find(p => p.game_key === "cfb_pickem_ats");
-        setPoolData(pickemPool);
+        if (pickemPool) {
+          // Ensure games_api_path is attached so the countdown can fetch live/active matchups
+          setPoolData({
+            ...pickemPool,
+            games_api_path: pickemPool.games_api_path || "/api/cfb_regular_season_matchups"
+          });
+        }
       })
       .catch(err => console.error("Failed to load pool data", err));
 

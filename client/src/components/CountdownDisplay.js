@@ -5,12 +5,12 @@ export default function PoolCountdown({ poolData, mode }) {
   const [timeLeft, setTimeLeft] = useState(null);
   const [subText, setSubText] = useState("");
 
-  // Logic for BOTH Pre-Start and Active
+  const token = localStorage.getItem("token");
+
   useEffect(() => {
     let timer;
 
     if (mode === "pre-start" && poolData?.lock_date) {
-      // Countdown to Pool Start
       const target = new Date(poolData.lock_date);
       timer = setInterval(() => {
         const diff = target - new Date();
@@ -19,37 +19,37 @@ export default function PoolCountdown({ poolData, mode }) {
           clearInterval(timer);
         } else {
           setTimeLeft(formatTime(diff));
-          setSubText(`Until ${poolData.game_label} Pool Entries Close`);
+          setSubText(`Until ${poolData.game_label || "Pool"} Entries Close`);
         }
       }, 1000);
 
     } else if (mode === "active" && poolData?.games_api_path) {
-      // Countdown to Next Game Kickoff
-      axios.get(poolData.games_api_path).then(res => {
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      axios.get(poolData.games_api_path, { headers }).then(res => {
         const now = new Date();
-        // Standardized to use 'game_date' across all pools
-        const upcoming = res.data
-          .filter(g => new Date(g.game_date) > now)
-          .sort((a, b) => new Date(a.game_date) - new Date(b.game_date));
+        const games = res.data.games || res.data || [];
+        const upcoming = games
+          .filter(g => new Date(g.game_date || g.date) > now)
+          .sort((a, b) => new Date(a.game_date || a.date) - new Date(b.game_date || b.date));
 
         if (upcoming.length > 0) {
           const nextGame = upcoming[0];
           timer = setInterval(() => {
-            const diff = new Date(nextGame.game_date) - new Date();
+            const diff = new Date(nextGame.game_date || nextGame.date) - new Date();
             if (diff <= 0) {
               clearInterval(timer);
-              // Optional: Trigger a refresh here to find the NEXT game
             } else {
               setTimeLeft(formatTime(diff));
               setSubText(`Next Game: ${nextGame.away_team} @ ${nextGame.home_team}`);
             }
           }, 1000);
         }
-      }).catch(err => console.error("Error fetching games:", err));
+      }).catch(err => console.error("Error fetching games for countdown:", err));
     }
 
     return () => clearInterval(timer);
-  }, [mode, poolData]);
+  }, [mode, poolData, token]);
 
   if (!timeLeft) return <div className="countdown-card">🏀 Pool is active—games are currently underway!</div>;
 

@@ -12,9 +12,21 @@ module.exports = function (app) {
     app.get("/api/nfl_bts/entries/me", requireAuth, async (req, res) => {
         try {
             const entries = await NflBtsEntries.findAll({
-                where: { user_id: req.user.id }
+                where: { user_id: req.user.id },
+                raw: true
             });
-            res.json({ entries: entries || [] });
+
+            const enrichedEntries = await Promise.all(entries.map(async (entry) => {
+                const assignment = await NflBtsTeamAssignments.findOne({
+                    where: { user_id: req.user.id, room_id: entry.room_id }
+                });
+                return {
+                    ...entry,
+                    has_teams: !!(assignment && (assignment.team_name_1 || assignment.team_name_2))
+                };
+            }));
+
+            res.json({ entries: enrichedEntries || [] });
         } catch (err) {
             console.error("❌ Error fetching entry status:", err);
             res.status(500).json({ error: "Check failed" });
@@ -91,6 +103,15 @@ module.exports = function (app) {
                 if (poolSetting && poolSetting.lock_date && new Date() >= new Date(poolSetting.lock_date)) {
                     return res.status(403).json({ error: "The pool has already started. You cannot leave." });
                 }
+            }
+
+            // Check if teams have already been assigned for this user in this room
+            const existingAssignment = await NflBtsTeamAssignments.findOne({
+                where: { user_id: req.user.id, room_id }
+            });
+
+            if (existingAssignment && (existingAssignment.team_name_1 || existingAssignment.team_name_2)) {
+                return res.status(403).json({ error: "You cannot leave this room anymore because teams have already been assigned!" });
             }
 
             const deletedCount = await NflBtsEntries.destroy({

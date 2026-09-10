@@ -99,11 +99,22 @@ module.exports = function (app) {
     // --------------------------------------------------------
     app.get("/api/cfb_regular_season_matchups", async (req, res) => {
         try {
-            const week = parseInt(req.query.week) || 1;
+            let week = req.query.week ? parseInt(req.query.week) : null;
+
+            if (!week) {
+                // Find the next upcoming game across any week
+                const nextGame = await CfbRegularSeasonGames.findOne({
+                    where: { game_date: { [Op.gte]: new Date() } },
+                    order: [["game_date", "ASC"]]
+                });
+                week = nextGame ? nextGame.week : 1;
+            }
+
             const games = await CfbRegularSeasonGames.findAll({
                 where: { week },
                 order: [["game_date", "ASC"]]
             });
+
             res.json(games);
         } catch (err) {
             console.error("Error fetching regular season matchups:", err);
