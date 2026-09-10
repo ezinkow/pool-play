@@ -37,7 +37,6 @@ export default function PoolGatekeeper({
             return;
         }
 
-        // Fetch active settings and check if league/pool has started via games schedule
         Promise.all([
             axios.get("/api/settings/active-states"),
             axios.get(`/api/settings/pool-started?game_key=${gameKey}`).catch(() => ({ data: { started: false } }))
@@ -62,7 +61,6 @@ export default function PoolGatekeeper({
                         isPastLockTime = currentTime >= lockTime;
                     }
 
-                    // Pool is closed if disabled, past lock time, OR if the actual league games have started
                     setIsPoolOpen(dbActive && !isPastLockTime && !leagueStarted);
                     setPoolName(currentPool.title || currentPool.game_label || gameKey.toUpperCase());
                     setPoolEmoji(currentPool.emoji || "🏆");
@@ -84,7 +82,6 @@ export default function PoolGatekeeper({
                     return;
                 }
 
-                // Dynamically resolve entry endpoint from state or fallback convention without hardcoding game keys
                 const entriesUrl = currentPool?.entries_endpoint || `/api/${gameKey}/entries/me`;
                 const token = localStorage.getItem("token");
 
@@ -131,7 +128,6 @@ export default function PoolGatekeeper({
     }
 
     // If the user does NOT have an entry AND the pool is closed, show registration closed.
-    // If they already have an entry, they bypass this lock and can view their picks/matrix.
     if (!hasAnyEntry && !isPoolOpen) {
         return (
             <div style={{ maxWidth: 600, margin: "40px auto", padding: "16px", fontFamily: "system-ui, -apple-system, sans-serif" }}>

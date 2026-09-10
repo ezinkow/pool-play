@@ -69,6 +69,11 @@ export default function NflBtsHome() {
   }, [poolData]);
 
   const handleJoinPool = async (roomId, creditAmount) => {
+    if (isPoolStarted) {
+      toast.error("Registration is closed because the pool has locked or started.");
+      return;
+    }
+
     if (!activeToken) {
       toast.error("Please log in or create an account to join a pool.");
       navigate("/login");
@@ -94,7 +99,13 @@ export default function NflBtsHome() {
     }
   };
 
-  const handleLeavePool = async (roomId) => {
+  const handleLeavePool = async (roomId, entry) => {
+    // Check if teams have already been randomized/assigned
+    if (entry?.team1_id || entry?.team2_id || entry?.team_one || entry?.team_two) {
+      toast.error("You cannot leave this room anymore because teams have already been randomized/assigned!");
+      return;
+    }
+
     if (!activeToken) {
       toast.error("Please log in first.");
       navigate("/login");
@@ -132,7 +143,7 @@ export default function NflBtsHome() {
 
       <div className="container" style={{ textAlign: "center", padding: "20px 16px", boxSizing: "border-box" }}>
 
-        {!activeToken && (
+        {!activeToken && !isPoolStarted && (
           <div style={{
             background: "#fffbeb",
             border: "1px solid #fde68a",
@@ -182,6 +193,12 @@ export default function NflBtsHome() {
           <p style={{ margin: "0 0 4px 0" }}>Choose one or multiple!</p>
           <p style={{ margin: "0 0 16px 0" }}>Everyone gets <strong>2 assigned teams</strong> per room, 1 per conference (16 spots available per room)!</p>
 
+          {isPoolStarted && (
+            <div style={{ background: "#fee2e2", color: "#b91c1c", padding: "12px", borderRadius: "8px", fontWeight: "bold", marginBottom: "16px" }}>
+              🔒 Registration is closed for this pool because it has started or locked.
+            </div>
+          )}
+
           <div style={{ display: "flex", justifyContent: "center", gap: "20px", flexWrap: "wrap" }}>
 
             {/* Room 1 (100 Credits A) */}
@@ -199,43 +216,49 @@ export default function NflBtsHome() {
                     {confirmLeaveRoom === 1 ? (
                       <div style={{ marginTop: 12, background: "#fee2e2", padding: 10, borderRadius: 8, textAlign: "center" }}>
                         <p style={{ fontSize: "13px", margin: "0 0 8px 0", color: "#b91c1c", fontWeight: "bold" }}>Are you sure you want to leave?</p>
-                        <button onClick={() => handleLeavePool(1)} style={{ background: NFL_RED, color: WHITE, border: "none", padding: "6px 12px", borderRadius: 6, marginRight: 8, cursor: "pointer", fontWeight: "bold" }}>Yes, Leave</button>
+                        <button onClick={() => handleLeavePool(1, entryRoom1)} style={{ background: NFL_RED, color: WHITE, border: "none", padding: "6px 12px", borderRadius: 6, marginRight: 8, cursor: "pointer", fontWeight: "bold" }}>Yes, Leave</button>
                         <button onClick={() => setConfirmLeaveRoom(null)} style={{ background: "#cbd5e1", border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>Cancel</button>
                       </div>
                     ) : (
-                      <button onClick={() => setConfirmLeaveRoom(1)} style={{ background: "transparent", color: NFL_RED, border: `1px solid ${NFL_RED}`, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: "13px", fontWeight: "bold", display: "block", margin: "0 auto" }}>
-                        Leave Pool
-                      </button>
+                      !entryRoom1.team1_id && !entryRoom1.team_one ? (
+                        <button onClick={() => setConfirmLeaveRoom(1)} style={{ background: "transparent", color: NFL_RED, border: `1px solid ${NFL_RED}`, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: "13px", fontWeight: "bold", display: "block", margin: "0 auto" }}>
+                          Leave Pool
+                        </button>
+                      ) : (
+                        <p style={{ fontSize: "12px", color: "#b91c1c", fontStyle: "italic" }}>🔒 Locked (Teams assigned)</p>
+                      )
                     )}
                   </div>
                 </div>
               ) : (
-                <div>
-                  <div style={{ marginBottom: 12 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                      <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE }}>Entry / Display Name:</label>
-                      {user?.name && (
-                        <button
-                          type="button"
-                          onClick={() => setCustomEntryNames({ ...customEntryNames, 1: user.name })}
-                          style={{ background: "none", border: "none", color: "#2563eb", fontSize: "11px", cursor: "pointer", padding: 0, fontWeight: 600 }}
-                        >
-                          Use Username ({user.name})
-                        </button>
-                      )}
+                !isPoolStarted && (
+                  <div>
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                        <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE }}>Entry / Display Name:</label>
+                        {user?.name && (
+                          <button
+                            type="button"
+                            onClick={() => setCustomEntryNames({ ...customEntryNames, 1: user.name })}
+                            style={{ background: "none", border: "none", color: "#2563eb", fontSize: "11px", cursor: "pointer", padding: 0, fontWeight: 600 }}
+                          >
+                            Use Username ({user.name})
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={customEntryNames[1] !== undefined ? customEntryNames[1] : ""}
+                        onChange={(e) => setCustomEntryNames({ ...customEntryNames, 1: e.target.value })}
+                        placeholder={user?.name || "Enter display name"}
+                        style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #cbd5e1", boxSizing: "border-box" }}
+                      />
                     </div>
-                    <input
-                      type="text"
-                      value={customEntryNames[1] !== undefined ? customEntryNames[1] : ""}
-                      onChange={(e) => setCustomEntryNames({ ...customEntryNames, 1: e.target.value })}
-                      placeholder={user?.name || "Enter display name"}
-                      style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #cbd5e1", boxSizing: "border-box" }}
-                    />
+                    <button onClick={() => handleJoinPool(1, 100)} className="btn-fb-secondary" style={{ width: "100%", padding: "10px 20px", fontSize: "14px" }}>
+                      Join 100-Credit Pool A
+                    </button>
                   </div>
-                  <button onClick={() => handleJoinPool(1, 100)} className="btn-fb-secondary" style={{ width: "100%", padding: "10px 20px", fontSize: "14px" }}>
-                    Join 100-Credit Pool A
-                  </button>
-                </div>
+                )
               )}
             </div>
 
@@ -250,47 +273,36 @@ export default function NflBtsHome() {
                 <div style={{ textAlign: "center" }}>
                   <p style={{ fontSize: "14px", color: "#16a34a", fontWeight: "bold" }}>✓ You are in Room 2</p>
                   <p style={{ fontSize: "13px", color: "#475569", margin: "4px 0 12px 0" }}>Display Name: <strong>{entryRoom2.entry_name}</strong></p>
-                  {/* <div>
-                    {confirmLeaveRoom === 2 ? (
-                      <div style={{ marginTop: 12, background: "#fee2e2", padding: 10, borderRadius: 8, textAlign: "center" }}>
-                        <p style={{ fontSize: "13px", margin: "0 0 8px 0", color: "#b91c1c", fontWeight: "bold" }}>Are you sure you want to leave?</p>
-                        <button onClick={() => handleLeavePool(2)} style={{ background: NFL_RED, color: WHITE, border: "none", padding: "6px 12px", borderRadius: 6, marginRight: 8, cursor: "pointer", fontWeight: "bold" }}>Yes, Leave</button>
-                        <button onClick={() => setConfirmLeaveRoom(null)} style={{ background: "#cbd5e1", border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>Cancel</button>
-                      </div>
-                    ) : (
-                      <button onClick={() => setConfirmLeaveRoom(2)} style={{ background: "transparent", color: NFL_RED, border: `1px solid ${NFL_RED}`, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: "13px", fontWeight: "bold", display: "block", margin: "0 auto" }}>
-                        Leave Pool
-                      </button>
-                    )}
-                  </div> */}
                 </div>
               ) : (
-                <div>
-                  <div style={{ marginBottom: 12 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                      <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE }}>Entry / Display Name:</label>
-                      {user?.name && (
-                        <button
-                          type="button"
-                          onClick={() => setCustomEntryNames({ ...customEntryNames, 2: user.name })}
-                          style={{ background: "none", border: "none", color: "#2563eb", fontSize: "11px", cursor: "pointer", padding: 0, fontWeight: 600 }}
-                        >
-                          Use Username ({user.name})
-                        </button>
-                      )}
+                !isPoolStarted && (
+                  <div>
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                        <label style={{ fontSize: "12px", fontWeight: "bold", color: NFL_BLUE }}>Entry / Display Name:</label>
+                        {user?.name && (
+                          <button
+                            type="button"
+                            onClick={() => setCustomEntryNames({ ...customEntryNames, 2: user.name })}
+                            style={{ background: "none", border: "none", color: "#2563eb", fontSize: "11px", cursor: "pointer", padding: 0, fontWeight: 600 }}
+                          >
+                            Use Username ({user.name})
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={customEntryNames[2] !== undefined ? customEntryNames[2] : ""}
+                        onChange={(e) => setCustomEntryNames({ ...customEntryNames, 2: e.target.value })}
+                        placeholder={user?.name || "Enter display name"}
+                        style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #cbd5e1", boxSizing: "border-box" }}
+                      />
                     </div>
-                    <input
-                      type="text"
-                      value={customEntryNames[2] !== undefined ? customEntryNames[2] : ""}
-                      onChange={(e) => setCustomEntryNames({ ...customEntryNames, 2: e.target.value })}
-                      placeholder={user?.name || "Enter display name"}
-                      style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #cbd5e1", boxSizing: "border-box" }}
-                    />
+                    <button onClick={() => handleJoinPool(2, 100)} className="btn-fb-secondary" style={{ width: "100%", padding: "10px 20px", fontSize: "14px" }}>
+                      Join 100-Credit Pool B
+                    </button>
                   </div>
-                  <button onClick={() => handleJoinPool(2, 100)} className="btn-fb-secondary" style={{ width: "100%", padding: "10px 20px", fontSize: "14px" }}>
-                    Join 100-Credit Pool B
-                  </button>
-                </div>
+                )
               )}
             </div>
 
