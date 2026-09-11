@@ -197,16 +197,16 @@ export default function NflBtsStandings() {
                                     background: division.includes("NFC") ? NFL_BLUE : NFL_RED,
                                     color: "white",
                                     padding: "10px 16px",
-                                    display: "flex",
-                                    justifyContent: "space-between",
+                                    display: "grid",
+                                    gridTemplateColumns: "1fr 32px 1fr 50px 50px",
+                                    alignItems: "center",
                                     fontWeight: 700,
-                                    fontSize: "14px"
+                                    fontSize: "14px",
+                                    gap: "8px"
                                 }}>
-                                    <span>{division}</span>
-                                    <div style={{ display: "flex", gap: "24px" }}>
-                                        <span style={{ width: "50px", textAlign: "center" }}>W-L</span>
-                                        <span style={{ width: "50px", textAlign: "center" }}>O/U</span>
-                                    </div>
+                                    <span style={{ gridColumn: "1 / span 3" }}>{division}</span>
+                                    <span style={{ textAlign: "center" }}>W-L</span>
+                                    <span style={{ textAlign: "center" }}>O/U</span>
                                 </div>
 
                                 <div style={{ display: "flex", flexDirection: "column" }}>
@@ -234,48 +234,48 @@ export default function NflBtsStandings() {
 
                                             return (
                                                 <div key={`${player.user_id}-${division}-${teamName}-${idx}`} style={{
-                                                    display: "flex",
-                                                    justifyContent: "space-between",
+                                                    display: "grid",
+                                                    gridTemplateColumns: "1fr 32px 1fr 50px 50px",
                                                     alignItems: "center",
                                                     padding: "10px 16px",
                                                     borderBottom: idx < divisionPlayers.length - 1 ? "1px solid #f3f4f6" : "none",
-                                                    background: rowBackground
+                                                    background: rowBackground,
+                                                    gap: "8px"
                                                 }}>
-                                                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, minWidth: 0 }}>
-                                                        <span style={{ fontWeight: 600, fontSize: "14px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                                            {player.user_name} {isCurrentUser && "(You)"}
-                                                        </span>
+                                                    <span style={{ fontWeight: 600, fontSize: "14px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                                        {player.user_name} {isCurrentUser && "(You)"}
+                                                    </span>
 
-                                                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                                                            {finalLogo ? (
-                                                                <div style={{
-                                                                    background: teamSec,
-                                                                    borderRadius: 5,
-                                                                    padding: "2px",
-                                                                    display: "flex",
-                                                                    alignItems: "center",
-                                                                    justifyContent: "center",
-                                                                    boxShadow: `0 0 3px 1px ${teamColor}, 0 1px 2px rgba(0,0,0,0.15)`,
-                                                                    border: `1.2px solid ${teamColor}`,
-                                                                    width: 24,
-                                                                    height: 24,
-                                                                    flexShrink: 0
-                                                                }}>
-                                                                    <img src={finalLogo} alt={teamName} style={{ width: 16, height: 16, ...logoStyle }} />
-                                                                </div>
-                                                            ) : null}
-                                                            <span style={{ fontSize: "11px", color: "#6b7280", whiteSpace: "nowrap" }}>{teamName}</span>
-                                                        </div>
+                                                    <div style={{ display: "flex", justifyContent: "center" }}>
+                                                        {finalLogo ? (
+                                                            <div style={{
+                                                                background: teamSec,
+                                                                borderRadius: 5,
+                                                                padding: "2px",
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                                boxShadow: `0 0 3px 1px ${teamColor}, 0 1px 2px rgba(0,0,0,0.15)`,
+                                                                border: `1.2px solid ${teamColor}`,
+                                                                width: 24,
+                                                                height: 24,
+                                                                flexShrink: 0
+                                                            }}>
+                                                                <img src={finalLogo} alt={teamName} style={{ width: 16, height: 16, ...logoStyle }} />
+                                                            </div>
+                                                        ) : null}
                                                     </div>
 
-                                                    <div style={{ display: "flex", gap: "24px", fontSize: "14px", fontWeight: 600, flexShrink: 0 }}>
-                                                        <span style={{ width: "50px", textAlign: "center" }}>
-                                                            {atsWins}-{atsLosses}
-                                                        </span>
-                                                        <span style={{ width: "50px", textAlign: "center", color: "#4b5563" }}>
-                                                            {ouWins}-{ouLosses}
-                                                        </span>
-                                                    </div>
+                                                    <span style={{ fontSize: "12px", color: "#6b7280", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                                        {teamName}
+                                                    </span>
+
+                                                    <span style={{ textAlign: "center", fontSize: "14px", fontWeight: 600 }}>
+                                                        {atsWins}-{atsLosses}
+                                                    </span>
+                                                    <span style={{ textAlign: "center", fontSize: "14px", fontWeight: 600, color: "#4b5563" }}>
+                                                        {ouWins}-{ouLosses}
+                                                    </span>
                                                 </div>
                                             );
                                         })
