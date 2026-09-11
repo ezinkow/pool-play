@@ -113,9 +113,18 @@ export default function NflBtsStandings() {
                         const bAtsWins = Number(isTeam1B ? b.ats_wins_1 : b.ats_wins_2) || 0;
                         if (bAtsWins !== aAtsWins) return bAtsWins - aAtsWins;
 
+                        const aAtsLosses = Number(isTeam1A ? a.ats_losses_1 : a.ats_losses_2) || 0;
+                        const bAtsLosses = Number(isTeam1B ? b.ats_losses_1 : b.ats_losses_2) || 0;
+                        // Fewer losses is better if wins are tied
+                        if (aAtsLosses !== bAtsLosses) return aAtsLosses - bAtsLosses;
+
                         const aOuWins = Number(isTeam1A ? a.ou_wins_1 : a.ou_wins_2) || 0;
                         const bOuWins = Number(isTeam1B ? b.ou_wins_1 : b.ou_wins_2) || 0;
-                        return bOuWins - aOuWins;
+                        if (bOuWins !== aOuWins) return bOuWins - aOuWins;
+
+                        const aOuLosses = Number(isTeam1A ? a.ou_losses_1 : a.ou_losses_2) || 0;
+                        const bOuLosses = Number(isTeam1B ? b.ou_losses_1 : b.ou_losses_2) || 0;
+                        return aOuLosses - bOuLosses;
                     });
                 });
 
