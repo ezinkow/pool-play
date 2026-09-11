@@ -101,12 +101,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/nfl_survivor_api_routes.js")(app);
   
   // MLB
-  require("./routes/mlb/entries-api-routes.js")(app);
-  require("./routes/mlb/series-api-routes.js")(app);
-  require("./routes/mlb/picks-api-routes.js")(app);
-  require("./routes/mlb/standings-api-routes.js")(app);
-  require("./routes/mlb/tiebreaker-api-routes.js")(app);
-  require("./routes/mlb/admin-api-routes.js")(app);
+  require("./routes/mlb_api_routes.js")(app);
 
   // Olympics
   require("./routes/olympics_api_routes.js")(app);

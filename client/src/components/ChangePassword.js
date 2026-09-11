@@ -1,9 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 
+const SECURITY_QUESTIONS = [
+  "What was the name of your first pet?",
+  "What city were you born in?",
+  "What was your childhood nickname?",
+  "What is your mother's maiden name?",
+  "What was the make and model of your first car?",
+  "What elementary school did you attend?"
+];
+
 export default function ChangePassword() {
   const [identifier, setIdentifier] = useState("");
+  const [selectedQuestion, setSelectedQuestion] = useState(SECURITY_QUESTIONS[0]);
+  const [securityAnswer, setSecurityAnswer] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [done, setDone] = useState(false);
@@ -18,19 +29,23 @@ export default function ChangePassword() {
   };
 
   const handleSubmit = async () => {
-    if (!identifier || !newPassword || !confirmPassword)
-      return toast.error("All fields required");
+    if (!identifier || !selectedQuestion || !securityAnswer || !newPassword || !confirmPassword)
+      return toast.error("All fields are required");
     if (newPassword !== confirmPassword)
       return toast.error("Passwords don't match");
 
     try {
-      const apiUrl = window.location.hostname === "localhost" 
-        ? "http://localhost:3001/api/auth/changepassword" 
+      const apiUrl = window.location.hostname === "localhost"
+        ? "http://localhost:3001/api/auth/changepassword"
         : "/api/auth/changepassword";
 
-      // Passing identifier (can be username or email depending on backend setup)
-      const res = await axios.post(apiUrl, { email: identifier, newPassword });
-      
+      const res = await axios.post(apiUrl, {
+        email: identifier,
+        securityQuestion: selectedQuestion,
+        securityAnswer,
+        newPassword
+      });
+
       if (res.data.success) {
         setDone(true);
         toast.success("Password updated!");
@@ -49,16 +64,16 @@ export default function ChangePassword() {
         boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
       }}>
         <h2 style={{ color: "#13447a", marginBottom: 6, textAlign: "center" }}>
-          🔑 Change Password
+          🔑 Reset Password
         </h2>
         <p style={{ color: "#6b7280", fontSize: 13, textAlign: "center", marginBottom: 24 }}>
-          Enter your username <strong>OR</strong> email address to update your password
+          Enter your email, select your security question, and provide your answer to change your password.
         </p>
 
         {done ? (
           <div style={{ textAlign: "center", color: "#16a34a", fontWeight: 600, fontSize: 15 }}>
             ✅ Password updated successfully!
-            <button 
+            <button
               onClick={() => window.location.hash = "#/login"}
               style={{ display: "block", margin: "20px auto 0", color: "#13447a", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
             >
@@ -69,13 +84,39 @@ export default function ChangePassword() {
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4, display: "block" }}>
-                Username <strong>OR</strong> Email Address
+                Email Address
               </label>
               <input
                 type="text"
                 value={identifier}
                 onChange={e => setIdentifier(e.target.value)}
-                placeholder="Enter username OR email"
+                placeholder="Enter your email"
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4, display: "block" }}>
+                Security Question
+              </label>
+              <select
+                value={selectedQuestion}
+                onChange={e => setSelectedQuestion(e.target.value)}
+                style={inputStyle}
+              >
+                {SECURITY_QUESTIONS.map((q, idx) => (
+                  <option key={idx} value={q}>{q}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4, display: "block" }}>
+                Security Answer
+              </label>
+              <input
+                type="text"
+                value={securityAnswer}
+                onChange={e => setSecurityAnswer(e.target.value)}
+                placeholder="Enter your security answer"
                 style={inputStyle}
               />
             </div>
@@ -88,7 +129,6 @@ export default function ChangePassword() {
                 value={newPassword}
                 onChange={e => setNewPassword(e.target.value)}
                 placeholder="New password"
-                onKeyDown={e => e.key === "Enter" && handleSubmit()}
                 style={inputStyle}
               />
             </div>
@@ -101,7 +141,6 @@ export default function ChangePassword() {
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
                 placeholder="Confirm new password"
-                onKeyDown={e => e.key === "Enter" && handleSubmit()}
                 style={inputStyle}
               />
             </div>

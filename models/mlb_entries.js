@@ -8,13 +8,11 @@ module.exports = function (sequelize, DataTypes) {
         user_id: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            unique: true,
             references: { model: "users", key: "id" },
         },
         entry_name: {
-            type: DataTypes.STRING(255), // 🧠 Explicit bounds added for clean unique indexing
+            type: DataTypes.STRING(255), // Explicit bounds for clean indexing
             allowNull: false,
-            unique: true,
         },
     }, {
         tableName: "mlb_entries",
@@ -23,9 +21,8 @@ module.exports = function (sequelize, DataTypes) {
         updatedAt: false,
     });
 
-    // 🧠 Standard association mapping block
+    // Standard association mapping block
     MlbEntries.associate = function (models) {
-        // Lets you easily do MlbEntries.findAll({ include: [models.Users] }) later
         MlbEntries.belongsTo(models.Users, { foreignKey: "user_id" });
     };
 

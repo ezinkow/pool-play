@@ -3,7 +3,7 @@ import useAuth from "../hooks/useAuth";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function LoginPage() {
-  const [name, setName] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -11,10 +11,12 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
     setLoading(true);
-    const result = await login(name, password);
+    const result = await login(identifier, password);
     if (result.success) {
       toast.success("Welcome back!");
-      window.location.hash = "#/"; // Redirect to home after login
+      setTimeout(() => {
+        window.location.href = "/"; // Force full browser reload to sync navbar auth state
+      }, 500);
     } else {
       toast.error(result.error || "Login failed");
       setLoading(false);
@@ -37,14 +39,14 @@ export default function LoginPage() {
       <Toaster />
       <div style={containerStyle}>
         <h2 style={{ color: "#13447a", marginBottom: 8 }}>Welcome Back</h2>
-        <p style={{ color: "#6b7280", marginBottom: 24, fontSize: 14 }}>Log in to join us in the pool!</p>
+        <p style={{ color: "#6b7280", marginBottom: 24, fontSize: 14 }}>Log in with your username or email address!</p>
         
         <form onSubmit={handleLogin}>
           <input
             type="text"
-            placeholder="Username"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            placeholder="Username or Email"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
             style={inputStyle}
             required
           />

@@ -1,6 +1,8 @@
 const { Users, Tokens } = require("../../models");
 const crypto = require("crypto");
+const bcrypt = require("bcrypt");
 const { Op } = require("sequelize");
+const requireAuth = require("../../middleware/Requireauth");
 
 module.exports = function (app) {
 
@@ -18,13 +20,24 @@ module.exports = function (app) {
         }
     });
 
-    // POST /api/auth/verify — login with username + password, returns token
+    // POST /api/auth/verify — login with username OR email + password, returns token
     app.post("/api/auth/verify", async (req, res) => {
         try {
-            const { name, password } = req.body;
-            const user = await Users.findOne({ where: { name } });
+            const { name, password } = req.body; // 'name' payload field can carry either username or email
+            if (!name || !password) {
+                return res.json({ success: false });
+            }
 
-            // 🧠 Updated: Use the model's validPassword instance method for bcrypt comparison
+            const identifier = name.trim();
+            const user = await Users.findOne({
+                where: {
+                    [Op.or]: [
+                        { name: identifier },
+                        { email: identifier }
+                    ]
+                }
+            });
+
             if (!user || !(await user.validPassword(password))) {
                 return res.json({ success: false });
             }
@@ -90,13 +103,13 @@ module.exports = function (app) {
         }
     });
 
-    // POST /api/auth/signup — create new shared user
+    // POST /api/auth/signup — create new shared user with security question/answer
     app.post("/api/auth/signup", async (req, res) => {
         try {
-            const { real_name, name, password, email, phone } = req.body;
+            const { real_name, name, password, email, phone, securityQuestion, securityAnswer } = req.body;
 
-            if (!real_name || !name || !password || !email || !email.trim()) {
-                return res.status(400).json({ error: "Name, username, password, and email address are required" });
+            if (!real_name || !name || !password || !email || !email.trim() || !securityQuestion || !securityAnswer) {
+                return res.status(400).json({ error: "All required fields including security question and answer must be provided." });
             }
 
             const existingUsername = await Users.findOne({ where: { name } });
@@ -107,13 +120,17 @@ module.exports = function (app) {
                 return res.status(400).json({ error: "An account already exists for this email address." });
             }
 
-            // 🧠 The `beforeCreate` model hook automatically intercepts and hashes this password
+            const salt = await bcrypt.genSalt(10);
+            const hashedAnswer = await bcrypt.hash(securityAnswer.trim().toLowerCase(), salt);
+
             await Users.create({
                 real_name: real_name.trim(),
                 name: name.trim(),
                 password,
                 email: email.trim(),
-                phone: phone ? phone.trim() : null
+                phone: phone ? phone.trim() : null,
+                security_question: securityQuestion,
+                security_answer: hashedAnswer
             });
 
             res.json({ success: true });
@@ -123,34 +140,83 @@ module.exports = function (app) {
         }
     });
 
-    // POST /api/auth/change-password — lookup by email or username, update password
-    app.post("/api/auth/changepassword", async (req, res) => {
+    // GET /api/auth/security-question — fetch current user's set security question
+    app.get("/api/auth/security-question", requireAuth, async (req, res) => {
         try {
-            const { email, newPassword } = req.body; // 'email' field holds either email or username from frontend input
-            if (!email || !newPassword) {
-                return res.status(400).json({ error: "Username or email and new password required" });
-            }
-            const identifier = email.trim();
-            const user = await Users.findOne({
-                where: {
-                    [Op.or]: [
-                        { email: identifier },
-                        { name: identifier }
-                    ]
-                }
-            });
-            if (!user) return res.status(404).json({ error: "No account found with that username or email" });
-
-            // 🧠 The `beforeUpdate` model hook automatically detects the password change and hashes it
-            await user.update({ password: newPassword });
-            res.json({ success: true });
+            const user = await Users.findByPk(req.user.id);
+            if (!user) return res.status(404).json({ error: "User not found" });
+            res.json({ security_question: user.security_question || "" });
         } catch (err) {
             console.error(err);
-            res.status(500).json({ error: "Password change failed" });
+            res.status(500).json({ error: "Failed to fetch security question" });
         }
     });
 
-    // GET or POST /api/auth/forgot-username
+    // POST /api/auth/update-security-question — update security question & answer
+    app.post("/api/auth/update-security-question", requireAuth, async (req, res) => {
+        try {
+            const { securityQuestion, securityAnswer, currentPassword } = req.body;
+            if (!securityQuestion || !securityAnswer || !currentPassword) {
+                return res.status(400).json({ error: "All fields are required" });
+            }
+
+            const user = await Users.findByPk(req.user.id);
+            if (!user || !(await user.validPassword(currentPassword))) {
+                return res.status(400).json({ error: "Incorrect current password" });
+            }
+
+            const salt = await bcrypt.genSalt(10);
+            const hashedAnswer = await bcrypt.hash(securityAnswer.trim().toLowerCase(), salt);
+
+            user.security_question = securityQuestion;
+            user.security_answer = hashedAnswer;
+            await user.save();
+
+            res.json({ success: true });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: "Failed to update security question" });
+        }
+    });
+
+    // POST /api/auth/changepassword — reset password using email, question, and answer
+    app.post("/api/auth/changepassword", async (req, res) => {
+        try {
+            const { email, securityQuestion, securityAnswer, newPassword } = req.body;
+
+            if (!email || !securityAnswer || !newPassword) {
+                return res.status(400).json({ error: "All fields are required" });
+            }
+
+            const user = await Users.findOne({ where: { email: email.trim() } });
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
+            }
+
+            if (securityQuestion && user.security_question && user.security_question !== securityQuestion) {
+                return res.status(400).json({ error: "Selected security question does not match our records" });
+            }
+
+            if (!user.security_answer) {
+                return res.status(400).json({ error: "No security answer configured for this account. Please contact admin." });
+            }
+
+            const isMatch = await bcrypt.compare(securityAnswer.trim().toLowerCase(), user.security_answer);
+            if (!isMatch) {
+                return res.status(400).json({ error: "Incorrect security answer" });
+            }
+
+            user.password = newPassword;
+            await user.save();
+
+            res.json({ success: true, message: "Password updated successfully" });
+        } catch (err) {
+            console.error("Password reset error:", err);
+            res.status(500).json({ error: "Failed to update password" });
+        }
+    });
+
+    // POST /api/auth/forgot-username
     app.post("/api/auth/forgot-username", async (req, res) => {
         try {
             const { email } = req.body;
@@ -160,8 +226,6 @@ module.exports = function (app) {
 
             const user = await Users.findOne({ where: { email: email.trim() } });
 
-            // For security reasons, you can choose whether or not to reveal if an email exists, 
-            // but for a straightforward recovery tool, returning the username or a generic success message works best:
             if (!user) {
                 return res.status(404).json({ error: "No account found with that email address." });
             }
