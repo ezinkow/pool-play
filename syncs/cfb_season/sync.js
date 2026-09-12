@@ -223,40 +223,52 @@ async function extractMatchups(data, weekNum) {
         }
 
         let overUnder = oddsObj?.overUnder !== undefined && oddsObj?.overUnder !== null ? parseFloat(oddsObj.overUnder) : 0.0;
-        let finalSpread = rawSpread !== null ? -rawSpread : null;
-        let adjustedSpread = applyHookRule(rawSpread, homeSpreadOdds);
+        let finalSpread = rawSpread !== null ? Math.abs(rawSpread) : null;
+        let adjustedSpread = rawSpread !== null ? Math.abs(applyHookRule(rawSpread, favoriteTeamId === homeTeamId ? homeSpreadOdds : awaySpreadOdds)) : null;
 
         const homeScore = homeCompetitor.score !== undefined ? parseInt(homeCompetitor.score, 10) : null;
         const awayScore = awayCompetitor.score !== undefined ? parseInt(awayCompetitor.score, 10) : null;
         const statusType = comp.status?.type?.name || "STATUS_SCHEDULED";
         const liveStatus = comp.status?.type?.shortDetail;
 
-        const isFinal = statusType === "STATUS_FINAL" || statusType === "Final" || statusType === "completed";
+        // 🧠 RESPECT DB AS SOURCE OF TRUTH / 48-HOUR LOCKOUT
+        let lockedSpread = finalSpread;
+        let lockedAdjustedSpread = adjustedSpread;
+        let lockedFavorite = favoriteTeamSchool;
+        let lockedFavoriteId = favoriteTeamId;
+        let lockedOverUnder = overUnder;
+        let lockedSpreadOdds = homeSpreadOdds;
+        let lockedAwaySpreadOdds = awaySpreadOdds;
 
-        if ((isFinal || finalSpread === null) && existingGame) {
-            if (finalSpread === null) {
-                finalSpread = existingGame.spread;
-                adjustedSpread = existingGame.adjusted_spread;
-                homeSpreadOdds = existingGame.spread_odds ?? homeSpreadOdds;
-                awaySpreadOdds = existingGame.away_spread_odds ?? awaySpreadOdds;
-                overUnder = existingGame.over_under || overUnder;
-                favoriteTeamSchool = existingGame.favorite || favoriteTeamSchool;
-                favoriteTeamId = existingGame.favorite_id || favoriteTeamId;
+        if (existingGame) {
+            const kickoffTime = existingGame.game_date ? new Date(existingGame.game_date).getTime() : new Date(gameDate).getTime();
+            const now = Date.now();
+            const hoursUntilKickoff = (kickoffTime - now) / (1000 * 60 * 60);
+
+            // If game is within 48 hours or already started/locked, use DB values
+            if (hoursUntilKickoff <= 48 || existingGame.status === "STATUS_FINAL" || existingGame.status === "Final" || existingGame.status === "completed") {
+                lockedSpread = existingGame.spread !== null ? existingGame.spread : finalSpread;
+                lockedAdjustedSpread = existingGame.adjusted_spread !== null ? existingGame.adjusted_spread : adjustedSpread;
+                lockedFavorite = existingGame.favorite || favoriteTeamSchool;
+                lockedFavoriteId = existingGame.favorite_id || favoriteTeamId;
+                lockedOverUnder = existingGame.over_under !== null ? existingGame.over_under : overUnder;
+                lockedSpreadOdds = existingGame.spread_odds !== null ? existingGame.spread_odds : homeSpreadOdds;
+                lockedAwaySpreadOdds = existingGame.away_spread_odds !== null ? existingGame.away_spread_odds : awaySpreadOdds;
             }
         }
 
         let calculatedOutcomes = { home_score: homeScore, away_score: awayScore, winner: null, ats_winner: null, ou_result: null };
-        if (isFinal) {
+        if (homeScore !== null && awayScore !== null) {
             calculatedOutcomes = calculateGameOutcomes({
                 home_team_id: homeTeamId,
                 home_team: homeTeamSchool,
                 away_team_id: awayTeamId,
                 away_team: awayTeamSchool,
-                spread: finalSpread,
-                adjusted_spread: adjustedSpread,
-                favorite_id: favoriteTeamId,
-                favorite: favoriteTeamSchool,
-                over_under: overUnder
+                spread: lockedSpread,
+                adjusted_spread: lockedAdjustedSpread,
+                favorite_id: lockedFavoriteId,
+                favorite: lockedFavorite,
+                over_under: lockedOverUnder
             }, homeScore, awayScore);
         }
 
@@ -287,13 +299,13 @@ async function extractMatchups(data, weekNum) {
             home_secondary_color: homeSecondaryColor,
             away_color: awayColor,
             away_secondary_color: awaySecondaryColor,
-            spread: finalSpread,
-            spread_odds: homeSpreadOdds,
-            away_spread_odds: awaySpreadOdds,
-            adjusted_spread: adjustedSpread,
-            over_under: overUnder,
-            favorite_id: favoriteTeamId,
-            favorite: favoriteTeamSchool,
+            spread: lockedSpread,
+            spread_odds: lockedSpreadOdds,
+            away_spread_odds: lockedAwaySpreadOdds,
+            adjusted_spread: lockedAdjustedSpread,
+            over_under: lockedOverUnder,
+            favorite_id: lockedFavoriteId,
+            favorite: lockedFavorite,
             game_date: gameDate,
             status: statusType,
             live_status: liveStatus,
@@ -313,20 +325,27 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
     if (homeScore > awayScore) winner = m.home_team;
     else if (awayScore > homeScore) winner = m.away_team;
 
-    const spreadVal = m.adjusted_spread !== undefined ? m.adjusted_spread : m.spread;
+    const spreadVal = m.adjusted_spread !== undefined && m.adjusted_spread !== null ? Number(m.adjusted_spread) : Number(m.spread);
     let ats_winner = "PUSH";
 
-    if (spreadVal !== null && spreadVal !== undefined) {
+    if (!isNaN(spreadVal) && spreadVal !== null && spreadVal !== undefined) {
         const isHomeFav = m.favorite_id === m.home_team_id;
         const favScore = isHomeFav ? homeScore : awayScore;
         const dogScore = isHomeFav ? awayScore : homeScore;
         const favTeam = isHomeFav ? m.home_team : m.away_team;
         const dogTeam = isHomeFav ? m.away_team : m.home_team;
 
-        const margin = favScore + spreadVal;
-        if (margin > dogScore) ats_winner = favTeam;
-        else if (margin < dogScore) ats_winner = dogTeam;
-        else ats_winner = "PUSH";
+        // 🧠 CORRECT ATS CALCULATION: Favorite Score minus Underdog Score compared against spread line
+        // e.g. Oregon (fav) 31, Okla State (dog) 38 -> margin = 31 - 38 = -7
+        const margin = favScore - dogScore;
+
+        if (margin > spreadVal) {
+            ats_winner = favTeam; // Favorite covered
+        } else if (margin < spreadVal) {
+            ats_winner = dogTeam; // Underdog covered
+        } else {
+            ats_winner = "PUSH";
+        }
     }
 
     let ou_result = "PUSH";
@@ -350,35 +369,7 @@ async function processMatchup(m) {
         if (!existingGame) {
             await CfbRegularSeasonGames.create(m);
         } else {
-            let payloadToUpdate = { ...m };
-
-            if ((payloadToUpdate.spread === null || payloadToUpdate.spread === undefined) && existingGame.spread != null) {
-                payloadToUpdate.spread = existingGame.spread;
-                payloadToUpdate.adjusted_spread = existingGame.adjusted_spread;
-                payloadToUpdate.spread_odds = existingGame.spread_odds;
-                payloadToUpdate.away_spread_odds = existingGame.away_spread_odds;
-                payloadToUpdate.over_under = existingGame.over_under;
-                payloadToUpdate.favorite = existingGame.favorite;
-                payloadToUpdate.favorite_id = existingGame.favorite_id;
-            }
-
-            if (existingGame.game_date) {
-                const kickoffTime = new Date(existingGame.game_date).getTime();
-                const now = Date.now();
-                const hoursUntilKickoff = (kickoffTime - now) / (1000 * 60 * 60);
-
-                if (hoursUntilKickoff <= 48) {
-                    payloadToUpdate.spread = existingGame.spread;
-                    payloadToUpdate.adjusted_spread = existingGame.adjusted_spread;
-                    payloadToUpdate.spread_odds = existingGame.spread_odds;
-                    payloadToUpdate.away_spread_odds = existingGame.away_spread_odds;
-                    payloadToUpdate.over_under = existingGame.over_under;
-                    payloadToUpdate.favorite = existingGame.favorite;
-                    payloadToUpdate.favorite_id = existingGame.favorite_id;
-                }
-            }
-
-            await existingGame.update(payloadToUpdate);
+            await existingGame.update(m);
         }
     } catch (err) {
         console.error(`[CFB Sync] Error saving matchup Week ${m.week} (${m.away_team} @ ${m.home_team}):`, err.message);
