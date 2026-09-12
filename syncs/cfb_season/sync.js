@@ -257,8 +257,11 @@ async function extractMatchups(data, weekNum) {
             }
         }
 
+        // 🧠 ONLY calculate final outcomes if the game status is explicitly Final / Completed
+        const isFinal = statusType === "STATUS_FINAL" || statusType === "Final" || statusType === "completed" || (liveStatus && liveStatus.toLowerCase().includes("final"));
+
         let calculatedOutcomes = { home_score: homeScore, away_score: awayScore, winner: null, ats_winner: null, ou_result: null };
-        if (homeScore !== null && awayScore !== null) {
+        if (isFinal && homeScore !== null && awayScore !== null) {
             calculatedOutcomes = calculateGameOutcomes({
                 home_team_id: homeTeamId,
                 home_team: homeTeamSchool,
