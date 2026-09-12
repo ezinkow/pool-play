@@ -229,6 +229,7 @@ async function extractMatchups(data, weekNum) {
         const homeScore = homeCompetitor.score !== undefined ? parseInt(homeCompetitor.score, 10) : null;
         const awayScore = awayCompetitor.score !== undefined ? parseInt(awayCompetitor.score, 10) : null;
         const statusType = comp.status?.type?.name || "STATUS_SCHEDULED";
+        const liveStatus = comp.status?.type?.shortDetail;
 
         const isFinal = statusType === "STATUS_FINAL" || statusType === "Final" || statusType === "completed";
 
@@ -295,6 +296,7 @@ async function extractMatchups(data, weekNum) {
             favorite: favoriteTeamSchool,
             game_date: gameDate,
             status: statusType,
+            live_status: liveStatus,
             ...calculatedOutcomes
         });
     }

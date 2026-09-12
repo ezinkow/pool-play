@@ -27,6 +27,7 @@ module.exports = function (sequelize, DataTypes) {
         favorite: { type: DataTypes.STRING, allowNull: true },
         game_date: { type: DataTypes.DATE, allowNull: true },
         status: { type: DataTypes.STRING, allowNull: true },
+        live_status: { type: DataTypes.STRING, allowNull: true },
         home_score: { type: DataTypes.INTEGER, allowNull: true },
         away_score: { type: DataTypes.INTEGER, allowNull: true },
         winner: { type: DataTypes.STRING, allowNull: true },

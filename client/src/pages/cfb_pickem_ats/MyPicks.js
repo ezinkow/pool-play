@@ -25,6 +25,7 @@ export default function CdbPickemAtsMyPicks() {
     const [currentWeek, setCurrentWeek] = useState(null);
     const [games, setGames] = useState([]);
     const [picks, setPicks] = useState({});
+    const [standings, setStandings] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const token = localStorage.getItem("token");
@@ -50,27 +51,33 @@ export default function CdbPickemAtsMyPicks() {
             });
     }, [token]);
 
-    // Fetch weekly schedule and user picks summary only after currentWeek is initialized
+    // Fetch weekly schedule, user picks summary, and overall standings
     useEffect(() => {
         if (!user || currentWeek === null) return;
         setLoading(true);
-        axios.get("/api/cfb_pickem_ats/mypicks", {
-            params: { week: currentWeek },
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(res => {
-                setGames(res.data.games || []);
-                setPicks(res.data.userPicks || {});
+        Promise.all([
+            axios.get("/api/cfb_pickem_ats/mypicks", {
+                params: { week: currentWeek },
+                headers: { Authorization: `Bearer ${token}` }
+            }),
+            axios.get("/api/cfb_pickem_ats/standings", {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+        ])
+            .then(([picksRes, standingsRes]) => {
+                setGames(picksRes.data.games || []);
+                setPicks(picksRes.data.userPicks || {});
+                setStandings(standingsRes.data || []);
             })
             .catch(err => {
-                console.error("Failed to load user picks", err);
+                console.error("Failed to load user picks or standings", err);
                 toast.error("Failed to load pick summary");
             })
             .finally(() => setLoading(false));
     }, [user, currentWeek, token]);
 
-    // Calculate total points and records dynamically using ats_winner from the game
-    let totalPoints = 0;
+    // Calculate weekly points and records dynamically using ats_winner from the game
+    let weekPoints = 0;
     let wins = 0;
     let losses = 0;
     let pushes = 0;
@@ -84,12 +91,16 @@ export default function CdbPickemAtsMyPicks() {
                 pushes++;
             } else if (game.ats_winner === userPick.picked_team) {
                 wins++;
-                totalPoints += userPick.is_best_bet ? 2 : 1;
+                weekPoints += userPick.is_best_bet ? 2 : 1;
             } else {
                 losses++;
             }
         }
     });
+
+    // Find overall points for the current logged-in user from standings
+    const currentUserStanding = standings.find(s => Number(s.user_id) === Number(user?.id));
+    const overallPoints = currentUserStanding ? (Number(currentUserStanding.total_points) || 0) : 0;
 
     // Filter games to ONLY show the ones the user has actually picked
     const pickedGames = games.filter(game => {
@@ -123,8 +134,11 @@ export default function CdbPickemAtsMyPicks() {
                         <div style={{ background: "#f1f5f9", padding: "8px 16px", borderRadius: 8, fontWeight: 700, fontSize: "13px", color: "#334155" }}>
                             Record: {wins} - {losses} {pushes > 0 ? `- ${pushes}` : ""}
                         </div>
+                        <div style={{ background: "#f8fafc", padding: "8px 16px", borderRadius: 8, fontWeight: 700, fontSize: "13px", color: "#0284c7", border: "1px solid #e2e8f0" }}>
+                            Week Points: {weekPoints} pts
+                        </div>
                         <div style={{ background: "#ecfdf5", padding: "8px 16px", borderRadius: 8, fontWeight: 700, fontSize: "13px", color: "#047857" }}>
-                            Total Points: {totalPoints} pts
+                            Overall Points: {overallPoints} pts
                         </div>
                     </div>
                 </div>
@@ -212,6 +226,8 @@ export default function CdbPickemAtsMyPicks() {
 
                             // Right-side Status / Live Score display
                             let statusBadge = null;
+                            const liveStatusText = game.live_status || "LIVE";
+
                             if (isFinished) {
                                 if (game.ats_winner === "PUSH") {
                                     statusBadge = <span style={{ color: "#d97706", fontWeight: 800, fontSize: "11px" }}>— PUSH</span>;
@@ -225,7 +241,7 @@ export default function CdbPickemAtsMyPicks() {
                                     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                                             <span style={PULSE_STYLE} />
-                                            <span style={{ backgroundColor: CFB_RED, color: "white", padding: "1px 5px", borderRadius: 3, fontSize: "9px", fontWeight: 700 }}>LIVE</span>
+                                            <span style={{ backgroundColor: CFB_RED, color: "white", padding: "1px 5px", borderRadius: 3, fontSize: "9px", fontWeight: 700 }}>{liveStatusText}</span>
                                         </div>
                                         {hasScores && (
                                             <span style={{ fontSize: "11px", fontWeight: 700, color: "#d97706" }}>
@@ -401,7 +417,7 @@ export default function CdbPickemAtsMyPicks() {
                                                 padding: "3px",
                                                 borderRadius: 6,
                                                 border: `1.5px solid ${pickedPrimary}`,
-                                                boxShadow: isBestBet 
+                                                boxShadow: isBestBet
                                                     ? `0 0 10px 3px rgba(200, 157, 60, 0.9), 0 0 4px 1px ${pickedPrimary}, 0 1px 3px rgba(0,0,0,0.15)`
                                                     : `0 0 4px 1px ${pickedPrimary}, 0 1px 3px rgba(0,0,0,0.15)`,
                                                 width: 35,

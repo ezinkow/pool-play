@@ -24,6 +24,7 @@ export default function CfbPickemAtsMatrix() {
     const [currentWeek, setCurrentWeek] = useState(null);
     const [matrixData, setMatrixData] = useState([]);
     const [matchupsData, setMatchupsData] = useState([]);
+    const [standingsData, setStandingsData] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const token = localStorage.getItem("token");
@@ -49,7 +50,7 @@ export default function CfbPickemAtsMatrix() {
             });
     }, [token]);
 
-    // Fetch weekly group matrix data and regular season matchups data for full game info
+    // Fetch weekly group matrix data, matchups data, and season standings data
     useEffect(() => {
         if (!user || currentWeek === null) return;
 
@@ -63,19 +64,22 @@ export default function CfbPickemAtsMatrix() {
                 }),
                 axios.get("/api/cfb_regular_season_matchups", {
                     params: { week: currentWeek }
+                }),
+                axios.get("/api/cfb_pickem_ats/standings", {
+                    headers: { Authorization: `Bearer ${token}` }
                 })
             ])
-                .then(([matrixRes, matchupsRes]) => {
-                    console.log("Matrix API Response:", matrixRes.data);
-                    console.log("Matchups API Response:", matchupsRes.data);
+                .then(([matrixRes, matchupsRes, standingsRes]) => {
                     setMatrixData(matrixRes.data || []);
                     setMatchupsData(matchupsRes.data || []);
+                    setStandingsData(standingsRes.data || []);
                 })
                 .catch(err => {
-                    console.error("Failed to load pick'em matrix or matchups", err);
+                    console.error("Failed to load pick'em matrix, matchups or standings", err);
                     if (isInitial) {
                         setMatrixData([]);
                         setMatchupsData([]);
+                        setStandingsData([]);
                     }
                 })
                 .finally(() => {
@@ -100,6 +104,12 @@ export default function CfbPickemAtsMatrix() {
     const { gamesList, sortedPlayers } = React.useMemo(() => {
         const gamesMap = new Map();
         const playersMap = {};
+
+        // Build a lookup map for season standings points by user_id
+        const standingsMap = new Map();
+        standingsData.forEach(s => {
+            standingsMap.set(Number(s.user_id), Number(s.total_points) || 0);
+        });
 
         // Build a lookup map for live/score details from regular season matchups endpoint
         const matchupsMap = new Map();
@@ -138,16 +148,18 @@ export default function CfbPickemAtsMatrix() {
                     away_score: liveMatchup.away_score !== undefined ? liveMatchup.away_score : row.away_score,
                     status: liveMatchup.status || row.status,
                     quarter: liveMatchup.quarter || liveMatchup.period || row.quarter || row.period,
-                    clock: liveMatchup.clock || row.clock
+                    clock: liveMatchup.clock || row.clock,
+                    live_status: liveMatchup.live_status || row.live_status
                 });
             }
 
             if (!playersMap[row.user_id]) {
+                const seasonPoints = standingsMap.get(Number(row.user_id)) || 0;
                 playersMap[row.user_id] = {
                     user_id: row.user_id,
                     user_name: row.user_name,
                     picks: {},
-                    totalPoints: 0
+                    totalPoints: seasonPoints
                 };
             }
 
@@ -189,27 +201,16 @@ export default function CfbPickemAtsMatrix() {
                 return dateB - dateA;
             });
 
-        const playersArr = Object.values(playersMap).map(player => {
-            let totalPoints = 0;
-            gamesArr.forEach(game => {
-                const pick = player.picks[game.game_id];
-                if (pick && pick.status) {
-                    const isWin = pick.status === "win" || pick.status === "correct";
-                    if (isWin) {
-                        totalPoints += pick.is_best_bet ? 2 : 1;
-                    }
-                }
-            });
-            return { ...player, totalPoints };
-        });
+        const playersArr = Object.values(playersMap);
 
+        // Sort players by season-long total points descending, then alphabetically by name
         playersArr.sort((a, b) => b.totalPoints - a.totalPoints || a.user_name.localeCompare(b.user_name));
 
         return {
             gamesList: gamesArr,
             sortedPlayers: playersArr
         };
-    }, [matrixData, matchupsData, teamColors]);
+    }, [matrixData, matchupsData, standingsData, teamColors]);
 
     const getCellStyle = (game, pickObj) => {
         if (!pickObj || !pickObj.ats_pick) return { backgroundColor: "transparent" };
@@ -234,8 +235,8 @@ export default function CfbPickemAtsMatrix() {
 
     const GameHeader = ({ game }) => {
         const rawStatus = (game.status || "").toUpperCase();
-        const isFinal = rawStatus === "STATUS_FINAL" || rawStatus === "FINAL" || rawStatus === "COMPLETED";
-        const isLive = rawStatus === "STATUS_IN_PROGRESS" || rawStatus === "IN_PROGRESS" || rawStatus === "HALFTIME" || rawStatus === "STATUS_HALFTIME" || rawStatus === "LIVE" || rawStatus.includes("HALF") || rawStatus.includes("PROGRESS");
+        const isFinal = rawStatus === "STATUS_FINAL" || rawStatus === "FINAL" || rawStatus === "COMPLETED" || (game.live_status && game.live_status.toLowerCase() === "final");
+        const isLive = !isFinal && (rawStatus === "STATUS_IN_PROGRESS" || rawStatus === "IN_PROGRESS" || rawStatus === "HALFTIME" || rawStatus === "STATUS_HALFTIME" || rawStatus === "LIVE" || rawStatus.includes("HALF") || rawStatus.includes("PROGRESS") || (game.live_status && game.live_status !== "Final" && !game.live_status.includes("AM") && !game.live_status.includes("PM")));
         const hasScores = game.home_score !== null && game.home_score !== undefined && game.away_score !== null && game.away_score !== undefined;
 
         const coveredTeam = game.ats_winner || game.winner;
@@ -280,19 +281,8 @@ export default function CfbPickemAtsMatrix() {
         const favBadgeStyle = getBadgeStyle(favPrimary, favSecondary);
         const coveredBadgeStyle = getBadgeStyle(coveredPrimary, coveredSecondary);
 
-        // Format quarter/time string for live games
-        let liveStatusText = "LIVE";
-        if (isLive) {
-            const qtr = game.quarter ? (isNaN(game.quarter) ? game.quarter : `Q${game.quarter}`) : "";
-            const clk = game.clock ? game.clock : "";
-            if (qtr && clk) {
-                liveStatusText = `${qtr} ${clk}`;
-            } else if (qtr) {
-                liveStatusText = qtr;
-            } else if (rawStatus.includes("HALF")) {
-                liveStatusText = "HALF";
-            }
-        }
+        // Directly use game.live_status if available, fallback to generic LIVE
+        const liveStatusText = game.live_status || "LIVE";
 
         return (
             <div style={{ textAlign: "center", width: "100%", overflow: "visible" }}>
