@@ -23,6 +23,7 @@ export default function CfbPickemAtsMatrix() {
     const { user, loading: authLoading } = useAuth();
     const [currentWeek, setCurrentWeek] = useState(null);
     const [matrixData, setMatrixData] = useState([]);
+    const [matchupsData, setMatchupsData] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const token = localStorage.getItem("token");
@@ -48,30 +49,42 @@ export default function CfbPickemAtsMatrix() {
             });
     }, [token]);
 
-    // Fetch weekly group matrix data only after currentWeek is initialized
+    // Fetch weekly group matrix data and regular season matchups data for full game info
     useEffect(() => {
         if (!user || currentWeek === null) return;
 
-        const fetchMatrix = (isInitial = false) => {
+        const fetchData = (isInitial = false) => {
             if (isInitial) setLoading(true);
-            axios.get("/api/cfb_pickem_ats/matrix", {
-                params: { week: currentWeek },
-                headers: { Authorization: `Bearer ${token}` }
-            })
-                .then(res => {
-                    setMatrixData(res.data || []);
+
+            Promise.all([
+                axios.get("/api/cfb_pickem_ats/matrix", {
+                    params: { week: currentWeek },
+                    headers: { Authorization: `Bearer ${token}` }
+                }),
+                axios.get("/api/cfb_regular_season_matchups", {
+                    params: { week: currentWeek }
+                })
+            ])
+                .then(([matrixRes, matchupsRes]) => {
+                    console.log("Matrix API Response:", matrixRes.data);
+                    console.log("Matchups API Response:", matchupsRes.data);
+                    setMatrixData(matrixRes.data || []);
+                    setMatchupsData(matchupsRes.data || []);
                 })
                 .catch(err => {
-                    console.error("Failed to load pick'em matrix", err);
-                    if (isInitial) setMatrixData([]);
+                    console.error("Failed to load pick'em matrix or matchups", err);
+                    if (isInitial) {
+                        setMatrixData([]);
+                        setMatchupsData([]);
+                    }
                 })
                 .finally(() => {
                     if (isInitial) setLoading(false);
                 });
         };
 
-        fetchMatrix(true);
-        const interval = setInterval(() => fetchMatrix(false), 15000);
+        fetchData(true);
+        const interval = setInterval(() => fetchData(false), 15000);
         return () => clearInterval(interval);
     }, [user, currentWeek, token]);
 
@@ -88,10 +101,19 @@ export default function CfbPickemAtsMatrix() {
         const gamesMap = new Map();
         const playersMap = {};
 
+        // Build a lookup map for live/score details from regular season matchups endpoint
+        const matchupsMap = new Map();
+        matchupsData.forEach(m => {
+            matchupsMap.set(m.id, m);
+        });
+
         matrixData.forEach(row => {
             const gameId = row.game_id;
             const rawMp = row.must_pick;
             const isMustPick = rawMp === true || rawMp === 1 || rawMp === "1" || rawMp === "true";
+
+            // Merge details from matchupsData if available
+            const liveMatchup = matchupsMap.get(gameId) || {};
 
             if (!gamesMap.has(gameId)) {
                 gamesMap.set(gameId, {
@@ -112,9 +134,11 @@ export default function CfbPickemAtsMatrix() {
                     winner: row.winner,
                     ats_winner: row.ats_winner,
                     must_pick: isMustPick,
-                    home_score: row.home_score,
-                    away_score: row.away_score,
-                    status: row.status
+                    home_score: liveMatchup.home_score !== undefined ? liveMatchup.home_score : row.home_score,
+                    away_score: liveMatchup.away_score !== undefined ? liveMatchup.away_score : row.away_score,
+                    status: liveMatchup.status || row.status,
+                    quarter: liveMatchup.quarter || liveMatchup.period || row.quarter || row.period,
+                    clock: liveMatchup.clock || row.clock
                 });
             }
 
@@ -185,7 +209,7 @@ export default function CfbPickemAtsMatrix() {
             gamesList: gamesArr,
             sortedPlayers: playersArr
         };
-    }, [matrixData, teamColors]);
+    }, [matrixData, matchupsData, teamColors]);
 
     const getCellStyle = (game, pickObj) => {
         if (!pickObj || !pickObj.ats_pick) return { backgroundColor: "transparent" };
@@ -256,6 +280,20 @@ export default function CfbPickemAtsMatrix() {
         const favBadgeStyle = getBadgeStyle(favPrimary, favSecondary);
         const coveredBadgeStyle = getBadgeStyle(coveredPrimary, coveredSecondary);
 
+        // Format quarter/time string for live games
+        let liveStatusText = "LIVE";
+        if (isLive) {
+            const qtr = game.quarter ? (isNaN(game.quarter) ? game.quarter : `Q${game.quarter}`) : "";
+            const clk = game.clock ? game.clock : "";
+            if (qtr && clk) {
+                liveStatusText = `${qtr} ${clk}`;
+            } else if (qtr) {
+                liveStatusText = qtr;
+            } else if (rawStatus.includes("HALF")) {
+                liveStatusText = "HALF";
+            }
+        }
+
         return (
             <div style={{ textAlign: "center", width: "100%", overflow: "visible" }}>
                 <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 4, padding: "3px 2px" }}>
@@ -284,7 +322,7 @@ export default function CfbPickemAtsMatrix() {
                     ) : isLive ? (
                         <>
                             <span style={PULSE_STYLE} />
-                            <span style={{ backgroundColor: CFB_RED, color: "white", padding: "1px 6px", borderRadius: 3 }}>LIVE</span>
+                            <span style={{ backgroundColor: CFB_RED, color: "white", padding: "1px 6px", borderRadius: 3 }}>{liveStatusText}</span>
                         </>
                     ) : (
                         <span style={{ color: "#cbd5e1" }}>

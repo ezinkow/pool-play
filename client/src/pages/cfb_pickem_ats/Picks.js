@@ -187,12 +187,6 @@ export default function CfbPickemAtsPicks() {
     });
 
     const handleSubmitAll = async () => {
-
-        if (completedMustPicks !== totalMustPicks) {
-            toast.error(`You must select all ${totalMustPicks} must-pick games before saving!`);
-            return;
-        }
-
         if (bestBetCount > 3) {
             toast.error(`You can select a maximum of 3 Best Bets! (Currently selected: ${bestBetCount})`);
             return;
@@ -201,6 +195,10 @@ export default function CfbPickemAtsPicks() {
         if (totalSelectedCount === 15 && bestBetCount < 3) {
             toast.error("You must select 3 Best Bets when submitting 15 total picks.");
             return;
+        }
+
+        if (completedMustPicks < totalMustPicks) {
+            toast("Note: Submitting with incomplete must-picks!", { icon: '⚠️' });
         }
 
         if (totalSelectedCount < 15 && bestBetCount < 3) {
@@ -264,7 +262,7 @@ export default function CfbPickemAtsPicks() {
                             <span>🏈</span> {poolTitle || "CFB PICK 'EM ATS"} <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span>
                         </h2>
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
-                            Select all {totalMustPicks} must-pick games & up to 15 total games (up to 3 Best Bets ⭐).
+                            Select up to {totalMustPicks} must-pick games & up to 15 total games (up to 3 Best Bets ⭐).
                         </p>
                         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 2 }}>
                             {totalMustPicks > 0 && (
@@ -696,7 +694,7 @@ export default function CfbPickemAtsPicks() {
 
                 {sortedGames.length > 0 && (
                     <div style={{ marginTop: 20 }}>
-                        {(completedMustPicks !== totalMustPicks || bestBetCount > 3) && (
+                        {(completedMustPicks < totalMustPicks || bestBetCount > 3) && (
                             <div style={{
                                 backgroundColor: "#fff7ed",
                                 border: "1px solid #fdba74",
@@ -708,7 +706,7 @@ export default function CfbPickemAtsPicks() {
                                 textAlign: "center",
                                 marginBottom: 10
                             }}>
-                                ⚠️ Note: Select all <strong>{totalMustPicks}</strong> must-pick games ({completedMustPicks}/{totalMustPicks}) & max 3 Best Bets.
+                                ⚠️ Note: You have completed {completedMustPicks} of {totalMustPicks} must-pick matchups. You can save with partial selections.
                             </div>
                         )}
                         <button
