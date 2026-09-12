@@ -22,6 +22,7 @@ export default function NflPickemAtsMatrix() {
     const { user, loading: authLoading } = useAuth();
     const [currentWeek, setCurrentWeek] = useState(null);
     const [matrixData, setMatrixData] = useState([]);
+    const [matchupsData, setMatchupsData] = useState([]);
     const [teamColors, setTeamColors] = useState({});
     const [loading, setLoading] = useState(true);
 
@@ -67,30 +68,41 @@ export default function NflPickemAtsMatrix() {
             });
     }, [token]);
 
-    // Fetch matrix data for the selected week only after currentWeek is initialized
+    // Fetch matrix data and match-ups data for the selected week concurrently
     useEffect(() => {
         if (!user || currentWeek === null) return;
-        
-        const fetchMatrix = (isInitial = false) => {
+
+        const fetchData = (isInitial = false) => {
             if (isInitial) setLoading(true);
-            axios.get("/api/nfl_pickem_ats/matrix", {
-                params: { week: currentWeek },
-                headers: { Authorization: `Bearer ${token}` }
-            })
-                .then(res => {
-                    setMatrixData(res.data || []);
+
+            Promise.all([
+                axios.get("/api/nfl_pickem_ats/matrix", {
+                    params: { week: currentWeek },
+                    headers: { Authorization: `Bearer ${token}` }
+                }),
+                axios.get("/api/nfl_regular_season_matchups", {
+                    params: { week: currentWeek },
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+            ])
+                .then(([matrixRes, matchupsRes]) => {
+                    setMatrixData(matrixRes.data || []);
+                    setMatchupsData(matchupsRes.data || []);
                 })
                 .catch(err => {
-                    console.error("Failed to load pick'em matrix", err);
-                    if (isInitial) setMatrixData([]);
+                    console.error("Failed to load pick'em matrix or matchups", err);
+                    if (isInitial) {
+                        setMatrixData([]);
+                        setMatchupsData([]);
+                    }
                 })
                 .finally(() => {
                     if (isInitial) setLoading(false);
                 });
         };
 
-        fetchMatrix(true);
-        const interval = setInterval(() => fetchMatrix(false), 15000);
+        fetchData(true);
+        const interval = setInterval(() => fetchData(false), 15000);
         return () => clearInterval(interval);
     }, [user, currentWeek, token]);
 
@@ -103,11 +115,42 @@ export default function NflPickemAtsMatrix() {
         return isLive || isFinal || new Date() >= new Date(game.game_date);
     };
 
-    // Pivot flat rows into: { games: [...unique games], players: [ ...sorted list of player objects with calculated points ] }
+    // Pivot flat rows and merge with master matchups endpoint info into: { games: [...unique games], players: [ ...sorted list of player objects with calculated points ] }
     const { gamesList, sortedPlayers } = React.useMemo(() => {
         const gamesMap = new Map();
+
+        // 1. Seed gamesMap with authoritative data from /api/nfl_regular_season_matchups
+        matchupsData.forEach(m => {
+            const gameId = m.id || m.game_id;
+            const rawMp = m.must_pick;
+            const isMustPick = rawMp === true || rawMp === 1 || rawMp === "1" || rawMp === "true";
+
+            gamesMap.set(gameId, {
+                game_id: gameId,
+                away_team: m.away_team,
+                home_team: m.home_team,
+                away_logo: m.away_logo || teamColors[m.away_team]?.logo,
+                home_logo: m.home_logo || teamColors[m.home_team]?.logo,
+                home_color: m.home_color,
+                home_secondary_color: m.home_secondary_color,
+                away_color: m.away_color,
+                away_secondary_color: m.away_secondary_color,
+                game_date: m.game_date,
+                adjusted_spread: m.adjusted_spread !== undefined ? m.adjusted_spread : m.spread,
+                favorite: m.favorite,
+                winner: m.winner,
+                ats_winner: m.ats_winner,
+                must_pick: isMustPick,
+                home_score: m.home_score,
+                away_score: m.away_score,
+                status: m.status,
+                live_status: m.live_status
+            });
+        });
+
         const playersMap = {};
 
+        // 2. Process matrix rows to capture player picks and fallback game info if needed
         matrixData.forEach(row => {
             const gameId = row.game_id;
             const rawMp = row.must_pick;
@@ -132,7 +175,8 @@ export default function NflPickemAtsMatrix() {
                     must_pick: isMustPick,
                     home_score: row.home_score,
                     away_score: row.away_score,
-                    status: row.status
+                    status: row.status,
+                    live_status: row.live_status
                 });
             }
 
@@ -148,7 +192,8 @@ export default function NflPickemAtsMatrix() {
             const rawBb = row.is_best_bet;
             const isBestBet = rawBb === true || rawBb === 1 || rawBb === "1" || rawBb === "true";
 
-            const atsWinner = row.ats_winner || row.winner;
+            const gameRef = gamesMap.get(gameId);
+            const atsWinner = row.ats_winner || row.winner || gameRef?.ats_winner || gameRef?.winner;
             const atsPick = row.ats_pick || row.picked_team;
             let status = (row.pick_status || row.status || row.result || "").toLowerCase();
 
@@ -173,8 +218,8 @@ export default function NflPickemAtsMatrix() {
         const gamesArr = Array.from(gamesMap.values())
             .filter(game => {
                 const rawStatus = (game.status || "").toUpperCase();
-                const isLive = rawStatus.includes("HALF") || rawStatus.includes("PROGRESS") || rawStatus.includes("LIVE") || rawStatus.includes("IN_PROGRESS");
-                const isFinal = rawStatus.includes("FINAL") || rawStatus.includes("COMPLETED");
+                const isLive = rawStatus.includes("HALF") || rawStatus.includes("PROGRESS") || rawStatus.includes("LIVE") || rawStatus.includes("IN_PROGRESS") || (game.live_status && game.live_status !== "Final" && !game.live_status.includes("AM") && !game.live_status.includes("PM"));
+                const isFinal = rawStatus.includes("FINAL") || rawStatus.includes("COMPLETED") || (game.live_status && game.live_status.toLowerCase() === "final");
                 return isLive || isFinal;
             })
             .sort((a, b) => {
@@ -205,14 +250,14 @@ export default function NflPickemAtsMatrix() {
             gamesList: gamesArr,
             sortedPlayers: playersArr
         };
-    }, [matrixData, teamColors]);
+    }, [matrixData, matchupsData, teamColors]);
 
     const getCellStyle = (game, pickObj) => {
         if (!pickObj || !pickObj.ats_pick) return { backgroundColor: "transparent" };
-        
+
         const rawStatus = (game.status || "").toUpperCase();
-        const isFinal = rawStatus === "STATUS_FINAL" || rawStatus === "FINAL" || rawStatus === "COMPLETED";
-        
+        const isFinal = rawStatus === "STATUS_FINAL" || rawStatus === "FINAL" || rawStatus === "COMPLETED" || (game.live_status && game.live_status.toLowerCase() === "final");
+
         if (!isFinal && !game.ats_winner && !game.winner) return { backgroundColor: "transparent" };
 
         const st = pickObj.status;
@@ -224,36 +269,40 @@ export default function NflPickemAtsMatrix() {
         } else if (atsWinner && atsWinner !== pickObj.ats_pick) {
             return { backgroundColor: "#fee2e2", color: "#991b1b" }; // Soft Red
         }
-        
+
         return { backgroundColor: "transparent" };
     };
 
     const GameHeader = ({ game }) => {
         const rawStatus = (game.status || "").toUpperCase();
-        const isFinal = rawStatus === "STATUS_FINAL" || rawStatus === "FINAL" || rawStatus === "COMPLETED";
-        const isLive = rawStatus === "STATUS_IN_PROGRESS" || rawStatus === "IN_PROGRESS" || rawStatus === "HALFTIME" || rawStatus === "STATUS_HALFTIME" || rawStatus === "LIVE" || rawStatus.includes("HALF") || rawStatus.includes("PROGRESS");
+        const isFinal = rawStatus === "STATUS_FINAL" || rawStatus === "FINAL" || rawStatus === "COMPLETED" || (game.live_status && game.live_status.toLowerCase() === "final");
+        const isLive = !isFinal && (rawStatus === "STATUS_IN_PROGRESS" || rawStatus === "IN_PROGRESS" || rawStatus === "HALFTIME" || rawStatus === "STATUS_HALFTIME" || rawStatus === "LIVE" || rawStatus.includes("HALF") || rawStatus.includes("PROGRESS") || (game.live_status && game.live_status !== "Final" && !game.live_status.includes("AM") && !game.live_status.includes("PM")));
         const hasScores = game.home_score !== null && game.home_score !== undefined && game.away_score !== null && game.away_score !== undefined;
 
         const coveredTeam = game.ats_winner || game.winner;
         const coveredLogo = coveredTeam === game.away_team ? game.away_logo : (coveredTeam === game.home_team ? game.home_logo : null);
         const isFavCovered = coveredTeam === game.favorite;
         const rawSpread = game.adjusted_spread !== null && game.adjusted_spread !== undefined ? parseFloat(game.adjusted_spread) : null;
-        
+
         const spreadLabel = rawSpread !== null ? (isFavCovered ? (rawSpread < 0 ? rawSpread : -Math.abs(rawSpread)) : (rawSpread > 0 ? `+${rawSpread}` : `+${Math.abs(rawSpread)}`)) : "";
 
-        const awayPrimary = game.away_color || teamColors[game.away_team]?.color || "#000000";
-        const awaySecondary = game.away_secondary_color || teamColors[game.away_team]?.secondaryColor || "#cbd5e1";
-        
-        const homePrimary = game.home_color || teamColors[game.home_team]?.color || "#000000";
-        const homeSecondary = game.home_secondary_color || teamColors[game.home_team]?.secondaryColor || "#cbd5e1";
+        const awayTeamMeta = teamColors[game.away_team] || {};
+        const homeTeamMeta = teamColors[game.home_team] || {};
+
+        const awayPrimary = game.away_color || awayTeamMeta.primaryColor || "#000000";
+        const awaySecondary = game.away_secondary_color || awayTeamMeta.secondaryColor || "#cbd5e1";
+
+        const homePrimary = game.home_color || homeTeamMeta.primaryColor || "#000000";
+        const homeSecondary = game.home_secondary_color || homeTeamMeta.secondaryColor || "#cbd5e1";
 
         const favTeam = game.favorite;
-        const favLogo = favTeam === game.away_team ? game.away_logo : (favTeam === game.home_team ? game.home_logo : teamColors[favTeam]?.logo);
-        const favPrimary = favTeam === game.away_team ? awayPrimary : (favTeam === game.home_team ? homePrimary : (teamColors[favTeam]?.color || "#000000"));
-        const favSecondary = favTeam === game.away_team ? awaySecondary : (favTeam === game.home_team ? homeSecondary : (teamColors[favTeam]?.secondaryColor || "#cbd5e1"));
+        const favTeamMeta = teamColors[favTeam] || {};
+        const favLogo = favTeam === game.away_team ? game.away_logo : (favTeam === game.home_team ? game.home_logo : favTeamMeta.logo);
+        const favPrimary = favTeam === game.away_team ? awayPrimary : (favTeam === game.home_team ? homePrimary : (favTeamMeta.primaryColor || "#000000"));
+        const favSecondary = favTeam === game.away_team ? awaySecondary : (favTeam === game.home_team ? homeSecondary : (favTeamMeta.secondaryColor || "#cbd5e1"));
 
         const coveredMeta = teamColors[coveredTeam] || {};
-        const coveredPrimary = coveredTeam === game.away_team ? awayPrimary : (coveredTeam === game.home_team ? homePrimary : (coveredMeta.color || "#000000"));
+        const coveredPrimary = coveredTeam === game.away_team ? awayPrimary : (coveredTeam === game.home_team ? homePrimary : (coveredMeta.primaryColor || "#000000"));
         const coveredSecondary = coveredTeam === game.away_team ? awaySecondary : (coveredTeam === game.home_team ? homeSecondary : (coveredMeta.secondaryColor || "#cbd5e1"));
 
         const getBadgeStyle = (primaryColor, secondaryColor) => ({
@@ -271,6 +320,8 @@ export default function NflPickemAtsMatrix() {
         const homeBadgeStyle = getBadgeStyle(homePrimary, homeSecondary);
         const favBadgeStyle = getBadgeStyle(favPrimary, favSecondary);
         const coveredBadgeStyle = getBadgeStyle(coveredPrimary, coveredSecondary);
+
+        const liveStatusText = game.live_status;
 
         return (
             <div style={{ textAlign: "center", width: "100%", overflow: "visible" }}>
@@ -300,7 +351,7 @@ export default function NflPickemAtsMatrix() {
                     ) : isLive ? (
                         <>
                             <span style={PULSE_STYLE} />
-                            <span style={{ backgroundColor: NFL_RED, color: "white", padding: "1px 6px", borderRadius: 3 }}>LIVE</span>
+                            <span style={{ backgroundColor: NFL_RED, color: "white", padding: "1px 6px", borderRadius: 3 }}>{liveStatusText}</span>
                         </>
                     ) : (
                         <span style={{ color: "#cbd5e1" }}>

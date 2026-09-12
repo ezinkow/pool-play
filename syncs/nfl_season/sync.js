@@ -128,6 +128,7 @@ function extractMatchups(data) {
         const homeScore = homeCompetitor.score !== undefined ? parseInt(homeCompetitor.score, 10) : null;
         const awayScore = awayCompetitor.score !== undefined ? parseInt(awayCompetitor.score, 10) : null;
         const statusType = comp.status?.type?.name || "STATUS_SCHEDULED";
+        const liveStatus = comp.status?.type?.shortDetail;
 
         let calculatedOutcomes = { home_score: homeScore, away_score: awayScore, winner: null, ats_winner: null, ou_result: null };
         if (statusType === "STATUS_FINAL" || statusType === "Final" || statusType === "completed") {
@@ -151,6 +152,7 @@ function extractMatchups(data) {
             favorite: favoriteTeamName,
             game_date: gameDate,
             status: statusType,
+            live_status: liveStatus,
             ...calculatedOutcomes
         });
     });
@@ -183,7 +185,7 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
         // Favorite wins ATS if their score minus the spread value is greater than the underdog's score.
         const absSpread = Math.abs(spreadVal);
         const favMargin = favScore - absSpread;
-    
+
         if (favMargin > dogScore) {
             ats_winner = favTeam;
         } else if (favMargin < dogScore) {

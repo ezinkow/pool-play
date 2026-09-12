@@ -80,7 +80,7 @@ async function syncGames() {
         // ⚡ OPTIMIZATION: Check if data actually changed before hitting the DB
         const newScore = parseInt(home.score || 0);
         const newAwayScore = parseInt(away.score || 0);
-        const newStatus = event.status.type.shortDetail;
+        const newStatus = event.status?.type?.shortDetail;
 
         // If the game exists AND scores/status haven't changed AND it's locked (so line won't change)
         // then SKIP the upsert to save a database "question"
@@ -103,7 +103,7 @@ async function syncGames() {
             home_score: parseInt(home.score || 0),
             away_score: parseInt(away.score || 0),
             status: status,
-            game_clock: event.status.type.shortDetail,
+            game_clock: event.status?.type?.shortDetail,
             winner: status === "STATUS_FINAL" ? (parseInt(home.score) > parseInt(away.score) ? home.team.shortDisplayName : away.team.shortDisplayName) : null,
 
             // 🔥 The Logic: If locked, use existing data. If not, update with current ESPN data.
