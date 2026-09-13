@@ -18,6 +18,8 @@ export default function SignUp() {
         confirm_password: "",
         email: "",
         phone: "",
+        security_question: "",
+        security_answer: "",
     });
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
@@ -42,6 +44,8 @@ export default function SignUp() {
         if (form.password.length < 1) return setError("Please enter a password.");
         if (form.password !== form.confirm_password) return setError("Passwords do not match.");
         if (!form.email.trim()) return setError("Please enter a valid email address.");
+        if (!form.security_question) return setError("Please select a security question.");
+        if (!form.security_answer.trim()) return setError("Please enter an answer to your security question.");
 
         setSubmitting(true);
         try {
@@ -51,6 +55,9 @@ export default function SignUp() {
                 password: form.password,
                 email: form.email.trim(),
                 phone: form.phone.trim() || null,
+                // ✨ Match backend property names exactly (securityQuestion & securityAnswer)
+                securityQuestion: form.security_question,
+                securityAnswer: form.security_answer.trim(),
             });
 
             if (!data.success) {
@@ -154,6 +161,31 @@ export default function SignUp() {
                             />
                         </Field>
 
+                        <Field label="Security question" required hint="Used for account recovery">
+                            <select
+                                value={form.security_question}
+                                onChange={set("security_question")}
+                                style={inputStyle}
+                            >
+                                <option value="">Select a security question...</option>
+                                <option value="What was the name of your first pet?">What was the name of your first pet?</option>
+                                <option value="In what city were you born?">In what city were you born?</option>
+                                <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+                                <option value="What was the model of your first car?">What was the model of your first car?</option>
+                                <option value="What elementary school did you attend?">What elementary school did you attend?</option>
+                            </select>
+                        </Field>
+
+                        <Field label="Security answer" required hint="Your secret answer">
+                            <input
+                                type="text"
+                                value={form.security_answer}
+                                onChange={set("security_answer")}
+                                placeholder="Enter your answer"
+                                style={inputStyle}
+                            />
+                        </Field>
+
                         {error && (
                             <div style={{
                                 background: "#fef2f2", border: "1px solid #fecaca",
@@ -223,4 +255,5 @@ const inputStyle = {
     border: "1px solid #d1d5db", fontSize: 15,
     outline: "none", boxSizing: "border-box",
     fontFamily: "inherit",
+    backgroundColor: "white",
 };
