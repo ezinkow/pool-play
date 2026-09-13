@@ -159,7 +159,8 @@ export default function CfbPickemAtsMatrix() {
                     user_id: row.user_id,
                     user_name: row.user_name,
                     picks: {},
-                    totalPoints: seasonPoints
+                    totalPoints: seasonPoints,
+                    weekPoints: 0
                 };
             }
 
@@ -185,6 +186,10 @@ export default function CfbPickemAtsMatrix() {
                 is_best_bet: isBestBet,
                 status: status
             };
+
+            if (status === "win") {
+                playersMap[row.user_id].weekPoints += 1;
+            }
         });
 
         // ✨ Filter games to ONLY include live or completed games, then sort newest first (descending by game date)
@@ -281,7 +286,6 @@ export default function CfbPickemAtsMatrix() {
         const favBadgeStyle = getBadgeStyle(favPrimary, favSecondary);
         const coveredBadgeStyle = getBadgeStyle(coveredPrimary, coveredSecondary);
 
-        // Directly use game.live_status if available, fallback to generic LIVE
         const liveStatusText = game.live_status || "LIVE";
 
         return (
@@ -440,11 +444,11 @@ export default function CfbPickemAtsMatrix() {
                                         padding: "10px 12px",
                                         textAlign: "left",
                                         fontSize: 12,
-                                        width: "130px",
-                                        minWidth: "130px",
+                                        width: "175px",
+                                        minWidth: "175px",
                                         boxShadow: "2px 0 5px rgba(0,0,0,0.1)"
                                     }}>
-                                        Player (Pts)
+                                        Player (Wk / Ovr)
                                     </th>
                                     {gamesList.map((game) => (
                                         <th key={game.game_id} style={{
@@ -466,8 +470,6 @@ export default function CfbPickemAtsMatrix() {
                                 {sortedPlayers.map((player, idx) => {
                                     const rank = sortedPlayers.filter(p => p.totalPoints > player.totalPoints).length + 1;
                                     const isCurrentUser = Number(player.user_id) === Number(user.id);
-                                    const playerLabel = `${rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`} ${player.user_name} ${isCurrentUser ? "(You)" : ""}`;
-                                    const ptsLabel = player.totalPoints === 1 ? "1 pt" : `${player.totalPoints} pts`;
 
                                     return (
                                         <tr key={player.user_id} style={{
@@ -475,32 +477,39 @@ export default function CfbPickemAtsMatrix() {
                                             backgroundColor: isCurrentUser ? "#eff6ff" : (idx % 2 === 0 ? "#fafafa" : "white")
                                         }}>
                                             <td
-                                                title={playerLabel}
                                                 style={{
                                                     position: "sticky",
                                                     left: 0,
                                                     zIndex: 5,
                                                     backgroundColor: isCurrentUser ? "#dbeafe" : (idx % 2 === 0 ? "#fafafa" : "white"),
-                                                    padding: "10px 12px",
-                                                    fontWeight: isCurrentUser ? 800 : 600,
-                                                    fontSize: 12,
-                                                    color: "#0f172a",
-                                                    width: "130px",
-                                                    minWidth: "130px",
-                                                    maxWidth: "130px",
-                                                    overflow: "hidden",
-                                                    textOverflow: "ellipsis",
-                                                    whiteSpace: "nowrap",
-                                                    boxShadow: "2px 0 5px rgba(0,0,0,0.05)"
+                                                    padding: "8px 12px",
+                                                    width: "175px",
+                                                    minWidth: "175px",
+                                                    maxWidth: "175px",
+                                                    boxShadow: "2px 0 5px rgba(0,0,0,0.05)",
+                                                    verticalAlign: "middle"
                                                 }}
                                             >
-                                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", overflow: "hidden" }}>
-                                                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginRight: 4 }}>
+                                                {/* ✨ Two-line stacked layout to prevent any name clipping */}
+                                                <div style={{ display: "flex", flexDirection: "column", gap: "2px", overflow: "hidden" }}>
+                                                    <div style={{
+                                                        fontWeight: isCurrentUser ? 800 : 700,
+                                                        fontSize: 12,
+                                                        color: "#0f172a",
+                                                        overflow: "hidden",
+                                                        textOverflow: "ellipsis",
+                                                        whiteSpace: "nowrap"
+                                                    }}>
                                                         {rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`} {player.user_name} {isCurrentUser && "(You)"}
-                                                    </span>
-                                                    <span style={{ fontWeight: 800, color: CFB_BLUE, flexShrink: 0 }}>
-                                                        {ptsLabel}
-                                                    </span>
+                                                    </div>
+                                                    <div style={{
+                                                        fontSize: 10,
+                                                        fontWeight: 800,
+                                                        color: CFB_BLUE,
+                                                        letterSpacing: "-0.2px"
+                                                    }}>
+                                                        Wk: {player.weekPoints} | Ovr: {player.totalPoints}
+                                                    </div>
                                                 </div>
                                             </td>
 
