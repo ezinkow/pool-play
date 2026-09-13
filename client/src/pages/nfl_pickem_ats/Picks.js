@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
+import useTeamColors from '../../hooks/useNFLTeamColors';
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 
 const NFL_BLUE = "#013369";
@@ -13,33 +14,14 @@ export default function NflPickemAtsPicks() {
     const [currentWeek, setCurrentWeek] = useState(null);
     const [games, setGames] = useState([]);
     const [picks, setPicks] = useState({});
-    const [teamColors, setTeamColors] = useState({});
+    const [poolTitle, setPoolTitle] = useState("");
     const [loading, setLoading] = useState(true);
     const [sortBy, setSortBy] = useState("kickoff");
 
     const token = localStorage.getItem("token");
+    const { teamColors, loading: colorsLoading, error: colorsError, refresh: refreshTeamColors } = useTeamColors(token);
 
-    // Fetch team primary/secondary colors and branding mapping
-    useEffect(() => {
-        if (!token) return;
-        axios.get("/api/nfl_teams", {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(res => {
-                const map = {};
-                (res.data || []).forEach(t => {
-                    map[t.name] = {
-                        color: t.color || t.primary_color || "#0f172a",
-                        secondaryColor: t.secondaryColor || t.bg_color || t.alt_color || t.secondary_color || "#cbd5e1",
-                        logo: t.logo
-                    };
-                });
-                setTeamColors(map);
-            })
-            .catch(err => console.error("Failed to load NFL team colors", err));
-    }, [token]);
-
-    // Fetch pool settings for current active week
+    // Fetch pool settings (title and current/active week) on mount
     useEffect(() => {
         if (!token) return;
 
@@ -47,18 +29,26 @@ export default function NflPickemAtsPicks() {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => {
-                if (res.data && res.data.current_week) {
-                    setCurrentWeek(Number(res.data.current_week));
+                if (res.data) {
+                    if (res.data.title) {
+                        setPoolTitle(res.data.title);
+                    }
+                    if (res.data.current_week) {
+                        setCurrentWeek(Number(res.data.current_week));
+                    } else {
+                        setCurrentWeek(1);
+                    }
                 } else {
                     setCurrentWeek(1);
                 }
             })
-            .catch(() => {
+            .catch(err => {
+                console.error("Failed to load pool settings", err);
                 setCurrentWeek(1);
             });
     }, [token]);
 
-    // Fetch weekly schedule and user picks independently
+    // Fetch weekly schedule and user picks independently after currentWeek is initialized
     useEffect(() => {
         if (!user || currentWeek === null) return;
         setLoading(true);
@@ -84,11 +74,12 @@ export default function NflPickemAtsPicks() {
             .finally(() => setLoading(false));
     }, [user, currentWeek, token]);
 
-    const availableGames = games.filter(game => {
-        if (!game.game_date) return true;
-        const kickoffTime = new Date(game.game_date).getTime();
-        const now = Date.now();
-        return kickoffTime > now;
+    const availableGames = games;
+
+    // Check if every game in the week has already started
+    const allGamesStarted = games.length > 0 && games.every(game => {
+        if (!game.game_date) return false;
+        return new Date().getTime() >= new Date(game.game_date).getTime();
     });
 
     const bestBetCount = Object.values(picks).filter(p => p.is_best_bet).length;
@@ -218,21 +209,37 @@ export default function NflPickemAtsPicks() {
     };
 
     const sortedGames = [...availableGames].sort((a, b) => {
+        const now = Date.now();
+        const dateA = a.game_date ? new Date(a.game_date).getTime() : 0;
+        const dateB = b.game_date ? new Date(b.game_date).getTime() : 0;
+        
+        const rawStatusA = (a.status || "").toUpperCase();
+        const rawStatusB = (b.status || "").toUpperCase();
+
+        const isLiveA = rawStatusA.includes("HALF") || rawStatusA.includes("PROGRESS") || rawStatusA.includes("LIVE");
+        const isLiveB = rawStatusB.includes("HALF") || rawStatusB.includes("PROGRESS") || rawStatusB.includes("LIVE");
+        
+        const isStartedA = dateA <= now || isLiveA || rawStatusA.includes("FINAL") || rawStatusA.includes("COMPLETED");
+        const isStartedB = dateB <= now || isLiveB || rawStatusB.includes("FINAL") || rawStatusB.includes("COMPLETED");
+
+        // 1. Unstarted games come first, started/live/finished games go to the bottom
+        if (!isStartedA && isStartedB) return -1;
+        if (isStartedA && !isStartedB) return 1;
+
+        // 2. Apply user's sort option for unstarted games (or general sorting)
         if (sortBy === "kickoff") {
-            const dateA = a.game_date ? new Date(a.game_date) : new Date(0);
-            const dateB = b.game_date ? new Date(b.game_date) : new Date(0);
             return dateA - dateB;
         } else if (sortBy === "team_asc") {
             return a.away_team.localeCompare(b.away_team);
         } else if (sortBy === "team_desc") {
             return b.away_team.localeCompare(a.away_team);
         } else if (sortBy === "fav_desc") {
-            const spreadA = Math.abs(a.adjusted_spread !== null ? a.adjusted_spread : (a.spread || 0));
-            const spreadB = Math.abs(b.adjusted_spread !== null ? b.adjusted_spread : (b.spread || 0));
+            const spreadA = Math.abs(a.adjusted_spread !== null && a.adjusted_spread !== undefined ? a.adjusted_spread : (a.spread !== null && a.spread !== undefined ? a.spread : 0));
+            const spreadB = Math.abs(b.adjusted_spread !== null && b.adjusted_spread !== undefined ? b.adjusted_spread : (b.spread !== null && b.spread !== undefined ? b.spread : 0));
             return spreadB - spreadA;
         } else if (sortBy === "fav_asc") {
-            const spreadA = Math.abs(a.adjusted_spread !== null ? a.adjusted_spread : (a.spread || 0));
-            const spreadB = Math.abs(b.adjusted_spread !== null ? b.adjusted_spread : (b.spread || 0));
+            const spreadA = Math.abs(a.adjusted_spread !== null && a.adjusted_spread !== undefined ? a.adjusted_spread : (a.spread !== null && a.spread !== undefined ? a.spread : 0));
+            const spreadB = Math.abs(b.adjusted_spread !== null && b.adjusted_spread !== undefined ? b.adjusted_spread : (b.spread !== null && b.spread !== undefined ? b.spread : 0));
             return spreadA - spreadB;
         }
         return 0;
@@ -249,7 +256,7 @@ export default function NflPickemAtsPicks() {
         const formattedPicks = Object.keys(picks)
             .filter(gameId => activeGameIds.has(String(gameId)))
             .map(gameId => ({
-                game_id: gameId,
+                game_id: Number(gameId),
                 picked_team: picks[gameId].picked_team,
                 is_best_bet: Boolean(picks[gameId].is_best_bet),
                 ou_pick: picks[gameId].ou_pick || null
@@ -268,7 +275,7 @@ export default function NflPickemAtsPicks() {
         }
     };
 
-    if (authLoading || loading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, -apple-system, sans-serif" }}>Loading matchups...</div>;
+    if (authLoading || loading || colorsLoading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, -apple-system, sans-serif" }}>Loading matchups...</div>;
 
     return (
         <PoolGatekeeper user={user} gameKey="nfl_pickem_ats" className='page-content'>
@@ -292,7 +299,7 @@ export default function NflPickemAtsPicks() {
                 }}>
                     <div style={{ textAlign: "center" }}>
                         <h2 style={{ color: NFL_BLUE, fontSize: "19px", margin: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontWeight: 800 }}>
-                            <span>🏈</span> NFL Pick'em ATS <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span>
+                            <span>🏈</span> {poolTitle || "NFL Pick'em ATS"} <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span>
                         </h2>
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
                             Make your ATS picks & assign exactly 3 Best Bets ⭐ (worth 2 points).
@@ -456,6 +463,25 @@ export default function NflPickemAtsPicks() {
                     )}
                 </div>
 
+                {allGamesStarted && sortedGames.length > 0 && (
+                    <div style={{
+                        background: "#eff6ff",
+                        borderRadius: 10,
+                        padding: "16px",
+                        textAlign: "center",
+                        border: "1px solid #bfdbfe",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+                        marginBottom: 14
+                    }}>
+                        <p style={{ fontSize: "14px", fontWeight: 800, color: "#1e40af", margin: 0 }}>
+                            🔒 All Week {currentWeek} games have started or concluded!
+                        </p>
+                        <p style={{ fontSize: "12px", color: "#3b82f6", marginTop: 4, marginBottom: 0 }}>
+                            Make sure to select <strong>W{currentWeek + 1}</strong> above to submit next week's picks.
+                        </p>
+                    </div>
+                )}
+
                 {sortedGames.length === 0 ? (
                     <div style={{
                         background: "white",
@@ -490,14 +516,14 @@ export default function NflPickemAtsPicks() {
                             const awayTeamMeta = teamColors[game.away_team] || {};
                             const homeTeamMeta = teamColors[game.home_team] || {};
 
-                            const awayLogo = game.away_logo || awayTeamMeta.logo || null;
-                            const homeLogo = game.home_logo || homeTeamMeta.logo || null;
+                            const awayLogo = awayTeamMeta.logo || game.away_logo || null;
+                            const homeLogo = homeTeamMeta.logo || game.home_logo || null;
 
-                            const awayColor = game.away_color || awayTeamMeta.color || "#0f172a";
-                            const awaySecondary = game.away_secondary_color || awayTeamMeta.secondaryColor || "#cbd5e1";
+                            const awayColor = awayTeamMeta.primaryColor || game.away_color || "#0f172a";
+                            const awaySecondary = awayTeamMeta.secondaryColor || game.away_secondary_color || "#cbd5e1";
 
-                            const homeColor = game.home_color || homeTeamMeta.color || "#0f172a";
-                            const homeSecondary = game.home_secondary_color || homeTeamMeta.secondaryColor || "#cbd5e1";
+                            const homeColor = homeTeamMeta.primaryColor || game.home_color || "#0f172a";
+                            const homeSecondary = homeTeamMeta.secondaryColor || game.home_secondary_color || "#cbd5e1";
 
                             const favoriteTeam = game.favorite;
                             const favTeamMeta = teamColors[favoriteTeam] || {};
@@ -531,7 +557,7 @@ export default function NflPickemAtsPicks() {
                                                         display: "inline-flex",
                                                         alignItems: "center",
                                                         justifyContent: "center",
-                                                        border: `1px solid ${favTeamMeta.color || homeColor}`,
+                                                        border: `1px solid ${favTeamMeta.primaryColor || homeColor}`,
                                                         width: 15,
                                                         height: 15,
                                                         flexShrink: 0
