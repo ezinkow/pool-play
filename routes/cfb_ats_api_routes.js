@@ -95,19 +95,15 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
-    // GET /api/cfb_regular_season_matchups (Fetch upcoming games publicly for countdown/settings)
+    // GET /api/cfb_regular_season_matchups 
     // --------------------------------------------------------
     app.get("/api/cfb_regular_season_matchups", async (req, res) => {
         try {
             let week = req.query.week ? parseInt(req.query.week) : null;
 
             if (!week) {
-                // Find the next upcoming game across any week
-                const nextGame = await CfbRegularSeasonGames.findOne({
-                    where: { game_date: { [Op.gte]: new Date() } },
-                    order: [["game_date", "ASC"]]
-                });
-                week = nextGame ? nextGame.week : 1;
+                const { currentWeek } = getCurrentAndNextCfbWeeks();
+                week = currentWeek;
             }
 
             const games = await CfbRegularSeasonGames.findAll({
@@ -241,7 +237,7 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
-    // GET /api/cfb_pickem_ats/settings (Fetch pool settings/title & current week)
+    // GET /api/cfb_pickem_ats/settings 
     // --------------------------------------------------------
     app.get("/api/cfb_pickem_ats/settings", requireAuth, async (req, res) => {
         try {
@@ -253,13 +249,8 @@ module.exports = function (app) {
             let currentWeek = settings?.current_week;
 
             if (!currentWeek) {
-                const upcomingGame = await CfbRegularSeasonGames.findOne({
-                    where: {
-                        game_date: { [Op.gte]: new Date() }
-                    },
-                    order: [["game_date", "ASC"]]
-                });
-                currentWeek = upcomingGame ? upcomingGame.week : 1;
+                const { currentWeek: activeWeek } = getCurrentAndNextCfbWeeks();
+                currentWeek = activeWeek;
             }
 
             res.json({
@@ -479,5 +470,53 @@ module.exports = function (app) {
             res.status(500).json({ error: "Failed to fetch standings" });
         }
     });
+
+    ///helper functions
+    /**
+ * 🧠 DYNAMIC CURRENT & NEXT WEEK CALCULATOR
+ */
+    function getCurrentAndNextCfbWeeks() {
+        const now = new Date();
+
+        const weeks = [
+            { week: 1, start: new Date("2026-08-22T00:00:00"), tuesdayStart: new Date("2026-08-22T00:00:00"), end: new Date("2026-09-07T23:59:59") },
+            { week: 2, start: new Date("2026-09-08T00:00:00"), tuesdayStart: new Date("2026-09-08T00:00:00"), end: new Date("2026-09-13T23:59:59") },
+            { week: 3, start: new Date("2026-09-14T00:00:00"), tuesdayStart: new Date("2026-09-15T00:00:00"), end: new Date("2026-09-20T23:59:59") },
+            { week: 4, start: new Date("2026-09-21T00:00:00"), tuesdayStart: new Date("2026-09-22T00:00:00"), end: new Date("2026-09-27T23:59:59") },
+            { week: 5, start: new Date("2026-09-28T00:00:00"), tuesdayStart: new Date("2026-09-29T00:00:00"), end: new Date("2026-10-04T23:59:59") },
+            { week: 6, start: new Date("2026-10-05T00:00:00"), tuesdayStart: new Date("2026-10-06T00:00:00"), end: new Date("2026-10-11T23:59:59") },
+            { week: 7, start: new Date("2026-10-12T00:00:00"), tuesdayStart: new Date("2026-10-13T00:00:00"), end: new Date("2026-10-18T23:59:59") },
+            { week: 8, start: new Date("2026-10-19T00:00:00"), tuesdayStart: new Date("2026-10-20T00:00:00"), end: new Date("2026-10-25T23:59:59") },
+            { week: 9, start: new Date("2026-10-26T00:00:00"), tuesdayStart: new Date("2026-10-27T00:00:00"), end: new Date("2026-11-01T23:59:59") },
+            { week: 10, start: new Date("2026-11-02T00:00:00"), tuesdayStart: new Date("2026-11-03T00:00:00"), end: new Date("2026-11-08T23:59:59") },
+            { week: 11, start: new Date("2026-11-09T00:00:00"), tuesdayStart: new Date("2026-11-10T00:00:00"), end: new Date("2026-11-15T23:59:59") },
+            { week: 12, start: new Date("2026-11-16T00:00:00"), tuesdayStart: new Date("2026-11-17T00:00:00"), end: new Date("2026-11-22T23:59:59") },
+            { week: 13, start: new Date("2026-11-23T00:00:00"), tuesdayStart: new Date("2026-11-24T00:00:00"), end: new Date("2026-11-29T23:59:59") },
+            { week: 14, start: new Date("2026-11-30T00:00:00"), tuesdayStart: new Date("2026-12-01T00:00:00"), end: new Date("2026-12-06T23:59:59") }
+        ];
+
+        let activeIndex = 0;
+        for (let i = weeks.length - 1; i >= 0; i--) {
+            if (now >= weeks[i].start) {
+                activeIndex = i;
+                break;
+            }
+        }
+
+        if (activeIndex < weeks.length - 1) {
+            const nextTuesday = weeks[activeIndex + 1].tuesdayStart;
+            if (now >= weeks[activeIndex].start && now < nextTuesday) {
+                // Keep activeIndex locked to current week until Tuesday morning
+            }
+        }
+
+        const currentWeekObj = weeks[activeIndex];
+        const nextWeekObj = weeks[activeIndex + 1] || currentWeekObj;
+
+        return {
+            currentWeek: currentWeekObj.week,
+            nextWeek: nextWeekObj.week
+        };
+    }
 
 };

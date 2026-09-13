@@ -47,27 +47,39 @@ function getCurrentAndNextCfbWeeks() {
     const now = new Date();
 
     const weeks = [
-        { week: 1, start: new Date("2026-08-22T00:00:00"), end: new Date("2026-09-07T23:59:59") },
-        { week: 2, start: new Date("2026-09-08T00:00:00"), end: new Date("2026-09-13T23:59:59") },
-        { week: 3, start: new Date("2026-09-14T00:00:00"), end: new Date("2026-09-20T23:59:59") },
-        { week: 4, start: new Date("2026-09-21T00:00:00"), end: new Date("2026-09-27T23:59:59") },
-        { week: 5, start: new Date("2026-09-28T00:00:00"), end: new Date("2026-10-04T23:59:59") },
-        { week: 6, start: new Date("2026-10-05T00:00:00"), end: new Date("2026-10-11T23:59:59") },
-        { week: 7, start: new Date("2026-10-12T00:00:00"), end: new Date("2026-10-18T23:59:59") },
-        { week: 8, start: new Date("2026-10-19T00:00:00"), end: new Date("2026-10-25T23:59:59") },
-        { week: 9, start: new Date("2026-10-26T00:00:00"), end: new Date("2026-11-01T23:59:59") },
-        { week: 10, start: new Date("2026-11-02T00:00:00"), end: new Date("2026-11-08T23:59:59") },
-        { week: 11, start: new Date("2026-11-09T00:00:00"), end: new Date("2026-11-15T23:59:59") },
-        { week: 12, start: new Date("2026-11-16T00:00:00"), end: new Date("2026-11-22T23:59:59") },
-        { week: 13, start: new Date("2026-11-23T00:00:00"), end: new Date("2026-11-29T23:59:59") },
-        { week: 14, start: new Date("2026-11-30T00:00:00"), end: new Date("2026-12-06T23:59:59") }
+        { week: 1, start: new Date("2026-08-22T00:00:00"), tuesdayStart: new Date("2026-08-22T00:00:00"), end: new Date("2026-09-07T23:59:59") },
+        { week: 2, start: new Date("2026-09-08T00:00:00"), tuesdayStart: new Date("2026-09-08T00:00:00"), end: new Date("2026-09-13T23:59:59") },
+        { week: 3, start: new Date("2026-09-14T00:00:00"), tuesdayStart: new Date("2026-09-15T00:00:00"), end: new Date("2026-09-20T23:59:59") },
+        { week: 4, start: new Date("2026-09-21T00:00:00"), tuesdayStart: new Date("2026-09-22T00:00:00"), end: new Date("2026-09-27T23:59:59") },
+        { week: 5, start: new Date("2026-09-28T00:00:00"), tuesdayStart: new Date("2026-09-29T00:00:00"), end: new Date("2026-10-04T23:59:59") },
+        { week: 6, start: new Date("2026-10-05T00:00:00"), tuesdayStart: new Date("2026-10-06T00:00:00"), end: new Date("2026-10-11T23:59:59") },
+        { week: 7, start: new Date("2026-10-12T00:00:00"), tuesdayStart: new Date("2026-10-13T00:00:00"), end: new Date("2026-10-18T23:59:59") },
+        { week: 8, start: new Date("2026-10-19T00:00:00"), tuesdayStart: new Date("2026-10-20T00:00:00"), end: new Date("2026-10-25T23:59:59") },
+        { week: 9, start: new Date("2026-10-26T00:00:00"), tuesdayStart: new Date("2026-10-27T00:00:00"), end: new Date("2026-11-01T23:59:59") },
+        { week: 10, start: new Date("2026-11-02T00:00:00"), tuesdayStart: new Date("2026-11-03T00:00:00"), end: new Date("2026-11-08T23:59:59") },
+        { week: 11, start: new Date("2026-11-09T00:00:00"), tuesdayStart: new Date("2026-11-10T00:00:00"), end: new Date("2026-11-15T23:59:59") },
+        { week: 12, start: new Date("2026-11-16T00:00:00"), tuesdayStart: new Date("2026-11-17T00:00:00"), end: new Date("2026-11-22T23:59:59") },
+        { week: 13, start: new Date("2026-11-23T00:00:00"), tuesdayStart: new Date("2026-11-24T00:00:00"), end: new Date("2026-11-29T23:59:59") },
+        { week: 14, start: new Date("2026-11-30T00:00:00"), tuesdayStart: new Date("2026-12-01T00:00:00"), end: new Date("2026-12-06T23:59:59") }
     ];
 
-    let activeIndex = weeks.findIndex(w => now >= w.start && now <= w.end);
+    // Find the latest week whose official competition window has started, 
+    // but block the rollover to the next week until Tuesday morning.
+    let activeIndex = 0;
+    for (let i = weeks.length - 1; i >= 0; i--) {
+        if (now >= weeks[i].start) {
+            activeIndex = i;
+            break;
+        }
+    }
 
-    if (activeIndex === -1) {
-        if (now < weeks[0].start) activeIndex = 0;
-        else activeIndex = weeks.length - 1;
+    // If we are past the end date of the week (e.g. Sunday/Monday), but it's not yet 
+    // the Tuesday start of the subsequent week, lock it to the current week.
+    if (activeIndex < weeks.length - 1) {
+        const nextTuesday = weeks[activeIndex + 1].tuesdayStart;
+        if (now >= weeks[activeIndex].start && now < nextTuesday) {
+            // Keep activeIndex as is
+        }
     }
 
     const currentWeekObj = weeks[activeIndex];
@@ -336,7 +348,7 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
     if (rawSpread !== null && rawSpread !== undefined) {
         // 🧠 ALWAYS FORCE POSITIVE MAGNITUDE FOR SPREAD VALUE
         const spreadVal = Math.abs(Number(rawSpread));
-        
+
         // 🧠 RESILIENT NAME-BASED FAVORITE CHECK (Prevents ID mismatches)
         const favTeam = m.favorite;
         const isHomeFav = favTeam === m.home_team;
@@ -352,9 +364,9 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
         // If the favorite won by more than the spread value, favorite covers.
         // If the favorite won by less, lost outright, or tied, the underdog covers.
         if (actualMargin > spreadVal) {
-            ats_winner = favTeam; 
+            ats_winner = favTeam;
         } else {
-            ats_winner = dogTeam; 
+            ats_winner = dogTeam;
         }
     }
 

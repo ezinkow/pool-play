@@ -71,12 +71,12 @@ export default function CfbPickemAtsPicks() {
             .finally(() => setLoading(false));
     }, [user, currentWeek, token]);
 
-    // Filter out any games that have already kicked off (only show future games)
-    const availableGames = games.filter(game => {
-        if (!game.game_date) return true;
-        const kickoffTime = new Date(game.game_date).getTime();
-        const now = Date.now();
-        return kickoffTime > now;
+    const availableGames = games;
+
+    // Check if every game in the week has already started
+    const allGamesStarted = games.length > 0 && games.every(game => {
+        if (!game.game_date) return false;
+        return new Date().getTime() >= new Date(game.game_date).getTime();
     });
 
     const totalSelectedCount = Object.values(picks).filter(p => p.picked_team).length;
@@ -159,12 +159,31 @@ export default function CfbPickemAtsPicks() {
     };
 
     const sortedGames = [...availableGames].sort((a, b) => {
-        if (a.must_pick && !b.must_pick) return -1;
-        if (!a.must_pick && b.must_pick) return 1;
+        const now = Date.now();
+        const dateA = a.game_date ? new Date(a.game_date).getTime() : 0;
+        const dateB = b.game_date ? new Date(b.game_date).getTime() : 0;
+        
+        const rawStatusA = (a.status || "").toUpperCase();
+        const rawStatusB = (b.status || "").toUpperCase();
 
+        const isLiveA = rawStatusA.includes("HALF") || rawStatusA.includes("PROGRESS") || rawStatusA.includes("LIVE");
+        const isLiveB = rawStatusB.includes("HALF") || rawStatusB.includes("PROGRESS") || rawStatusB.includes("LIVE");
+        
+        const isStartedA = dateA <= now || isLiveA || rawStatusA.includes("FINAL") || rawStatusA.includes("COMPLETED");
+        const isStartedB = dateB <= now || isLiveB || rawStatusB.includes("FINAL") || rawStatusB.includes("COMPLETED");
+
+        // 1. Unstarted games come first, started/live/finished games go to the bottom
+        if (!isStartedA && isStartedB) return -1;
+        if (isStartedA && !isStartedB) return 1;
+
+        // 2. Prioritize Must-Picks among unstarted games
+        if (!isStartedA && !isStartedB) {
+            if (a.must_pick && !b.must_pick) return -1;
+            if (!a.must_pick && b.must_pick) return 1;
+        }
+
+        // 3. Apply user's sort option for unstarted games (or general sorting)
         if (sortBy === "kickoff") {
-            const dateA = a.game_date ? new Date(a.game_date) : new Date(0);
-            const dateB = b.game_date ? new Date(b.game_date) : new Date(0);
             return dateA - dateB;
         } else if (sortBy === "home_team_asc") {
             return (a.home_team_nickname || a.home_team).localeCompare(b.home_team_nickname || b.home_team);
@@ -392,6 +411,26 @@ export default function CfbPickemAtsPicks() {
                         </button>
                     )}
                 </div>
+
+                {/* All Games Started Banner Notification */}
+                {allGamesStarted && sortedGames.length > 0 && (
+                    <div style={{
+                        background: "#eff6ff",
+                        borderRadius: 10,
+                        padding: "16px",
+                        textAlign: "center",
+                        border: "1px solid #bfdbfe",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+                        marginBottom: 14
+                    }}>
+                        <p style={{ fontSize: "14px", fontWeight: 800, color: "#1e40af", margin: 0 }}>
+                            🔒 All Week {currentWeek} games have started or concluded!
+                        </p>
+                        <p style={{ fontSize: "12px", color: "#3b82f6", marginTop: 4, marginBottom: 0 }}>
+                            Make sure to select <strong>W{currentWeek + 1}</strong> above to submit next week's picks.
+                        </p>
+                    </div>
+                )}
 
                 {/* Compact Games List or Notice */}
                 {sortedGames.length === 0 ? (
