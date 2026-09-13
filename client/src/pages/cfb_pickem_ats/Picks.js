@@ -162,13 +162,13 @@ export default function CfbPickemAtsPicks() {
         const now = Date.now();
         const dateA = a.game_date ? new Date(a.game_date).getTime() : 0;
         const dateB = b.game_date ? new Date(b.game_date).getTime() : 0;
-        
+
         const rawStatusA = (a.status || "").toUpperCase();
         const rawStatusB = (b.status || "").toUpperCase();
 
         const isLiveA = rawStatusA.includes("HALF") || rawStatusA.includes("PROGRESS") || rawStatusA.includes("LIVE");
         const isLiveB = rawStatusB.includes("HALF") || rawStatusB.includes("PROGRESS") || rawStatusB.includes("LIVE");
-        
+
         const isStartedA = dateA <= now || isLiveA || rawStatusA.includes("FINAL") || rawStatusA.includes("COMPLETED");
         const isStartedB = dateB <= now || isLiveB || rawStatusB.includes("FINAL") || rawStatusB.includes("COMPLETED");
 
@@ -281,7 +281,7 @@ export default function CfbPickemAtsPicks() {
                             <span>🏈</span> {poolTitle || "CFB PICK 'EM ATS"} <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span>
                         </h2>
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
-                            Select up to {totalMustPicks} must-pick games & up to 15 total games (up to 3 Best Bets ⭐).
+                            Select up to {totalMustPicks} must-pick games & up to 15 total games (up to 3 Best Bets ⭐). <br />Lines lock 48 hours before kickoff.
                         </p>
                         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 2 }}>
                             {totalMustPicks > 0 && (
@@ -762,6 +762,6 @@ export default function CfbPickemAtsPicks() {
                 )}
 
             </div>
-        </PoolGatekeeper>
+        </PoolGatekeeper >
     );
 }
