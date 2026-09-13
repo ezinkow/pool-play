@@ -165,16 +165,16 @@ async function extractMatchups(data, weekNum) {
 
         const homeTeamId = homeCompetitor.team.id;
         const awayTeamId = awayCompetitor.team.id;
-        
+
         const homeTeamSchool = homeCompetitor.team.shortDisplayName || homeCompetitor.team.location;
         const awayTeamSchool = awayCompetitor.team.shortDisplayName || awayCompetitor.team.location;
-        
+
         const homeTeamMascot = homeCompetitor.team.name || homeCompetitor.team.nickname;
         const awayTeamMascot = awayCompetitor.team.name || awayCompetitor.team.nickname;
 
         const homeColor = homeCompetitor.team.color ? `#${homeCompetitor.team.color.replace('#', '')}` : null;
         const homeSecondaryColor = homeCompetitor.team.alternateColor ? `#${homeCompetitor.team.alternateColor.replace('#', '')}` : (homeCompetitor.team.secondaryColor ? `#${homeCompetitor.team.secondaryColor.replace('#', '')}` : null);
-        
+
         const awayColor = awayCompetitor.team.color ? `#${awayCompetitor.team.color.replace('#', '')}` : null;
         const awaySecondaryColor = awayCompetitor.team.alternateColor ? `#${awayCompetitor.team.alternateColor.replace('#', '')}` : (awayCompetitor.team.secondaryColor ? `#${awayCompetitor.team.secondaryColor.replace('#', '')}` : null);
 
@@ -245,8 +245,10 @@ async function extractMatchups(data, weekNum) {
             const now = Date.now();
             const hoursUntilKickoff = (kickoffTime - now) / (1000 * 60 * 60);
 
-            // If game is within 48 hours or already started/locked, use DB values
-            if (hoursUntilKickoff <= 48 || existingGame.status === "STATUS_FINAL" || existingGame.status === "Final" || existingGame.status === "completed") {
+            const isAlreadyFinal = existingGame.status === "STATUS_FINAL" || existingGame.status === "Final" || existingGame.status === "completed";
+
+            // If game is within 48 hours and not final, or if we want to respect existing lines pre-game
+            if ((hoursUntilKickoff <= 48 && !isAlreadyFinal) || isAlreadyFinal) {
                 lockedSpread = existingGame.spread !== null ? existingGame.spread : finalSpread;
                 lockedAdjustedSpread = existingGame.adjusted_spread !== null ? existingGame.adjusted_spread : adjustedSpread;
                 lockedFavorite = existingGame.favorite || favoriteTeamSchool;
@@ -287,13 +289,13 @@ async function extractMatchups(data, weekNum) {
             id: gameId,
             week: weekNum,
             home_team_id: homeTeamId,
-            home_team: homeTeamSchool, 
-            home_team_nickname: homeTeamMascot, 
+            home_team: homeTeamSchool,
+            home_team_nickname: homeTeamMascot,
             home_team_conference: getConferenceName(homeConfId),
             home_team_rank: homeTeamRank,
             away_team_id: awayTeamId,
-            away_team: awayTeamSchool, 
-            away_team_nickname: awayTeamMascot, 
+            away_team: awayTeamSchool,
+            away_team_nickname: awayTeamMascot,
             away_team_conference: getConferenceName(awayConfId),
             away_team_rank: awayTeamRank,
             home_logo: homeCompetitor.team.logo || null,
@@ -328,26 +330,31 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
     if (homeScore > awayScore) winner = m.home_team;
     else if (awayScore > homeScore) winner = m.away_team;
 
-    const spreadVal = m.adjusted_spread !== undefined && m.adjusted_spread !== null ? Number(m.adjusted_spread) : Number(m.spread);
+    const rawSpread = m.adjusted_spread !== undefined && m.adjusted_spread !== null ? m.adjusted_spread : m.spread;
     let ats_winner = "PUSH";
 
-    if (!isNaN(spreadVal) && spreadVal !== null && spreadVal !== undefined) {
-        const isHomeFav = m.favorite_id === m.home_team_id;
-        const favScore = isHomeFav ? homeScore : awayScore;
-        const dogScore = isHomeFav ? awayScore : homeScore;
-        const favTeam = isHomeFav ? m.home_team : m.away_team;
+    if (rawSpread !== null && rawSpread !== undefined) {
+        // 🧠 ALWAYS FORCE POSITIVE MAGNITUDE FOR SPREAD VALUE
+        const spreadVal = Math.abs(Number(rawSpread));
+        
+        // 🧠 RESILIENT NAME-BASED FAVORITE CHECK (Prevents ID mismatches)
+        const favTeam = m.favorite;
+        const isHomeFav = favTeam === m.home_team;
         const dogTeam = isHomeFav ? m.away_team : m.home_team;
 
-        // 🧠 CORRECT ATS CALCULATION: Favorite Score minus Underdog Score compared against spread line
-        // e.g. Oregon (fav) 31, Okla State (dog) 38 -> margin = 31 - 38 = -7
-        const margin = favScore - dogScore;
+        const favScore = isHomeFav ? homeScore : awayScore;
+        const dogScore = isHomeFav ? awayScore : homeScore;
 
-        if (margin > spreadVal) {
-            ats_winner = favTeam; // Favorite covered
-        } else if (margin < spreadVal) {
-            ats_winner = dogTeam; // Underdog covered
+        // Favorite's score minus underdog's score (e.g. 31 (Oregon) - 39 (Oklahoma St) = -8)
+        const actualMargin = favScore - dogScore;
+
+        // 🧠 BULLETPROOF ATS COMPARISON:
+        // If the favorite won by more than the spread value, favorite covers.
+        // If the favorite won by less, lost outright, or tied, the underdog covers.
+        if (actualMargin > spreadVal) {
+            ats_winner = favTeam; 
         } else {
-            ats_winner = "PUSH";
+            ats_winner = dogTeam; 
         }
     }
 

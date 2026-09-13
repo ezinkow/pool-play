@@ -131,7 +131,9 @@ function extractMatchups(data) {
         const liveStatus = comp.status?.type?.shortDetail;
 
         let calculatedOutcomes = { home_score: homeScore, away_score: awayScore, winner: null, ats_winner: null, ou_result: null };
-        if (statusType === "STATUS_FINAL" || statusType === "Final" || statusType === "completed") {
+        const isFinal = statusType === "STATUS_FINAL" || statusType === "Final" || statusType === "completed" || statusType === "FINAL" || (liveStatus && liveStatus.toLowerCase().includes("final"));
+
+        if (isFinal && homeScore !== null && awayScore !== null) {
             calculatedOutcomes = calculateGameOutcomes({ home_team: homeCompetitor.team.name, away_team: awayCompetitor.team.name, spread: finalSpread, adjusted_spread: adjustedSpread, favorite: favoriteTeamName, over_under: overUnder }, homeScore, awayScore);
         }
 
@@ -171,25 +173,31 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
     else if (awayScore > homeScore) winner = m.away_team;
 
     // 2. ATS Cover Calculation (using adjusted_spread or spread, relative to favorite)
-    const spreadVal = m.adjusted_spread !== undefined ? m.adjusted_spread : m.spread;
+    const rawSpread = m.adjusted_spread !== undefined && m.adjusted_spread !== null ? m.adjusted_spread : m.spread;
     let ats_winner = "PUSH";
 
-    if (spreadVal !== null && spreadVal !== undefined) {
-        const isHomeFav = m.favorite === m.home_team;
-        const favScore = isHomeFav ? homeScore : awayScore;
-        const dogScore = isHomeFav ? awayScore : homeScore;
-        const favTeam = isHomeFav ? m.home_team : m.away_team;
+    if (rawSpread !== null && rawSpread !== undefined) {
+        // 🧠 ALWAYS FORCE POSITIVE MAGNITUDE FOR SPREAD VALUE
+        const spreadVal = Math.abs(Number(rawSpread));
+        
+        // 🧠 RESILIENT NAME-BASED FAVORITE CHECK
+        const favTeam = m.favorite;
+        const isHomeFav = favTeam === m.home_team;
         const dogTeam = isHomeFav ? m.away_team : m.home_team;
 
-        // Use absolute spread magnitude or handle negative spread properly:
-        // Favorite wins ATS if their score minus the spread value is greater than the underdog's score.
-        const absSpread = Math.abs(spreadVal);
-        const favMargin = favScore - absSpread;
+        const favScore = isHomeFav ? homeScore : awayScore;
+        const dogScore = isHomeFav ? awayScore : homeScore;
 
-        if (favMargin > dogScore) {
-            ats_winner = favTeam;
-        } else if (favMargin < dogScore) {
-            ats_winner = dogTeam;
+        // Favorite's score minus underdog's score
+        const actualMargin = favScore - dogScore;
+
+        // 🧠 BULLETPROOF ATS COMPARISON:
+        // If the favorite won by more than the spread value, favorite covers.
+        // If the favorite won by less, lost outright, or tied, the underdog covers.
+        if (actualMargin > spreadVal) {
+            ats_winner = favTeam; 
+        } else if (actualMargin < spreadVal) {
+            ats_winner = dogTeam; 
         } else {
             ats_winner = "PUSH";
         }
@@ -312,9 +320,12 @@ async function processMatchup(m) {
 
             // If the game is final or live, calculate outcomes using the DB's locked spread
             const statusType = payloadToUpdate.status;
-            if (statusType === "STATUS_FINAL" || statusType === "Final" || statusType === "completed" || statusType === "FINAL") {
+            const isFinal = statusType === "STATUS_FINAL" || statusType === "Final" || statusType === "completed" || statusType === "FINAL" || (payloadToUpdate.live_status && payloadToUpdate.live_status.toLowerCase().includes("final"));
+
+            if (isFinal && payloadToUpdate.home_score !== null && payloadToUpdate.away_score !== null) {
                 const gameObjForCalc = {
                     ...payloadToUpdate,
+                    spread: lockedSpread,
                     adjusted_spread: lockedSpread,
                     favorite: lockedFavorite
                 };
