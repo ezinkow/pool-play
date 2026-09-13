@@ -143,7 +143,10 @@ export default function NflPickemAtsPicks() {
             setPicks(prev => {
                 const copy = { ...prev };
                 Object.keys(copy).forEach(gameId => {
-                    if (activeGameIds.has(Number(gameId))) {
+                    const gameObj = availableGames.find(g => Number(g.id) === Number(gameId));
+                    const isGameStarted = gameObj && gameObj.game_date && new Date() >= new Date(gameObj.game_date);
+
+                    if (activeGameIds.has(Number(gameId)) && !isGameStarted) {
                         delete copy[gameId];
                     }
                 });
@@ -190,9 +193,14 @@ export default function NflPickemAtsPicks() {
     };
 
     const isCriteriaActive = (type) => {
-        if (availableGames.length === 0) return false;
+        const unlockedGames = availableGames.filter(game => {
+            const isLocked = game.game_date && new Date() >= new Date(game.game_date);
+            return !isLocked;
+        });
 
-        return availableGames.every(game => {
+        if (unlockedGames.length === 0) return false;
+
+        return unlockedGames.every(game => {
             const userPick = picks[game.id]?.picked_team;
             if (!userPick) return false;
 
@@ -253,8 +261,21 @@ export default function NflPickemAtsPicks() {
 
         const activeGameIds = new Set(availableGames.map(g => String(g.id)));
 
+        // ✨ CRITICAL FIX: Only send picks for games that have NOT kicked off yet, 
+        // OR allow the backend to handle filtering/merging. Wait, if we send picks for *locked* games,
+        // the backend controller is likely rejecting the entire batch because one of the submitted game_ids
+        // has already started! Let's filter out any game picks where the game has already started.
+        const now = new Date();
         const formattedPicks = Object.keys(picks)
-            .filter(gameId => activeGameIds.has(String(gameId)))
+            .filter(gameId => {
+                if (!activeGameIds.has(String(gameId))) return false;
+                const gameObj = availableGames.find(g => String(g.id) === String(gameId));
+                // If game has started, do not include it in the submission payload to prevent backend validation rejection
+                if (gameObj && gameObj.game_date && now >= new Date(gameObj.game_date)) {
+                    return false;
+                }
+                return true;
+            })
             .map(gameId => ({
                 game_id: Number(gameId),
                 picked_team: picks[gameId].picked_team,
