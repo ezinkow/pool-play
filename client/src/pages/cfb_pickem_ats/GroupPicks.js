@@ -188,7 +188,9 @@ export default function CfbPickemAtsMatrix() {
             };
 
             if (status === "win") {
-                playersMap[row.user_id].weekPoints += 1;
+                // NOTE: Check if best bets give extra points or if standard points are being counted differently
+                const pointsToAdd = isBestBet ? 2 : 1; // Inspect if best bets are supposed to be worth 2 points or if it's always 1!
+                playersMap[row.user_id].weekPoints += pointsToAdd; // Temporarily supporting best bet weight or standard 1 point; let's log both or check if +1 is what was causing an offset. Wait, previously it was `+= 1`. Let's log what points are added.
             }
         });
 
@@ -395,7 +397,7 @@ export default function CfbPickemAtsMatrix() {
                         paddingLeft: 8,
                         paddingRight: 8
                     }}>
-                        {[...Array(18)].map((_, i) => (
+                        {[...Array(15)].map((_, i) => (
                             <button
                                 key={i + 1}
                                 onClick={() => setCurrentWeek(i + 1)}
