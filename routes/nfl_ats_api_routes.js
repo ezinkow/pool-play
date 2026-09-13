@@ -85,42 +85,52 @@ module.exports = function (app) {
         }
     });
 
-    // --------------------------------------------------------
+// --------------------------------------------------------
     // POST /api/nfl_pickem_ats/picks (Save batch picks for the week)
     // --------------------------------------------------------
     app.post("/api/nfl_pickem_ats/picks", requireAuth, async (req, res) => {
+        const t = await db.sequelize.transaction();
         try {
             const { week, picks } = req.body;
             const targetWeek = parseInt(week);
 
             if (!Array.isArray(picks)) {
+                await t.rollback();
                 return res.status(400).json({ error: "Invalid picks payload." });
             }
 
             const bestBetCount = picks.filter(p => p.is_best_bet === true).length;
             if (bestBetCount > 3) {
+                await t.rollback();
                 return res.status(400).json({ error: "You can only select a maximum of 3 Best Bets per week." });
             }
 
+            const now = new Date();
+
             for (const p of picks) {
-                const game = await NflRegularSeasonGames.findByPk(p.game_id);
+                const game = await NflRegularSeasonGames.findByPk(p.game_id, { transaction: t });
                 if (!game) continue;
 
-                if (game.game_date && new Date() >= new Date(game.game_date)) {
-                    return res.status(403).json({ error: `Game (${game.away_team} @ ${game.home_team}) has already kicked off. Picks are locked.` });
-                }
+                const isLocked = game.game_date && now >= new Date(game.game_date);
 
+                // Check if a pick already exists for this user/week/game
                 let existingPick = await NflPickemAtsPicks.findOne({
-                    where: { user_id: req.user.id, week: targetWeek, game_id: p.game_id }
+                    where: { user_id: req.user.id, week: targetWeek, game_id: p.game_id },
+                    transaction: t
                 });
+
+                if (isLocked) {
+                    // If the game is locked, block changes to it, but do NOT fail the whole batch if they didn't change it
+                    continue;
+                }
 
                 if (existingPick) {
                     await existingPick.update({
                         picked_team: p.picked_team,
                         is_best_bet: p.is_best_bet || false,
                         ou_pick: p.ou_pick || null
-                    });
-                } else {
+                    }, { transaction: t });
+                } else if (p.picked_team) {
                     await NflPickemAtsPicks.create({
                         user_id: req.user.id,
                         week: targetWeek,
@@ -128,12 +138,31 @@ module.exports = function (app) {
                         picked_team: p.picked_team,
                         is_best_bet: p.is_best_bet || false,
                         ou_pick: p.ou_pick || null
+                    }, { transaction: t });
+                }
+            }
+
+            // Also, remove any picks that were explicitly cleared/deselected by the user on unlocked games
+            const submittedGameIds = picks.map(p => Number(p.game_id));
+            const allWeekGames = await NflRegularSeasonGames.findAll({
+                where: { week: targetWeek },
+                transaction: t
+            });
+
+            for (const game of allWeekGames) {
+                const isLocked = game.game_date && now >= new Date(game.game_date);
+                if (!isLocked && !submittedGameIds.includes(Number(game.id))) {
+                    await NflPickemAtsPicks.destroy({
+                        where: { user_id: req.user.id, week: targetWeek, game_id: game.id },
+                        transaction: t
                     });
                 }
             }
 
+            await t.commit();
             res.json({ success: true, message: "Weekly picks saved successfully!" });
         } catch (err) {
+            await t.rollback();
             console.error("Error saving pick'em picks:", err);
             res.status(500).json({ error: "Failed to save picks" });
         }

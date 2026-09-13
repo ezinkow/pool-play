@@ -3,11 +3,10 @@ import axios from "axios";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 
-const NFL_BLUE = "#013369";
+const NFL_BLUE = "#0a1628";
 const GOLD = "#c89d3c";
 const NFL_RED = "#D50A0A";
 
-// ✨ Condensation-optimized pulsing live indicator
 const PULSE_STYLE = {
     width: "6px",
     height: "6px",
@@ -29,7 +28,6 @@ export default function NflPickemAtsMatrix() {
 
     const token = localStorage.getItem("token");
 
-    // Fetch team branding mapping for secondary colors and logos
     useEffect(() => {
         if (!token) return;
         axios.get("/api/nfl_teams", {
@@ -49,7 +47,6 @@ export default function NflPickemAtsMatrix() {
             .catch(err => console.error("Failed to load NFL team colors", err));
     }, [token]);
 
-    // Fetch pool settings first to default to current active week
     useEffect(() => {
         if (!token) return;
 
@@ -69,7 +66,6 @@ export default function NflPickemAtsMatrix() {
             });
     }, [token]);
 
-    // Fetch matrix data, matchups data, and overall standings concurrently for the selected week
     useEffect(() => {
         if (!user || currentWeek === null) return;
 
@@ -112,7 +108,6 @@ export default function NflPickemAtsMatrix() {
         return () => clearInterval(interval);
     }, [user, currentWeek, token]);
 
-    // ✨ Reveal check logic for individual cells (reveals if game is live/final or past kickoff, plus user's own picks)
     const canRevealPick = (game) => {
         if (!game || !game.game_date) return false;
         const rawStatus = (game.status || "").toUpperCase();
@@ -125,13 +120,11 @@ export default function NflPickemAtsMatrix() {
         const gamesMap = new Map();
         const playersMap = {};
 
-        // Build a lookup map for season standings points by user_id
         const standingsMap = new Map();
         standingsData.forEach(s => {
             standingsMap.set(Number(s.user_id), Number(s.total_points) || 0);
         });
 
-        // Build a lookup map for live/score details from regular season matchups endpoint
         const matchupsMap = new Map();
         matchupsData.forEach(m => {
             const gameId = m.id || m.game_id;
@@ -143,7 +136,6 @@ export default function NflPickemAtsMatrix() {
             const rawMp = row.must_pick;
             const isMustPick = rawMp === true || rawMp === 1 || rawMp === "1" || rawMp === "true";
 
-            // Merge details from matchupsData if available
             const liveMatchup = matchupsMap.get(gameId) || {};
 
             if (!gamesMap.has(gameId)) {
@@ -201,6 +193,8 @@ export default function NflPickemAtsMatrix() {
                 } else {
                     status = "loss";
                 }
+            } else {
+                status = "unpicked";
             }
 
             playersMap[row.user_id].picks[gameId] = {
@@ -209,13 +203,12 @@ export default function NflPickemAtsMatrix() {
                 status: status
             };
 
-            if (status === "win" || status === "correct") {
+            if (atsPick && (status === "win" || status === "correct")) {
                 const pointsToAdd = isBestBet ? 2 : 1;
                 playersMap[row.user_id].weekPoints += pointsToAdd;
             }
         });
 
-        // ✨ Filter games to ONLY include live or completed games, then sort newest first (descending by game date)
         const gamesArr = Array.from(gamesMap.values())
             .filter(game => {
                 const rawStatus = (game.status || "").toUpperCase();
@@ -231,7 +224,6 @@ export default function NflPickemAtsMatrix() {
 
         const playersArr = Object.values(playersMap);
 
-        // Sort players by season-long total points descending, then weekly points, then alphabetically by name
         playersArr.sort((a, b) => b.totalPoints - a.totalPoints || b.weekPoints - a.weekPoints || a.user_name.localeCompare(b.user_name));
 
         return {
@@ -251,11 +243,11 @@ export default function NflPickemAtsMatrix() {
         const st = pickObj.status;
         const atsWinner = game.ats_winner || game.winner;
         if (st === "win" || st === "correct" || (atsWinner && atsWinner === pickObj.ats_pick)) {
-            return { backgroundColor: "#dcfce7", color: "#166534" }; // Soft Green
+            return { backgroundColor: "#dcfce7", color: "#166534" };
         } else if (st === "push" || st === "tie" || atsWinner === "PUSH") {
-            return { backgroundColor: "#fef3c2", color: "#b45309" }; // Soft Yellow
+            return { backgroundColor: "#fef3c2", color: "#b45309" };
         } else if (atsWinner && atsWinner !== pickObj.ats_pick) {
-            return { backgroundColor: "#fee2e2", color: "#991b1b" }; // Soft Red
+            return { backgroundColor: "#fee2e2", color: "#991b1b" };
         }
 
         return { backgroundColor: "transparent" };
@@ -513,7 +505,6 @@ export default function NflPickemAtsMatrix() {
                                                     verticalAlign: "middle"
                                                 }}
                                             >
-                                                {/* ✨ Two-line stacked layout to prevent any name clipping */}
                                                 <div style={{ display: "flex", flexDirection: "column", gap: "2px", overflow: "hidden" }}>
                                                     <div style={{
                                                         fontWeight: isCurrentUser ? 800 : 700,
