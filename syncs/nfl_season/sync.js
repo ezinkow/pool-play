@@ -179,7 +179,7 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
     if (rawSpread !== null && rawSpread !== undefined) {
         // 🧠 ALWAYS FORCE POSITIVE MAGNITUDE FOR SPREAD VALUE
         const spreadVal = Math.abs(Number(rawSpread));
-        
+
         // 🧠 RESILIENT NAME-BASED FAVORITE CHECK
         const favTeam = m.favorite;
         const isHomeFav = favTeam === m.home_team;
@@ -195,9 +195,9 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
         // If the favorite won by more than the spread value, favorite covers.
         // If the favorite won by less, lost outright, or tied, the underdog covers.
         if (actualMargin > spreadVal) {
-            ats_winner = favTeam; 
+            ats_winner = favTeam;
         } else if (actualMargin < spreadVal) {
-            ats_winner = dogTeam; 
+            ats_winner = dogTeam;
         } else {
             ats_winner = "PUSH";
         }
@@ -318,6 +318,12 @@ async function processMatchup(m) {
             payloadToUpdate.over_under = existingGame.over_under;
             payloadToUpdate.favorite = existingGame.favorite;
 
+            // 🧠 Ensure live status and scores update dynamically from ESPN fetch
+            payloadToUpdate.status = m.status;
+            payloadToUpdate.live_status = m.live_status;
+            payloadToUpdate.home_score = m.home_score;
+            payloadToUpdate.away_score = m.away_score;
+
             // If the game is final or live, calculate outcomes using the DB's locked spread
             const statusType = payloadToUpdate.status;
             const isFinal = statusType === "STATUS_FINAL" || statusType === "Final" || statusType === "completed" || statusType === "FINAL" || (payloadToUpdate.live_status && payloadToUpdate.live_status.toLowerCase().includes("final"));
@@ -337,6 +343,28 @@ async function processMatchup(m) {
         }
     } catch (err) {
         console.error(`[NFL BTS sync] Error saving matchup Week ${m.week} (${m.away_team} @ ${m.home_team}):`, err.message);
+    }
+}
+
+async function syncNflSeason() {
+    try {
+        // 🧠 Use the dynamic date range consistently just like CFB
+        const dateRange = getDynamicDateRange();
+        const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${dateRange}`;
+
+        console.log(`[NFL Regular Season sync] Fetching scoreboard data for range: ${dateRange}`);
+        const { data } = await axios.get(scoreboardUrl, { timeout: 15000 });
+
+        const matchups = extractMatchups(data);
+        for (const m of matchups) {
+            await processMatchup(m);
+        }
+        console.log(`[NFL Regular Season sync] Successfully synced ${matchups.length} matchups.`);
+
+        await evaluateSurvivorResults();
+
+    } catch (err) {
+        console.error("[NFL Regular Season sync] Fatal Error:", err.message);
     }
 }
 
