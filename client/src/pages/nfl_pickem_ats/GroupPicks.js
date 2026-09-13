@@ -23,6 +23,7 @@ export default function NflPickemAtsMatrix() {
     const [currentWeek, setCurrentWeek] = useState(null);
     const [matrixData, setMatrixData] = useState([]);
     const [matchupsData, setMatchupsData] = useState([]);
+    const [standingsData, setStandingsData] = useState([]);
     const [teamColors, setTeamColors] = useState({});
     const [loading, setLoading] = useState(true);
 
@@ -68,7 +69,7 @@ export default function NflPickemAtsMatrix() {
             });
     }, [token]);
 
-    // Fetch matrix data and match-ups data for the selected week concurrently
+    // Fetch matrix data, matchups data, and overall standings concurrently for the selected week
     useEffect(() => {
         if (!user || currentWeek === null) return;
 
@@ -83,17 +84,22 @@ export default function NflPickemAtsMatrix() {
                 axios.get("/api/nfl_regular_season_matchups", {
                     params: { week: currentWeek },
                     headers: { Authorization: `Bearer ${token}` }
+                }),
+                axios.get("/api/nfl_pickem_ats/standings", {
+                    headers: { Authorization: `Bearer ${token}` }
                 })
             ])
-                .then(([matrixRes, matchupsRes]) => {
+                .then(([matrixRes, matchupsRes, standingsRes]) => {
                     setMatrixData(matrixRes.data || []);
                     setMatchupsData(matchupsRes.data || []);
+                    setStandingsData(standingsRes.data || []);
                 })
                 .catch(err => {
-                    console.error("Failed to load pick'em matrix or matchups", err);
+                    console.error("Failed to load pick'em matrix, matchups, or standings", err);
                     if (isInitial) {
                         setMatrixData([]);
                         setMatchupsData([]);
+                        setStandingsData([]);
                     }
                 })
                 .finally(() => {
@@ -115,77 +121,67 @@ export default function NflPickemAtsMatrix() {
         return isLive || isFinal || new Date() >= new Date(game.game_date);
     };
 
-    // Pivot flat rows and merge with master matchups endpoint info into: { games: [...unique games], players: [ ...sorted list of player objects with calculated points ] }
     const { gamesList, sortedPlayers } = React.useMemo(() => {
         const gamesMap = new Map();
-
-        // 1. Seed gamesMap with authoritative data from /api/nfl_regular_season_matchups
-        matchupsData.forEach(m => {
-            const gameId = m.id || m.game_id;
-            const rawMp = m.must_pick;
-            const isMustPick = rawMp === true || rawMp === 1 || rawMp === "1" || rawMp === "true";
-
-            gamesMap.set(gameId, {
-                game_id: gameId,
-                away_team: m.away_team,
-                home_team: m.home_team,
-                away_logo: m.away_logo || teamColors[m.away_team]?.logo,
-                home_logo: m.home_logo || teamColors[m.home_team]?.logo,
-                home_color: m.home_color,
-                home_secondary_color: m.home_secondary_color,
-                away_color: m.away_color,
-                away_secondary_color: m.away_secondary_color,
-                game_date: m.game_date,
-                adjusted_spread: m.adjusted_spread !== undefined ? m.adjusted_spread : m.spread,
-                favorite: m.favorite,
-                winner: m.winner,
-                ats_winner: m.ats_winner,
-                must_pick: isMustPick,
-                home_score: m.home_score,
-                away_score: m.away_score,
-                status: m.status,
-                live_status: m.live_status
-            });
-        });
-
         const playersMap = {};
 
-        // 2. Process matrix rows to capture player picks and fallback game info if needed
+        // Build a lookup map for season standings points by user_id
+        const standingsMap = new Map();
+        standingsData.forEach(s => {
+            standingsMap.set(Number(s.user_id), Number(s.total_points) || 0);
+        });
+
+        // Build a lookup map for live/score details from regular season matchups endpoint
+        const matchupsMap = new Map();
+        matchupsData.forEach(m => {
+            const gameId = m.id || m.game_id;
+            matchupsMap.set(gameId, m);
+        });
+
         matrixData.forEach(row => {
             const gameId = row.game_id;
             const rawMp = row.must_pick;
             const isMustPick = rawMp === true || rawMp === 1 || rawMp === "1" || rawMp === "true";
 
+            // Merge details from matchupsData if available
+            const liveMatchup = matchupsMap.get(gameId) || {};
+
             if (!gamesMap.has(gameId)) {
                 gamesMap.set(gameId, {
                     game_id: gameId,
                     away_team: row.away_team,
+                    away_team_nickname: row.away_team_nickname,
                     home_team: row.home_team,
-                    away_logo: row.away_logo || teamColors[row.away_team]?.logo,
-                    home_logo: row.home_logo || teamColors[row.home_team]?.logo,
-                    home_color: row.home_color,
-                    home_secondary_color: row.home_secondary_color,
-                    away_color: row.away_color,
-                    away_secondary_color: row.away_secondary_color,
-                    game_date: row.game_date,
-                    adjusted_spread: row.adjusted_spread,
-                    favorite: row.favorite,
-                    winner: row.winner,
-                    ats_winner: row.ats_winner,
+                    home_team_nickname: row.home_team_nickname,
+                    away_logo: teamColors[row.away_team]?.logo || row.away_logo || liveMatchup.away_logo || null,
+                    home_logo: teamColors[row.home_team]?.logo || row.home_logo || liveMatchup.home_logo || null,
+                    home_color: row.home_color || liveMatchup.home_color,
+                    home_secondary_color: row.home_secondary_color || liveMatchup.home_secondary_color,
+                    away_color: row.away_color || liveMatchup.away_color,
+                    away_secondary_color: row.away_secondary_color || liveMatchup.away_secondary_color,
+                    game_date: row.game_date || liveMatchup.game_date,
+                    adjusted_spread: row.adjusted_spread !== undefined ? row.adjusted_spread : liveMatchup.adjusted_spread,
+                    favorite: row.favorite || liveMatchup.favorite,
+                    winner: row.winner || liveMatchup.winner,
+                    ats_winner: row.ats_winner || liveMatchup.ats_winner,
                     must_pick: isMustPick,
-                    home_score: row.home_score,
-                    away_score: row.away_score,
-                    status: row.status,
-                    live_status: row.live_status
+                    home_score: liveMatchup.home_score !== undefined ? liveMatchup.home_score : row.home_score,
+                    away_score: liveMatchup.away_score !== undefined ? liveMatchup.away_score : row.away_score,
+                    status: liveMatchup.status || row.status,
+                    quarter: liveMatchup.quarter || liveMatchup.period || row.quarter || row.period,
+                    clock: liveMatchup.clock || row.clock,
+                    live_status: liveMatchup.live_status || row.live_status
                 });
             }
 
             if (!playersMap[row.user_id]) {
+                const seasonPoints = standingsMap.get(Number(row.user_id)) || 0;
                 playersMap[row.user_id] = {
                     user_id: row.user_id,
                     user_name: row.user_name,
                     picks: {},
-                    totalPoints: 0
+                    totalPoints: seasonPoints,
+                    weekPoints: 0
                 };
             }
 
@@ -212,6 +208,11 @@ export default function NflPickemAtsMatrix() {
                 is_best_bet: isBestBet,
                 status: status
             };
+
+            if (status === "win" || status === "correct") {
+                const pointsToAdd = isBestBet ? 2 : 1;
+                playersMap[row.user_id].weekPoints += pointsToAdd;
+            }
         });
 
         // ✨ Filter games to ONLY include live or completed games, then sort newest first (descending by game date)
@@ -228,29 +229,16 @@ export default function NflPickemAtsMatrix() {
                 return dateB - dateA;
             });
 
-        // Calculate total points for each player
-        const playersArr = Object.values(playersMap).map(player => {
-            let totalPoints = 0;
-            gamesArr.forEach(game => {
-                const pick = player.picks[game.game_id];
-                if (pick && pick.status) {
-                    const isWin = pick.status === "win" || pick.status === "correct";
-                    if (isWin) {
-                        totalPoints += pick.is_best_bet ? 2 : 1;
-                    }
-                }
-            });
-            return { ...player, totalPoints };
-        });
+        const playersArr = Object.values(playersMap);
 
-        // Sort players by total points descending, then by user_name alphabetically
-        playersArr.sort((a, b) => b.totalPoints - a.totalPoints || a.user_name.localeCompare(b.user_name));
+        // Sort players by season-long total points descending, then weekly points, then alphabetically by name
+        playersArr.sort((a, b) => b.totalPoints - a.totalPoints || b.weekPoints - a.weekPoints || a.user_name.localeCompare(b.user_name));
 
         return {
             gamesList: gamesArr,
             sortedPlayers: playersArr
         };
-    }, [matrixData, matchupsData, teamColors]);
+    }, [matrixData, matchupsData, standingsData, teamColors]);
 
     const getCellStyle = (game, pickObj) => {
         if (!pickObj || !pickObj.ats_pick) return { backgroundColor: "transparent" };
@@ -289,20 +277,20 @@ export default function NflPickemAtsMatrix() {
         const awayTeamMeta = teamColors[game.away_team] || {};
         const homeTeamMeta = teamColors[game.home_team] || {};
 
-        const awayPrimary = game.away_color || awayTeamMeta.primaryColor || "#000000";
+        const awayPrimary = game.away_color || awayTeamMeta.color || "#000000";
         const awaySecondary = game.away_secondary_color || awayTeamMeta.secondaryColor || "#cbd5e1";
 
-        const homePrimary = game.home_color || homeTeamMeta.primaryColor || "#000000";
+        const homePrimary = game.home_color || homeTeamMeta.color || "#000000";
         const homeSecondary = game.home_secondary_color || homeTeamMeta.secondaryColor || "#cbd5e1";
 
         const favTeam = game.favorite;
         const favTeamMeta = teamColors[favTeam] || {};
         const favLogo = favTeam === game.away_team ? game.away_logo : (favTeam === game.home_team ? game.home_logo : favTeamMeta.logo);
-        const favPrimary = favTeam === game.away_team ? awayPrimary : (favTeam === game.home_team ? homePrimary : (favTeamMeta.primaryColor || "#000000"));
+        const favPrimary = favTeam === game.away_team ? awayPrimary : (favTeam === game.home_team ? homePrimary : (favTeamMeta.color || "#000000"));
         const favSecondary = favTeam === game.away_team ? awaySecondary : (favTeam === game.home_team ? homeSecondary : (favTeamMeta.secondaryColor || "#cbd5e1"));
 
         const coveredMeta = teamColors[coveredTeam] || {};
-        const coveredPrimary = coveredTeam === game.away_team ? awayPrimary : (coveredTeam === game.home_team ? homePrimary : (coveredMeta.primaryColor || "#000000"));
+        const coveredPrimary = coveredTeam === game.away_team ? awayPrimary : (coveredTeam === game.home_team ? homePrimary : (coveredMeta.color || "#000000"));
         const coveredSecondary = coveredTeam === game.away_team ? awaySecondary : (coveredTeam === game.home_team ? homeSecondary : (coveredMeta.secondaryColor || "#cbd5e1"));
 
         const getBadgeStyle = (primaryColor, secondaryColor) => ({
@@ -321,7 +309,7 @@ export default function NflPickemAtsMatrix() {
         const favBadgeStyle = getBadgeStyle(favPrimary, favSecondary);
         const coveredBadgeStyle = getBadgeStyle(coveredPrimary, coveredSecondary);
 
-        const liveStatusText = game.live_status;
+        const liveStatusText = game.live_status || "LIVE";
 
         return (
             <div style={{ textAlign: "center", width: "100%", overflow: "visible" }}>
@@ -387,7 +375,7 @@ export default function NflPickemAtsMatrix() {
         );
     };
 
-    if (authLoading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50 }}>Verifying session...</div>;
+    if (authLoading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50 }}>Loading matrix...</div>;
 
     return (
         <PoolGatekeeper user={user} gameKey="nfl_pickem_ats" className='page-content'>
@@ -479,11 +467,11 @@ export default function NflPickemAtsMatrix() {
                                         padding: "10px 12px",
                                         textAlign: "left",
                                         fontSize: 12,
-                                        width: "130px",
-                                        minWidth: "130px",
+                                        width: "175px",
+                                        minWidth: "175px",
                                         boxShadow: "2px 0 5px rgba(0,0,0,0.1)"
                                     }}>
-                                        Player (Pts)
+                                        Player (Wk / Ovr)
                                     </th>
                                     {gamesList.map((game) => (
                                         <th key={game.game_id} style={{
@@ -503,44 +491,48 @@ export default function NflPickemAtsMatrix() {
                             </thead>
                             <tbody>
                                 {sortedPlayers.map((player, idx) => {
-                                    // Calculate standard competitive ranking (ties share the same rank)
                                     const rank = sortedPlayers.filter(p => p.totalPoints > player.totalPoints).length + 1;
-                                    const isCurrentUser = Number(player.user_id) === Number(user.id);
-                                    const playerLabel = `${rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`} ${player.user_name} ${isCurrentUser ? "(You)" : ""}`;
-                                    const ptsLabel = player.totalPoints === 1 ? "1 pt" : `${player.totalPoints} pts`;
+                                    const isCurrentUser = Number(player.user_id) === Number(user?.id);
 
                                     return (
                                         <tr key={player.user_id} style={{
                                             borderBottom: "1px solid #f1f5f9",
                                             backgroundColor: isCurrentUser ? "#eff6ff" : (idx % 2 === 0 ? "#fafafa" : "white")
                                         }}>
-                                            <td 
-                                                title={playerLabel}
+                                            <td
                                                 style={{
                                                     position: "sticky",
                                                     left: 0,
                                                     zIndex: 5,
                                                     backgroundColor: isCurrentUser ? "#dbeafe" : (idx % 2 === 0 ? "#fafafa" : "white"),
-                                                    padding: "10px 12px",
-                                                    fontWeight: isCurrentUser ? 800 : 600,
-                                                    fontSize: 12,
-                                                    color: "#0f172a",
-                                                    width: "130px",
-                                                    minWidth: "130px",
-                                                    maxWidth: "130px",
-                                                    overflow: "hidden",
-                                                    textOverflow: "ellipsis",
-                                                    whiteSpace: "nowrap",
-                                                    boxShadow: "2px 0 5px rgba(0,0,0,0.05)"
+                                                    padding: "8px 12px",
+                                                    width: "175px",
+                                                    minWidth: "175px",
+                                                    maxWidth: "175px",
+                                                    boxShadow: "2px 0 5px rgba(0,0,0,0.05)",
+                                                    verticalAlign: "middle"
                                                 }}
                                             >
-                                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", overflow: "hidden" }}>
-                                                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginRight: 4 }}>
+                                                {/* ✨ Two-line stacked layout to prevent any name clipping */}
+                                                <div style={{ display: "flex", flexDirection: "column", gap: "2px", overflow: "hidden" }}>
+                                                    <div style={{
+                                                        fontWeight: isCurrentUser ? 800 : 700,
+                                                        fontSize: 12,
+                                                        color: "#0f172a",
+                                                        overflow: "hidden",
+                                                        textOverflow: "ellipsis",
+                                                        whiteSpace: "nowrap"
+                                                    }}>
                                                         {rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`} {player.user_name} {isCurrentUser && "(You)"}
-                                                    </span>
-                                                    <span style={{ fontWeight: 800, color: NFL_BLUE, flexShrink: 0 }}>
-                                                        {ptsLabel}
-                                                    </span>
+                                                    </div>
+                                                    <div style={{
+                                                        fontSize: 10,
+                                                        fontWeight: 800,
+                                                        color: NFL_BLUE,
+                                                        letterSpacing: "-0.2px"
+                                                    }}>
+                                                        Wk: {player.weekPoints} | Ovr: {player.totalPoints}
+                                                    </div>
                                                 </div>
                                             </td>
 

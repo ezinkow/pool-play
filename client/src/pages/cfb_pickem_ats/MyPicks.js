@@ -126,7 +126,7 @@ export default function CdbPickemAtsMyPicks() {
                 <div style={{ textAlign: "center", marginBottom: 20 }}>
                     <h2 style={{ color: CFB_BLUE, fontSize: "26px", margin: 0, fontWeight: 800, letterSpacing: "-0.025em" }}>My Week {currentWeek} Summary</h2>
                     <p style={{ color: "#64748b", marginTop: 6, fontSize: "14px", fontWeight: 500 }}>
-                        Review your ATS selections, Best Bet outcomes, and Over/Under picks.
+                        Review your ATS selections and Best Bet outcomes.
                     </p>
 
                     {/* Score / Stats Banner */}
