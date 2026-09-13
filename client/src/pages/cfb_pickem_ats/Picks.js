@@ -148,7 +148,10 @@ export default function CfbPickemAtsPicks() {
             setPicks(prev => {
                 const copy = { ...prev };
                 Object.keys(copy).forEach(gameId => {
-                    if (activeGameIds.has(Number(gameId))) {
+                    const gameObj = availableGames.find(g => Number(g.id) === Number(gameId));
+                    const isGameStarted = gameObj && gameObj.game_date && new Date() >= new Date(gameObj.game_date);
+
+                    if (activeGameIds.has(Number(gameId)) && !isGameStarted) {
                         delete copy[gameId];
                     }
                 });
@@ -229,9 +232,17 @@ export default function CfbPickemAtsPicks() {
         }
 
         const activeGameIds = new Set(availableGames.map(g => String(g.id)));
+        const now = new Date();
 
         const formattedPicks = Object.keys(picks)
-            .filter(gameId => activeGameIds.has(String(gameId)))
+            .filter(gameId => {
+                if (!activeGameIds.has(String(gameId))) return false;
+                const gameObj = availableGames.find(g => String(g.id) === String(gameId));
+                if (gameObj && gameObj.game_date && now >= new Date(gameObj.game_date)) {
+                    return false;
+                }
+                return true;
+            })
             .map(gameId => ({
                 game_id: Number(gameId),
                 picked_team: picks[gameId].picked_team,

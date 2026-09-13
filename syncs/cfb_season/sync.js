@@ -401,7 +401,7 @@ async function processMatchup(m) {
 async function syncCfbSeason(targetWeek) {
     try {
         const dateRange = getCfbDateRange(targetWeek);
-        const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?dates=20260822-20260907`;
+        const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?dates=${dateRange}`;
 
         console.log(`[CFB Regular Season sync] Fetching Week ${targetWeek} data for range: ${dateRange}`);
         const { data } = await axios.get(scoreboardUrl, { timeout: 15000 });
