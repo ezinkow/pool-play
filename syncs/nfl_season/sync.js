@@ -2,38 +2,49 @@ const axios = require("axios");
 const db = require("../../models");
 
 /**
- * 🧠 DYNAMIC DATE CALCULATOR (Wednesday to Tuesday NFL Windows)
- * Automatically generates the ESPN scoreboard date range string for the current week and next week.
+ * 🧠 DYNAMIC CURRENT & NEXT NFL WEEK CALCULATOR
+ * Maps date boundaries to determine the current active week and upcoming weeks.
  */
-function getDynamicDateRange() {
+function getCurrentAndNextNflWeeks() {
     const now = new Date();
-    const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 3 = Wednesday, etc.
 
-    // Calculate days to the most recent Wednesday
-    let distanceToWednesday = (dayOfWeek >= 3) ? (dayOfWeek - 3) : (dayOfWeek + 4);
+    // Standard 2026-2027 NFL regular season week boundaries (Wednesday-to-Tuesday windows)
+    const weeks = [
+        { week: 1, start: new Date("2026-09-02T00:00:00"), transition: new Date("2026-09-15T06:00:00"), end: new Date("2026-09-08T23:59:59") },
+        { week: 2, start: new Date("2026-09-15T06:00:00"), transition: new Date("2026-09-22T06:00:00"), end: new Date("2026-09-15T23:59:59") },
+        { week: 3, start: new Date("2026-09-22T06:00:00"), transition: new Date("2026-09-29T06:00:00"), end: new Date("2026-09-22T23:59:59") },
+        { week: 4, start: new Date("2026-09-26T06:00:00"), transition: new Date("2026-10-06T06:00:00"), end: new Date("2026-09-29T23:59:59") },
+        { week: 5, start: new Date("2026-10-06T06:00:00"), transition: new Date("2026-10-13T06:00:00"), end: new Date("2026-10-06T23:59:59") },
+        { week: 6, start: new Date("2026-10-13T06:00:00"), transition: new Date("2026-10-20T06:00:00"), end: new Date("2026-10-13T23:59:59") },
+        { week: 7, start: new Date("2026-10-20T06:00:00"), transition: new Date("2026-10-27T06:00:00"), end: new Date("2026-10-20T23:59:59") },
+        { week: 8, start: new Date("2026-10-27T06:00:00"), transition: new Date("2026-11-03T06:00:00"), end: new Date("2026-10-27T23:59:59") },
+        { week: 9, start: new Date("2026-11-03T06:00:00"), transition: new Date("2026-11-10T06:00:00"), end: new Date("2026-11-03T23:59:59") },
+        { week: 10, start: new Date("2026-11-10T06:00:00"), transition: new Date("2026-11-17T06:00:00"), end: new Date("2026-11-10T23:59:59") },
+        { week: 11, start: new Date("2026-11-17T06:00:00"), transition: new Date("2026-11-24T06:00:00"), end: new Date("2026-11-17T23:59:59") },
+        { week: 12, start: new Date("2026-11-24T06:00:00"), transition: new Date("2026-12-01T06:00:00"), end: new Date("2026-11-24T23:59:59") },
+        { week: 13, start: new Date("2026-12-01T06:00:00"), transition: new Date("2026-12-08T06:00:00"), end: new Date("2026-12-01T23:59:59") },
+        { week: 14, start: new Date("2026-12-08T06:00:00"), transition: new Date("2026-12-15T06:00:00"), end: new Date("2026-12-08T23:59:59") },
+        { week: 15, start: new Date("2026-12-15T06:00:00"), transition: new Date("2026-12-22T06:00:00"), end: new Date("2026-12-15T23:59:59") },
+        { week: 16, start: new Date("2026-12-22T06:00:00"), transition: new Date("2026-12-29T06:00:00"), end: new Date("2026-12-22T23:59:59") },
+        { week: 17, start: new Date("2026-12-29T06:00:00"), transition: new Date("2026-01-05T06:00:00"), end: new Date("2026-12-29T23:59:59") },
+        { week: 18, start: new Date("2027-01-05T06:00:00"), transition: new Date("2027-01-12T06:00:00"), end: new Date("2027-01-05T23:59:59") }
+    ];
 
-    const currentWednesday = new Date(now);
-    currentWednesday.setDate(now.getDate() - distanceToWednesday);
+    let activeIndex = 0;
+    for (let i = weeks.length - 1; i >= 0; i--) {
+        if (now >= weeks[i].start) {
+            activeIndex = i;
+            break;
+        }
+    }
 
-    // We want a 2-week window ending 14 days later (covering this week + next week)
-    const twoWeeksOut = new Date(currentWednesday);
-    twoWeeksOut.setDate(currentWednesday.getDate() + 14); // 14 days covers 2 full weeks
-
-    const formatDate = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}${month}${day}`;
-    };
-
-    return `${formatDate(currentWednesday)}-${formatDate(twoWeeksOut)}`;
+    return weeks[activeIndex].week;
 }
 
 /**
  * 🧠 UNIVERSAL HOOK RULE LOGIC:
  * Automatically detects any whole number spread (e.g., 3.0, 6.0, 7.0) 
  * and bumps it to a half-point (e.g., 3.5, 6.5, 7.5) if the juice condition is met.
- * Natural half-points (e.g., 2.5, 5.5) pass through untouched.
  */
 function applyHookRule(spread, odds) {
     if (spread === null || spread === undefined) return spread;
@@ -41,17 +52,14 @@ function applyHookRule(spread, odds) {
     let absVal = Math.abs(spread);
     let adjustedAbs = absVal;
 
-    // Check if the number is a whole number (e.g., 3.0, 6.0, 10.0)
     const isWholeNumber = Number.isInteger(absVal);
     if (isWholeNumber) {
-        // If it's a whole number and juice meets your threshold, bump by 0.5
         if (odds !== null && odds !== undefined && odds >= -110) {
             adjustedAbs = absVal - 0.5;
         } else {
             adjustedAbs = absVal + 0.5;
         }
     }
-    // Always return as a negative number for the favorite's adjusted spread
     return -adjustedAbs;
 }
 
@@ -60,15 +68,14 @@ function extractMatchups(data) {
     const matchups = [];
 
     data.events.forEach(event => {
-        // 🧠 CONDITION: Only look for regular season games (season.type === 2)
         const seasonType = event.season?.type;
         if (seasonType !== 2) {
-            return; // Skip preseason (1), postseason (3), etc.
+            return;
         }
         const comp = event.competitions?.[0];
         if (!comp) return;
 
-        const gameId = event.id; // ESPN Game ID used as primary key
+        const gameId = event.id;
         const weekNum = event.week?.number || 1;
         const gameDate = event.date;
 
@@ -80,21 +87,17 @@ function extractMatchups(data) {
         let rawSpread = '';
         let favoriteTeamName = homeCompetitor.team.name;
 
-        // 🧠 Pull the odds object cleanly from the array or object
         const oddsObj = Array.isArray(comp.odds) ? comp.odds[0] : comp.odds;
 
         if (oddsObj) {
-            // 1. Get spread magnitude from oddsObj.spread (e.g., -2.5 becomes 2.5)
             if (oddsObj.spread !== undefined) {
                 rawSpread = Math.abs(parseFloat(oddsObj.spread));
             }
 
-            // 🧠 Parse Favorite directly from ESPN details string
             if (oddsObj.details) {
                 const parts = oddsObj.details.split(" ");
                 const favAbbr = parts[0];
 
-                // Match the abbreviation to home or away team object
                 if (homeCompetitor.team.abbreviation === favAbbr || homeCompetitor.team.shortDisplayName === favAbbr) {
                     favoriteTeamName = homeCompetitor.team.name;
                 } else if (awayCompetitor.team.abbreviation === favAbbr || awayCompetitor.team.shortDisplayName === favAbbr) {
@@ -103,7 +106,6 @@ function extractMatchups(data) {
             }
         }
 
-        // 2. Extract precise close odds for both home and away independently
         let homeSpreadOdds = -110;
         let awaySpreadOdds = -110;
 
@@ -124,7 +126,6 @@ function extractMatchups(data) {
         const finalSpread = -rawSpread;
         const adjustedSpread = applyHookRule(rawSpread, homeSpreadOdds);
 
-        // Extract scores if status indicates completion
         const homeScore = homeCompetitor.score !== undefined ? parseInt(homeCompetitor.score, 10) : null;
         const awayScore = awayCompetitor.score !== undefined ? parseInt(awayCompetitor.score, 10) : null;
         const statusType = comp.status?.type?.name || "STATUS_SCHEDULED";
@@ -138,7 +139,7 @@ function extractMatchups(data) {
         }
 
         matchups.push({
-            id: gameId, // Set ESPN game ID as primary key
+            id: gameId,
             week: weekNum,
             home_team: homeCompetitor.team.name,
             away_team: awayCompetitor.team.name,
@@ -147,8 +148,8 @@ function extractMatchups(data) {
             home_color: homeCompetitor.team.color ? `#${homeCompetitor.team.color}` : null,
             away_color: awayCompetitor.team.color ? `#${awayCompetitor.team.color}` : null,
             spread: finalSpread,
-            spread_odds: homeSpreadOdds,      // Home juice
-            away_spread_odds: awaySpreadOdds, // Away juice
+            spread_odds: homeSpreadOdds,
+            away_spread_odds: awaySpreadOdds,
             adjusted_spread: adjustedSpread,
             over_under: overUnder,
             favorite: favoriteTeamName,
@@ -167,20 +168,15 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
         return { home_score: null, away_score: null, winner: null, ats_winner: null, ou_result: null };
     }
 
-    // 1. Outright Winner
     let winner = "PUSH";
     if (homeScore > awayScore) winner = m.home_team;
     else if (awayScore > homeScore) winner = m.away_team;
 
-    // 2. ATS Cover Calculation (using adjusted_spread or spread, relative to favorite)
     const rawSpread = m.adjusted_spread !== undefined && m.adjusted_spread !== null ? m.adjusted_spread : m.spread;
     let ats_winner = "PUSH";
 
     if (rawSpread !== null && rawSpread !== undefined) {
-        // 🧠 ALWAYS FORCE POSITIVE MAGNITUDE FOR SPREAD VALUE
         const spreadVal = Math.abs(Number(rawSpread));
-
-        // 🧠 RESILIENT NAME-BASED FAVORITE CHECK
         const favTeam = m.favorite;
         const isHomeFav = favTeam === m.home_team;
         const dogTeam = isHomeFav ? m.away_team : m.home_team;
@@ -188,12 +184,8 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
         const favScore = isHomeFav ? homeScore : awayScore;
         const dogScore = isHomeFav ? awayScore : homeScore;
 
-        // Favorite's score minus underdog's score
         const actualMargin = favScore - dogScore;
 
-        // 🧠 BULLETPROOF ATS COMPARISON:
-        // If the favorite won by more than the spread value, favorite covers.
-        // If the favorite won by less, lost outright, or tied, the underdog covers.
         if (actualMargin > spreadVal) {
             ats_winner = favTeam;
         } else if (actualMargin < spreadVal) {
@@ -203,7 +195,6 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
         }
     }
 
-    // 3. Over / Under Result
     let ou_result = "PUSH";
     if (m.over_under) {
         const totalPoints = homeScore + awayScore;
@@ -221,10 +212,6 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
     };
 }
 
-/**
- * 🧠 AUTOMATED SURVIVOR ELIMINATION EVALUATOR
- * Automatically evaluates user picks against finalized game winners and updates entry statuses.
- */
 async function evaluateSurvivorResults() {
     const { NflSurvivorEntries, NflSurvivorPicks, NflRegularSeasonGames } = db;
     try {
@@ -271,7 +258,7 @@ async function evaluateSurvivorResults() {
                 const weekResults = gameWinners[wk];
 
                 if (pick && weekResults && weekResults[pick.team_name]) {
-                    const outcome = weekResults[pick.team_name]; // "WIN", "LOSS", or "PUSH"
+                    const outcome = weekResults[pick.team_name];
 
                     pick.status = outcome.toLowerCase();
                     await pick.save();
@@ -307,7 +294,6 @@ async function processMatchup(m) {
         } else {
             let payloadToUpdate = { ...m };
 
-            // Always preserve the locked-in spread/favorite from the DB if it exists
             const lockedSpread = existingGame.adjusted_spread !== null ? existingGame.adjusted_spread : existingGame.spread;
             const lockedFavorite = existingGame.favorite;
 
@@ -318,13 +304,11 @@ async function processMatchup(m) {
             payloadToUpdate.over_under = existingGame.over_under;
             payloadToUpdate.favorite = existingGame.favorite;
 
-            // 🧠 Ensure live status and scores update dynamically from ESPN fetch
             payloadToUpdate.status = m.status;
             payloadToUpdate.live_status = m.live_status;
             payloadToUpdate.home_score = m.home_score;
             payloadToUpdate.away_score = m.away_score;
 
-            // If the game is final or live, calculate outcomes using the DB's locked spread
             const statusType = payloadToUpdate.status;
             const isFinal = statusType === "STATUS_FINAL" || statusType === "Final" || statusType === "completed" || statusType === "FINAL" || (payloadToUpdate.live_status && payloadToUpdate.live_status.toLowerCase().includes("final"));
 
@@ -348,22 +332,33 @@ async function processMatchup(m) {
 
 async function syncNflSeason() {
     try {
-        const dateRange = getDynamicDateRange();
-        const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${dateRange}`;
+        const currentWeek = getCurrentAndNextNflWeeks();
+        
+        // ✨ Target rolling 3-week window (Current Week, Next Week, and Following Week)
+        const targetWeeks = [currentWeek, currentWeek + 1, currentWeek + 2];
 
-        console.log(`[NFL Regular Season sync] Fetching scoreboard data for range: ${dateRange}`);
-        const { data } = await axios.get(scoreboardUrl, { timeout: 15000 });
+        console.log(`[NFL Sync Job] Current Active Week: Week ${currentWeek} | Syncing Weeks: ${targetWeeks.join(", ")}`);
 
-        const matchups = extractMatchups(data);
-        for (const m of matchups) {
-            await processMatchup(m);
+        for (const wk of targetWeeks) {
+            const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${wk}&limit=500`;
+
+            console.log(`[NFL Regular Season sync] Fetching scoreboard data for Week ${wk}`);
+            const { data } = await axios.get(scoreboardUrl, { timeout: 15000 });
+
+            const matchups = extractMatchups(data);
+            for (const m of matchups) {
+                await processMatchup(m);
+            }
+            console.log(`[NFL Regular Season sync] Successfully synced ${matchups.length} matchups for Week ${wk}.`);
         }
-        console.log(`[NFL Regular Season sync] Successfully synced ${matchups.length} matchups.`);
 
         await evaluateSurvivorResults();
 
     } catch (err) {
-        console.error("[NFL Regular Season sync] Fatal Error:", err.message);
+        console.error("[NFL Regular Season sync] Fatal Error:", err.response?.status, err.response?.data || err.message);
+        if (err.config) {
+            console.error("[NFL Regular Season sync] Requested URL was:", err.config.url);
+        }
     }
 }
 

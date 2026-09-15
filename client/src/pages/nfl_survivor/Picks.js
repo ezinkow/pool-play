@@ -10,8 +10,8 @@ const GOLD = "#c89d3c";
 
 export default function NflSurvivorPicks() {
     const { user, loading: authLoading } = useAuth();
-    const [currentWeek, setCurrentWeek] = useState(1);
-    const [maxAvailableWeek, setMaxAvailableWeek] = useState(1);
+    const [currentWeek, setCurrentWeek] = useState(2); // Default to Week 2 for September 15, 2026
+    const [maxAvailableWeek, setMaxAvailableWeek] = useState(2);
     const [games, setGames] = useState([]);
     const [userPicks, setUserPicks] = useState({});
     const [usedTeams, setUsedTeams] = useState([]);
@@ -53,9 +53,11 @@ export default function NflSurvivorPicks() {
                 setUserPicks(data.userPicks || {});
                 setUsedTeams(data.usedTeams || []);
                 
-                if (data.currentWeek && data.currentWeek > maxAvailableWeek) {
-                    setMaxAvailableWeek(data.currentWeek);
-                    setCurrentWeek(data.currentWeek);
+                // ✨ Dynamically honor active week returned by backend or fall back safely
+                const activeWk = data.currentWeek || weekToFetch;
+                if (activeWk >= maxAvailableWeek) {
+                    setMaxAvailableWeek(activeWk);
+                    setCurrentWeek(activeWk);
                 }
             })
             .catch(err => {
@@ -66,26 +68,10 @@ export default function NflSurvivorPicks() {
             .finally(() => setLoading(false));
     };
 
-    // Initial load - check active week state from active-states or pool endpoint
+    // ✨ Initial load directly queries the survivor picks endpoint to pull the active week games
     useEffect(() => {
         if (!user) return;
-        axios.get("/api/settings/active-states", {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(res => {
-                const survivorPool = (res.data || []).find(p => p.game_key === "nfl_survivor");
-                if (survivorPool && survivorPool.current_week) {
-                    const activeWk = parseInt(survivorPool.current_week);
-                    setMaxAvailableWeek(activeWk);
-                    setCurrentWeek(activeWk);
-                    loadSurvivorData(activeWk);
-                } else {
-                    loadSurvivorData(currentWeek);
-                }
-            })
-            .catch(() => {
-                loadSurvivorData(currentWeek);
-            });
+        loadSurvivorData(currentWeek);
     }, [user]);
 
     const handleWeekChange = (targetWeek) => {
@@ -306,7 +292,6 @@ export default function NflSurvivorPicks() {
                             const homePrimary = homeMeta.primaryColor || NFL_BLUE;
                             const homeSecondary = homeMeta.secondaryColor || "#cbd5e1";
 
-                            // Badge styling matching the pick'em reference style (with drop-shadow and border glow)
                             const getBadgeStyle = (primaryColor, secondaryColor, isPicked, isUsedState) => ({
                                 background: isPicked ? secondaryColor : (isUsedState ? "#f1f5f9" : secondaryColor),
                                 borderRadius: 6,
@@ -324,7 +309,6 @@ export default function NflSurvivorPicks() {
                             const awayBadgeStyle = getBadgeStyle(awayPrimary, awaySecondary, isAwayPicked, awayUsed);
                             const homeBadgeStyle = getBadgeStyle(homePrimary, homeSecondary, isHomePicked, homeUsed);
 
-                            // Faded primary to secondary gradient shading matching the pick'em reference style
                             const awayTileBg = isAwayPicked
                                 ? `linear-gradient(to right, ${awayPrimary} 100%, ${awayPrimary} 100%)`
                                 : `linear-gradient(to right, ${awayPrimary} 0%, ${awayPrimary} 0%, transparent 0%), linear-gradient(135deg, ${awayPrimary}12 0%, ${awaySecondary}22 100%)`;
@@ -344,7 +328,6 @@ export default function NflSurvivorPicks() {
                                     flexDirection: "column",
                                     gap: 6
                                 }}>
-                                    {/* Game Header / Date */}
                                     {formattedDate && (
                                         <div style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textAlign: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: 4, display: "flex", justifyContent: "center", alignItems: "center", gap: 6 }}>
                                             <span>{formattedDate}</span>
@@ -352,7 +335,6 @@ export default function NflSurvivorPicks() {
                                         </div>
                                     )}
 
-                                    {/* Side-by-Side Team Selection Box Container */}
                                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                                         {/* Away Team Option Box */}
                                         <div
@@ -455,7 +437,6 @@ export default function NflSurvivorPicks() {
                         })
                     )}
                 </div>
-
             </div>
         </PoolGatekeeper>
     );

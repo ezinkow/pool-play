@@ -2,44 +2,6 @@ const axios = require("axios");
 const db = require("../../models");
 
 /**
- * 🧠 DYNAMIC CFB WEEKLY WINDOW CALCULATOR
- * Week 1: August 22, 2026 – September 7, 2026
- * Week 2: September 8, 2026 – September 13, 2026 (Tuesday to Saturday)
- * Subsequent Weeks: Monday to Sunday rolling window
- */
-function getCfbDateRange(weekNumber) {
-    const weekNum = parseInt(weekNumber, 10) || 1;
-
-    // Week 1: Custom extended window
-    if (weekNum === 1) {
-        return "20260822-20260907";
-    }
-
-    // Week 2: Specific Tuesday to Saturday window (Sep 8 - Sep 13, 2026)
-    if (weekNum === 2) {
-        return "20260908-20260913";
-    }
-
-    // Week 3 onward: Standard Monday to Sunday rolling window
-    // Week 3 starts the Monday following Week 2's Saturday (Sept 14, 2026)
-    const baseMonday = new Date("2026-09-14T00:00:00");
-    const weekStart = new Date(baseMonday);
-    weekStart.setDate(baseMonday.getDate() + (weekNum - 3) * 7);
-
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6); // Monday + 6 days = Sunday
-
-    const formatDate = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}${month}${day}`;
-    };
-
-    return `${formatDate(weekStart)}-${formatDate(weekEnd)}`;
-}
-
-/**
  * 🧠 DYNAMIC CURRENT & NEXT WEEK CALCULATOR
  * Maps date boundaries to determine current active week and next upcoming week.
  */
@@ -63,8 +25,6 @@ function getCurrentAndNextCfbWeeks() {
         { week: 14, start: new Date("2026-11-30T00:00:00"), tuesdayStart: new Date("2026-12-01T00:00:00"), end: new Date("2026-12-06T23:59:59") }
     ];
 
-    // Find the latest week whose official competition window has started, 
-    // but block the rollover to the next week until Tuesday morning.
     let activeIndex = 0;
     for (let i = weeks.length - 1; i >= 0; i--) {
         if (now >= weeks[i].start) {
@@ -73,8 +33,6 @@ function getCurrentAndNextCfbWeeks() {
         }
     }
 
-    // If we are past the end date of the week (e.g. Sunday/Monday), but it's not yet 
-    // the Tuesday start of the subsequent week, lock it to the current week.
     if (activeIndex < weeks.length - 1) {
         const nextTuesday = weeks[activeIndex + 1].tuesdayStart;
         if (now >= weeks[activeIndex].start && now < nextTuesday) {
@@ -83,12 +41,7 @@ function getCurrentAndNextCfbWeeks() {
     }
 
     const currentWeekObj = weeks[activeIndex];
-    const nextWeekObj = weeks[activeIndex + 1] || currentWeekObj;
-
-    return {
-        currentWeek: currentWeekObj.week,
-        nextWeek: nextWeekObj.week
-    };
+    return currentWeekObj.week;
 }
 
 function applyHookRule(spread, odds) {
@@ -243,7 +196,6 @@ async function extractMatchups(data, weekNum) {
         const statusType = comp.status?.type?.name || "STATUS_SCHEDULED";
         const liveStatus = comp.status?.type?.shortDetail;
 
-        // 🧠 RESPECT DB AS SOURCE OF TRUTH / 48-HOUR LOCKOUT
         let lockedSpread = finalSpread;
         let lockedAdjustedSpread = adjustedSpread;
         let lockedFavorite = favoriteTeamSchool;
@@ -259,7 +211,6 @@ async function extractMatchups(data, weekNum) {
 
             const isAlreadyFinal = existingGame.status === "STATUS_FINAL" || existingGame.status === "Final" || existingGame.status === "completed";
 
-            // If game is within 48 hours and not final, or if we want to respect existing lines pre-game
             if ((hoursUntilKickoff <= 48 && !isAlreadyFinal) || isAlreadyFinal) {
                 lockedSpread = existingGame.spread !== null ? existingGame.spread : finalSpread;
                 lockedAdjustedSpread = existingGame.adjusted_spread !== null ? existingGame.adjusted_spread : adjustedSpread;
@@ -271,7 +222,6 @@ async function extractMatchups(data, weekNum) {
             }
         }
 
-        // 🧠 ONLY calculate final outcomes if the game status is explicitly Final / Completed
         const isFinal = statusType === "STATUS_FINAL" || statusType === "Final" || statusType === "completed" || (liveStatus && liveStatus.toLowerCase().includes("final"));
 
         let calculatedOutcomes = { home_score: homeScore, away_score: awayScore, winner: null, ats_winner: null, ou_result: null };
@@ -346,10 +296,7 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
     let ats_winner = "PUSH";
 
     if (rawSpread !== null && rawSpread !== undefined) {
-        // 🧠 ALWAYS FORCE POSITIVE MAGNITUDE FOR SPREAD VALUE
         const spreadVal = Math.abs(Number(rawSpread));
-
-        // 🧠 RESILIENT NAME-BASED FAVORITE CHECK (Prevents ID mismatches)
         const favTeam = m.favorite;
         const isHomeFav = favTeam === m.home_team;
         const dogTeam = isHomeFav ? m.away_team : m.home_team;
@@ -357,12 +304,8 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
         const favScore = isHomeFav ? homeScore : awayScore;
         const dogScore = isHomeFav ? awayScore : homeScore;
 
-        // Favorite's score minus underdog's score (e.g. 31 (Oregon) - 39 (Oklahoma St) = -8)
         const actualMargin = favScore - dogScore;
 
-        // 🧠 BULLETPROOF ATS COMPARISON:
-        // If the favorite won by more than the spread value, favorite covers.
-        // If the favorite won by less, lost outright, or tied, the underdog covers.
         if (actualMargin > spreadVal) {
             ats_winner = favTeam;
         } else {
@@ -400,10 +343,10 @@ async function processMatchup(m) {
 
 async function syncCfbSeason(targetWeek) {
     try {
-        const dateRange = getCfbDateRange(targetWeek);
-        const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?dates=${dateRange}`;
+        // ✨ Replaced fragile date ranges with native ESPN week parameters + limit=500
+        const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?seasontype=2&week=${targetWeek}&limit=500`;
 
-        console.log(`[CFB Regular Season sync] Fetching Week ${targetWeek} data for range: ${dateRange}`);
+        console.log(`[CFB Regular Season sync] Fetching Week ${targetWeek} data via week parameter`);
         const { data } = await axios.get(scoreboardUrl, { timeout: 15000 });
 
         const matchups = await extractMatchups(data, targetWeek);
@@ -413,24 +356,23 @@ async function syncCfbSeason(targetWeek) {
         console.log(`[CFB Regular Season sync] Successfully synced ${matchups.length} matchups for Week ${targetWeek}.`);
 
     } catch (err) {
-        console.error(`[CFB Regular Season sync] Fatal Error on Week ${targetWeek}:`, err.message);
+        console.error(`[CFB Regular Season sync] Fatal Error on Week ${targetWeek}:`, err.response?.status, err.response?.data || err.message);
     }
 }
 
 /**
- * 🧠 MAIN EXPORTED WRAPPER: Syncs both current active week and next upcoming week automatically
+ * 🧠 MAIN EXPORTED WRAPPER: Automatically syncs the rolling 3-week window (Current, Next, and Following Week)
  */
 async function syncCurrentAndNextWeeks() {
-    const { currentWeek, nextWeek } = getCurrentAndNextCfbWeeks();
+    const currentWeek = getCurrentAndNextCfbWeeks();
 
-    console.log(`[CFB Sync Job] Current Active Week: Week ${currentWeek} | Next Upcoming Week: Week ${nextWeek}`);
+    // ✨ Target current week, next week, and the week after (rolling 3-week sync window)
+    const targetWeeks = [currentWeek, currentWeek + 1, currentWeek + 2];
 
-    // Sync current active week
-    await syncCfbSeason(currentWeek);
+    console.log(`[CFB Sync Job] Current Active Week: Week ${currentWeek} | Syncing Weeks: ${targetWeeks.join(", ")}`);
 
-    // Sync next week if it differs from current week
-    if (nextWeek !== currentWeek) {
-        await syncCfbSeason(nextWeek);
+    for (const wk of targetWeeks) {
+        await syncCfbSeason(wk);
     }
 }
 
