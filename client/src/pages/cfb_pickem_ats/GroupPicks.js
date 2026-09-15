@@ -26,6 +26,7 @@ export default function CfbPickemAtsMatrix() {
     const [matchupsData, setMatchupsData] = useState([]);
     const [standingsData, setStandingsData] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [sortBy, setSortBy] = useState("overall"); // "overall" or "week"
 
     const token = localStorage.getItem("token");
     const { teamColors, loading: colorsLoading, error: colorsError, refresh: refreshTeamColors } = useTeamColors(token);
@@ -188,9 +189,8 @@ export default function CfbPickemAtsMatrix() {
             };
 
             if (status === "win") {
-                // NOTE: Check if best bets give extra points or if standard points are being counted differently
-                const pointsToAdd = isBestBet ? 2 : 1; // Inspect if best bets are supposed to be worth 2 points or if it's always 1!
-                playersMap[row.user_id].weekPoints += pointsToAdd; // Temporarily supporting best bet weight or standard 1 point; let's log both or check if +1 is what was causing an offset. Wait, previously it was `+= 1`. Let's log what points are added.
+                const pointsToAdd = isBestBet ? 2 : 1;
+                playersMap[row.user_id].weekPoints += pointsToAdd;
             }
         });
 
@@ -210,14 +210,20 @@ export default function CfbPickemAtsMatrix() {
 
         const playersArr = Object.values(playersMap);
 
-        // Sort players by season-long total points descending, then alphabetically by name
-        playersArr.sort((a, b) => b.totalPoints - a.totalPoints || a.user_name.localeCompare(b.user_name));
+        // Sort players based on current sortBy selection (week points vs overall points)
+        playersArr.sort((a, b) => {
+            if (sortBy === "week") {
+                return b.weekPoints - a.weekPoints || b.totalPoints - a.totalPoints || a.user_name.localeCompare(b.user_name);
+            } else {
+                return b.totalPoints - a.totalPoints || b.weekPoints - a.weekPoints || a.user_name.localeCompare(b.user_name);
+            }
+        });
 
         return {
             gamesList: gamesArr,
             sortedPlayers: playersArr
         };
-    }, [matrixData, matchupsData, standingsData, teamColors]);
+    }, [matrixData, matchupsData, standingsData, teamColors, sortBy]);
 
     const getCellStyle = (game, pickObj) => {
         if (!pickObj || !pickObj.ats_pick) return { backgroundColor: "transparent" };
@@ -443,14 +449,57 @@ export default function CfbPickemAtsMatrix() {
                                         left: 0,
                                         zIndex: 10,
                                         backgroundColor: CFB_BLUE,
-                                        padding: "10px 12px",
+                                        padding: "8px 12px",
                                         textAlign: "left",
                                         fontSize: 12,
                                         width: "175px",
                                         minWidth: "175px",
-                                        boxShadow: "2px 0 5px rgba(0,0,0,0.1)"
+                                        boxShadow: "2px 0 5px rgba(0,0,0,0.1)",
+                                        verticalAlign: "middle"
                                     }}>
-                                        Player (Wk / Ovr)
+                                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                            <span>Player (Wk / Ovr)</span>
+                                            <div style={{ display: "flex", gap: "6px", width: "100%" }}>
+                                                <button
+                                                    onClick={() => setSortBy("overall")}
+                                                    style={{
+                                                        width: "52px",
+                                                        padding: "1px 2px",
+                                                        borderRadius: 3,
+                                                        border: `1px solid ${GOLD}`,
+                                                        backgroundColor: sortBy === "overall" ? CFB_BLUE : "white",
+                                                        color: sortBy === "overall" ? GOLD : CFB_BLUE,
+                                                        cursor: "pointer",
+                                                        fontWeight: 800,
+                                                        fontSize: "10px",
+                                                        boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                                                        transition: "all 0.2s",
+                                                        textAlign: "center"
+                                                    }}
+                                                >
+                                                    Ovr
+                                                </button>
+                                                <button
+                                                    onClick={() => setSortBy("week")}
+                                                    style={{
+                                                        width: "52px",
+                                                        padding: "1px 2px",
+                                                        borderRadius: 3,
+                                                        border: `1px solid ${GOLD}`,
+                                                        backgroundColor: sortBy === "week" ? CFB_BLUE : "white",
+                                                        color: sortBy === "week" ? GOLD : CFB_BLUE,
+                                                        cursor: "pointer",
+                                                        fontWeight: 800,
+                                                        fontSize: "10px",
+                                                        boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                                                        transition: "all 0.2s",
+                                                        textAlign: "center"
+                                                    }}
+                                                >
+                                                    Wk
+                                                </button>
+                                            </div>
+                                        </div>
                                     </th>
                                     {gamesList.map((game) => (
                                         <th key={game.game_id} style={{
