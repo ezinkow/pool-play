@@ -348,7 +348,6 @@ async function processMatchup(m) {
 
 async function syncNflSeason() {
     try {
-        // 🧠 Use the dynamic date range consistently just like CFB
         const dateRange = getDynamicDateRange();
         const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${dateRange}`;
 
@@ -361,32 +360,6 @@ async function syncNflSeason() {
         }
         console.log(`[NFL Regular Season sync] Successfully synced ${matchups.length} matchups.`);
 
-        await evaluateSurvivorResults();
-
-    } catch (err) {
-        console.error("[NFL Regular Season sync] Fatal Error:", err.message);
-    }
-}
-
-async function syncNflSeason() {
-    try {
-        const now = new Date();
-        const seasonStartThreshold = new Date("2026-09-09T00:00:00"); // Week 1 kickoff date
-
-        // Hardcode through 9/22 until season starts, then switch to dynamic 2-week rolling window
-        const dateRange = now < seasonStartThreshold ? "20260909-20260922" : getDynamicDateRange();
-        const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${dateRange}`;
-
-        console.log(`[NFL Regular Season sync] Fetching scoreboard data for range: ${dateRange}`);
-        const { data } = await axios.get(scoreboardUrl, { timeout: 15000 });
-
-        const matchups = extractMatchups(data);
-        for (const m of matchups) {
-            await processMatchup(m);
-        }
-        console.log(`[NFL Regular Season sync] Successfully synced ${matchups.length} matchups.`);
-
-        // 🧠 Automatically run survivor elimination evaluation after games sync
         await evaluateSurvivorResults();
 
     } catch (err) {
