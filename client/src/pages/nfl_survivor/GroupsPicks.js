@@ -9,7 +9,7 @@ const NFL_RED = "#D50A0A";
 
 export default function NflSurvivorGroupPicks() {
     const { user, loading: authLoading } = useAuth();
-    const [currentWeek, setCurrentWeek] = useState(1);
+    const [currentWeek, setCurrentWeek] = useState(null);
     const [maxAvailableWeek, setMaxAvailableWeek] = useState(1);
     const [rosterData, setRosterData] = useState([]);
     const [teamColors, setTeamColors] = useState({});
@@ -37,24 +37,30 @@ export default function NflSurvivorGroupPicks() {
             .catch(err => console.error("Failed to load NFL team colors", err));
     }, [token]);
 
-    // Fetch roster data & determine current active week
+    // Fetch dynamic current active week from survivor settings, then fetch roster data
     useEffect(() => {
-        if (!user) return;
+        if (!user || !token) return;
         setLoading(true);
 
-        // Fetch active states for max week
-        axios.get("/api/settings/active-states", {
+        axios.get("/api/nfl_survivor/settings", {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => {
-                const survivorPool = (res.data || []).find(p => p.game_key === "nfl_survivor");
-                if (survivorPool && survivorPool.current_week) {
-                    const activeWk = parseInt(survivorPool.current_week);
-                    setMaxAvailableWeek(activeWk);
-                    setCurrentWeek(activeWk);
+                const activeWk = res.data?.current_week;
+                if (activeWk) {
+                    const weekNum = Number(activeWk);
+                    setCurrentWeek(weekNum);
+                    setMaxAvailableWeek(weekNum); // 👈 Restricts buttons up to current week only
+                } else {
+                    setCurrentWeek(2);
+                    setMaxAvailableWeek(2);
                 }
             })
-            .catch(() => { })
+            .catch(err => {
+                console.error("Failed to load survivor settings, defaulting to week 2", err);
+                setCurrentWeek(2);
+                setMaxAvailableWeek(2);
+            })
             .finally(() => {
                 // Fetch roster data from your existing route
                 axios.get("/api/nfl_survivor/roster", {
@@ -79,7 +85,7 @@ export default function NflSurvivorGroupPicks() {
         setCurrentWeek(targetWeek);
     };
 
-    if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50 }}>Loading group matrix...</div>;
+    if (authLoading || loading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50 }}>Loading group matrix...</div>;
 
     return (
         <PoolGatekeeper user={user} gameKey="nfl_survivor" className='page-content'>
@@ -93,7 +99,7 @@ export default function NflSurvivorGroupPicks() {
                     </p>
                 </div>
 
-                {/* Restricted Week Selector Bar */}
+                {/* Restricted Week Selector Bar (Shows buttons only up to current week) */}
                 <div style={{
                     display: "flex",
                     justifyContent: "flex-start",

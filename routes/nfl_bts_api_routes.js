@@ -7,7 +7,7 @@ const assignTeamsToRoom = require("../client/src/services/nfl_bts_team_assigner"
 module.exports = function (app) {
 
     // ------------------------------------------------------------------
-    // 1. GET Current User's Profile Statuses across rooms
+    // 1. GET Current User's Profile Status
     // ------------------------------------------------------------------
     app.get("/api/nfl_bts/entries/me", requireAuth, async (req, res) => {
         try {
@@ -18,7 +18,7 @@ module.exports = function (app) {
 
             const enrichedEntries = await Promise.all(entries.map(async (entry) => {
                 const assignment = await NflBtsTeamAssignments.findOne({
-                    where: { user_id: req.user.id, room_id: entry.room_id }
+                    where: { user_id: req.user.id, room_id: 1 }
                 });
                 return {
                     ...entry,
@@ -34,16 +34,11 @@ module.exports = function (app) {
     });
 
     // ------------------------------------------------------------------
-    // 2. POST Create/Initialize Profile Entry for a specific Room
+    // 2. POST Create/Initialize Profile Entry
     // ------------------------------------------------------------------
     app.post("/api/nfl_bts/entries/create", requireAuth, async (req, res) => {
         try {
-            const room_id = parseInt(req.body.room_id || req.body.room_number) || 1;
             const entry_name = (req.body.entry_name || req.user.name).trim();
-
-            if (![1, 2].includes(room_id)) {
-                return res.status(400).json({ error: "Invalid room selection" });
-            }
 
             if (!entry_name) {
                 return res.status(400).json({ error: "Entry name is required" });
@@ -56,27 +51,27 @@ module.exports = function (app) {
                 }
             }
 
-            const currentRoomCount = await NflBtsEntries.count({ where: { room_id } });
-            if (currentRoomCount >= 16) {
-                return res.status(400).json({ error: "This room is full (max 16 players)." });
+            const currentCount = await NflBtsEntries.count({ where: { room_id: 1 } });
+            if (currentCount >= 16) {
+                return res.status(400).json({ error: "The pool is full (max 16 players)." });
             }
 
-            const nameTaken = await NflBtsEntries.findOne({ where: { entry_name, room_id } });
+            const nameTaken = await NflBtsEntries.findOne({ where: { entry_name, room_id: 1 } });
             if (nameTaken && nameTaken.user_id !== req.user.id) {
-                return res.status(400).json({ error: "That display name is already taken in this room" });
+                return res.status(400).json({ error: "That display name is already taken" });
             }
 
-            const existingInRoom = await NflBtsEntries.findOne({
-                where: { user_id: req.user.id, room_id }
+            const existing = await NflBtsEntries.findOne({
+                where: { user_id: req.user.id, room_id: 1 }
             });
 
-            if (existingInRoom) {
-                return res.status(400).json({ error: `You are already entered in Room ${room_id}` });
+            if (existing) {
+                return res.status(400).json({ error: "You are already entered in the pool" });
             }
 
             const entry = await NflBtsEntries.create({
                 user_id: req.user.id,
-                room_id,
+                room_id: 1,
                 entry_name
             });
 
@@ -88,16 +83,10 @@ module.exports = function (app) {
     });
 
     // ------------------------------------------------------------------
-    // 3. POST Leave Pool Entry for a specific Room
+    // 3. POST Leave Pool Entry
     // ------------------------------------------------------------------
     app.post("/api/nfl_bts/entries/leave", requireAuth, async (req, res) => {
         try {
-            const room_id = parseInt(req.body.room_id || req.body.room_number);
-
-            if (![1, 2].includes(room_id)) {
-                return res.status(400).json({ error: "Invalid room selection" });
-            }
-
             if (Settings && typeof Settings.findOne === "function") {
                 const poolSetting = await Settings.findOne({ where: { game_key: "nfl_bts" } });
                 if (poolSetting && poolSetting.lock_date && new Date() >= new Date(poolSetting.lock_date)) {
@@ -105,25 +94,24 @@ module.exports = function (app) {
                 }
             }
 
-            // Check if teams have already been assigned for this user in this room
             const existingAssignment = await NflBtsTeamAssignments.findOne({
-                where: { user_id: req.user.id, room_id }
+                where: { user_id: req.user.id, room_id: 1 }
             });
 
             if (existingAssignment && (existingAssignment.team_name_1 || existingAssignment.team_name_2)) {
-                return res.status(403).json({ error: "You cannot leave this room anymore because teams have already been assigned!" });
+                return res.status(403).json({ error: "You cannot leave anymore because teams have already been assigned!" });
             }
 
             const deletedCount = await NflBtsEntries.destroy({
-                where: { user_id: req.user.id, room_id }
+                where: { user_id: req.user.id, room_id: 1 }
             });
 
             if (deletedCount === 0) {
-                return res.status(404).json({ error: "Entry not found in this room" });
+                return res.status(404).json({ error: "Entry not found" });
             }
 
             await NflBtsTeamAssignments.destroy({
-                where: { user_id: req.user.id, room_id }
+                where: { user_id: req.user.id, room_id: 1 }
             });
 
             res.json({ success: true });
@@ -139,6 +127,7 @@ module.exports = function (app) {
     app.get("/api/nfl_bts/entries", async (req, res) => {
         try {
             const entries = await NflBtsEntries.findAll({
+                where: { room_id: 1 },
                 attributes: ["id", "user_id", "room_id", "entry_name", "createdAt"],
             });
             res.json(entries);
@@ -170,9 +159,8 @@ module.exports = function (app) {
     // --------------------------------------------------------
     app.get("/api/nfl_bts/assignment", requireAuth, async (req, res) => {
         try {
-            const room_id = parseInt(req.query.room_id || req.query.room_number) || 1;
             const assignment = await NflBtsTeamAssignments.findOne({
-                where: { user_id: req.user.id, room_id }
+                where: { user_id: req.user.id, room_id: 1 }
             });
 
             if (!assignment || !assignment.team_name_1) {
@@ -208,13 +196,11 @@ module.exports = function (app) {
     // --------------------------------------------------------
     app.get("/api/nfl_bts/picks", requireAuth, async (req, res) => {
         try {
-            const { week, room_id, room_number } = req.query;
-            const targetRoom = parseInt(room_id || room_number) || 1;
+            const { week } = req.query;
             const targetWeek = parseInt(week) || 1;
 
-            // Ensure user has an active assignment or entry in this room before querying picks
             const assignment = await NflBtsTeamAssignments.findOne({
-                where: { user_id: req.user.id, room_id: targetRoom }
+                where: { user_id: req.user.id, room_id: 1 }
             });
 
             if (!assignment) {
@@ -222,7 +208,7 @@ module.exports = function (app) {
             }
 
             const picks = await NflBtsPicks.findAll({
-                where: { user_id: req.user.id, week: targetWeek, room_id: targetRoom }
+                where: { user_id: req.user.id, week: targetWeek, room_id: 1 }
             });
             res.json(picks || []);
         } catch (err) {
@@ -232,14 +218,12 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
-    // POST /api/nfl_bts/picks (Supports batch array or single pick payload)
+    // POST /api/nfl_bts/picks
     // --------------------------------------------------------
     app.post("/api/nfl_bts/picks", requireAuth, async (req, res) => {
         try {
-            const { week, room_id, room_number, picks } = req.body;
-            const targetRoom = parseInt(room_id || room_number) || 1;
+            const { week, picks } = req.body;
             const targetWeek = parseInt(week) || 1;
-
             const picksArray = Array.isArray(picks) ? picks : [req.body];
 
             if (picksArray.length === 0) {
@@ -247,11 +231,11 @@ module.exports = function (app) {
             }
 
             const assignment = await NflBtsTeamAssignments.findOne({
-                where: { user_id: req.user.id, room_id: targetRoom }
+                where: { user_id: req.user.id, room_id: 1 }
             });
 
             if (!assignment) {
-                return res.status(400).json({ error: "No teams assigned for this room." });
+                return res.status(400).json({ error: "No teams assigned." });
             }
 
             const allowedTeams = [assignment.team_name_1, assignment.team_name_2];
@@ -277,7 +261,7 @@ module.exports = function (app) {
                 }
 
                 let existingPick = await NflBtsPicks.findOne({
-                    where: { user_id: req.user.id, week: targetWeek, room_id: targetRoom, team_name }
+                    where: { user_id: req.user.id, week: targetWeek, room_id: 1, team_name }
                 });
 
                 if (existingPick) {
@@ -290,7 +274,7 @@ module.exports = function (app) {
                     await NflBtsPicks.create({
                         user_id: req.user.id,
                         week: targetWeek,
-                        room_id: targetRoom,
+                        room_id: 1,
                         team_name,
                         game_id: matchup.id || matchup.game_id,
                         ats_pick,
@@ -311,12 +295,11 @@ module.exports = function (app) {
     // --------------------------------------------------------
     app.get("/api/nfl_bts/matrix", requireAuth, async (req, res) => {
         try {
-            const { week, room_id, room_number } = req.query;
-            const targetRoom = parseInt(room_id || room_number) || 1;
+            const { week } = req.query;
             const targetWeek = parseInt(week) || 1;
 
             const entries = await NflBtsEntries.findAll({
-                where: { room_id: targetRoom },
+                where: { room_id: 1 },
                 include: [{ model: Users, attributes: ["id", "name"] }],
                 raw: true,
                 nest: true
@@ -329,7 +312,7 @@ module.exports = function (app) {
                 const userName = entry.entry_name || (entry.User ? entry.User.name : "Unknown");
 
                 const assignment = await NflBtsTeamAssignments.findOne({
-                    where: { user_id: userId, room_id: targetRoom }
+                    where: { user_id: userId, room_id: 1 }
                 });
 
                 const team1 = assignment ? assignment.team_name_1 : null;
@@ -354,7 +337,7 @@ module.exports = function (app) {
                         }
                     });
                     const pick = await NflBtsPicks.findOne({
-                        where: { user_id: userId, week: targetWeek, room_id: targetRoom, team_name: teamName }
+                        where: { user_id: userId, week: targetWeek, room_id: 1, team_name: teamName }
                     });
 
                     let awayLogo = null, homeLogo = null, favoriteLogo = null, favoriteTeam = null;
@@ -370,7 +353,6 @@ module.exports = function (app) {
                         }
                     }
 
-                    // Calculate individual pick statuses if game is final
                     let calculatedStatus = pick ? pick.status : null;
                     let atsStatus = null;
                     let ouStatus = null;
@@ -391,7 +373,6 @@ module.exports = function (app) {
                         }
 
                         if (isFinal) {
-                            // Aggregate win/loss default for row display
                             let wCount = 0;
                             let lCount = 0;
                             if (atsStatus === 'win') wCount++;
@@ -455,8 +436,6 @@ module.exports = function (app) {
     // --------------------------------------------------------
     app.get("/api/nfl_bts/standings", requireAuth, async (req, res) => {
         try {
-            const room_id = parseInt(req.query.room_id) || 1;
-
             const query = `
                 SELECT 
                     fa.user_id,
@@ -471,28 +450,25 @@ module.exports = function (app) {
                 JOIN nfl_bts_entries u ON fa.user_id = u.user_id AND fa.room_id = u.room_id
                 LEFT JOIN nfl_teams t1 ON fa.team_name_1 = t1.name
                 LEFT JOIN nfl_teams t2 ON fa.team_name_2 = t2.name
-                WHERE fa.room_id = :room_id
+                WHERE fa.room_id = 1
             `;
 
-            const [assignments] = await db.sequelize.query(query, {
-                replacements: { room_id }
-            });
+            const [assignments] = await db.sequelize.query(query);
 
             const picks = await NflBtsPicks.findAll({
-                where: { room_id },
+                where: { room_id: 1 },
                 raw: true
             });
 
             const games = await NflRegularSeasonGames.findAll({ raw: true });
 
-            // Helper function to calculate record for a specific team name
             const getTeamRecord = (userId, teamName) => {
                 const userTeamPicks = picks.filter(p => Number(p.user_id) === Number(userId) && p.team_name === teamName);
 
                 let ats_wins = 0, ats_losses = 0, ou_wins = 0, ou_losses = 0, ou_pushes = 0;
 
                 userTeamPicks.forEach(p => {
-                    const game = games.find(g => String(g.id) === String(p.game_id) || String(g.game_id) === String(p.game_id));
+                    const game = games.find(g => String(g.id) === String(p.game_id));
 
                     if (game && game.status === 'STATUS_FINAL') {
                         if (p.ats_pick && game.ats_winner) {
@@ -526,7 +502,6 @@ module.exports = function (app) {
 
                 return {
                     ...row,
-                    // Pass individual records per team slot so the frontend maps them accurately
                     ats_wins_1: team1Stats.ats_wins,
                     ats_losses_1: team1Stats.ats_losses,
                     ou_wins_1: team1Stats.ou_wins,
@@ -537,7 +512,6 @@ module.exports = function (app) {
                     ou_wins_2: team2Stats.ou_wins,
                     ou_losses_2: team2Stats.ou_losses,
 
-                    // Combined total fallback for sorting rows
                     ats_wins: team1Stats.ats_wins + team2Stats.ats_wins,
                     ats_losses: team1Stats.ats_losses + team2Stats.ats_losses,
                     ou_wins: team1Stats.ou_wins + team2Stats.ou_wins,
@@ -553,7 +527,7 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
-    // POST /api/nfl_bts/admin/randomize-room-teams (Assigns 1 NFC and 1 AFC team to each user)
+    // POST /api/nfl_bts/admin/randomize-room-teams
     // --------------------------------------------------------
     app.post("/api/nfl_bts/admin/randomize-room-teams", requireAuth, async (req, res) => {
         try {
@@ -564,34 +538,86 @@ module.exports = function (app) {
                 return res.status(403).json({ error: "Unauthorized. Admin access required." });
             }
 
-            const { room_id } = req.body;
-            const roomId = parseInt(room_id) || 1;
-
             const entries = await NflBtsEntries.findAll({
-                where: { room_id: roomId }
+                where: { room_id: 1 }
             });
 
             if (entries.length === 0) {
-                return res.status(400).json({ error: `Room ${roomId} has no entries yet.` });
+                return res.status(400).json({ error: "The pool has no entries yet." });
             }
 
             const usersList = entries.map(e => ({
                 id: e.user_id
             }));
 
-            // Clear existing team assignments for this room before re-assigning
-            await NflBtsTeamAssignments.destroy({ where: { room_id: roomId } });
+            await NflBtsTeamAssignments.destroy({ where: { room_id: 1 } });
 
-            const success = await assignTeamsToRoom(usersList, roomId);
+            const success = await assignTeamsToRoom(usersList, 1);
 
             if (success) {
-                return res.json({ success: true, message: `Room ${roomId} successfully randomized with 1 NFC and 1 AFC team per user ID!` });
+                return res.json({ success: true, message: "Pool successfully randomized with 1 NFC and 1 AFC team per user ID!" });
             } else {
                 return res.status(500).json({ error: "Team assignment execution failed." });
             }
         } catch (err) {
-            console.error("Error randomizing room teams:", err);
-            res.status(500).json({ error: "Failed to randomize room teams" });
+            console.error("Error randomizing pool teams:", err);
+            res.status(500).json({ error: "Failed to randomize pool teams" });
+        }
+    });
+
+    // --------------------------------------------------------
+    // GET /api/nfl_bts/settings
+    // --------------------------------------------------------
+    app.get("/api/nfl_bts/settings", requireAuth, async (req, res) => {
+        try {
+            const SettingsModel = Settings || db.Settings;
+            let setting = null;
+
+            if (SettingsModel && typeof SettingsModel.findOne === "function") {
+                setting = await SettingsModel.findOne({ where: { game_key: "nfl_bts" } });
+            }
+
+            // 🧠 Built-in dynamic active week calculator (matches NFL Pick'em logic)
+            const now = new Date();
+            const weeks = [
+                { week: 1, start: new Date("2026-09-02T00:00:00"), end: new Date("2026-09-08T23:59:59") },
+                { week: 2, start: new Date("2026-09-09T00:00:00"), end: new Date("2026-09-15T23:59:59") },
+                { week: 3, start: new Date("2026-09-16T00:00:00"), end: new Date("2026-09-22T23:59:59") },
+                { week: 4, start: new Date("2026-09-23T00:00:00"), end: new Date("2026-09-29T23:59:59") },
+                { week: 5, start: new Date("2026-09-30T00:00:00"), end: new Date("2026-10-06T23:59:59") },
+                { week: 6, start: new Date("2026-10-07T00:00:00"), end: new Date("2026-10-13T23:59:59") },
+                { week: 7, start: new Date("2026-10-14T00:00:00"), end: new Date("2026-10-20T23:59:59") },
+                { week: 8, start: new Date("2026-10-21T00:00:00"), end: new Date("2026-10-27T23:59:59") },
+                { week: 9, start: new Date("2026-10-28T00:00:00"), end: new Date("2026-11-03T23:59:59") },
+                { week: 10, start: new Date("2026-11-04T00:00:00"), end: new Date("2026-11-10T23:59:59") },
+                { week: 11, start: new Date("2026-11-11T00:00:00"), end: new Date("2026-11-17T23:59:59") },
+                { week: 12, start: new Date("2026-11-18T00:00:00"), end: new Date("2026-11-24T23:59:59") },
+                { week: 13, start: new Date("2026-11-25T00:00:00"), end: new Date("2026-12-01T23:59:59") },
+                { week: 14, start: new Date("2026-12-02T00:00:00"), end: new Date("2026-12-08T23:59:59") },
+                { week: 15, start: new Date("2026-12-09T00:00:00"), end: new Date("2026-12-15T23:59:59") },
+                { week: 16, start: new Date("2026-12-16T00:00:00"), end: new Date("2026-12-22T23:59:59") },
+                { week: 17, start: new Date("2026-12-23T00:00:00"), end: new Date("2026-12-29T23:59:59") },
+                { week: 18, start: new Date("2026-12-30T00:00:00"), end: new Date("2027-01-05T23:59:59") }
+            ];
+
+            let activeIndex = 0;
+            for (let i = weeks.length - 1; i >= 0; i--) {
+                if (now >= weeks[i].start) {
+                    activeIndex = i;
+                    break;
+                }
+            }
+            const dynamicWeek = weeks[activeIndex].week;
+
+            res.json({
+                current_week: dynamicWeek,
+                active_week: dynamicWeek,
+                is_active: setting ? setting.is_active : true,
+                title: setting?.title || "NFL Beat The Spread"
+            });
+        } catch (err) {
+            console.error("Error fetching BTS settings:", err);
+            res.status(500).json({ error: "Failed to fetch settings" });
         }
     });
 };

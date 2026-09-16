@@ -64,20 +64,49 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
-    // GET /api/nfl_pickem_ats/settings (Fetch current pool settings / active week)
+    // GET /api/nfl_pickem_ats/settings (Fetch current pool settings / active week dynamically)
     // --------------------------------------------------------
     app.get("/api/nfl_pickem_ats/settings", async (req, res) => {
         try {
             const SettingsModel = db.GameSettings || db.gameSettings || db.GameSetting || db.game_settings;
             const setting = SettingsModel ? await SettingsModel.findOne({ where: { game_key: "nfl_pickem_ats" } }) : null;
 
-            if (!setting) {
-                return res.json({ current_week: 1 });
+            // 🧠 Built-in dynamic active week calculator
+            const now = new Date();
+            const weeks = [
+                { week: 1, start: new Date("2026-09-02T00:00:00"), end: new Date("2026-09-08T23:59:59") },
+                { week: 2, start: new Date("2026-09-09T00:00:00"), end: new Date("2026-09-15T23:59:59") },
+                { week: 3, start: new Date("2026-09-16T00:00:00"), end: new Date("2026-09-22T23:59:59") },
+                { week: 4, start: new Date("2026-09-23T00:00:00"), end: new Date("2026-09-29T23:59:59") },
+                { week: 5, start: new Date("2026-09-30T00:00:00"), end: new Date("2026-10-06T23:59:59") },
+                { week: 6, start: new Date("2026-10-07T00:00:00"), end: new Date("2026-10-13T23:59:59") },
+                { week: 7, start: new Date("2026-10-14T00:00:00"), end: new Date("2026-10-20T23:59:59") },
+                { week: 8, start: new Date("2026-10-21T00:00:00"), end: new Date("2026-10-27T23:59:59") },
+                { week: 9, start: new Date("2026-10-28T00:00:00"), end: new Date("2026-11-03T23:59:59") },
+                { week: 10, start: new Date("2026-11-04T00:00:00"), end: new Date("2026-11-10T23:59:59") },
+                { week: 11, start: new Date("2026-11-11T00:00:00"), end: new Date("2026-11-17T23:59:59") },
+                { week: 12, start: new Date("2026-11-18T00:00:00"), end: new Date("2026-11-24T23:59:59") },
+                { week: 13, start: new Date("2026-11-25T00:00:00"), end: new Date("2026-12-01T23:59:59") },
+                { week: 14, start: new Date("2026-12-02T00:00:00"), end: new Date("2026-12-08T23:59:59") },
+                { week: 15, start: new Date("2026-12-09T00:00:00"), end: new Date("2026-12-15T23:59:59") },
+                { week: 16, start: new Date("2026-12-16T00:00:00"), end: new Date("2026-12-22T23:59:59") },
+                { week: 17, start: new Date("2026-12-23T00:00:00"), end: new Date("2026-12-29T23:59:59") },
+                { week: 18, start: new Date("2026-12-30T00:00:00"), end: new Date("2027-01-05T23:59:59") }
+            ];
+
+            let activeIndex = 0;
+            for (let i = weeks.length - 1; i >= 0; i--) {
+                if (now >= weeks[i].start) {
+                    activeIndex = i;
+                    break;
+                }
             }
+            const dynamicWeek = weeks[activeIndex].week;
 
             return res.json({
-                current_week: setting.current_week || 1,
-                is_active: setting.is_active
+                current_week: dynamicWeek,
+                is_active: setting ? setting.is_active : true,
+                title: setting?.title || "NFL Pick'em ATS"
             });
         } catch (err) {
             console.error("Failed to fetch pool settings:", err);
@@ -85,7 +114,7 @@ module.exports = function (app) {
         }
     });
 
-// --------------------------------------------------------
+    // --------------------------------------------------------
     // POST /api/nfl_pickem_ats/picks (Save batch picks for the week)
     // --------------------------------------------------------
     app.post("/api/nfl_pickem_ats/picks", requireAuth, async (req, res) => {

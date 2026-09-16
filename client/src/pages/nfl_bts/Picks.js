@@ -11,10 +11,8 @@ const NFL_RED = "#D50A0A";
 
 export default function NflBtsPicks() {
     const { user, loading: authLoading } = useAuth();
-    const [userEntries, setUserEntries] = useState([]);
-    const [selectedRoomId, setSelectedRoomId] = useState(1);
     const [assignedTeams, setAssignedTeams] = useState({ team_1: null, team_2: null });
-    const [currentWeek, setCurrentWeek] = useState(1);
+    const [currentWeek, setCurrentWeek] = useState(null); // Initialized as null until fetched
     const [matchups, setMatchups] = useState({ match_1: null, match_2: null });
     const [picks, setPicks] = useState({
         team_1: { ats_pick: "", ou_pick: "" },
@@ -49,6 +47,7 @@ export default function NflBtsPicks() {
         );
     };
 
+    // Fetch team colors mapping
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (!token) return;
@@ -69,36 +68,42 @@ export default function NflBtsPicks() {
             .catch(err => console.error("Failed to load NFL team colors", err));
     }, []);
 
+    // Fetch dynamic current active week on mount
     useEffect(() => {
-        if (!user) return;
         const token = localStorage.getItem("token");
-        const config = { headers: { Authorization: `Bearer ${token}` } };
+        if (!token) return;
 
-        axios.get("/api/nfl_bts/entries/me", config)
+        axios.get("/api/nfl_bts/settings", {
+            headers: { Authorization: `Bearer ${token}` }
+        })
             .then(res => {
-                const entries = res.data.entries || [];
-                setUserEntries(entries);
-                if (entries.length > 0) {
-                    if (!entries.some(e => Number(e.room_id) === selectedRoomId)) {
-                        setSelectedRoomId(Number(entries[0].room_id));
+                if (res.data) {
+                    const activeWk = res.data.current_week || res.data.active_week || res.data.currentWeek;
+                    if (activeWk) {
+                        setCurrentWeek(Number(activeWk));
+                    } else {
+                        setCurrentWeek(1);
                     }
+                } else {
+                    setCurrentWeek(1);
                 }
             })
-            .catch(err => console.error("Error loading user entries", err));
-    }, [user]);
+            .catch(err => {
+                console.error("Failed to load pool settings:", err);
+                setCurrentWeek(1);
+            });
+    }, []);
 
+    // Fetch team assignments and weekly matchup data
     useEffect(() => {
-        if (!user) return;
+        if (!user || currentWeek === null) return;
         const token = localStorage.getItem("token");
         const config = { headers: { Authorization: `Bearer ${token}` } };
 
         async function fetchData() {
             setLoading(true);
             try {
-                const assignmentRes = await axios.get("/api/nfl_bts/assignment", {
-                    ...config,
-                    params: { room_id: selectedRoomId }
-                });
+                const assignmentRes = await axios.get("/api/nfl_bts/assignment", config);
 
                 const t1 = assignmentRes.data.team_name_1;
                 const t2 = assignmentRes.data.team_name_2;
@@ -133,7 +138,7 @@ export default function NflBtsPicks() {
 
                 const pickRes = await axios.get("/api/nfl_bts/picks", {
                     ...config,
-                    params: { week: currentWeek, room_id: selectedRoomId }
+                    params: { week: currentWeek }
                 });
 
                 const savedPicks = pickRes.data || [];
@@ -158,7 +163,7 @@ export default function NflBtsPicks() {
             }
         }
         fetchData();
-    }, [user, currentWeek, selectedRoomId, teamColorsMap]);
+    }, [user, currentWeek, teamColorsMap]);
 
     const handlePickChange = (teamKey, field, value, matchup) => {
         if (matchup?.game_date && new Date() >= new Date(matchup.game_date)) {
@@ -204,17 +209,18 @@ export default function NflBtsPicks() {
         try {
             await axios.post("/api/nfl_bts/picks", {
                 week: currentWeek,
-                room_id: selectedRoomId,
                 picks: picksArray
             }, { headers: { Authorization: `Bearer ${token}` } });
 
-            toast.success(`Room ${selectedRoomId} weekly picks saved successfully!`);
+            toast.success(`Week ${currentWeek} picks saved successfully!`);
         } catch (err) {
             toast.error(err.response?.data?.error || "Failed to save picks");
         }
     };
 
-    if (authLoading || (loading && !assignedTeams.team_1)) return <div style={{ textAlign: "center", padding: 50 }}>Loading your team assignments...</div>;
+    if (authLoading || currentWeek === null || (loading && !assignedTeams.team_1)) {
+        return <div style={{ textAlign: "center", padding: 50 }}>Loading your team assignments...</div>;
+    }
 
     const renderMatchupCard = (teamKey, teamName, teamMetaInfo, matchupData, pickData) => {
         if (!teamName) {
@@ -435,46 +441,26 @@ export default function NflBtsPicks() {
                 <div style={{ padding: "20px 24px", minWidth: 0 }}>
                     <Toaster />
 
-                    {userEntries.length > 1 && (
-                        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
-                            {[1, 2].map(rId => {
-                                const isJoined = userEntries.some(e => Number(e.room_id) === rId);
-                                if (!isJoined) return null;
-                                const isSelected = selectedRoomId === rId;
-                                const label = rId === 1 ? "Room 1 (100 Credit Pool A)" : "Room 2 (100 Credit Pool B)";
-                                return (
-                                    <button
-                                        key={rId}
-                                        onClick={() => setSelectedRoomId(rId)}
-                                        style={{
-                                            padding: "8px 12px",
-                                            borderRadius: 8,
-                                            border: `2px solid ${NFL_BLUE}`,
-                                            background: isSelected ? NFL_BLUE : "white",
-                                            color: isSelected ? "white" : NFL_BLUE,
-                                            fontWeight: 700,
-                                            cursor: "pointer",
-                                            fontSize: "12px"
-                                        }}
-                                    >
-                                        {label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
+                    {/* Header Title Section */}
+                    <div style={{ textAlign: "center", marginBottom: 20 }}>
+                        <h2 style={{ color: NFL_BLUE, fontSize: "22px", margin: "0 0 4px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontWeight: 800 }}>
+                            <span>🏈</span> NFL Beat The Spread <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span>
+                        </h2>
+                        <p style={{ color: "#64748b", margin: 0, fontSize: "12px" }}>
+                            Make your ATS and Over/Under picks for your assigned weekly teams.
+                        </p>
+                    </div>
 
-                    <h3 style={{ color: NFL_BLUE, fontSize: "14px", margin: "0 0 6px 0" }}>Select Week:</h3>
-
+                    {/* All 18 Weeks Horizontal Scroll Bar */}
                     <div style={{
                         display: "flex",
+                        justifyContent: "flex-start",
                         gap: 6,
                         marginBottom: 20,
                         flexWrap: "nowrap",
                         overflowX: "auto",
                         WebkitOverflowScrolling: "touch",
-                        marginTop: 4,
-                        paddingBottom: 6,
+                        paddingBottom: 4,
                         width: "100%"
                     }}>
                         {[...Array(18)].map((_, i) => (
@@ -482,25 +468,25 @@ export default function NflBtsPicks() {
                                 key={i + 1}
                                 onClick={() => setCurrentWeek(i + 1)}
                                 style={{
-                                    padding: "6px 12px",
+                                    padding: "6px 10px",
                                     borderRadius: 6,
                                     border: "1px solid #ddd",
-                                    backgroundColor: currentWeek === i + 1 ? FALLBACK_BLUE : "white",
+                                    backgroundColor: currentWeek === i + 1 ? NFL_BLUE : "white",
                                     color: currentWeek === i + 1 ? "white" : "#333",
                                     cursor: "pointer",
                                     fontWeight: 600,
                                     flexShrink: 0,
-                                    fontSize: "14px"
+                                    fontSize: "13px"
                                 }}
                             >
-                                {i + 1}
+                                W{i + 1}
                             </button>
                         ))}
                     </div>
 
-                    <h2 style={{ fontSize: "18px", color: NFL_BLUE, textAlign: "center", marginBottom: 20 }}>
-                        Room {selectedRoomId} - Week {currentWeek} Team Matchups
-                    </h2>
+                    <h3 style={{ fontSize: "16px", color: NFL_BLUE, textAlign: "center", marginBottom: 20, fontWeight: 700 }}>
+                        Week {currentWeek} Team Matchups
+                    </h3>
 
                     <div className="bts-picks-grid" style={{
                         display: "grid",
@@ -517,11 +503,11 @@ export default function NflBtsPicks() {
                             onClick={handleSubmitAll}
                             style={{
                                 width: "100%", padding: 14, backgroundColor: "#16a34a", color: "white",
-                                borderRadius: 8, border: "none", fontWeight: 700, fontSize: 15,
-                                cursor: "pointer", boxShadow: "0 4px 10px rgba(22,163,74,0.3)"
+                                borderRadius: 8, border: "none", fontWeight: 800, fontSize: 15,
+                                cursor: "pointer", boxShadow: "0 4px 10px rgba(22,163,74,0.3)", textTransform: "uppercase", letterSpacing: "0.5px"
                             }}
                         >
-                            Submit Week {currentWeek} Picks for Room {selectedRoomId}
+                            Save Week {currentWeek} Picks
                         </button>
                     </div>
                 </div>

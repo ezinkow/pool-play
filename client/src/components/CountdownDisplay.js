@@ -47,6 +47,7 @@ export default function PoolCountdown({ poolData, mode }) {
 
     useEffect(() => {
         let timer;
+        let isMounted = true;
 
         if (mode === "pre-start" && poolData?.lock_date) {
             const target = new Date(poolData.lock_date);
@@ -64,32 +65,67 @@ export default function PoolCountdown({ poolData, mode }) {
         } else if (mode === "active" && poolData?.games_api_path) {
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-            axios.get(poolData.games_api_path, { headers }).then(res => {
-                const now = new Date();
-                const games = res.data.games || res.data || [];
-                const upcoming = games
-                    .filter(g => new Date(g.game_date || g.date) > now)
-                    .sort((a, b) => new Date(a.game_date || a.date) - new Date(b.game_date || b.date));
+            // Helper function to fetch and find the absolute next game across multiple weeks if needed
+            const fetchNextGame = async () => {
+                try {
+                    let basePath = poolData.games_api_path;
+                    let baseWeek = poolData.current_week || 1;
+                    
+                    // If path has a week query param, strip it so we can search sequentially
+                    if (basePath.includes("week=")) {
+                        basePath = basePath.split("?")[0];
+                    }
 
-                if (upcoming.length > 0) {
-                    const nextGame = upcoming[0];
-                    timer = setInterval(() => {
-                        const diff = new Date(nextGame.game_date || nextGame.date) - new Date();
-                        if (diff <= 0) {
-                            clearInterval(timer);
-                        } else {
-                            setTimeLeft(formatTime(diff));
-                            setSubText(`Next Game: ${nextGame.away_team} @ ${nextGame.home_team}`);
+                    let foundGame = null;
+
+                    // Scan up to 3 consecutive weeks ahead to find the absolute next upcoming game
+                    for (let w = Number(baseWeek); w <= Number(baseWeek) + 3; w++) {
+                        const separator = basePath.includes("?") ? "&" : "?";
+                        const queryUrl = `${basePath}${separator}week=${w}`;
+                        
+                        const res = await axios.get(queryUrl, { headers });
+                        const games = res.data.games || res.data || [];
+                        
+                        const now = new Date();
+                        const upcoming = games
+                            .filter(g => new Date(g.game_date || g.date) > now)
+                            .sort((a, b) => new Date(a.game_date || a.date) - new Date(b.game_date || b.date));
+
+                        if (upcoming.length > 0) {
+                            foundGame = upcoming[0];
+                            break;
                         }
-                    }, 1000);
+                    }
+
+                    if (foundGame && isMounted) {
+                        const gameTime = new Date(foundGame.game_date || foundGame.date);
+                        timer = setInterval(() => {
+                            const diff = gameTime - new Date();
+                            if (diff <= 0) {
+                                clearInterval(timer);
+                                // Re-run to fetch subsequent game when this one passes
+                                fetchNextGame();
+                            } else {
+                                setTimeLeft(formatTime(diff));
+                                setSubText(`Next Game: ${foundGame.away_team} @ ${foundGame.home_team}`);
+                            }
+                        }, 1000);
+                    }
+                } catch (err) {
+                    console.error("Error fetching games for countdown:", err);
                 }
-            }).catch(err => console.error("Error fetching games for countdown:", err));
+            };
+
+            fetchNextGame();
         }
 
-        return () => clearInterval(timer);
+        return () => {
+            isMounted = false;
+            clearInterval(timer);
+        };
     }, [mode, poolData, token]);
 
-    if (!timeLeft) return <div className="countdown-card">🏀 Pool is active—games are currently underway!</div>;
+    if (!timeLeft) return <div className="countdown-card" style={{ whiteSpace: "nowrap" }}>🏀 Pool is active—games are currently underway! 🏈</div>;
 
     return (
         <>

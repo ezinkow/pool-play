@@ -33,8 +33,10 @@ export default function NflPickemAtsPicks() {
                     if (res.data.title) {
                         setPoolTitle(res.data.title);
                     }
-                    if (res.data.current_week) {
-                        setCurrentWeek(Number(res.data.current_week));
+                    
+                    const activeWk = res.data.current_week || res.data.active_week || res.data.currentWeek;
+                    if (activeWk) {
+                        setCurrentWeek(Number(activeWk));
                     } else {
                         setCurrentWeek(1);
                     }
@@ -43,7 +45,7 @@ export default function NflPickemAtsPicks() {
                 }
             })
             .catch(err => {
-                console.error("Failed to load pool settings", err);
+                console.error("Failed to load pool settings:", err);
                 setCurrentWeek(1);
             });
     }, [token]);
@@ -51,6 +53,7 @@ export default function NflPickemAtsPicks() {
     // Fetch weekly schedule and user picks independently after currentWeek is initialized
     useEffect(() => {
         if (!user || currentWeek === null) return;
+
         setLoading(true);
 
         Promise.all([
@@ -68,7 +71,7 @@ export default function NflPickemAtsPicks() {
                 setPicks(picksRes.data.userPicks || {});
             })
             .catch(err => {
-                console.error("Failed to load pickem data", err);
+                console.error("Failed to load pickem data for week " + currentWeek, err);
                 toast.error("Failed to load matchups or picks");
             })
             .finally(() => setLoading(false));
@@ -230,11 +233,9 @@ export default function NflPickemAtsPicks() {
         const isStartedA = dateA <= now || isLiveA || rawStatusA.includes("FINAL") || rawStatusA.includes("COMPLETED");
         const isStartedB = dateB <= now || isLiveB || rawStatusB.includes("FINAL") || rawStatusB.includes("COMPLETED");
 
-        // 1. Unstarted games come first, started/live/finished games go to the bottom
         if (!isStartedA && isStartedB) return -1;
         if (isStartedA && !isStartedB) return 1;
 
-        // 2. Apply user's sort option for unstarted games (or general sorting)
         if (sortBy === "kickoff") {
             return dateA - dateB;
         } else if (sortBy === "team_asc") {
@@ -261,16 +262,11 @@ export default function NflPickemAtsPicks() {
 
         const activeGameIds = new Set(availableGames.map(g => String(g.id)));
 
-        // ✨ CRITICAL FIX: Only send picks for games that have NOT kicked off yet, 
-        // OR allow the backend to handle filtering/merging. Wait, if we send picks for *locked* games,
-        // the backend controller is likely rejecting the entire batch because one of the submitted game_ids
-        // has already started! Let's filter out any game picks where the game has already started.
         const now = new Date();
         const formattedPicks = Object.keys(picks)
             .filter(gameId => {
                 if (!activeGameIds.has(String(gameId))) return false;
                 const gameObj = availableGames.find(g => String(g.id) === String(gameId));
-                // If game has started, do not include it in the submission payload to prevent backend validation rejection
                 if (gameObj && gameObj.game_date && now >= new Date(gameObj.game_date)) {
                     return false;
                 }

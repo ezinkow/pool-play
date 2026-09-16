@@ -24,7 +24,13 @@ export default function NflPickemAtsHome() {
     axios.get("/api/settings/active-states")
       .then(res => {
         const pickemPool = res.data.find(p => p.game_key === "nfl_pickem_ats");
-        setPoolData(pickemPool);
+        if (pickemPool) {
+          setPoolData({
+            ...pickemPool,
+            // Force a valid API path or fallback to current week matchups
+            games_api_path: "/api/nfl_regular_season_matchups?week=" + (pickemPool.current_week || 1)
+          });
+        }
       })
       .catch(err => console.error("Failed to load pool data", err));
 
@@ -52,8 +58,17 @@ export default function NflPickemAtsHome() {
   }, [activeToken]);
 
   const isPoolStarted = useMemo(() => {
-    if (!poolData?.lock_date) return false;
-    return new Date() >= new Date(poolData.lock_date);
+    if (!poolData) return false;
+    const dbActive = !!poolData.is_active;
+    let isPastLockTime = false;
+    if (poolData.lock_date) {
+      let lockDateStr = poolData.lock_date;
+      if (typeof lockDateStr === 'string' && !lockDateStr.endsWith('Z') && !lockDateStr.includes('+')) {
+        lockDateStr = lockDateStr.replace(' ', 'T') + 'Z';
+      }
+      isPastLockTime = new Date() >= new Date(lockDateStr);
+    }
+    return !dbActive || isPastLockTime;
   }, [poolData]);
 
   const handleJoinPool = async () => {
