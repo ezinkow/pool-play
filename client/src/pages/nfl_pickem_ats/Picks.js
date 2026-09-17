@@ -33,7 +33,7 @@ export default function NflPickemAtsPicks() {
                     if (res.data.title) {
                         setPoolTitle(res.data.title);
                     }
-                    
+
                     const activeWk = res.data.current_week || res.data.active_week || res.data.currentWeek;
                     if (activeWk) {
                         setCurrentWeek(Number(activeWk));
@@ -223,13 +223,13 @@ export default function NflPickemAtsPicks() {
         const now = Date.now();
         const dateA = a.game_date ? new Date(a.game_date).getTime() : 0;
         const dateB = b.game_date ? new Date(b.game_date).getTime() : 0;
-        
+
         const rawStatusA = (a.status || "").toUpperCase();
         const rawStatusB = (b.status || "").toUpperCase();
 
         const isLiveA = rawStatusA.includes("HALF") || rawStatusA.includes("PROGRESS") || rawStatusA.includes("LIVE");
         const isLiveB = rawStatusB.includes("HALF") || rawStatusB.includes("PROGRESS") || rawStatusB.includes("LIVE");
-        
+
         const isStartedA = dateA <= now || isLiveA || rawStatusA.includes("FINAL") || rawStatusA.includes("COMPLETED");
         const isStartedB = dateB <= now || isLiveB || rawStatusB.includes("FINAL") || rawStatusB.includes("COMPLETED");
 
@@ -255,9 +255,21 @@ export default function NflPickemAtsPicks() {
     });
 
     const handleSubmitAll = async () => {
-        if (bestBetCount !== 3) {
-            toast.error(`You must select exactly 3 Best Bets before saving! (Currently selected: ${bestBetCount})`);
+        // Block if user selected more than 3 best bets
+        if (bestBetCount > 3) {
+            toast.error(`You have selected ${bestBetCount} Best Bets. You can only have up to 3 Best Bets!`);
             return;
+        }
+
+        // If all games have been picked, but best bets are less than 3, block submission
+        if (selectedPicksCount === totalGamesCount && bestBetCount < 3) {
+            toast.error(`You have filled out all ${totalGamesCount} picks, but you only have ${bestBetCount} Best Bets selected. You must have 3 Best Bets to complete your full sheet!`);
+            return;
+        }
+
+        // If picks are incomplete and best bets are less than 3, allow submission with a warning toast
+        if (selectedPicksCount < totalGamesCount && bestBetCount < 3) {
+            toast("⚠️ Warning: Saving partial picks with fewer than 3 Best Bets.", { icon: "⚠️" });
         }
 
         const activeGameIds = new Set(availableGames.map(g => String(g.id)));
@@ -760,7 +772,7 @@ export default function NflPickemAtsPicks() {
                                 textAlign: "center",
                                 marginBottom: 10
                             }}>
-                                ⚠️ Note: Select exactly <strong>3 Best Bets</strong> (Currently selected: {bestBetCount}/3).
+                                ⚠️ Note: You currently have {bestBetCount}/3 Best Bets selected. You can save your picks, but you must have exactly 3 Best Bets before final submission.
                             </div>
                         )}
                         <button
