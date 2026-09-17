@@ -169,7 +169,7 @@ export default function MlbHome() {
           textAlign: "left"
         }}>
           <h3 style={{ color: NAVY, marginTop: 0, marginBottom: 16, fontSize: "1.2rem", textAlign: "center" }}>
-            ⚾ MLB Playoff Pool Entry
+            ⚾ MLB Playoff Pool Entry <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>⚾</span>
           </h3>
 
           {userEntry ? (

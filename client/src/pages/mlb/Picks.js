@@ -174,7 +174,7 @@ export default function Picks() {
                 }}>
                     <div style={{ textAlign: "center" }}>
                         <h2 style={{ color: NAVY, fontSize: "19px", margin: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontWeight: 800 }}>
-                            <span>⚾</span> MLB Postseason Pick'em <span>⚾</span>
+                            <span>⚾</span> MLB Postseason Pick'em <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>⚾</span>
                         </h2>
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
                             Correctly guessing the number of games gives you a <strong>2x bonus</strong>! Allocate up to {roundMax} confidence points for the {currentRoundLabel} round.

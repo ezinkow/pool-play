@@ -1,284 +1,110 @@
-import React from 'react'
-import { useState, useEffect } from 'react'
-import Button from 'react-bootstrap/Button'
-import axios from 'axios'
-import toast, { Toaster } from 'react-hot-toast'
-import Dropdown from 'react-bootstrap/Dropdown';
-import DropdownButton from 'react-bootstrap/DropdownButton';
-import Table from 'react-bootstrap/Table';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
 
-export default function PicksAM() {
-    const [name, setName] = useState('SELECT YOUR NAME IN DROPDOWN!')
-    const [names, setNames] = useState([''])
-    const [games, setGames] = useState([])
-    const [picks, setPicks] = useState([])
-    const [uScore, setUScore] = useState('')
-    const [fScore, setFScore] = useState('')
-    const [nameToast, setNameToast] = useState('')
-    const [currentPick, setCurrentPick] = useState([])
-    const [modalIsOpen, setIsOpen] = useState('')
-    const todaysDate = '43'
+const NAVY = "#13447a";
+const GOLD = "#c89d3c";
 
-    const customStyles = {
-        content: {
-            top: '50%',
-            left: '50%',
-            right: 'auto',
-            bottom: 'auto',
-            marginRight: '-50%',
-            transform: 'translate(-50%, -50%)',
-        },
-    };
-    useEffect(() => {
-        async function fetchGames() {
-            try {
-                const response = await axios(`api/games/${todaysDate}`)
-                setGames(response.data)
-            } catch (e) {
-                console.log(e)
-            }
-        }
-        fetchGames()
-    }, [])
+export default function TiebreakerCard() {
+    const [totalPoints, setTotalPoints] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+
+    const token = localStorage.getItem("token");
 
     useEffect(() => {
-        async function fetchNames() {
+        async function fetchTiebreaker() {
             try {
-                const response = await axios('api/names')
-                const sortedList = response.data.sort((a, b) =>
-                    a.name.localeCompare(b.name));
-                setNames(sortedList)
-            } catch (e) {
-                console.log(e)
+                const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+                const res = await axios.get("/api/mlb/tiebreaker", config);
+                if (res.data && res.data.total_points !== null) {
+                    setTotalPoints(res.data.total_points);
+                }
+            } catch (err) {
+                console.error("Failed to load tiebreaker", err);
+            } finally {
+                setLoading(false);
             }
         }
-        fetchNames()
-    }, [])
+        fetchTiebreaker();
+    }, [token]);
 
-    // Set Name
-    const handleNameSelect = event => {
-        setName(event);
-        setNameToast(event);
+    const handleSave = async (e) => {
+        e.preventDefault();
+        if (!totalPoints || isNaN(parseInt(totalPoints))) {
+            toast.error("Please enter a valid total points prediction.");
+            return;
+        }
+
+        setSaving(true);
+        try {
+            const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+            await axios.post("/api/mlb/tiebreaker", { total_points: parseInt(totalPoints) }, config);
+            toast.success("Championship tiebreaker saved!");
+        } catch (err) {
+            toast.error(err.response?.data?.error || "Failed to save tiebreaker.");
+        } finally {
+            setSaving(false);
+        }
     };
 
-    const namesList =
-        names.map(name =>
-            <Dropdown.Item
-                eventKey={name.name}
-                key={name.name}
-            >
-                {name.name}
-            </Dropdown.Item>
-        )
-
-    // Set Picks
-    const handleChange = (event, id, underdog, favorite, line, game_date) => {
-        let activePicks = picks
-        const currentPick = event.target.value
-        const currentPickObj = {
-            game: id,
-            pick: currentPick,
-            underdog,
-            favorite,
-            line,
-            game_date
-        }
-        setCurrentPick(currentPick)
-        if (activePicks.length > 0) {
-            let findCurrentPick = activePicks.find(o => o.game === id)
-            if (findCurrentPick === undefined) {
-                activePicks.push(currentPickObj)
-                setPicks(activePicks)
-            } else {
-                findCurrentPick.pick = currentPick
-                setPicks(activePicks)
-            }
-        } else {
-            activePicks.push(currentPickObj)
-            setPicks(activePicks);
-        }
-    }
-
-    const handleUScore = event => {
-        setUScore(event.target.value)
-    }
-
-    const handleFScore = event => {
-        setFScore(event.target.value)
-    }
-
-    const tableGrid =
-        games.map(game =>
-            <tr>
-                <>
-                    <td key={game.id}>{game.id}</td>
-                    <td key={game.time}>{game.time}</td>
-                    <td key={game.underdog}>{game.underdog}</td>
-                    <td key={game.favorite}>{game.favorite}</td>
-                    <td key={game.line}>-{game.line}</td>
-                    <td>
-                        <select
-                            key={game.id}
-                            value={game.id}
-                            onChange={() => { handleChange(event, game.id, game.underdog, game.favorite, game.line, game.game_date) }}
-                        >
-                            <option
-                                key='pick'
-                                value=''
-                            >
-
-                            </option>
-                            <option
-                                key={game.underdog}
-                                value={game.underdog}
-                            >
-                                {game.underdog} (+{game.line})
-                            </option>
-                            <option
-                                key={game.favorite}
-                                value={game.favorite}
-                            >
-                                {game.favorite} (-{game.line})
-                            </option>
-                        </select>
-                    </td>
-                </>
-            </tr>
-            // )
-        )
-
-
-    // Send name and picks to database and reset fields
-    function handleSubmitClick(event) {
-
-        if (name != 'SELECT YOUR NAME IN DROPDOWN!') {
-            event.preventDefault()
-            setIsOpen(true);
-            let newArr = picks
-            let tiebreakScore = uScore + "-" + fScore
-            let newObj = {
-                game: '105',
-                pick: tiebreakScore,
-                game_date: '312',
-                favorite: 'null',
-                underdog: 'null',
-                line: 'null'
-            }
-            newArr.push(newObj)
-            setPicks(newArr)
-            for (let i = 0; i < picks.length; i++) {
-                const game_id = picks[i].game;
-                const pick = picks[i].pick
-                const game_date = picks[i].game_date
-                axios.post('api/picks', {
-                    name,
-                    game_id,
-                    pick,
-                    game_date
-                })
-            }
-            toast.success(`Thanks, ${nameToast}, picks submitted.`,
-                {
-                    duration: 10001,
-                    position: 'top-center',
-                    style: {
-                        border: '2px solid #713200',
-                        padding: '20px',
-                        marginTop: '100px',
-                        color: 'white',
-                        backgroundColor: 'rgb(60, 179, 113, 0.7)'
-                    },
-                    icon: '🏀',
-                    role: 'status',
-                    ariaLive: 'polite',
-                });
-            setName("")
-            setPicks("")
-        } else {
-            toast.error('Please select name in dropdown!',
-                {
-                    duration: 5000,
-                    position: 'top-center',
-                    style: {
-                        border: '2px solid #713200',
-                        padding: '20px',
-                        marginTop: '100px',
-                        backgroundColor: 'rgb(255,0,0)',
-                        color: 'rgb(255,255,255)'
-                    },
-                });
-        }
-
-    }
+    if (loading) return null;
 
     return (
-        <div className='container'>
-            <Toaster />
-            <h3>Steps:</h3>
-            <ul>
-                <li>Select CORRECT name from drop down</li>
-                <li>Make your picks. Try to do them in order. You can always go back and change your pick</li>
-                <li>Picks will show up in the table down below</li>
-                <li>When ready, submit your picks. If you need to make a change, just reach out to me. DO NOT re-submit picks</li>
-                <li>The google doc will still house your picks and results</li>
-            </ul>
-            <DropdownButton
-                id="dropdown-basic-button"
-                title='Name'
-                onSelect={handleNameSelect}
-                key='dropdown'>{namesList}
-            </DropdownButton>
-            <h4> Name: {name}</h4>
-            <h5>Most Recent Pick: {currentPick}</h5>
-            <div className="table">
-                <Table striped bordered hover>
-                    <thead>
-                        <tr>
-                            <th>Game #</th>
-                            <th>Time (ET)</th>
-                            <th>Underdog</th>
-                            <th>Favorite</th>
-                            <th>Line</th>
-                            <th>Pick</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {tableGrid}
-                        <tr>
-                            <td>Tiebreaker: Championship score</td>
-                            <td>Put winning score first</td>
-                            <td><input onChange={handleUScore} type="text" id="tiebreakeru" name="underdog score" size="10" /></td>
-                            <td><input onChange={handleFScore} type="text" id="tiebreakerf" name="favorite score" size="10" /></td>
-                        </tr>
-                    </tbody>
-                </Table>
-                <Button onClick={handleSubmitClick}>Submit</Button>
-            </div>
-            <>
-                <h3>Picks (selected {picks.length} out of {games.length}):</h3>
-                <div className="table picksTable">
-                    <Table striped bordered hover size="sm">
-                        <thead>
-                            <tr>
-                                <th key='game id'>#</th>
-                                <th key='game'>Game</th>
-                                <th key='game pick'>Pick</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {picks.length > 0 ? picks.map(thisPick =>
-                                <tr>
-                                    <td key={thisPick.game}>{thisPick.game}</td>
-                                    <td key='matchup'>{thisPick.underdog} vs {thisPick.favorite} (-{thisPick.line})</td>
-                                    <td key={thisPick.pick}>{thisPick.pick}</td>
-                                </tr>
-                            ) : ""
-                            }
-                        </tbody>
-                    </Table>
+        <div style={{
+            background: "white",
+            borderRadius: 12,
+            padding: "20px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+            border: "1px solid #e2e8f0",
+            marginBottom: 24,
+            fontFamily: "system-ui, -apple-system, sans-serif"
+        }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+                <div>
+                    <h3 style={{ color: NAVY, margin: 0, fontSize: "16px", fontWeight: 800 }}>
+                        🏆 Championship Tiebreaker
+                    </h3>
+                    <p style={{ color: "#64748b", margin: "4px 0 0", fontSize: "12px" }}>
+                        Guess the total combined runs/score for the final World Series game to break ties.
+                    </p>
                 </div>
-            </>
+                <form onSubmit={handleSave} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <input
+                        type="number"
+                        placeholder="Total Score"
+                        value={totalPoints}
+                        onChange={(e) => setTotalPoints(e.target.value)}
+                        style={{
+                            padding: "8px 12px",
+                            borderRadius: 6,
+                            border: "1px solid #cbd5e1",
+                            width: "120px",
+                            fontSize: "14px",
+                            fontWeight: 700,
+                            color: NAVY,
+                            outline: "none"
+                        }}
+                    />
+                    <button
+                        type="submit"
+                        disabled={saving}
+                        style={{
+                            padding: "8px 16px",
+                            backgroundColor: NAVY,
+                            color: "white",
+                            border: `1px solid ${GOLD}`,
+                            borderRadius: 6,
+                            fontWeight: 700,
+                            fontSize: "13px",
+                            cursor: "pointer",
+                            transition: "opacity 0.2s"
+                        }}
+                    >
+                        {saving ? "Saving..." : "Save Tiebreaker"}
+                    </button>
+                </form>
+            </div>
         </div>
-    )
+    );
 }
-
