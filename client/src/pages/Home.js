@@ -54,16 +54,27 @@ function SingleFlipCard({ value }) {
 
 // Reusable 3D Flipping Countdown component synced correctly with backend target dates
 const Countdown = ({ targetDate, label }) => {
-    const [timeLeft, setTimeLeft] = useState({ d: "00", h: "00", m: "00", s: "00" });
+    const [timeLeft, setTimeLeft] = useState({ y: 0, d: "00", h: "00", m: "00", s: "00" });
 
     useEffect(() => {
         const update = () => {
-            const diff = new Date(targetDate) - new Date();
+            const target = new Date(targetDate);
+            if (isNaN(target.getTime())) {
+                setTimeLeft({ y: 0, d: "00", h: "00", m: "00", s: "00" });
+                return;
+            }
+
+            const diff = target - new Date();
             if (diff <= 0) {
-                setTimeLeft({ d: "00", h: "00", m: "00", s: "00" });
+                setTimeLeft({ y: 0, d: "00", h: "00", m: "00", s: "00" });
             } else {
+                const totalDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const years = Math.floor(totalDays / 365);
+                const days = totalDays % 365;
+
                 setTimeLeft({
-                    d: Math.floor(diff / (1000 * 60 * 60 * 24)).toString().padStart(2, '0'),
+                    y: years,
+                    d: days.toString(),
                     h: Math.floor((diff / (1000 * 60 * 60)) % 24).toString().padStart(2, '0'),
                     m: Math.floor((diff / 1000 / 60) % 60).toString().padStart(2, '0'),
                     s: Math.floor((diff / 1000) % 60).toString().padStart(2, '0')
@@ -76,13 +87,13 @@ const Countdown = ({ targetDate, label }) => {
     }, [targetDate]);
 
     const renderFlipPair = (valStr, unitLabel) => {
-        const tens = valStr[0] || '0';
-        const ones = valStr[1] || '0';
+        const digits = valStr.toString().split('');
         return (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
                 <div style={{ display: "flex", gap: "2px" }}>
-                    <SingleFlipCard value={tens} />
-                    <SingleFlipCard value={ones} />
+                    {digits.map((digit, idx) => (
+                        <SingleFlipCard key={idx} value={digit} />
+                    ))}
                 </div>
                 <span style={{ fontSize: "8px", color: GOLD, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>{unitLabel}</span>
             </div>
@@ -213,6 +224,12 @@ const Countdown = ({ targetDate, label }) => {
             <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: "#0b0f19", padding: "4px 8px", borderRadius: "6px", border: "1px solid #334155", boxShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>
                 <span style={{ color: GOLD, fontSize: "10px", fontWeight: "800", marginRight: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>{label}</span>
                 <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                    {timeLeft.y > 0 && (
+                        <>
+                            {renderFlipPair(timeLeft.y.toString(), "Years")}
+                            <span style={{ color: "#01da25", fontSize: "12px", fontWeight: "bold", marginTop: "-10px" }}>:</span>
+                        </>
+                    )}
                     {renderFlipPair(timeLeft.d, "Days")}
                     <span style={{ color: "#01da25", fontSize: "12px", fontWeight: "bold", marginTop: "-10px" }}>:</span>
                     {renderFlipPair(timeLeft.h, "Hours")}
