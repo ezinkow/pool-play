@@ -78,6 +78,7 @@ import NbaAdminRefresh from './pages/nba/AdminRefresh';
 // MLB Pages
 import MlbHome from './pages/mlb/Home';
 import MlbPicks from './pages/mlb/Picks';
+import MlbMyPicks from './pages/mlb/MyPicks';
 import MlbPicksDisplay from './pages/mlb/GroupPicks';
 import MlbStandings from './pages/mlb/Standings';
 import MlbSignUp from './pages/mlb/SignUp';
@@ -210,6 +211,7 @@ export default function App() {
           <Route path="/mlb" element={<MlbHome />} />
           <Route path="/mlb/signup" element={<MlbSignUp />} />
           <Route path="/mlb/picks" element={<MlbPicks />} />
+          <Route path="/mlb/mypicks" element={<MlbMyPicks />} />
           <Route path="/mlb/picksdisplay" element={<MlbPicksDisplay />} />
           <Route path="/mlb/standings" element={<MlbStandings />} />
 

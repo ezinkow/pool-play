@@ -3,8 +3,8 @@ const requireAuth = require("../middleware/Requireauth");
 const { Op } = require("sequelize");
 
 const ROUND_CONFIG = {
-    1: { label: "R1", maxPoints: 32 },
-    2: { label: "R2", maxPoints: 24 },
+    1: { label: "R1", maxPoints: 24 },
+    2: { label: "R2", maxPoints: 32 },
     3: { label: "R3", maxPoints: 16 },
     4: { label: "Finals", maxPoints: 8 },
 };
@@ -65,7 +65,7 @@ module.exports = function (app) {
                 return res.status(404).json({ error: "Entry not found" });
             }
 
-            // Optional: Check if pool/series have started/locked before leaving
+            // Check if pool/series have started/locked before leaving
             const activeLockedSeries = await MlbSeries.findOne({ where: { locked: true } });
             if (activeLockedSeries) {
                 return res.status(403).json({ error: "Cannot leave pool after games have locked." });
@@ -269,7 +269,7 @@ module.exports = function (app) {
     app.get("/api/mlb/series", async (req, res) => {
         try {
             const series = await MlbSeries.findAll({
-                order: [["round", "ASC"], ["series_slot", "ASC"]],
+                order: [["round", "ASC"], ["id", "ASC"]],
             });
             res.json(series);
         } catch (err) {
@@ -283,7 +283,7 @@ module.exports = function (app) {
         try {
             const series = await MlbSeries.findAll({
                 where: { locked: false },
-                order: [["round", "ASC"], ["series_slot", "ASC"]],
+                order: [["round", "ASC"], ["id", "ASC"]],
             });
             res.json(series);
         } catch (err) {
@@ -297,7 +297,7 @@ module.exports = function (app) {
         try {
             const series = await MlbSeries.findAll({
                 where: { round: req.params.round },
-                order: [["series_slot", "ASC"]],
+                order: [["id", "ASC"]],
             });
             res.json(series);
         } catch (err) {
@@ -313,7 +313,7 @@ module.exports = function (app) {
                 where: {
                     status: ["STATUS_IN_PROGRESS", "STATUS_FINAL"],
                 },
-                order: [["round", "ASC"], ["series_slot", "ASC"]],
+                order: [["round", "ASC"], ["id", "ASC"]],
             });
             res.json(series);
         } catch (err) {
@@ -344,7 +344,7 @@ module.exports = function (app) {
                 picksByUser[p.user_id].push(p);
             });
 
-            const TOTAL_TOURNAMENT_MAX = 160;
+            const TOTAL_TOURNAMENT_MAX = 120; // 32 + 24*2 + 16*2 + 8 = 120 max points across tournament
 
             const standings = entries.map(entry => {
                 const picks = picksByUser[entry.user_id] || [];
@@ -359,9 +359,13 @@ module.exports = function (app) {
 
                     const base = pick.confidence;
                     const maxForThisSeries = base * 2;
-                    const homeWins = s.home_wins || 0;
-                    const awayWins = s.away_wins || 0;
+                    const homeWins = Number(s.home_wins || 0);
+                    const awayWins = Number(s.away_wins || 0);
                     const totalPlayed = homeWins + awayWins;
+                    
+                    // Wild Card is best-of-3 (target wins: 2), others are best-of-5 or best-of-7 (target wins: 4)
+                    const targetWins = s.round === 1 ? 2 : 4;
+                    const defaultLengthGuess = s.round === 1 ? 2 : 4;
 
                     if (s.winner) {
                         if (pick.pick === s.winner) {
@@ -379,20 +383,17 @@ module.exports = function (app) {
                             potential_lost += maxForThisSeries;
                         }
                     } else {
-                        const hWins = Number(s.home_wins || 0);
-                        const aWins = Number(s.away_wins || 0);
-                        const totalPlayed = hWins + aWins;
-                        const userLengthGuess = Number(pick.series_length_guess || 4);
+                        const userLengthGuess = Number(pick.series_length_guess || defaultLengthGuess);
 
                         const pickedTeam = String(pick.pick || "").trim().toLowerCase();
                         const homeTeamName = String(s.home_team || "").trim().toLowerCase();
                         const awayTeamName = String(s.away_team || "").trim().toLowerCase();
 
-                        const pickedTeamLost = (pickedTeam === homeTeamName && awayWins === 4) ||
-                            (pickedTeam === awayTeamName && hWins === 4);
+                        const pickedTeamLost = (pickedTeam === homeTeamName && awayWins === targetWins) ||
+                            (pickedTeam === awayTeamName && homeWins === targetWins);
 
-                        const currentWinsForPickedTeam = (pickedTeam === homeTeamName) ? hWins : aWins;
-                        const winsNeeded = 4 - currentWinsForPickedTeam;
+                        const currentWinsForPickedTeam = (pickedTeam === homeTeamName) ? homeWins : awayWins;
+                        const winsNeeded = targetWins - currentWinsForPickedTeam;
 
                         const earliestPossibleWinForUser = totalPlayed + winsNeeded;
                         const lengthImpossible = earliestPossibleWinForUser > userLengthGuess;

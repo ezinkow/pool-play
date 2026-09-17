@@ -13,7 +13,7 @@ module.exports = function (sequelize, DataTypes) {
         series_id: {
             type: DataTypes.STRING(64),
             allowNull: false,
-            references: { model: "nba_series", key: "id" },
+            references: { model: "mlb_series", key: "id" },
         },
         pick: {
             type: DataTypes.STRING,

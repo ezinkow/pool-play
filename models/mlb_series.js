@@ -18,8 +18,8 @@ module.exports = function (sequelize, DataTypes) {
             type: DataTypes.INTEGER,  // 32 / 24 / 16 / 8
             allowNull: false,
         },
-        conference: {
-            type: DataTypes.STRING,   // "East" | "West" | "Finals"
+        league: {
+            type: DataTypes.STRING,   // "American" | "National" | "World Series"
             allowNull: true,
         },
         series_slot: {

@@ -107,7 +107,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/olympics_api_routes.js")(app);
 
   // World Cup
-  require("./routes/world_cup_api_routes.js")
+  require("./routes/world_cup_api_routes.js")(app);
 
   // ── 4. MOVED INSIDE: Background jobs can safely execute query sets ────────
   const syncTourneyPickem = require("./syncs/tourney_pickem/sync.js");
@@ -128,7 +128,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
       // await syncBracket();
       // await syncHrd();
       // await syncNba();
-      // await syncMlb();
+      await syncMlb();
       await syncNfl();
       await syncCfb();
       // await syncWorldCup();

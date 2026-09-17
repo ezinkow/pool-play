@@ -4,15 +4,8 @@ import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 
-const GOLD = "#c89d3c";
 const NAVY = "#13447a";
-const LENGTHS = [4, 5, 6, 7];
-
-const thStyle = { padding: "12px 15px", textAlign: "left", fontSize: 13, fontWeight: 600 };
-const tdStyle = { padding: "12px 15px" };
-const cardStyle = { background: "white", padding: 16, borderRadius: 10, marginBottom: 12, boxShadow: "0 2px 5px rgba(0,0,0,0.05)" };
-const mobileBtnStyle = (active) => ({ flex: 1, padding: 10, borderRadius: 8, border: active ? `2px solid ${NAVY}` : "1px solid #ddd", background: active ? "#eff6ff" : "white", cursor: "pointer" });
-const lenBtnStyle = (active) => ({ width: 30, height: 30, borderRadius: 4, background: active ? NAVY : "white", color: active ? "white" : "#333", border: "1px solid #ddd", cursor: "pointer" });
+const GOLD = "%23c89d3c";
 
 const formatDateTime = (iso) => {
     if (!iso) return "TBD";
@@ -23,21 +16,19 @@ const formatDateTime = (iso) => {
         hour: 'numeric',
         minute: '2-digit',
         hour12: true
-    });
+    }).toUpperCase();
 };
 
 export default function Picks() {
-    const { user: user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const [series, setSeries] = useState([]);
     const [picks, setPicks] = useState([]);
     const [dataLoaded, setDataLoaded] = useState(false);
-    const [tiebreakerWin, setTiebreakerWin] = useState("");
-    const [tiebreakerLoss, setTiebreakerLoss] = useState("");
 
     useEffect(() => {
         axios.get("/api/mlb/series")
             .then(res => setSeries(res.data || []))
-            .catch(err => toast.error("Error loading series"));
+            .catch(() => toast.error("Error loading series"));
     }, []);
 
     useEffect(() => {
@@ -59,33 +50,20 @@ export default function Picks() {
                     setDataLoaded(true);
                 })
                 .catch(() => setDataLoaded(true));
-
-            axios.get("/api/mlb/tiebreaker", { params: { name: user.name }, ...config })
-                .then(res => {
-                    if (res.data) {
-                        setTiebreakerWin(res.data.win_score || "");
-                        setTiebreakerLoss(res.data.loss_score || "");
-                    }
-                }).catch(() => { });
         }
     }, [user, series]);
 
     // --- LOGIC HOOKS ---
-
-    // 1. Determine which round is currently accepting picks
     const activeRound = useMemo(() => {
         if (!series.length) return 1;
         const now = new Date();
         const unstarted = series.filter(g => new Date(g.game_date) > now);
-
         if (unstarted.length > 0) {
             return Math.min(...unstarted.map(g => g.round));
         }
-        // Fallback if all rounds currently in DB have started
         return Math.max(...series.map(g => g.round)) + 1;
     }, [series]);
 
-    // 2. Filter games to only show the unstarted games for the active round
     const visibleGames = useMemo(() => {
         if (!series.length) return [];
         const now = new Date();
@@ -94,27 +72,30 @@ export default function Picks() {
             .sort((a, b) => new Date(a.game_date) - new Date(b.game_date));
     }, [series, activeRound]);
 
-    // 3. Set the point ceiling (32, 24, 16, 8)
+    // Dynamic possible lengths based on round rules
+    const availableLengths = useMemo(() => {
+        if (activeRound === 1) return [2, 3]; // Wild Card: Best-of-3
+        if (activeRound === 2) return [3, 4, 5]; // Division Series: Best-of-5
+        return [4, 5, 6, 7]; // LCS & World Series: Best-of-7
+    }, [activeRound]);
+
     const roundMax = useMemo(() => {
-        const roundMapping = { 1: 32, 2: 24, 3: 16, 4: 8 };
+        const roundMapping = { 1: 24, 2: 32, 3: 16, 4: 8 };
         if (visibleGames.length > 0 && visibleGames[0].round_points_max) {
             return Number(visibleGames[0].round_points_max);
         }
-        return roundMapping[activeRound] || 32;
+        return roundMapping[activeRound];
     }, [visibleGames, activeRound]);
 
-    // 4. Calculate points used ONLY for the games visible on the current screen
     const currentPointsUsed = useMemo(() => {
         if (visibleGames.length === 0) return 0;
         const visibleIds = visibleGames.map(vg => String(vg.id));
-
         return picks
             .filter(p => visibleIds.includes(String(p.series)))
             .reduce((sum, p) => sum + (parseInt(p.confidence) || 0), 0);
     }, [picks, visibleGames]);
 
     // --- ACTIONS ---
-
     const updatePickData = (gameId, field, value) => {
         const sId = String(gameId);
         setPicks(prev => {
@@ -127,7 +108,7 @@ export default function Picks() {
                 series: sId,
                 pick: field === 'pick' ? value : null,
                 confidence: field === 'confidence' ? value : 0,
-                length: field === 'length' ? value : 4
+                length: field === 'length' ? value : availableLengths[0]
             }];
         });
     };
@@ -148,166 +129,268 @@ export default function Picks() {
                 }))
             }, { headers: { Authorization: `Bearer ${token}` } });
 
-            toast.success("Picks submitted!");
+            toast.success("Picks submitted successfully!");
             setTimeout(() => { window.location.hash = "#/mlb/mypicks"; }, 1500);
         } catch (err) {
             toast.error(err.response?.data?.error || "Failed to save picks");
         }
     };
 
-    if (authLoading) return <div style={{ paddingTop: 100, textAlign: "center" }}>Verifying Session...</div>;
-    if (!user) return <div style={{ paddingTop: 100, textAlign: "center" }}>Please log in to make picks.</div>;
-    if (!dataLoaded && series.length > 0) return <div style={{ paddingTop: 100, textAlign: "center" }}>Loading your saved picks...</div>;
+    if (authLoading) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, sans-serif" }}>Verifying Session...</div>;
+    if (!user) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, sans-serif" }}>Please log in to make picks.</div>;
+    if (!dataLoaded && series.length > 0) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, sans-serif" }}>Loading your saved picks...</div>;
+
+    // Second round (Division Series) max confidence option count is 12, others are 10
+    const maxConfidenceOption = activeRound === 2 ? 12 : 10;
 
     return (
-        <PoolGatekeeper user={user} gameKey="mlb">
-            <div style={{ paddingTop: 68, paddingBottom: 80, maxWidth: 1200, margin: "0 auto", paddingLeft: 12, paddingRight: 12 }}>
+        <PoolGatekeeper user={user} gameKey="mlb" className='page-content'>
+            <div style={{ maxWidth: 850, margin: "0 auto", padding: "12px 8px", paddingBottom: 100, paddingTop: 16, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 <Toaster />
-                <ul>
-                    <li>Correctly guessing the number of games in a series will give you a 2x bonus</li>
-                </ul>
-                <div style={{ position: "sticky", top: 70, zIndex: 10, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, background: "#fff", padding: "15px", borderRadius: "10px", border: `2px solid ${GOLD}`, boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}>
-                    <div>
-                        <h4 style={{ margin: 0 }}>
-                            {user.name} - {visibleGames[0]?.round_label || `Round ${activeRound} Selections`}
-                        </h4>
-                        <div style={{ fontSize: "14px", marginTop: "4px" }}>
-                            Points: <span style={{ fontWeight: 700, color: currentPointsUsed > roundMax ? "red" : "#16a34a" }}>{currentPointsUsed}</span> / {roundMax}
+
+                {/* Sticky Header */}
+                <div style={{
+                    position: "sticky",
+                    top: "48px",
+                    zIndex: 99,
+                    background: "#ffffff",
+                    paddingTop: 10,
+                    paddingBottom: 10,
+                    borderBottom: "1px solid #e2e8f0",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+                    marginBottom: 16,
+                    marginLeft: "-8px",
+                    marginRight: "-8px",
+                    paddingLeft: "8px",
+                    paddingRight: "8px"
+                }}>
+                    <div style={{ textAlign: "center" }}>
+                        <h2 style={{ color: NAVY, fontSize: "19px", margin: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontWeight: 800 }}>
+                            <span>⚾</span> MLB Postseason Pick'em - {visibleGames[0]?.round_label || `Round ${activeRound}`} <span>⚾</span>
+                        </h2>
+                        <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
+                            Correctly guessing the number of games gives you a <strong>2x bonus</strong>! Allocate up to {roundMax} confidence points.
+                        </p>
+                        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, flexWrap: "nowrap" }}>
+                            <div style={{ background: currentPointsUsed > roundMax ? "#fef2f2" : "#f8fafc", color: currentPointsUsed > roundMax ? "#dc2626" : "#475569", padding: "4px 10px", borderRadius: 6, fontWeight: 700, fontSize: "11px", border: "1px solid #cbd5e1" }}>
+                                Points Used: <span style={{ color: currentPointsUsed > roundMax ? "#dc2626" : "#16a34a" }}>{currentPointsUsed}</span> / {roundMax}
+                            </div>
+                            <button
+                                onClick={handleSubmitPicks}
+                                style={{
+                                    background: "#16a34a",
+                                    color: "white",
+                                    border: "1px solid #15803d",
+                                    padding: "4px 12px",
+                                    borderRadius: 6,
+                                    fontSize: "11px",
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                    boxShadow: "0 2px 4px rgba(22,163,74,0.25)"
+                                }}
+                            >
+                                Save All Picks
+                            </button>
                         </div>
                     </div>
-                    <button onClick={handleSubmitPicks} style={{ padding: "12px 28px", borderRadius: 8, backgroundColor: "#16a34a", color: "white", border: "none", fontWeight: 700, cursor: "pointer" }}>Submit All Picks</button>
                 </div>
 
                 {visibleGames.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: 40, background: "white", borderRadius: 12 }}>
-                        <h5 style={{ color: NAVY }}>No active matchups for selection.</h5>
-                        <p style={{ color: "#64748b", fontSize: 13 }}>Check back once the next round matchups are set!</p>
+                    <div style={{ background: "white", borderRadius: 10, padding: "30px 16px", textAlign: "center", border: "1px solid #e2e8f0", boxShadow: "0 2px 6px rgba(0,0,0,0.04)" }}>
+                        <p style={{ fontSize: "15px", fontWeight: 700, color: NAVY, margin: 0 }}>No active matchups for selection right now.</p>
+                        <p style={{ fontSize: "13px", color: "#64748b", marginTop: 6, marginBottom: 0 }}>Check back once the next round matchups are finalized!</p>
                     </div>
                 ) : (
-                    <>
-                        <div className="desktop-only" style={{ background: "white", borderRadius: 12, boxShadow: "0 2px 10px rgba(0,0,0,0.05)", overflow: "hidden" }}>
-                            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                                <thead style={{ backgroundColor: NAVY, color: "white" }}>
-                                    <tr>
-                                        <th style={thStyle}>Matchup</th>
-                                        <th style={thStyle}>Winner</th>
-                                        <th style={thStyle}>Series Length</th>
-                                        <th style={thStyle}>Confidence (1-10)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {visibleGames.map(s => {
-                                        const currentPick = picks.find(p => p.series === String(s.id));
-                                        return (
-                                            <tr key={s.id} style={{ borderBottom: "1px solid #eee" }}>
-                                                <td style={tdStyle}>
-                                                    <div style={{ fontSize: 11, color: "#d97706", fontWeight: 700, marginBottom: 2 }}>
-                                                        Game 1 tip-off: {formatDateTime(s.game_date)} CT
-                                                    </div>
-                                                    <div style={{ fontWeight: 500 }}>
-                                                        {s.away_seed && <sup style={{ fontSize: 8, color: "#9ca3af", marginRight: 1 }}>{s.away_seed}</sup>}
-                                                        {s.away_team} @ {s.home_team}
-                                                        {s.home_seed && <sup style={{ fontSize: 8, color: "#9ca3af", marginLeft: 1 }}>{s.home_seed}</sup>}
-                                                    </div>
-                                                </td>
-                                                <td style={tdStyle}>
-                                                    <div style={{ display: "flex", gap: 8 }}>
-                                                        {[s.away_team, s.home_team].map(team => (
-                                                            <button
-                                                                key={team}
-                                                                onClick={() => updatePickData(s.id, 'pick', team)}
-                                                                style={{
-                                                                    padding: "6px 12px", borderRadius: 6, border: currentPick?.pick === team ? `2px solid ${NAVY}` : "1px solid #ddd",
-                                                                    backgroundColor: currentPick?.pick === team ? "#eff6ff" : "white", cursor: "pointer", display: "flex", alignItems: "center", gap: 6
-                                                                }}
-                                                            >
-                                                                <img src={team === s.home_team ? s.home_logo : s.away_logo} width={20} alt="" />
-                                                                <span style={{ fontSize: 12 }}>{team}</span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </td>
-                                                <td style={tdStyle}>
-                                                    <div style={{ display: "flex", gap: 4 }}>
-                                                        {LENGTHS.map(len => (
-                                                            <button
-                                                                key={len}
-                                                                onClick={() => updatePickData(s.id, 'length', len)}
-                                                                style={{
-                                                                    width: 32, height: 32, borderRadius: 6, border: "1px solid #ddd",
-                                                                    backgroundColor: currentPick?.length === len ? NAVY : "white",
-                                                                    color: currentPick?.length === len ? "white" : "#333", cursor: "pointer"
-                                                                }}
-                                                            >
-                                                                {len}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </td>
-                                                <td style={tdStyle}>
-                                                    <select
-                                                        value={currentPick?.confidence || ""}
-                                                        onChange={(e) => updatePickData(s.id, 'confidence', parseInt(e.target.value))}
-                                                        style={{ padding: "8px", borderRadius: 6, border: "1px solid #ddd", width: "100%" }}
-                                                    >
-                                                        <option value="" disabled>Pts</option>
-                                                        {[...Array(10)].map((_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}
-                                                    </select>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        {visibleGames.map(s => {
+                            const currentPick = picks.find(p => p.series === String(s.id)) || {};
+                            const isAwayPicked = currentPick.pick === s.away_team;
+                            const isHomePicked = currentPick.pick === s.home_team;
 
-                        <div className="mobile-only">
-                            {visibleGames.map(s => {
-                                const currentPick = picks.find(p => p.series === String(s.id));
-                                return (
-                                    <div key={s.id} style={cardStyle}>
-                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-                                            <div style={{ fontWeight: 500, fontSize: '14px' }}>
-                                                {s.away_team} vs {s.home_team}
+                            const awayColor = s.away_color || NAVY;
+                            const awaySecondary = s.away_secondary_color || "#cbd5e1";
+                            const homeColor = s.home_color || NAVY;
+                            const homeSecondary = s.home_secondary_color || "#cbd5e1";
+
+                            return (
+                                <div key={s.id} style={{
+                                    background: "#ffffff",
+                                    borderRadius: 10,
+                                    boxShadow: "0 2px 5px rgba(0, 0, 0, 0.06)",
+                                    border: "1px solid #cbd5e1",
+                                    overflow: "hidden",
+                                    padding: "10px 12px"
+                                }}>
+                                    {/* Game Time Header */}
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, fontSize: "10px", fontWeight: 700, color: "#d97706", textTransform: "uppercase" }}>
+                                        <span>Game 1 First Pitch: {formatDateTime(s.game_date)} CT</span>
+                                    </div>
+
+                                    {/* Team Selector Grid (Away vs Home) */}
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+                                        {/* Away Team Option */}
+                                        <div
+                                            onClick={() => updatePickData(s.id, 'pick', s.away_team)}
+                                            style={{
+                                                backgroundImage: isAwayPicked
+                                                    ? `linear-gradient(to right, ${awayColor} 100%, ${awayColor} 100%)`
+                                                    : `linear-gradient(to right, ${awayColor} 0%, ${awayColor} 0%, transparent 0%), linear-gradient(135deg, ${awayColor}26 0%, ${awaySecondary}26 50%, #f8fafc 100%)`,
+                                                backgroundColor: isAwayPicked ? awayColor : "transparent",
+                                                borderRadius: 8,
+                                                border: isAwayPicked ? `2px solid #0284c7` : `1px solid ${awayColor}55`,
+                                                padding: "10px 8px",
+                                                cursor: "pointer",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                alignItems: "center",
+                                                textAlign: "center",
+                                                position: "relative",
+                                                boxShadow: isAwayPicked ? `0 0 10px rgba(2, 132, 199, 0.35), inset 0 0 8px ${awayColor}` : "0 1px 3px rgba(0,0,0,0.02)",
+                                                transition: "background-size 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border 0.2s ease, transform 0.1s ease",
+                                                backgroundSize: isAwayPicked ? "100% 100%" : "0% 100%, 100% 100%",
+                                                backgroundRepeat: "no-repeat",
+                                                minWidth: 0
+                                            }}
+                                        >
+                                            {isAwayPicked && (
+                                                <span style={{ position: "absolute", top: 6, right: 8, fontSize: "11px", color: "#ffffff", fontWeight: 900 }}>✓</span>
+                                            )}
+                                            {s.away_logo ? (
+                                                <div style={{
+                                                    background: awaySecondary,
+                                                    borderRadius: 6,
+                                                    padding: "4px",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    boxShadow: `0 0 4px 1px ${awayColor}, 0 1px 3px rgba(0,0,0,0.15)`,
+                                                    border: `1.5px solid ${awayColor}`,
+                                                    marginBottom: 6,
+                                                    width: 35,
+                                                    height: 35,
+                                                    flexShrink: 0
+                                                }}>
+                                                    <img src={s.away_logo} alt={s.away_team} style={{ width: 25, height: 25, objectFit: "contain", display: "block" }} />
+                                                </div>
+                                            ) : null}
+                                            <div style={{ fontWeight: isAwayPicked ? 800 : 600, fontSize: "12px", color: isAwayPicked ? "#ffffff" : "#0f172a", width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                {s.away_seed && <sup style={{ marginRight: 2, fontSize: 8 }}>({s.away_seed})</sup>}
+                                                {s.away_team}
                                             </div>
-                                            <div style={{ fontSize: 10, color: "#d97706", fontWeight: 700 }}>
-                                                {formatDateTime(s.game_date)}
+                                            <div style={{ fontSize: "10px", color: isAwayPicked ? "#e2e8f0" : "#64748b", marginTop: 2, fontWeight: 600 }}>Away</div>
+                                        </div>
+
+                                        {/* Home Team Option */}
+                                        <div
+                                            onClick={() => updatePickData(s.id, 'pick', s.home_team)}
+                                            style={{
+                                                backgroundImage: isHomePicked
+                                                    ? `linear-gradient(to right, ${homeColor} 100%, ${homeColor} 100%)`
+                                                    : `linear-gradient(to right, ${homeColor} 0%, ${homeColor} 0%, transparent 0%), linear-gradient(135deg, ${homeColor}26 0%, ${homeSecondary}26 50%, #f8fafc 100%)`,
+                                                backgroundColor: isHomePicked ? homeColor : "transparent",
+                                                borderRadius: 8,
+                                                border: isHomePicked ? `2px solid #0284c7` : `1px solid ${homeColor}55`,
+                                                padding: "10px 8px",
+                                                cursor: "pointer",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                alignItems: "center",
+                                                textAlign: "center",
+                                                position: "relative",
+                                                boxShadow: isHomePicked ? `0 0 10px rgba(2, 132, 199, 0.35), inset 0 0 8px ${homeColor}` : "0 1px 3px rgba(0,0,0,0.02)",
+                                                transition: "background-size 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border 0.2s ease, transform 0.1s ease",
+                                                backgroundSize: isHomePicked ? "100% 100%" : "0% 100%, 100% 100%",
+                                                backgroundRepeat: "no-repeat",
+                                                minWidth: 0
+                                            }}
+                                        >
+                                            {isHomePicked && (
+                                                <span style={{ position: "absolute", top: 6, right: 8, fontSize: "11px", color: "#ffffff", fontWeight: 900 }}>✓</span>
+                                            )}
+                                            {s.home_logo ? (
+                                                <div style={{
+                                                    background: homeSecondary,
+                                                    borderRadius: 6,
+                                                    padding: "4px",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    boxShadow: `0 0 4px 1px ${homeColor}, 0 1px 3px rgba(0,0,0,0.15)`,
+                                                    border: `1.5px solid ${homeColor}`,
+                                                    marginBottom: 6,
+                                                    width: 35,
+                                                    height: 35,
+                                                    flexShrink: 0
+                                                }}>
+                                                    <img src={s.home_logo} alt={s.home_team} style={{ width: 25, height: 25, objectFit: "contain", display: "block" }} />
+                                                </div>
+                                            ) : null}
+                                            <div style={{ fontWeight: isHomePicked ? 800 : 600, fontSize: "12px", color: isHomePicked ? "#ffffff" : "#0f172a", width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                {s.home_seed && <sup style={{ marginRight: 2, fontSize: 8 }}>({s.home_seed})</sup>}
+                                                {s.home_team}
                                             </div>
+                                            <div style={{ fontSize: "10px", color: isHomePicked ? "#e2e8f0" : "#64748b", marginTop: 2, fontWeight: 600 }}>Home</div>
                                         </div>
-                                        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-                                            <button onClick={() => updatePickData(s.id, 'pick', s.away_team)} style={mobileBtnStyle(currentPick?.pick === s.away_team)}>
-                                                <img src={s.away_logo} width={24} height={24} alt="" /> {s.away_team}
-                                            </button>
-                                            <button onClick={() => updatePickData(s.id, 'pick', s.home_team)} style={mobileBtnStyle(currentPick?.pick === s.home_team)}>
-                                                <img src={s.home_logo} width={24} height={24} alt="" /> {s.home_team}
-                                            </button>
-                                        </div>
-                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                            <select value={currentPick?.confidence || ""} onChange={(e) => updatePickData(s.id, 'confidence', parseInt(e.target.value))} style={{ padding: 8, borderRadius: 6 }}>
-                                                <option value="" disabled>Confidence</option>
-                                                {[...Array(10)].map((_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}
-                                            </select>
-                                            <div style={{ display: "flex", gap: 4 }}>
-                                                {LENGTHS.map(len => (
-                                                    <button key={len} onClick={() => updatePickData(s.id, 'length', len)} style={lenBtnStyle(currentPick?.length === len)}>{len}</button>
+                                    </div>
+
+                                    {/* Series Length & Confidence Controls */}
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, background: "#f8fafc", padding: "10px 12px", borderRadius: 8, border: "1px solid #e2e8f0" }}>
+                                        <div>
+                                            <div style={{ fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: 5 }}>Series Length (Games):</div>
+                                            <div style={{ display: "flex", gap: 6 }}>
+                                                {availableLengths.map(len => (
+                                                    <button
+                                                        key={len}
+                                                        onClick={() => updatePickData(s.id, 'length', len)}
+                                                        style={{
+                                                            width: 32,
+                                                            height: 30,
+                                                            borderRadius: 6,
+                                                            background: currentPick.length === len ? NAVY : "white",
+                                                            color: currentPick.length === len ? "white" : "#333",
+                                                            border: currentPick.length === len ? `1px solid ${NAVY}` : "1px solid #cbd5e1",
+                                                            fontWeight: 700,
+                                                            fontSize: "12px",
+                                                            cursor: "pointer",
+                                                            boxShadow: currentPick.length === len ? "0 2px 4px rgba(19, 68, 122, 0.25)" : "none",
+                                                            transition: "all 0.15s ease"
+                                                        }}
+                                                    >
+                                                        {len}
+                                                    </button>
                                                 ))}
                                             </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </>
-                )}
 
-                <style>{`
-          .desktop-only { display: block; }
-          .mobile-only { display: none; }
-          @media (max-width: 768px) {
-            .desktop-only { display: none; }
-            .mobile-only { display: block; }
-          }
-        `}</style>
+                                        <div>
+                                            <div style={{ fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: 5 }}>Confidence Pts:</div>
+                                            <select
+                                                value={currentPick.confidence || ""}
+                                                onChange={(e) => updatePickData(s.id, 'confidence', parseInt(e.target.value))}
+                                                style={{
+                                                    padding: "6px 10px",
+                                                    borderRadius: 6,
+                                                    border: "1px solid #cbd5e1",
+                                                    fontSize: "12px",
+                                                    fontWeight: 600,
+                                                    background: "white",
+                                                    cursor: "pointer",
+                                                    color: "#0f172a",
+                                                    boxShadow: "0 1px 2px rgba(0,0,0,0.02)"
+                                                }}
+                                            >
+                                                <option value="" disabled>Select Pts</option>
+                                                {[...Array(maxConfidenceOption)].map((_, i) => (
+                                                    <option key={i + 1} value={i + 1}>{i + 1} Pts</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </PoolGatekeeper>
     );
