@@ -30,7 +30,7 @@ function SingleFlipCard({ value }) {
         <div className={`flip-card-unit ${isFlipping ? 'flipping' : ''}`}>
             <div className="top-static"><span>{currentToShow}</span></div>
             <div className="bottom-static"><span>{prevToShow}</span></div>
-            
+
             <div className="flipper">
                 <div className="front"><span>{prevToShow}</span></div>
                 <div className="back"><span>{currentToShow}</span></div>
@@ -70,7 +70,7 @@ export default function PoolCountdown({ poolData, mode }) {
                 try {
                     let basePath = poolData.games_api_path;
                     let baseWeek = poolData.current_week || 1;
-                    
+
                     // If path has a week query param, strip it so we can search sequentially
                     if (basePath.includes("week=")) {
                         basePath = basePath.split("?")[0];
@@ -82,10 +82,10 @@ export default function PoolCountdown({ poolData, mode }) {
                     for (let w = Number(baseWeek); w <= Number(baseWeek) + 3; w++) {
                         const separator = basePath.includes("?") ? "&" : "?";
                         const queryUrl = `${basePath}${separator}week=${w}`;
-                        
+
                         const res = await axios.get(queryUrl, { headers });
                         const games = res.data.games || res.data || [];
-                        
+
                         const now = new Date();
                         const upcoming = games
                             .filter(g => new Date(g.game_date || g.date) > now)
@@ -151,10 +151,10 @@ export default function PoolCountdown({ poolData, mode }) {
                     width: 100%;
                     height: 50%;
                     overflow: hidden;
-                    background: #1f1f1f;
                 }
                 .flip-card-unit .top-static {
                     top: 0;
+                    background: #181818; /* Dark Black Top */
                     border-bottom: 1px solid #000;
                     border-radius: 4px 4px 0 0;
                 }
@@ -170,7 +170,8 @@ export default function PoolCountdown({ poolData, mode }) {
                 }
                 .flip-card-unit .bottom-static {
                     bottom: 0;
-                    border-top: 1px solid #333;
+                    background: #2c2c2c; /* Lighter Gray Bottom */
+                    border-top: 1px solid #111;
                     border-radius: 0 0 4px 4px;
                 }
                 .flip-card-unit .bottom-static span {
@@ -182,6 +183,15 @@ export default function PoolCountdown({ poolData, mode }) {
                     line-height: 36px;
                     text-align: center;
                     text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+                }
+                .flip-card-unit .bottom-shade {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.45) 100%);
+                    pointer-events: none;
                 }
                 .flip-card-unit .flipper {
                     position: absolute;
@@ -204,10 +214,10 @@ export default function PoolCountdown({ poolData, mode }) {
                     height: 100%;
                     overflow: hidden;
                     backface-visibility: hidden;
-                    background: #2c2c2c;
                 }
                 .flip-card-unit .front {
                     top: 0;
+                    background: #181818; /* Front of flipper matches dark black top */
                     border-bottom: 1px solid #000;
                     border-radius: 4px 4px 0 0;
                 }
@@ -223,9 +233,9 @@ export default function PoolCountdown({ poolData, mode }) {
                 }
                 .flip-card-unit .back {
                     bottom: 0;
+                    background: #2c2c2c; /* Back of flipper matches lighter gray bottom */
                     transform: rotateX(180deg);
                     border-radius: 0 0 4px 4px;
-                    background: #2c2c2c;
                 }
                 .flip-card-unit .back span {
                     position: absolute;
