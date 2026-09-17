@@ -309,13 +309,12 @@ module.exports = function (app) {
             // Dynamic week calculator fallback
             const now = new Date();
             const weeks = [
-                { week: 1, start: new Date("2026-09-02T00:00:00"), end: new Date("2026-09-08T23:59:59") },
-                { week: 2, start: new Date("2026-09-09T00:00:00"), end: new Date("2026-09-15T23:59:59") },
-                { week: 3, start: new Date("2026-09-16T00:00:00"), end: new Date("2026-09-22T23:59:59") },
-                { week: 4, start: new Date("2026-09-23T00:00:00"), end: new Date("2026-09-29T23:59:59") },
-                { week: 5, start: new Date("2026-09-30T00:00:00"), end: new Date("2026-10-06T23:59:59") },
-                { week: 6, start: new Date("2026-10-07T00:00:00"), end: new Date("2026-10-13T23:59:59") },
-                { week: 7, start: new Date("2026-10-14T00:00:00"), end: new Date("2026-10-20T23:59:59") },
+                { week: 1, start: new Date("2026-09-09T00:00:00"), end: new Date("2026-09-15T23:59:59") },
+                { week: 2, start: new Date("2026-09-16T00:00:00"), end: new Date("2026-09-22T23:59:59") },
+                { week: 3, start: new Date("2026-09-23T00:00:00"), end: new Date("2026-09-29T23:59:59") },
+                { week: 4, start: new Date("2026-09-30T00:00:00"), end: new Date("2026-10-06T23:59:59") },
+                { week: 5, start: new Date("2026-10-07T00:00:00"), end: new Date("2026-10-13T23:59:59") },
+                { week: 6, start: new Date("2026-10-14T00:00:00"), end: new Date("2026-10-20T23:59:59") },
                 { week: 8, start: new Date("2026-10-21T00:00:00"), end: new Date("2026-10-27T23:59:59") },
                 { week: 9, start: new Date("2026-10-28T00:00:00"), end: new Date("2026-11-03T23:59:59") },
                 { week: 10, start: new Date("2026-11-04T00:00:00"), end: new Date("2026-11-10T23:59:59") },
