@@ -36,11 +36,17 @@ function SingleFlipCard({ value }) {
     return (
         <div className={`flip-card-unit ${isFlipping ? 'flipping' : ''}`}>
             <div className="top-static"><span>{currentToShow}</span></div>
-            <div className="bottom-static"><span>{prevToShow}</span></div>
+            <div className="bottom-static">
+                <span>{prevToShow}</span>
+                <div className="bottom-shade"></div>
+            </div>
             
             <div className="flipper">
                 <div className="front"><span>{prevToShow}</span></div>
-                <div className="back"><span>{currentToShow}</span></div>
+                <div className="back">
+                    <span>{currentToShow}</span>
+                    <div className="bottom-shade"></div>
+                </div>
             </div>
         </div>
     );
@@ -107,10 +113,10 @@ const Countdown = ({ targetDate, label }) => {
                     width: 100%;
                     height: 50%;
                     overflow: hidden;
-                    background: #1f1f1f;
                 }
                 .flip-card-unit .top-static {
                     top: 0;
+                    background: #181818;
                     border-bottom: 1px solid #000;
                     border-radius: 3px 3px 0 0;
                 }
@@ -126,7 +132,8 @@ const Countdown = ({ targetDate, label }) => {
                 }
                 .flip-card-unit .bottom-static {
                     bottom: 0;
-                    border-top: 1px solid #333;
+                    background: #2c2c2c;
+                    border-top: 1px solid #111;
                     border-radius: 0 0 3px 3px;
                 }
                 .flip-card-unit .bottom-static span {
@@ -138,6 +145,15 @@ const Countdown = ({ targetDate, label }) => {
                     line-height: 32px;
                     text-align: center;
                     text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+                }
+                .flip-card-unit .bottom-shade {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.45) 100%);
+                    pointer-events: none;
                 }
                 .flip-card-unit .flipper {
                     position: absolute;
@@ -160,10 +176,10 @@ const Countdown = ({ targetDate, label }) => {
                     height: 100%;
                     overflow: hidden;
                     backface-visibility: hidden;
-                    background: #2c2c2c;
                 }
                 .flip-card-unit .front {
                     top: 0;
+                    background: #181818;
                     border-bottom: 1px solid #000;
                     border-radius: 3px 3px 0 0;
                 }
@@ -179,9 +195,9 @@ const Countdown = ({ targetDate, label }) => {
                 }
                 .flip-card-unit .back {
                     bottom: 0;
+                    background: #2c2c2c;
                     transform: rotateX(180deg);
                     border-radius: 0 0 3px 3px;
-                    background: #2c2c2c;
                 }
                 .flip-card-unit .back span {
                     position: absolute;
