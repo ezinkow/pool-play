@@ -35,8 +35,6 @@ export default function Navbar() {
             .catch(err => console.error("❌ Navbar dynamic data load failure:", err));
     }, []);
 
-    // 🧠 GLOBAL REPAIRED CLICK-OUT LISTENER:
-    // Safely handles click tracking parameters across dropdown targets
     useEffect(() => {
         function handleClickOutside(event) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -64,7 +62,6 @@ export default function Navbar() {
 
     const currentGame = useMemo(() => {
         if (isHome) return null;
-        // Sort by prefix length descending so longer prefixes (/nflbts) match before shorter ones (/nfl)
         const sortedGames = [...rawGameSettings].sort((a, b) => (b.prefix?.length || 0) - (a.prefix?.length || 0));
         return sortedGames.find(g => g.prefix && location.pathname.startsWith(g.prefix));
     }, [rawGameSettings, location.pathname, isHome]);
@@ -78,7 +75,6 @@ export default function Navbar() {
             ? new Date() >= new Date(currentGame.lock_date)
             : false;
 
-        // 🧠 Safely parse nav_links whether it comes as an Array or a JSON String from production DB
         let parsedNavLinks = currentGame.nav_links;
         if (typeof parsedNavLinks === "string") {
             try {
@@ -128,18 +124,15 @@ export default function Navbar() {
         navigate(destination);
     };
 
-    // 🧠 SORTED & CATEGORIZED POOL DATA ENGINE
     const categorizedGames = useMemo(() => {
         const active = [];
         const inactive = [];
 
-        // Sort alphabetically first
         const sorted = [...rawGameSettings].sort((a, b) =>
             a.game_label.localeCompare(b.game_label)
         );
 
         sorted.forEach(game => {
-            // Treat boolean true, number 1, or string "true" as active
             const isActive = game.is_active === true || game.is_active === 1 || game.is_active === "true";
             if (isActive) {
                 active.push(game);
@@ -151,22 +144,24 @@ export default function Navbar() {
     }, [rawGameSettings]);
 
     const renderGameLink = (game) => {
-        const isLinkActive = game.is_active === true || user?.is_admin === true;
+        const isLinkActive = (game.is_active === true || game.is_active === 1 || game.is_active === "true") || user?.is_admin === true;
         const isSelected = currentGame?.game_key === game.game_key;
+        const destination = `${game.prefix}/picks`;
+
         return (
             <Link
                 key={game.game_key}
-                to={game.prefix}
-                onClick={(e) => handleDropdownLinkClick(e, isLinkActive, game.prefix)}
+                to={destination}
+                onClick={(e) => handleDropdownLinkClick(e, isLinkActive, destination)}
                 style={{
-                    display: "block", padding: "10px 16px", fontSize: "13px",
+                    display: "flex", alignItems: "center", gap: "6px", padding: "8px 20px", fontSize: "12px",
                     color: !isLinkActive ? "#9ca3af" : (isSelected ? GOLD : "#334155"),
                     textDecoration: "none", fontWeight: isSelected ? "700" : "500",
                     backgroundColor: isSelected ? "#f8fafc" : "transparent",
                     cursor: isLinkActive ? "pointer" : "default"
                 }}
             >
-                <span>{game.emoji}</span> {game.game_label.toUpperCase()}
+                <span style={{ width: "18px", textAlign: "center", flexShrink: 0 }}>{game.emoji}</span> {game.game_label.toUpperCase()}
             </Link>
         );
     };
@@ -174,16 +169,16 @@ export default function Navbar() {
     return (
         <>
             <header className="navbar-header" style={{ backgroundColor: navBg, position: "fixed", top: 0, left: 0, right: 0, zIndex: 2100, transition: "background-color 0.2s" }}>
-                <div className="navbar-inner" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: "50px", padding: "0 16px", width: "100%" }}>
+                <div className="navbar-inner" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: "50px", padding: "0 12px", width: "100%", gap: "8px" }}>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0, flex: "0 1 auto" }}>
-                        <Link to="/" style={{ display: "flex", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0, flex: "1 1 auto", overflow: "hidden" }}>
+                        <Link to="/" style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
                             <img
                                 src={logo}
                                 alt="POOL PLAY"
                                 style={{
-                                    width: "32px",
-                                    height: "32px",
+                                    width: "30px",
+                                    height: "30px",
                                     borderRadius: "50%",
                                     border: `1px solid ${GOLD}`,
                                     objectFit: "cover"
@@ -191,50 +186,46 @@ export default function Navbar() {
                             />
                         </Link>
                         {!isHome && (
-                            <Link to="/" style={{ color: "white", fontSize: 12, textDecoration: "none", fontWeight: 700, whiteSpace: "nowrap", flexShrink: 0 }}>
+                            <Link to="/" style={{ color: "white", fontSize: 11, textDecoration: "none", fontWeight: 700, whiteSpace: "nowrap", flexShrink: 0 }}>
                                 ← Home
                             </Link>
                         )}
-                        <Link to="/" className="navbar-brand" style={{ fontWeight: 900, textDecoration: "none", color: "white", fontSize: "14px", display: "flex", alignItems: "center", minWidth: 0 }}>
+                        <Link to="/" className="navbar-brand" style={{ fontWeight: 900, textDecoration: "none", color: "white", fontSize: "13px", display: "flex", alignItems: "center", minWidth: 0, overflow: "hidden" }}>
                             <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>
                                 {brandLabel}
                             </span>
                         </Link>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0, marginLeft: "auto" }}>
-                        {!isMobile && (
-                            <div ref={dropdownRef} style={{ position: "relative" }}>
-                                <button
-                                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                                    style={{
-                                        backgroundColor: "rgba(255,255,255,0.15)", color: "white",
-                                        border: "1px solid rgba(255,255,255,0.2)", borderRadius: "6px",
-                                        padding: "6px 12px", fontSize: "12px", fontWeight: 700,
-                                        cursor: "pointer", display: "flex", alignItems: "center", gap: "6px"
-                                    }}
-                                >
-                                    {isHome ? <>🚀 Go to Pool</> : <>🎮 Switch Pool</>} {dropdownOpen ? "▲" : "▼"}
-                                </button>
-                                {dropdownOpen && (
-                                    <div style={{ position: "absolute", top: "110%", right: 0, backgroundColor: "white", minWidth: "240px", borderRadius: "8px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", border: "1px solid #e2e8f0", padding: "6px 0", zIndex: 2500, maxHeight: "70vh", overflowY: "auto" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                        <div ref={dropdownRef} style={{ position: "relative" }}>
+                            <button
+                                onClick={() => setDropdownOpen(!dropdownOpen)}
+                                style={{
+                                    backgroundColor: "rgba(200, 157, 60, 0.25)", color: GOLD,
+                                    border: `1px solid ${GOLD}`, borderRadius: "6px",
+                                    padding: "4px 8px", fontSize: "11px", fontWeight: 700,
+                                    cursor: "pointer", display: "flex", alignItems: "center", gap: "3px",
+                                    whiteSpace: "nowrap"
+                                }}
+                            >
+                                ⚡ Quick Jump {dropdownOpen ? "▲" : "▼"}
+                            </button>
+                            {dropdownOpen && (
+                                <div style={{ position: "absolute", top: "110%", right: 0, backgroundColor: "white", minWidth: "240px", borderRadius: "8px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", border: "1px solid #e2e8f0", padding: "6px 0", zIndex: 2500, maxHeight: "70vh", overflowY: "auto" }}>
+                                    <div style={{ padding: "6px 16px 4px", fontSize: "10px", fontWeight: 800, color: "#64748b", textTransform: "uppercase" }}>Active Pools (Quick Picks)</div>
+                                    {categorizedGames.active.map(game => renderGameLink(game))}
 
-                                        {/* ACTIVE SECTION FIRST */}
-                                        <div style={{ padding: "6px 16px 4px", fontSize: "10px", fontWeight: 800, color: "#64748b", textTransform: "uppercase" }}>Active Pools</div>
-                                        {categorizedGames.active.map(game => renderGameLink(game))}
-
-                                        {categorizedGames.inactive.length > 0 && (
-                                            <>
-                                                <div style={{ height: "1px", background: "#e2e8f0", margin: "6px 0" }} />
-                                                {/* INACTIVE SECTION SECOND */}
-                                                <div style={{ padding: "6px 16px 4px", fontSize: "10px", fontWeight: 800, color: "#9ca3af", textTransform: "uppercase" }}>Inactive Pools</div>
-                                                {categorizedGames.inactive.map(game => renderGameLink(game))}
-                                            </>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                                    {categorizedGames.inactive.length > 0 && (
+                                        <>
+                                            <div style={{ height: "1px", background: "#e2e8f0", margin: "6px 0" }} />
+                                            <div style={{ padding: "6px 16px 4px", fontSize: "10px", fontWeight: 800, color: "#9ca3af", textTransform: "uppercase" }}>Inactive Pools</div>
+                                            {categorizedGames.inactive.map(game => renderGameLink(game))}
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                        </div>
 
                         {!isMobile && !loading && (
                             user ? (
@@ -262,7 +253,6 @@ export default function Navbar() {
                 </div>
             </header>
 
-            {/* 🧠 FLOATING CHAT BALLOON ELEMENT */}
             {isMobile && user && currentGame && (
                 <button
                     onClick={() => setChatOpen(true)}
@@ -329,49 +319,52 @@ export default function Navbar() {
             {isMobile && menuOpen && (
                 <>
                     <div className="menu-overlay" onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 2998, display: "block" }} />
-                    <nav className="nav-links open" style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "280px", backgroundColor: "#111827", boxShadow: "-4px 0 20px rgba(0,0,0,0.3)", zIndex: 2999, display: "flex", flexDirection: "column", padding: "24px 0", overflowY: "auto" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 20px 16px 20px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-                            <span style={{ color: GOLD, fontWeight: 900, fontSize: "14px" }}>MENU PANELS</span>
-                            <button onClick={() => setMenuOpen(false)} style={{ background: "none", border: "none", color: "white", fontSize: "20px", cursor: "pointer" }}>✕</button>
+                    <nav className="nav-links open" style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "280px", backgroundColor: "#111827", boxShadow: "-4px 0 20px rgba(0,0,0,0.3)", zIndex: 2999, display: "flex", flexDirection: "column", padding: "16px 0", overflowY: "auto" }}>
+                        
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 16px 12px 20px", borderBottom: "1px solid rgba(255,255,255,0.1)", flexShrink: 0 }}>
+                            <span style={{ color: GOLD, fontWeight: 900, fontSize: "12px", letterSpacing: "1px", whiteSpace: "nowrap" }}>MENU PANELS</span>
+                            <button onClick={() => setMenuOpen(false)} style={{ background: "none", border: "none", color: "white", fontSize: "18px", cursor: "pointer", padding: "4px 8px", lineHeight: 1, flexShrink: 0 }}>✕</button>
                         </div>
 
-                        {currentGame && activeLinks.length > 0 && (
-                            <div style={{ padding: "16px 0", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-                                <div style={{ padding: "0 20px 8px 20px", fontSize: "10px", color: "#9ca3af", fontWeight: 800, letterSpacing: "1px" }}>POOL CONTEXT LINKS</div>
-                                {activeLinks.map(({ to, label, emoji }) => {
-                                    const isActive = location.pathname === to;
-                                    return (
-                                        <Link key={to} to={to} onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 20px", textDecoration: "none", color: isActive ? GOLD : "#f3f4f6", backgroundColor: isActive ? "rgba(255,255,255,0.05)" : "transparent", fontWeight: isActive ? 700 : 500, fontSize: "14px" }}>
-                                            <span style={{ fontSize: "16px" }}>{emoji}</span> {label}
-                                        </Link>
-                                    );
-                                })}
-                                <button onClick={() => { setMenuOpen(false); setChatOpen(true); }} style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "12px 20px", background: "none", border: "none", color: "#f3f4f6", fontWeight: 500, fontSize: "14px", cursor: "pointer", textAlign: "left" }}>
-                                    <span style={{ fontSize: "16px" }}>💬</span> Open Pool Chat
-                                </button>
-                            </div>
-                        )}
-                        <div style={{ padding: "16px 0" }}>
-                            <div style={{ padding: "0 20px 8px 20px", fontSize: "10px", color: "#64748b", fontWeight: 800, letterSpacing: "1px" }}>ACTIVE POOLS</div>
+                        <div style={{ padding: "10px 0", flex: "1 0 auto", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                            {currentGame && activeLinks.length > 0 && (
+                                <>
+                                    <div style={{ padding: "0 20px 6px 20px", fontSize: "10px", color: "#9ca3af", fontWeight: 800, letterSpacing: "1px", width: "100%", boxSizing: "border-box" }}>POOL CONTEXT LINKS</div>
+                                    {activeLinks.map(({ to, label, emoji }) => {
+                                        const isActive = location.pathname === to;
+                                        return (
+                                            <Link key={to} to={to} onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 20px", textDecoration: "none", color: isActive ? GOLD : "#f3f4f6", backgroundColor: isActive ? "rgba(255,255,255,0.05)" : "transparent", fontWeight: isActive ? 700 : 500, fontSize: "12px", width: "100%", boxSizing: "border-box" }}>
+                                                <span style={{ width: "18px", textAlign: "center", flexShrink: 0 }}>{emoji}</span> {label}
+                                            </Link>
+                                        );
+                                    })}
+                                    <div onClick={() => { setMenuOpen(false); setChatOpen(true); }} style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%", padding: "8px 20px", background: "none", border: "none", color: "#f3f4f6", fontWeight: 500, fontSize: "12px", cursor: "pointer", textAlign: "left", boxSizing: "border-box" }}>
+                                        <span style={{ width: "18px", textAlign: "center", flexShrink: 0 }}>💬</span> Open Pool Chat
+                                    </div>
+                                    <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", width: "100%", margin: "8px 0" }} />
+                                </>
+                            )}
+                            
+                            <div style={{ padding: "0 20px 6px 20px", fontSize: "10px", color: "#64748b", fontWeight: 800, letterSpacing: "1px", width: "100%", boxSizing: "border-box" }}>ACTIVE POOLS</div>
                             {categorizedGames.active.map((game) => {
                                 const isLinkActive = true;
                                 const isSelected = currentGame?.game_key === game.game_key;
                                 return (
-                                    <Link key={game.game_key} to={game.prefix} onClick={(e) => handleDropdownLinkClick(e, isLinkActive, game.prefix)} style={{ display: "block", padding: "10px 20px", textDecoration: "none", fontSize: "13px", fontWeight: isSelected ? 700 : 500, color: isSelected ? GOLD : "#f3f4f6" }}>
-                                        <span>{game.emoji}</span> {game.game_label.toUpperCase()}
+                                    <Link key={game.game_key} to={`${game.prefix}/picks`} onClick={(e) => handleDropdownLinkClick(e, isLinkActive, `${game.prefix}/picks`)} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 20px", textDecoration: "none", fontSize: "12px", fontWeight: isSelected ? 700 : 500, color: isSelected ? GOLD : "#f3f4f6", width: "100%", boxSizing: "border-box" }}>
+                                        <span style={{ width: "18px", textAlign: "center", flexShrink: 0 }}>{game.emoji}</span> {game.game_label.toUpperCase()}
                                     </Link>
                                 );
                             })}
 
                             {categorizedGames.inactive.length > 0 && (
                                 <>
-                                    <div style={{ padding: "16px 20px 8px 20px", fontSize: "10px", color: "#9ca3af", fontWeight: 800, letterSpacing: "1px", borderTop: "1px solid rgba(255,255,255,0.1)", marginTop: "12px" }}>INACTIVE POOLS</div>
+                                    <div style={{ padding: "10px 20px 6px 20px", fontSize: "10px", color: "#9ca3af", fontWeight: 800, letterSpacing: "1px", borderTop: "1px solid rgba(255,255,255,0.1)", marginTop: "6px", width: "100%", boxSizing: "border-box" }}>INACTIVE POOLS</div>
                                     {categorizedGames.inactive.map((game) => {
                                         const isLinkActive = user?.is_admin === true;
                                         const isSelected = currentGame?.game_key === game.game_key;
                                         return (
-                                            <Link key={game.game_key} to={game.prefix} onClick={(e) => handleDropdownLinkClick(e, isLinkActive, game.prefix)} style={{ display: "block", padding: "10px 20px", textDecoration: "none", fontSize: "13px", fontWeight: isSelected ? 700 : 500, color: !isLinkActive ? "#4b5563" : (isSelected ? GOLD : "#d1d5db"), fontStyle: isLinkActive ? "normal" : "italic" }}>
-                                                <span>{game.emoji}</span> {game.game_label.toUpperCase()} {!isLinkActive && " (🔒)"}
+                                            <Link key={game.game_key} to={`${game.prefix}/picks`} onClick={(e) => handleDropdownLinkClick(e, isLinkActive, `${game.prefix}/picks`)} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 20px", textDecoration: "none", fontSize: "12px", fontWeight: isSelected ? 700 : 500, color: !isLinkActive ? "#4b5563" : (isSelected ? GOLD : "#d1d5db"), fontStyle: isLinkActive ? "normal" : "italic", width: "100%", boxSizing: "border-box" }}>
+                                                <span style={{ width: "18px", textAlign: "center", flexShrink: 0 }}>{game.emoji}</span> {game.game_label.toUpperCase()} {!isLinkActive && " (🔒)"}
                                             </Link>
                                         );
                                     })}
@@ -379,28 +372,26 @@ export default function Navbar() {
                             )}
                         </div>
 
-                        <div style={{ marginTop: "auto", padding: "20px", borderTop: "1px solid rgba(255,255,255,0.1)", backgroundColor: "#1f2937" }}>
+                        <div style={{ marginTop: "auto", padding: "14px 20px", borderTop: "1px solid rgba(255,255,255,0.1)", backgroundColor: "#1f2937", flexShrink: 0 }}>
                             {user ? (
                                 <>
-                                    <div style={{ fontSize: "13px", color: "#e5e7eb", marginBottom: "12px" }}>Logged in: <strong style={{ color: GOLD }}>{user.name}</strong></div>
-                                    <button onClick={() => { setMenuOpen(false); navigate("/myaccount"); }} style={{ width: "100%", padding: "10px", borderRadius: "6px", border: `1px solid ${GOLD}`, background: "transparent", color: GOLD, fontWeight: 700, fontSize: "13px", cursor: "pointer", marginBottom: "8px" }}>👤 My Account Dashboard</button>
-                                    <button onClick={handleLogout} style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #4b5563", background: "#374151", color: "#f87171", fontWeight: 700, fontSize: "13px", cursor: "pointer" }}>Log Out</button>
+                                    <div style={{ fontSize: "12px", color: "#e5e7eb", marginBottom: "8px" }}>Logged in: <strong style={{ color: GOLD }}>{user.name}</strong></div>
+                                    <button onClick={() => { setMenuOpen(false); navigate("/myaccount"); }} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: `1px solid ${GOLD}`, background: "transparent", color: GOLD, fontWeight: 700, fontSize: "12px", cursor: "pointer", marginBottom: "6px" }}>👤 My Account Dashboard</button>
+                                    <button onClick={handleLogout} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #4b5563", background: "#374151", color: "#f87171", fontWeight: 700, fontSize: "12px", cursor: "pointer" }}>Log Out</button>
                                 </>
                             ) : (
                                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                                    <button onClick={() => { setMenuOpen(false); setShowLogin(true); }} style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "none", background: GOLD, color: "#0a1628", fontWeight: 700, fontSize: "13px" }}>Log In</button>
+                                    <button onClick={() => { setMenuOpen(false); setShowLogin(true); }} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "none", background: GOLD, color: "#0a1628", fontWeight: 700, fontSize: "12px" }}>Log In</button>
                                 </div>
-
                             )}
-                            <div style={{ paddingTop: "10px" }}>
-                                <button onClick={() => { setMenuOpen(false); navigate("/contact"); }} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #4b5563", background: "transparent", color: "white", fontWeight: 700, fontSize: "13px" }}>📩 Contact Support</button>
+                            <div style={{ paddingTop: "6px" }}>
+                                <button onClick={() => { setMenuOpen(false); navigate("/contact"); }} style={{ width: "100%", padding: "6px", borderRadius: "6px", border: "1px solid #4b5563", background: "transparent", color: "white", fontWeight: 700, fontSize: "12px" }}>📩 Contact Support</button>
                             </div>
                         </div>
                     </nav>
                 </>
             )}
 
-            {/* 🧠 RE-MOUNTED AUTHENTICATION STEP PANEL PORTAL LINK */}
             <AuthModal show={showLogin} onClose={() => setShowLogin(false)} />
 
             <BanterDrawer

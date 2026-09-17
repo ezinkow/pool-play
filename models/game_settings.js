@@ -9,6 +9,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false
         },
+        sport: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
         is_active: {
             type: DataTypes.BOOLEAN,
             defaultValue: false,
