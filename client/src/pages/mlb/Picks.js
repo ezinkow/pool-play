@@ -95,6 +95,14 @@ export default function Picks() {
             .reduce((sum, p) => sum + (parseInt(p.confidence) || 0), 0);
     }, [picks, visibleGames]);
 
+    const currentRoundLabel = useMemo(() => {
+        if (visibleGames.length > 0 && visibleGames[0].round_label) {
+            return visibleGames[0].round_label.toLowerCase();
+        }
+        const mapping = { 1: "wild card", 2: "division series", 3: "league championship", 4: "world series" };
+        return mapping[activeRound] || `round ${activeRound}`;
+    }, [visibleGames, activeRound]);
+
     // --- ACTIONS ---
     const updatePickData = (gameId, field, value) => {
         const sId = String(gameId);
@@ -166,10 +174,10 @@ export default function Picks() {
                 }}>
                     <div style={{ textAlign: "center" }}>
                         <h2 style={{ color: NAVY, fontSize: "19px", margin: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontWeight: 800 }}>
-                            <span>⚾</span> MLB Postseason Pick'em - {visibleGames[0]?.round_label || `Round ${activeRound}`} <span>⚾</span>
+                            <span>⚾</span> MLB Postseason Pick'em <span>⚾</span>
                         </h2>
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
-                            Correctly guessing the number of games gives you a <strong>2x bonus</strong>! Allocate up to {roundMax} confidence points.
+                            Correctly guessing the number of games gives you a <strong>2x bonus</strong>! Allocate up to {roundMax} confidence points for the {currentRoundLabel} round.
                         </p>
                         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, flexWrap: "nowrap" }}>
                             <div style={{ background: currentPointsUsed > roundMax ? "#fef2f2" : "#f8fafc", color: currentPointsUsed > roundMax ? "#dc2626" : "#475569", padding: "4px 10px", borderRadius: 6, fontWeight: 700, fontSize: "11px", border: "1px solid #cbd5e1" }}>
