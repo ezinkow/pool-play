@@ -179,31 +179,34 @@ export default function NflBtsPicks() {
     const handleSubmitAll = async () => {
         const token = localStorage.getItem("token");
         const picksArray = [];
+        const now = new Date();
 
+        // Check Team 1 pick
         if (assignedTeams.team_1 && matchups.match_1) {
-            if (new Date() >= new Date(matchups.match_1.game_date)) {
-                return toast.error(`Game for ${assignedTeams.team_1} has already kicked off.`);
+            const isMatch1Started = matchups.match_1.game_date && now >= new Date(matchups.match_1.game_date);
+            if (!isMatch1Started) {
+                picksArray.push({
+                    team_name: assignedTeams.team_1,
+                    ats_pick: picks.team_1.ats_pick,
+                    ou_pick: picks.team_1.ou_pick
+                });
             }
-            picksArray.push({
-                team_name: assignedTeams.team_1,
-                ats_pick: picks.team_1.ats_pick,
-                ou_pick: picks.team_1.ou_pick
-            });
         }
 
+        // Check Team 2 pick
         if (assignedTeams.team_2 && matchups.match_2) {
-            if (new Date() >= new Date(matchups.match_2.game_date)) {
-                return toast.error(`Game for ${assignedTeams.team_2} has already kicked off.`);
+            const isMatch2Started = matchups.match_2.game_date && now >= new Date(matchups.match_2.game_date);
+            if (!isMatch2Started) {
+                picksArray.push({
+                    team_name: assignedTeams.team_2,
+                    ats_pick: picks.team_2.ats_pick,
+                    ou_pick: picks.team_2.ou_pick
+                });
             }
-            picksArray.push({
-                team_name: assignedTeams.team_2,
-                ats_pick: picks.team_2.ats_pick,
-                ou_pick: picks.team_2.ou_pick
-            });
         }
 
         if (picksArray.length === 0) {
-            return toast.error("No active team games to submit picks for this week.");
+            return toast.error("No active or unlocked team games available to submit picks for.");
         }
 
         try {
