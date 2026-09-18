@@ -12,13 +12,36 @@ export default function NflBtsMatrix() {
     const { user, loading: authLoading } = useAuth();
     const [userEntries, setUserEntries] = useState([]);
     const [selectedRoomId, setSelectedRoomId] = useState(1);
-    const [currentWeek, setCurrentWeek] = useState(1);
+    const [currentWeek, setCurrentWeek] = useState(null); // Starts as null until settings load
     const [matrixData, setMatrixData] = useState([]);
     const [teamColorsMap, setTeamColorsMap] = useState({});
     const [loading, setLoading] = useState(true);
 
+    const token = localStorage.getItem("token");
+
+    // 1. Fetch pool settings to get the dynamic current week automatically on load
     useEffect(() => {
-        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        axios.get("/api/nfl_bts/settings", {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => {
+                if (res.data) {
+                    const activeWk = res.data.current_week || res.data.active_week;
+                    setCurrentWeek(activeWk ? Number(activeWk) : 1);
+                } else {
+                    setCurrentWeek(1);
+                }
+            })
+            .catch(err => {
+                console.error("Failed to load pool settings, defaulting to week 1:", err);
+                setCurrentWeek(1);
+            });
+    }, [token]);
+
+    // 2. Load NFL team colors and logos
+    useEffect(() => {
         if (!token) return;
         axios.get("/api/nfl_teams", {
             headers: { Authorization: `Bearer ${token}` }
@@ -35,11 +58,11 @@ export default function NflBtsMatrix() {
                 setTeamColorsMap(map);
             })
             .catch(err => console.error("Failed to load NFL team colors", err));
-    }, []);
+    }, [token]);
 
+    // 3. Load user entries for rooms
     useEffect(() => {
-        if (!user) return;
-        const token = localStorage.getItem("token");
+        if (!user || !token) return;
         axios.get("/api/nfl_bts/entries/me", {
             headers: { Authorization: `Bearer ${token}` }
         })
@@ -53,11 +76,11 @@ export default function NflBtsMatrix() {
                 }
             })
             .catch(err => console.error("Error loading user entries", err));
-    }, [user]);
+    }, [user, token]);
 
+    // 4. Fetch Matrix Data once currentWeek is determined
     useEffect(() => {
-        if (!user) return;
-        const token = localStorage.getItem("token");
+        if (!user || !token || currentWeek === null) return;
         setLoading(true);
 
         axios.get("/api/nfl_bts/matrix", {
@@ -106,7 +129,7 @@ export default function NflBtsMatrix() {
                 setMatrixData([]);
             })
             .finally(() => setLoading(false));
-    }, [user, currentWeek, selectedRoomId]);
+    }, [user, currentWeek, selectedRoomId, token]);
 
     const canRevealPick = (gameDate) => {
         if (!gameDate) return false;
@@ -150,7 +173,7 @@ export default function NflBtsMatrix() {
         return <span style={{ color: "#9ca3af" }}>--</span>;
     };
 
-    if (authLoading) return <div style={{ textAlign: "center", padding: 50 }}>Verifying session...</div>;
+    if (authLoading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50 }}>Loading pool week settings...</div>;
 
     return (
         <PoolGatekeeper user={user} gameKey="nfl_bts" className='page-content'>
