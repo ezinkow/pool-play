@@ -5,9 +5,6 @@ const db = require("../../models");
  * 🧠 DYNAMIC CURRENT & NEXT NFL WEEK CALCULATOR
  * Maps date boundaries to determine the current active week and upcoming weeks.
  */
-/**
- * 🧠 DYNAMIC CURRENT & NEXT NFL WEEK CALCULATOR
- */
 function getCurrentAndNextNflWeeks() {
     const now = new Date();
 
@@ -294,15 +291,25 @@ async function processMatchup(m) {
         } else {
             let payloadToUpdate = { ...m };
 
-            const lockedSpread = existingGame.adjusted_spread !== null ? existingGame.adjusted_spread : existingGame.spread;
-            const lockedFavorite = existingGame.favorite;
+            // 🕒 48-Hour Pre-Kickoff Lock Rule:
+            // If we are within 48 hours of kickoff (or the game has already started),
+            // preserve the previously locked spread, odds, and favorite.
+            const now = new Date();
+            const gameDate = existingGame.game_date ? new Date(existingGame.game_date) : null;
+            
+            if (gameDate) {
+                const hoursUntilKickoff = (gameDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+                const isWithin48Hours = hoursUntilKickoff <= 48;
 
-            payloadToUpdate.spread = existingGame.spread;
-            payloadToUpdate.adjusted_spread = existingGame.adjusted_spread;
-            payloadToUpdate.spread_odds = existingGame.spread_odds;
-            payloadToUpdate.away_spread_odds = existingGame.away_spread_odds;
-            payloadToUpdate.over_under = existingGame.over_under;
-            payloadToUpdate.favorite = existingGame.favorite;
+                if (isWithin48Hours) {
+                    payloadToUpdate.spread = existingGame.spread;
+                    payloadToUpdate.adjusted_spread = existingGame.adjusted_spread;
+                    payloadToUpdate.spread_odds = existingGame.spread_odds;
+                    payloadToUpdate.away_spread_odds = existingGame.away_spread_odds;
+                    payloadToUpdate.over_under = existingGame.over_under;
+                    payloadToUpdate.favorite = existingGame.favorite;
+                }
+            }
 
             payloadToUpdate.status = m.status;
             payloadToUpdate.live_status = m.live_status;
@@ -313,6 +320,9 @@ async function processMatchup(m) {
             const isFinal = statusType === "STATUS_FINAL" || statusType === "Final" || statusType === "completed" || statusType === "FINAL" || (payloadToUpdate.live_status && payloadToUpdate.live_status.toLowerCase().includes("final"));
 
             if (isFinal && payloadToUpdate.home_score !== null && payloadToUpdate.away_score !== null) {
+                const lockedSpread = existingGame.adjusted_spread !== null ? existingGame.adjusted_spread : existingGame.spread;
+                const lockedFavorite = existingGame.favorite;
+                
                 const gameObjForCalc = {
                     ...payloadToUpdate,
                     spread: lockedSpread,
