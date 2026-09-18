@@ -139,7 +139,9 @@ function extractMatchups(data) {
             id: gameId,
             week: weekNum,
             home_team: homeCompetitor.team.name,
+            home_city: homeCompetitor.team.location,
             away_team: awayCompetitor.team.name,
+            away_city: awayCompetitor.team.location,
             home_logo: homeCompetitor.team.logo || null,
             away_logo: awayCompetitor.team.logo || null,
             home_color: homeCompetitor.team.color ? `#${homeCompetitor.team.color}` : null,
@@ -296,7 +298,7 @@ async function processMatchup(m) {
             // preserve the previously locked spread, odds, and favorite.
             const now = new Date();
             const gameDate = existingGame.game_date ? new Date(existingGame.game_date) : null;
-            
+
             if (gameDate) {
                 const hoursUntilKickoff = (gameDate.getTime() - now.getTime()) / (1000 * 60 * 60);
                 const isWithin48Hours = hoursUntilKickoff <= 48;
@@ -322,7 +324,7 @@ async function processMatchup(m) {
             if (isFinal && payloadToUpdate.home_score !== null && payloadToUpdate.away_score !== null) {
                 const lockedSpread = existingGame.adjusted_spread !== null ? existingGame.adjusted_spread : existingGame.spread;
                 const lockedFavorite = existingGame.favorite;
-                
+
                 const gameObjForCalc = {
                     ...payloadToUpdate,
                     spread: lockedSpread,

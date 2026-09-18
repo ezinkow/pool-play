@@ -1,5 +1,6 @@
 module.exports = function (sequelize, DataTypes) {
     const NflTeams = sequelize.define("NflTeams", {
+        city: { type: DataTypes.STRING, allowNull: false, unique: true },
         name: { type: DataTypes.STRING, allowNull: false, unique: true },
         division: { type: DataTypes.STRING, allowNull: false },
         abbreviation: { type: DataTypes.STRING, allowNull: true },
