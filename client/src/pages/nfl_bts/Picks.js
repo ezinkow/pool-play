@@ -449,6 +449,9 @@ export default function NflBtsPicks() {
                         <p style={{ color: "#64748b", margin: 0, fontSize: "12px" }}>
                             Make your ATS and Over/Under picks for your assigned weekly teams.
                         </p>
+                        <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
+                            Lines will change throughout the week until 48 hours before kickoff. Picks/games are locked at kickoff.
+                        </p>
                     </div>
 
                     {/* All 18 Weeks Horizontal Scroll Bar */}

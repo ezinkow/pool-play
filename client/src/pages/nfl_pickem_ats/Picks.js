@@ -333,6 +333,9 @@ export default function NflPickemAtsPicks() {
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
                             Make your ATS picks & assign exactly 3 Best Bets ⭐ (worth 2 points).
                         </p>
+                        <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
+                            Lines will change throughout the week until 48 hours before kickoff. Picks/games are locked at kickoff.
+                        </p>
                         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 2 }}>
                             <div style={{ background: bestBetCount === 3 ? "#ecfdf5" : "#fef3c2", color: bestBetCount === 3 ? "#047857" : "#b45309", padding: "4px 8px", borderRadius: 6, fontWeight: 700, fontSize: "11px", whiteSpace: "nowrap" }}>
                                 Best Bets: {bestBetCount}/3

@@ -292,7 +292,10 @@ export default function CfbPickemAtsPicks() {
                             <span>🏈</span> {poolTitle || "CFB PICK 'EM ATS"} <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span>
                         </h2>
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
-                            Select up to {totalMustPicks} must-pick games & up to 15 total games (up to 3 Best Bets ⭐). <br />Lines lock 48 hours before kickoff.
+                            Select up to {totalMustPicks} must-pick games & up to 15 total games (up to 3 Best Bets ⭐).
+                        </p>
+                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
+                            Lines will change throughout the week until 48 hours before kickoff. Picks/games are locked at kickoff.
                         </p>
                         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 2 }}>
                             {totalMustPicks > 0 && (

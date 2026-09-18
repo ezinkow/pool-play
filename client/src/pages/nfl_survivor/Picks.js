@@ -52,7 +52,7 @@ export default function NflSurvivorPicks() {
                 setGames(data.games || (Array.isArray(data) ? data : []) || []);
                 setUserPicks(data.userPicks || {});
                 setUsedTeams(data.usedTeams || []);
-                
+
                 // ✨ Dynamically honor active week returned by backend or fall back safely
                 const activeWk = data.currentWeek || weekToFetch;
                 if (activeWk >= maxAvailableWeek) {
@@ -113,12 +113,12 @@ export default function NflSurvivorPicks() {
     const formatGameDate = (dateStr) => {
         if (!dateStr) return "";
         const d = new Date(dateStr);
-        return d.toLocaleDateString("en-US", { 
-            weekday: "short", 
-            month: "short", 
-            day: "numeric", 
-            hour: "numeric", 
-            minute: "2-digit" 
+        return d.toLocaleDateString("en-US", {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit"
         });
     };
 
@@ -129,8 +129,8 @@ export default function NflSurvivorPicks() {
     const pickedPrimary = pickedTeamMeta.primaryColor || NFL_BLUE;
     const pickedSecondary = pickedTeamMeta.secondaryColor || "#cbd5e1";
 
-    const bannerBg = currentWeekPick 
-        ? `linear-gradient(135deg, ${pickedPrimary}, ${pickedSecondary})` 
+    const bannerBg = currentWeekPick
+        ? `linear-gradient(135deg, ${pickedPrimary}, ${pickedSecondary})`
         : "#fffbeb";
 
     return (
@@ -142,6 +142,9 @@ export default function NflSurvivorPicks() {
                     <h2 style={{ color: NFL_BLUE, fontSize: "20px", margin: 0 }}>🏈 NFL Survivor: Week {currentWeek}</h2>
                     <p style={{ color: "#64748b", marginTop: 4, fontSize: "12px" }}>
                         Pick one team straight up. Click your selected team again to de-select.
+                    </p>
+                    <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
+                        Lines will change throughout the week until 48 hours before kickoff. Picks/games are locked at kickoff.
                     </p>
                 </div>
 
@@ -212,11 +215,11 @@ export default function NflSurvivorPicks() {
                     {currentWeekPick ? (
                         <>
                             {pickedTeamMeta.logo && (
-                                <span style={{ 
-                                    background: pickedSecondary, 
-                                    borderRadius: 4, 
-                                    padding: "2px 4px", 
-                                    display: "inline-flex", 
+                                <span style={{
+                                    background: pickedSecondary,
+                                    borderRadius: 4,
+                                    padding: "2px 4px",
+                                    display: "inline-flex",
                                     alignItems: "center",
                                     border: `2px solid ${pickedPrimary}`,
                                     boxShadow: `0 0 4px 1px ${pickedPrimary}, 0 1px 3px rgba(0,0,0,0.3)`
@@ -274,7 +277,7 @@ export default function NflSurvivorPicks() {
                                 const isAwayFav = game.favorite === game.away_team;
                                 const hOddsStr = homeSpreadOdds > 0 ? `+${homeSpreadOdds}` : homeSpreadOdds;
                                 const aOddsStr = awaySpreadOdds > 0 ? `+${awaySpreadOdds}` : awaySpreadOdds;
-                                
+
                                 if (rawSpread === 0) {
                                     awaySpreadStr = `PK (${aOddsStr})`;
                                     homeSpreadStr = `PK (${hOddsStr})`;
