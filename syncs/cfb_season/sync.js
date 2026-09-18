@@ -344,7 +344,7 @@ async function processMatchup(m) {
 async function syncCfbSeason(targetWeek) {
     try {
         // ✨ Replaced fragile date ranges with native ESPN week parameters + limit=500
-        const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?seasontype=2&week=${targetWeek}&limit=500`;
+        const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?seasontype=2&week=${targetWeek}&groups=80&limit=500`;
 
         console.log(`[CFB Regular Season sync] Fetching Week ${targetWeek} data via week parameter`);
         const { data } = await axios.get(scoreboardUrl, { timeout: 15000 });
