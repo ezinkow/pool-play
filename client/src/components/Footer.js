@@ -28,10 +28,12 @@ export default function Footer() {
                         FOR ENTERTAINMENT USE ONLY.
                     </p>
                     <p style={{ margin: "0 0 8px 0" }}>
-                        This site is not affiliated in any way with the NFL, NBA, NHL, MLB, NCAA, UFC or any other professional or collegiate sports team, league, or association. Any league, association, or team names/logos are copyright of their respective owners.
+                        This site is not affiliated in any way with the NFL, NBA, MLB, NCAA, Olympic, International or any other professional or collegiate sports team, league, or association. Any league, association, or team names/logos are copyright of their respective owners.
                     </p>
                     <p style={{ margin: 0 }}>
-                        Copyright © 2026-{new Date().getFullYear()} Pool Play. All rights reserved.
+                        Copyright © 2026 Pool Play. All rights reserved.
+                        {/* -{new Date().getFullYear()} */}
+                        
                     </p>
                 </div>
             </div>
