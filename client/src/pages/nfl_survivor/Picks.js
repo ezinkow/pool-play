@@ -144,7 +144,7 @@ export default function NflSurvivorPicks() {
                         Pick one team straight up. Click your selected team again to de-select.
                     </p>
                     <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
-                        Lines will change throughout the week until 48 hours before kickoff. Picks/games are locked at kickoff.
+                        Picks/games are locked at kickoff.
                     </p>
                 </div>
 
