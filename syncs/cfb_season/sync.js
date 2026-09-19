@@ -67,7 +67,7 @@ function applyHookRule(spread, odds) {
 async function fetchTeamRankings(weekNumber) {
     const rankingsMap = {};
     try {
-        const rankingsUrl = `http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2026/types/1/weeks/${weekNumber}/rankings/2?lang=en&region=us`;
+        const rankingsUrl = `http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2026/types/2/weeks/${weekNumber}/rankings/1?lang=en&region=us`;
         const { data } = await axios.get(rankingsUrl, { timeout: 10000 });
         const ranksArray = data?.ranks || [];
 
