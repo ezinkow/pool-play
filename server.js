@@ -80,6 +80,12 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/nba/tiebreaker-api-routes.js")(app);
   require("./routes/nba/admin-api-routes.js")(app);
 
+  // NBA Regular Season
+  require("./routes/nba_regular_season_api_routes.js")(app);
+
+  // NBA Survivor
+  require("./routes/nba_survivor_api_routes.js")(app);
+
   // NFL
   require("./routes/nfl/rosters-api-routes.js")(app);
   require("./routes/nfl/playerpools-api-routes.js")(app);
@@ -99,7 +105,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
 
   // NFL Survivor
   require("./routes/nfl_survivor_api_routes.js")(app);
-  
+
   // MLB
   require("./routes/mlb_api_routes.js")(app);
 
@@ -115,8 +121,9 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   const syncHrd = require("./syncs/home_run_derby/sync.js");
   const syncNba = require("./syncs/nba/sync.js");
   const syncMlb = require("./syncs/mlb/sync.js");
-  const syncNfl = require("./syncs/nfl_season/sync.js");
+  const syncNflRegSeason = require("./syncs/nfl_season/sync.js");
   const syncCfb = require("./syncs/cfb_season/sync.js");
+  const syncNbaRegSeason = require("./syncs/nba_season/sync.js");
   const syncWorldCup = require("./syncs/world_cup/sync.js");
   const tourneyPickemLockLines = require("./jobs/tourney_pickem/lockLines.js");
 
@@ -129,7 +136,8 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
       // await syncHrd();
       // await syncNba();
       await syncMlb();
-      await syncNfl();
+      await syncNflRegSeason();
+      await syncNbaRegSeason();
       await syncCfb();
       // await syncWorldCup();
       // await tourneyPickemLockLines();

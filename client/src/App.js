@@ -66,14 +66,20 @@ import BracketMyBracket from './pages/bracket/MyBracket';
 import BracketStandings from './pages/bracket/Standings';
 import BracketSignUp from './pages/bracket/SignUp';
 
-// NBA pages
+// NBA Playoffs pages
 import NbaHome from './pages/nba/Home';
 import NbaPicks from './pages/nba/Picks';
 import NbaMyPicks from './pages/nba/MyPicks';
 import NbaStandings from './pages/nba/Standings';
 import NbaGroupPicks from './pages/nba/GroupPicks';
-import NbaSignUp from './pages/nba/SignUp';       // ← pool entry, not account creation
+import NbaSignUp from './pages/nba/SignUp';
 import NbaAdminRefresh from './pages/nba/AdminRefresh';
+
+// NBA Survivor pages
+import NbaSurvivorHome from './pages/nba_survivor/Home';
+import NbaSurvivorPicks from './pages/nba_survivor/Picks';
+import NbaSurvivorMyPicks from './pages/nba_survivor/MyPicks';
+import NbaSurvivorGroupPicks from './pages/nba_survivor/GroupsPicks';
 
 // MLB Pages
 import MlbHome from './pages/mlb/Home';
@@ -213,7 +219,7 @@ export default function App() {
           <Route path="/mlb/grouppicks" element={<MlbGroupPicks />} />
           <Route path="/mlb/standings" element={<MlbStandings />} />
 
-          {/* NBA */}
+          {/* NBA Playoffs*/}
           <Route path="/nba" element={<NbaHome />} />
           <Route path="/nba/picks" element={<NbaPicks />} />
           <Route path="/nba/mypicks" element={<NbaMyPicks />} />
@@ -221,6 +227,12 @@ export default function App() {
           <Route path="/nba/grouppicks" element={<NbaGroupPicks />} />
           <Route path="/nba/signup" element={<NbaSignUp />} />
           <Route path="/nba/adminrefresh" element={<NbaAdminRefresh />} />
+
+          {/* NBA Survivor*/}
+          <Route path="/nbasurvivor" element={<NbaSurvivorHome />} />
+          <Route path="/nbasurvivor/picks" element={<NbaSurvivorPicks />} />
+          <Route path="/nbasurvivor/mypicks" element={<NbaSurvivorMyPicks />} />
+          <Route path="/nbasurvivor/grouppicks" element={<NbaSurvivorGroupPicks />} />
 
           {/* NFL Playoffs*/}
           <Route path="/nfl" element={<NflHome />} />

@@ -1,0 +1,55 @@
+const { NbaRegularSeasonGames, NbaTeams } = require("../models");
+const db = require("../models");
+const { Op } = require("sequelize");
+const requireAuth = require("../middleware/Requireauth");
+
+module.exports = function (app) {
+
+    // --------------------------------------------------------
+    // GET /api/nba_regular_season_matchups (Supports both week-only and team lookups)
+    // --------------------------------------------------------
+    app.get("/api/nba_regular_season_matchups", requireAuth, async (req, res) => {
+        try {
+            const { week, team } = req.query;
+
+            // If a specific team is requested, handle single matchup lookup
+            if (team && team !== "undefined" && team !== "null") {
+                const matchup = await NbaRegularSeasonGames.findOne({
+                    where: {
+                        week: parseInt(week),
+                        [Op.or]: [{ home_team: team }, { away_team: team }]
+                    }
+                });
+                return res.json(matchup || null);
+            }
+
+            // Otherwise, fetch all games for the requested week (used by Pick'em)
+            const targetWeek = parseInt(week) || 1;
+            const games = await NbaRegularSeasonGames.findAll({
+                where: { week: targetWeek },
+                order: [["game_date", "ASC"]]
+            });
+            res.json(games);
+        } catch (err) {
+            console.error("Error fetching regular season matchups:", err);
+            res.status(500).json({ error: "Failed to fetch matchups" });
+        }
+    });
+
+
+    // --------------------------------------------------------
+    // GET /api/nba_teams (Fetch all NBA teams and colors)
+    // --------------------------------------------------------
+    app.get("/api/nba_teams", requireAuth, async (req, res) => {
+        try {
+            const teams = await NbaTeams.findAll({
+                order: [["name", "ASC"]]
+            });
+            res.json(teams);
+        } catch (err) {
+            console.error("Error fetching NBA teams:", err);
+            res.status(500).json({ error: "Failed to fetch NBA teams" });
+        }
+    });
+
+}

@@ -1,5 +1,5 @@
 module.exports = function (sequelize, DataTypes) {
-    const NflRegularSeasonGames = sequelize.define("NflRegularSeasonGames", {
+    const NbaRegularSeasonGames = sequelize.define("NbaRegularSeasonGames", {
         id: { type: DataTypes.INTEGER, primaryKey: true, allowNull: false },
         week: { type: DataTypes.INTEGER, allowNull: false },
         home_team: { type: DataTypes.STRING, allowNull: false },
@@ -25,9 +25,9 @@ module.exports = function (sequelize, DataTypes) {
         ats_winner: { type: DataTypes.STRING, allowNull: true },
         ou_result: { type: DataTypes.STRING, allowNull: true }
     }, {
-        tableName: "nfl_regular_season_games",
+        tableName: "nba_regular_season_games",
         timestamps: true
     });
 
-    return NflRegularSeasonGames;
+    return NbaRegularSeasonGames;
 };

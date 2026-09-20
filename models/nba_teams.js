@@ -1,5 +1,5 @@
 module.exports = function (sequelize, DataTypes) {
-    const NflTeams = sequelize.define("NflTeams", {
+    const NbaTeams = sequelize.define("NbaTeams", {
         city: { type: DataTypes.STRING, allowNull: false, unique: false },
         name: { type: DataTypes.STRING, allowNull: false, unique: true },
         division: { type: DataTypes.STRING, allowNull: false },
@@ -9,9 +9,9 @@ module.exports = function (sequelize, DataTypes) {
         secondary_color: { type: DataTypes.STRING, allowNull: true },
         bg_color: { type: DataTypes.STRING, allowNull: true }
     }, {
-        tableName: "nfl_teams",
+        tableName: "nba_teams",
         timestamps: false
     });
 
-    return NflTeams;
+    return NbaTeams;
 };
