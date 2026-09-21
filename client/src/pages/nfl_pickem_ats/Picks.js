@@ -255,19 +255,16 @@ export default function NflPickemAtsPicks() {
     });
 
     const handleSubmitAll = async () => {
-        // Block if user selected more than 3 best bets
         if (bestBetCount > 3) {
             toast.error(`You have selected ${bestBetCount} Best Bets. You can only have up to 3 Best Bets!`);
             return;
         }
 
-        // If all games have been picked, but best bets are less than 3, block submission
         if (selectedPicksCount === totalGamesCount && bestBetCount < 3) {
             toast.error(`You have filled out all ${totalGamesCount} picks, but you only have ${bestBetCount} Best Bets selected. You must have 3 Best Bets to complete your full sheet!`);
             return;
         }
 
-        // If picks are incomplete and best bets are less than 3, allow submission with a warning toast
         if (selectedPicksCount < totalGamesCount && bestBetCount < 3) {
             toast("⚠️ Warning: Saving partial picks with fewer than 3 Best Bets.", { icon: "⚠️" });
         }
@@ -552,10 +549,7 @@ export default function NflPickemAtsPicks() {
                             const homeLogo = homeTeamMeta.logo || game.home_logo || null;
 
                             const awayColor = awayTeamMeta.primaryColor || game.away_color || "#0f172a";
-                            const awaySecondary = awayTeamMeta.secondaryColor || game.away_secondary_color || "#cbd5e1";
-
                             const homeColor = homeTeamMeta.primaryColor || game.home_color || "#0f172a";
-                            const homeSecondary = homeTeamMeta.secondaryColor || game.home_secondary_color || "#cbd5e1";
 
                             const favoriteTeam = game.favorite;
                             const favTeamMeta = teamColors[favoriteTeam] || {};
@@ -563,6 +557,15 @@ export default function NflPickemAtsPicks() {
 
                             const isAwayPicked = userPick.picked_team === game.away_team;
                             const isHomePicked = userPick.picked_team === game.home_team;
+
+                            const hasStarted = isLocked || (game.home_score !== null && game.home_score !== undefined) || (game.away_score !== null && game.away_score !== undefined);
+                            const rawStatus = (game.status || "").toUpperCase();
+                            const liveStatusText = game.live_status || game.status_detail || (rawStatus.includes("FINAL") || rawStatus.includes("COMPLETED") ? "Final" : (hasStarted ? "In Progress" : ""));
+                            const displayDateStr = game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).toUpperCase() : "TBD";
+
+                            const gameHeaderLabel = hasStarted
+                                ? `${liveStatusText}`
+                                : displayDateStr;
 
                             return (
                                 <div key={game.id} style={{
@@ -575,15 +578,15 @@ export default function NflPickemAtsPicks() {
                                 }}>
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 4 }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", minWidth: 0, flex: 1 }}>
-                                            <span style={{ fontSize: "10px", color: "#000000", fontWeight: 700, textTransform: "uppercase", flexShrink: 0 }}>
-                                                {game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).toUpperCase() : "TBD"}
+                                            <span style={{ fontSize: "10px", color: hasStarted ? NFL_RED : "#000000", fontWeight: 700, textTransform: "uppercase", flexShrink: 0 }}>
+                                                {gameHeaderLabel}
                                             </span>
 
                                             <span style={{ fontSize: "10px", color: "#000000", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3, minWidth: 0 }}>
                                                 <span style={{ color: "#64748b" }}>Spread:</span>
                                                 {favoriteLogo && (
                                                     <span style={{
-                                                        background: favTeamMeta.secondaryColor || homeSecondary,
+                                                        background: favTeamMeta.secondaryColor || "#f1f5f9",
                                                         borderRadius: 3,
                                                         padding: "1px",
                                                         display: "inline-flex",
@@ -633,15 +636,14 @@ export default function NflPickemAtsPicks() {
                                     </div>
 
                                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                                        {/* Away Team Card */}
                                         <div
                                             onClick={() => !isLocked && handleTeamPick(game.id, game.away_team, game.game_date)}
                                             style={{
-                                                backgroundImage: isAwayPicked
-                                                    ? `linear-gradient(to right, ${awayColor} 100%, ${awayColor} 100%)`
-                                                    : `linear-gradient(to right, ${awayColor} 0%, ${awayColor} 0%, transparent 0%), linear-gradient(135deg, ${awayColor}26 0%, ${awaySecondary}26 50%, #f8fafc 100%)`,
-                                                backgroundColor: isAwayPicked ? awayColor : "transparent",
+                                                backgroundColor: isAwayPicked ? awayColor : "#f8fafc",
+                                                color: isAwayPicked ? "#ffffff" : "#0f172a",
                                                 borderRadius: 6,
-                                                border: isAwayPicked ? `2px solid #0284c7` : `1px solid ${awayColor}55`,
+                                                border: isAwayPicked ? `2px solid ${awayColor}` : "1px solid #cbd5e1",
                                                 padding: "8px 6px",
                                                 cursor: isLocked ? "not-allowed" : "pointer",
                                                 display: "flex",
@@ -649,10 +651,8 @@ export default function NflPickemAtsPicks() {
                                                 alignItems: "center",
                                                 textAlign: "center",
                                                 position: "relative",
-                                                boxShadow: isAwayPicked ? `0 0 10px rgba(2, 132, 199, 0.35), inset 0 0 8px ${awayColor}` : "none",
-                                                transition: "background-size 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border 0.2s ease",
-                                                backgroundSize: isAwayPicked ? "100% 100%" : "0% 100%, 100% 100%",
-                                                backgroundRepeat: "no-repeat",
+                                                boxShadow: isAwayPicked ? `0 0 10px rgba(0, 0, 0, 0.2)` : "none",
+                                                transition: "all 0.2s ease",
                                                 minWidth: 0
                                             }}
                                         >
@@ -670,13 +670,13 @@ export default function NflPickemAtsPicks() {
                                             )}
                                             {awayLogo && (
                                                 <div style={{
-                                                    background: awaySecondary,
+                                                    background: awayTeamMeta.secondaryColor || "#ffffff",
                                                     borderRadius: 6,
                                                     padding: "3px",
                                                     display: "flex",
                                                     alignItems: "center",
                                                     justifyContent: "center",
-                                                    boxShadow: `0 0 4px 1px ${awayColor}, 0 1px 3px rgba(0,0,0,0.15)`,
+                                                    boxShadow: `0 1px 3px rgba(0,0,0,0.15)`,
                                                     border: `1.5px solid ${awayColor}`,
                                                     marginBottom: 4,
                                                     width: 35,
@@ -689,20 +689,31 @@ export default function NflPickemAtsPicks() {
                                             <div style={{ fontWeight: isAwayPicked ? 800 : 600, fontSize: "12px", color: isAwayPicked ? "#ffffff" : "#0f172a", marginBottom: 2, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                                 {game.away_team}
                                             </div>
-                                            <div style={{ fontSize: "11px", fontWeight: 700, color: isAwayPicked ? "#e2e8f0" : "#475569" }}>
-                                                {hasLine ? awaySpreadStr : "No Line"}
+                                            <div style={{ fontSize: "11px", fontWeight: 700, color: isAwayPicked ? "#f1f5f9" : "#475569", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                                                <span>{hasLine ? awaySpreadStr : "No Line"}</span>
+                                                {hasStarted && game.status && !game.status.toUpperCase().includes("STATUS_SCHEDULED") && !game.status.toUpperCase().includes("PRE") && game.away_score !== null && game.away_score !== undefined && (
+                                                    <span style={{
+                                                        background: isAwayPicked ? "rgba(0,0,0,0.25)" : "#0f172a",
+                                                        color: "#ffffff",
+                                                        padding: "1px 6px",
+                                                        borderRadius: 4,
+                                                        fontSize: "12px",
+                                                        fontWeight: 800
+                                                    }}>
+                                                        {game.away_score}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
 
+                                        {/* Home Team Card */}
                                         <div
                                             onClick={() => !isLocked && handleTeamPick(game.id, game.home_team, game.game_date)}
                                             style={{
-                                                backgroundImage: isHomePicked
-                                                    ? `linear-gradient(to right, ${homeColor} 100%, ${homeColor} 100%)`
-                                                    : `linear-gradient(to right, ${homeColor} 0%, ${homeColor} 0%, transparent 0%), linear-gradient(135deg, ${homeColor}26 0%, ${homeSecondary}26 50%, #f8fafc 100%)`,
-                                                backgroundColor: isHomePicked ? homeColor : "transparent",
+                                                backgroundColor: isHomePicked ? homeColor : "#f8fafc",
+                                                color: isHomePicked ? "#ffffff" : "#0f172a",
                                                 borderRadius: 6,
-                                                border: isHomePicked ? `2px solid #0284c7` : `1px solid ${homeColor}55`,
+                                                border: isHomePicked ? `2px solid ${homeColor}` : "1px solid #cbd5e1",
                                                 padding: "8px 6px",
                                                 cursor: isLocked ? "not-allowed" : "pointer",
                                                 display: "flex",
@@ -710,10 +721,8 @@ export default function NflPickemAtsPicks() {
                                                 alignItems: "center",
                                                 textAlign: "center",
                                                 position: "relative",
-                                                boxShadow: isHomePicked ? `0 0 10px rgba(2, 132, 199, 0.35), inset 0 0 8px ${homeColor}` : "none",
-                                                transition: "background-size 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border 0.2s ease",
-                                                backgroundSize: isHomePicked ? "100% 100%" : "0% 100%, 100% 100%",
-                                                backgroundRepeat: "no-repeat",
+                                                boxShadow: isHomePicked ? `0 0 10px rgba(0, 0, 0, 0.2)` : "none",
+                                                transition: "all 0.2s ease",
                                                 minWidth: 0
                                             }}
                                         >
@@ -731,13 +740,13 @@ export default function NflPickemAtsPicks() {
                                             )}
                                             {homeLogo && (
                                                 <div style={{
-                                                    background: homeSecondary,
+                                                    background: homeTeamMeta.secondaryColor || "#ffffff",
                                                     borderRadius: 6,
                                                     padding: "3px",
                                                     display: "flex",
                                                     alignItems: "center",
                                                     justifyContent: "center",
-                                                    boxShadow: `0 0 4px 1px ${homeColor}, 0 1px 3px rgba(0,0,0,0.15)`,
+                                                    boxShadow: `0 1px 3px rgba(0,0,0,0.15)`,
                                                     border: `1.5px solid ${homeColor}`,
                                                     marginBottom: 4,
                                                     width: 35,
@@ -750,8 +759,20 @@ export default function NflPickemAtsPicks() {
                                             <div style={{ fontWeight: isHomePicked ? 800 : 600, fontSize: "12px", color: isHomePicked ? "#ffffff" : "#0f172a", marginBottom: 2, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                                 {game.home_team}
                                             </div>
-                                            <div style={{ fontSize: "11px", fontWeight: 700, color: isHomePicked ? "#e2e8f0" : "#475569" }}>
-                                                {hasLine ? homeSpreadStr : "No Line"}
+                                            <div style={{ fontSize: "11px", fontWeight: 700, color: isHomePicked ? "#f1f5f9" : "#475569", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                                                <span>{hasLine ? homeSpreadStr : "No Line"}</span>
+                                                {hasStarted && game.status && !game.status.toUpperCase().includes("STATUS_SCHEDULED") && !game.status.toUpperCase().includes("PRE") && game.home_score !== null && game.home_score !== undefined && (
+                                                    <span style={{
+                                                        background: isHomePicked ? "rgba(0,0,0,0.25)" : "#0f172a",
+                                                        color: "#ffffff",
+                                                        padding: "1px 6px",
+                                                        borderRadius: 4,
+                                                        fontSize: "12px",
+                                                        fontWeight: 800
+                                                    }}>
+                                                        {game.home_score}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

@@ -498,6 +498,15 @@ export default function CfbPickemAtsPicks() {
                             const isAwayPicked = userPick.picked_team === game.away_team;
                             const isHomePicked = userPick.picked_team === game.home_team;
 
+                            const hasStarted = isLocked || (game.home_score !== null && game.home_score !== undefined) || (game.away_score !== null && game.away_score !== undefined);
+                            const rawStatus = (game.status || "").toUpperCase();
+                            const liveStatusText = game.live_status || game.status_detail || (rawStatus.includes("FINAL") || rawStatus.includes("COMPLETED") ? "Final" : (hasStarted ? "In Progress" : ""));
+                            const displayDateStr = game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).toUpperCase() : "TBD";
+
+                            const gameHeaderLabel = hasStarted
+                                ? `${liveStatusText}`
+                                : displayDateStr;
+
                             const prevGame = sortedGames[index - 1];
                             const showMustPickHeader = game.must_pick && (!prevGame || !prevGame.must_pick);
                             const showRegularHeader = !game.must_pick && prevGame && prevGame.must_pick;
@@ -553,8 +562,8 @@ export default function CfbPickemAtsPicks() {
                                                         MUST
                                                     </span>
                                                 )}
-                                                <span style={{ fontSize: "10px", color: "#000000", fontWeight: 700, textTransform: "uppercase", flexShrink: 0 }}>
-                                                    {game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).toUpperCase() : "TBD"}
+                                                <span style={{ fontSize: "10px", color: hasStarted ? CFB_RED : "#000000", fontWeight: 700, textTransform: "uppercase", flexShrink: 0 }}>
+                                                    {gameHeaderLabel}
                                                 </span>
 
                                                 <span style={{ fontSize: "10px", color: "#000000", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3, minWidth: 0 }}>
@@ -670,8 +679,20 @@ export default function CfbPickemAtsPicks() {
                                                     {game.away_team_rank ? <span style={{ color: isAwayPicked ? "#fef08a" : "#b45309", marginRight: 2 }}>({game.away_team_rank})</span> : null}
                                                     {game.away_team}
                                                 </div>
-                                                <div style={{ fontSize: "11px", fontWeight: 700, color: isAwayPicked ? "#e2e8f0" : "#475569" }}>
-                                                    {hasLine ? awaySpreadStr : "No Line"}
+                                                <div style={{ fontSize: "11px", fontWeight: 700, color: isAwayPicked ? "#e2e8f0" : "#475569", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                                                    <span>{hasLine ? awaySpreadStr : "No Line"}</span>
+                                                    {hasStarted && game.status && !game.status.toUpperCase().includes("STATUS_SCHEDULED") && !game.status.toUpperCase().includes("PRE") && game.away_score !== null && game.away_score !== undefined && (
+                                                        <span style={{
+                                                            background: isAwayPicked ? "rgba(0,0,0,0.25)" : "#0f172a",
+                                                            color: "#ffffff",
+                                                            padding: "1px 6px",
+                                                            borderRadius: 4,
+                                                            fontSize: "12px",
+                                                            fontWeight: 800
+                                                        }}>
+                                                            {game.away_score}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -733,8 +754,20 @@ export default function CfbPickemAtsPicks() {
                                                     {game.home_team_rank ? <span style={{ color: isHomePicked ? "#fef08a" : "#b45309", marginRight: 2 }}>({game.home_team_rank})</span> : null}
                                                     {game.home_team}
                                                 </div>
-                                                <div style={{ fontSize: "11px", fontWeight: 700, color: isHomePicked ? "#e2e8f0" : "#475569" }}>
-                                                    {hasLine ? homeSpreadStr : "No Line"}
+                                                <div style={{ fontSize: "11px", fontWeight: 700, color: isHomePicked ? "#e2e8f0" : "#475569", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                                                    <span>{hasLine ? homeSpreadStr : "No Line"}</span>
+                                                    {hasStarted && game.status && !game.status.toUpperCase().includes("STATUS_SCHEDULED") && !game.status.toUpperCase().includes("PRE") && game.home_score !== null && game.home_score !== undefined && (
+                                                        <span style={{
+                                                            background: isHomePicked ? "rgba(0,0,0,0.25)" : "#0f172a",
+                                                            color: "#ffffff",
+                                                            padding: "1px 6px",
+                                                            borderRadius: 4,
+                                                            fontSize: "12px",
+                                                            fontWeight: 800
+                                                        }}>
+                                                            {game.home_score}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
