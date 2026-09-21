@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
   NflSurvivorEntries.associate = (models) => {
     NflSurvivorEntries.hasMany(models.NflSurvivorPicks, {
       foreignKey: "user_id",
-      sourceKey: "id" // 👈 Reference the primary id key
+      sourceKey: "user_id" // 👈 Reference the primary id key
     });
   };
   return NflSurvivorEntries;

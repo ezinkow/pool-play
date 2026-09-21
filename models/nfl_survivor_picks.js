@@ -16,7 +16,8 @@ module.exports = (sequelize, DataTypes) => {
             targetKey: "user_id"
         });
         NflSurvivorPicks.belongsTo(models.NflRegularSeasonGames, {
-            foreignKey: "game_id"
+            foreignKey: "game_id",
+            targetKey: "id"
         });
     };
 

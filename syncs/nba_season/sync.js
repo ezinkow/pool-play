@@ -3,24 +3,18 @@ const db = require("../../models");
 
 /**
  * 🧠 DYNAMIC CURRENT & NEXT NBA WEEK CALCULATOR
- * Week 1 starts Sep 18, 2026 (Fri-Sun block through Oct 25, 2026).
- * Subsequent weeks roll on standard Monday-Sunday cycles through April 11, 2027.
  */
 function getCurrentAndNextNbaWeeks() {
     const now = new Date();
-
     const weeks = [];
 
-    // Week 1: September 18, 2026 to October 25, 2026 (Special extended first block)
     weeks.push({
         week: 1,
         start: new Date("2026-09-18T00:00:00"),
         end: new Date("2026-10-25T23:59:59")
     });
 
-    // Week 2 onwards: Standard 7-day Monday-Sunday blocks starting Oct 26, 2026
     let currentMonday = new Date("2026-10-26T00:00:00");
-
     for (let w = 2; w <= 26; w++) {
         const weekStart = new Date(currentMonday);
         const weekEnd = new Date(currentMonday);
@@ -46,19 +40,15 @@ function getCurrentAndNextNbaWeeks() {
     return weeks[activeIndex].week;
 }
 
-/**
- * 🧠 GET FRIDAY, SATURDAY, SUNDAY DATES FOR NBA WEEKS
- */
 function getWeekendDatesForNbaWeek(weekNumber) {
     const weekendDates = [];
 
     if (weekNumber === 1) {
-        // Week 1 spans from Sep 18, 2026 to Oct 25, 2026. 
         let curr = new Date("2026-09-18T00:00:00");
         const endRange = new Date("2026-10-25T23:59:59");
 
         while (curr <= endRange) {
-            const dayOfWeek = curr.getDay(); // 5 = Fri, 6 = Sat, 0 = Sun
+            const dayOfWeek = curr.getDay();
             if (dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0) {
                 const year = curr.getFullYear();
                 const month = String(curr.getMonth() + 1).padStart(2, '0');
@@ -68,7 +58,6 @@ function getWeekendDatesForNbaWeek(weekNumber) {
             curr.setDate(curr.getDate() + 1);
         }
     } else {
-        // Week 2 onwards: Standard Monday-Sunday calculation starting Oct 26, 2026
         const week1Start = new Date("2026-10-26T00:00:00");
         const monday = new Date(week1Start);
         monday.setDate(week1Start.getDate() + (weekNumber - 2) * 7);
@@ -107,7 +96,7 @@ function applyHookRule(spread, odds) {
     return -adjustedAbs;
 }
 
-function extractMatchups(data, weekNum) { // 👈 Accepts weekNum passed from loop
+function extractMatchups(data, weekNum) {
     if (!data?.events) return [];
     const matchups = [];
 
@@ -181,7 +170,7 @@ function extractMatchups(data, weekNum) { // 👈 Accepts weekNum passed from lo
 
         matchups.push({
             id: parseInt(gameId, 10),
-            week: weekNum, // 👈 Assigned properly from week loop
+            week: weekNum,
             home_team: homeCompetitor.team.name,
             home_city: homeCompetitor.team.location,
             away_team: awayCompetitor.team.name,
@@ -253,6 +242,48 @@ function calculateGameOutcomes(m, homeScore, awayScore) {
         ats_winner,
         ou_result
     };
+}
+
+/**
+ * 🧠 SYNC TEAM RECORDS FROM ESPN API
+ */
+async function syncTeamRecords() {
+    const { NbaTeams } = db;
+    try {
+        const teams = await NbaTeams.findAll();
+        for (const team of teams) {
+            if (!team.team_id) continue;
+            try {
+                // Target the overall team record endpoint (using type 2 regular season or general records list)
+                const recordUrl = `http://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons/2027/types/1/groups/7/teams/${team.team_id}/records/34?lang=en&region=us`;
+                const { data } = await axios.get(recordUrl, { timeout: 10000 });
+
+                // Look for the overall record entry (usually type 'total' or 'overall', or fallback to the first item's summary)
+                let overallSummary = "";
+                const recordsList = Array.isArray(data) ? data : (data.items || data.records || []);
+
+                const overallRec = recordsList.find(r => r.type === "total" || r.type === "overall" || r.name === "Overall");
+                if (overallRec) {
+                    overallSummary = overallRec.summary || overallRec.displayValue;
+                } else if (recordsList.length > 0) {
+                    // Fallback to the first record summary found if overall isn't explicitly named
+                    overallSummary = recordsList[0].summary || recordsList[0].displayValue;
+                } else if (data.summary) {
+                    overallSummary = data.summary;
+                }
+
+                if (overallSummary) {
+                    team.record = overallSummary;
+                    await team.save();
+                }
+            } catch (err) {
+                console.error(`[NBA Sync] Failed to fetch record for team_id ${team.team_id}:`, err.message);
+            }
+        }
+        console.log("[NBA Sync] Team records updated successfully.");
+    } catch (err) {
+        console.error("[NBA Sync] Error syncing team records:", err);
+    }
 }
 
 async function evaluateSurvivorResults() {
@@ -394,7 +425,7 @@ async function syncNbaWeek(targetWeek) {
             const url = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${dateStr}`;
             const { data } = await axios.get(url, { timeout: 15000 });
 
-            const dailyMatchups = extractMatchups(data, targetWeek); // 👈 Fixed function name
+            const dailyMatchups = extractMatchups(data, targetWeek);
             allMatchups = allMatchups.concat(dailyMatchups);
         } catch (err) {
             console.error(`[NBA Sync] Error fetching scoreboard for date ${dateStr}:`, err.message);
@@ -407,7 +438,6 @@ async function syncNbaWeek(targetWeek) {
     console.log(`[NBA Sync] Successfully synced ${allMatchups.length} weekend matchups for Week ${targetWeek}.`);
 }
 
-// 🧠 Wrapper function required by server.js to cycle through the rolling 3-week window
 async function syncNbaSeason() {
     const currentWeek = getCurrentAndNextNbaWeeks();
     const targetWeeks = [currentWeek, currentWeek + 1, currentWeek + 2];
@@ -419,6 +449,7 @@ async function syncNbaSeason() {
     }
 
     await evaluateSurvivorResults();
+    await syncTeamRecords(); // 👈 Update records after syncing season data
 }
 
 module.exports = syncNbaSeason;

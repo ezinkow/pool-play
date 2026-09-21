@@ -31,7 +31,8 @@ export default function NbaSurvivorPicks() {
                         map[nameKey] = {
                             primaryColor: t.primary_color || t.color || t.primary || NBA_BLUE,
                             secondaryColor: t.secondary_color || t.secondaryColor || t.alt_color || "#cbd5e1",
-                            logo: t.logo || t.team_logo || t.logo_url
+                            logo: t.logo || t.team_logo || t.logo_url,
+                            record: t.record || ""
                         };
                     }
                 });
@@ -139,7 +140,7 @@ export default function NbaSurvivorPicks() {
     games.forEach(game => {
         if (!game.game_date) return;
         const d = new Date(game.game_date);
-        const dayOfWeek = d.getDay(); // 5=Fri, 6=Sat, 0=Sun
+        const dayOfWeek = d.getDay();
 
         let dayKey = null;
         if (dayOfWeek === 5) dayKey = "Fri";
@@ -153,9 +154,9 @@ export default function NbaSurvivorPicks() {
             const rawSpread = gameObj.spread;
             const isHome = gameObj.home_team === myTeam;
             const isFav = gameObj.favorite === myTeam;
-            let spreadStr = "PK";
+            let spreadStr = "no line yet";
 
-            if (rawSpread !== null && rawSpread !== undefined) {
+            if (rawSpread !== null && rawSpread !== undefined && rawSpread !== 0) {
                 const absVal = Math.abs(rawSpread);
                 spreadStr = isFav ? `-${absVal}` : `+${absVal}`;
             }
@@ -163,6 +164,7 @@ export default function NbaSurvivorPicks() {
             return {
                 gameId: gameObj.id,
                 opponent: oppTeam,
+                oppRecord: oppMeta.record || "", // 👈 Opponent record extracted
                 isHome,
                 oppLogo: gameObj.away_team === oppTeam ? (gameObj.away_logo || oppMeta.logo) : (gameObj.home_logo || oppMeta.logo),
                 spreadStr,
@@ -185,9 +187,11 @@ export default function NbaSurvivorPicks() {
                 <Toaster />
 
                 <div style={{ textAlign: "center", marginBottom: 12, padding: "0 8px" }}>
-                    <h2 style={{ color: NBA_BLUE, fontSize: "22px", margin: 0 }}>🏀 NBA Weekend Survivor: Week {currentWeek}</h2>
+                    <h2 style={{ color: NBA_BLUE, fontSize: "22px", margin: 0 }}>🏀 NBA Survivor: Week {currentWeek} <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏀</span></h2>
                     <p style={{ color: "#64748b", marginTop: 4, fontSize: "13px" }}>
-                        Click anywhere on a team's row to select them for Week {currentWeek}. You cannot pick a team twice!
+                        Select a team for week {currentWeek}.<br/>
+                        Your team must win ONCE in any of their Friday, Saturday, or Sunday games for you to advance!<br/>
+                        You cannot pick a team twice!
                     </p>
                 </div>
 
@@ -265,6 +269,7 @@ export default function NbaSurvivorPicks() {
                                 const tPrimary = tMeta.primaryColor || NBA_BLUE;
                                 const tSecondary = tMeta.secondaryColor || "#cbd5e1";
                                 const teamLogo = tMeta.logo;
+                                const teamRecord = tMeta.record;
 
                                 const hasLockedGame = Object.values(days).some(d => d && d.locked);
 
@@ -328,6 +333,11 @@ export default function NbaSurvivorPicks() {
                                                     <span style={{ fontWeight: isPicked ? 800 : 700, fontSize: "13px", textShadow: isPicked ? "0 1px 2px rgba(0,0,0,0.3)" : "none", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                                         {teamName}
                                                     </span>
+                                                    {teamRecord && (
+                                                        <span style={{ fontSize: "10px", fontWeight: 600, opacity: 0.85 }}>
+                                                            ({teamRecord})
+                                                        </span>
+                                                    )}
                                                     {isUsed && <span style={{ fontSize: "9px", color: "#64748b", fontWeight: 700 }}>USED</span>}
                                                 </div>
 
@@ -378,7 +388,7 @@ export default function NbaSurvivorPicks() {
                                                         )}
                                                         <div style={{ overflow: "hidden", lineHeight: 1.2, flexGrow: 1 }}>
                                                             <div style={{ fontWeight: 600, whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
-                                                                {prefix} {matchup.opponent}
+                                                                {prefix} {matchup.opponent} {matchup.oppRecord && <span style={{ opacity: 0.75, fontWeight: 500 }}>({matchup.oppRecord})</span>}
                                                             </div>
                                                             <div style={{ fontSize: "10px", opacity: 0.75, fontWeight: 700 }}>
                                                                 {matchup.spreadStr} {matchup.locked && "🔒"}

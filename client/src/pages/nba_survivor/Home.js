@@ -250,9 +250,9 @@ export default function NbaSurvivorHome() {
             📋 NBA Survivor: <br />Rules & Overview
           </h3>
           <ol style={{ paddingLeft: 20, lineHeight: "1.7", fontSize: "14px" }}>
-            <li><strong>Win Straight Up:</strong> Pick one NBA team each week to win their game outright (no point spreads).</li>
+            <li><strong>Win Straight Up:</strong> Pick one NBA team each weekend to win A game outright (no point spreads) between their games from Friday-Sunday.</li>
             <li><strong>Single-Use Teams:</strong> You can only use each NBA team <strong>once per season</strong>. Choose wisely!</li>
-            <li><strong>Survive & Advance:</strong> If your team wins, you advance to the next week. If they lose or tie, you are eliminated.</li>
+            <li><strong>Survive & Advance:</strong> If your team wins, you advance to the next week. If they do not win a game, you are eliminated.</li>
             <li><strong>Kickoff Locks:</strong> Your selected team locks automatically when their specific game kicks off.</li>
           </ol>
         </div>
