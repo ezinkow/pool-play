@@ -88,12 +88,12 @@ import NbaSurvivorPicks from './pages/nba_survivor/Picks';
 import NbaSurvivorMyPicks from './pages/nba_survivor/MyPicks';
 import NbaSurvivorGroupPicks from './pages/nba_survivor/GroupsPicks';
 
-// MLB Pages
-import MlbHome from './pages/mlb/Home';
-import MlbPicks from './pages/mlb/Picks';
-import MlbMyPicks from './pages/mlb/MyPicks';
-import MlbGroupPicks from './pages/mlb/GroupPicks';
-import MlbStandings from './pages/mlb/Standings';
+// MLB Playoffs pages
+import MlbHome from './pages/mlb_playoffs/Home';
+import MlbPicks from './pages/mlb_playoffs/Picks';
+import MlbMyPicks from './pages/mlb_playoffs/MyPicks';
+import MlbGroupPicks from './pages/mlb_playoffs/GroupPicks';
+import MlbStandings from './pages/mlb_playoffs/Standings';
 
 // NFL Playoffs pages
 import NflHome from './pages/nfl_playoffs/Home';

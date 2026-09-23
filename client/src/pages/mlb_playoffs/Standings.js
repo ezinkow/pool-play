@@ -90,11 +90,22 @@ export default function Standings() {
                                 </tr>
                             ) : (
                                 standings.map((standing, idx) => {
-                                    const rank = idx + 1;
                                     const entryName = standing.name || standing.entry_name;
                                     const isCurrentUser = user && (entryName === user.name || Number(standing.user_id) === Number(user.id));
 
-                                    // Incorrect picks can be derived from completed series minus correct ones, or left clean as just correct hits
+                                    // Calculate shared competition ranking (Standard 1, 2, 2, 4 layout)
+                                    let rank = idx + 1;
+                                    if (idx > 0) {
+                                        const prevStanding = standings[idx - 1];
+                                        const prevPoints = Number(prevStanding.points) || 0;
+                                        const currentPoints = Number(standing.points) || 0;
+                                        if (currentPoints === prevPoints) {
+                                            // If points match the previous row, look up the rank of the first person with these points
+                                            const firstMatchingIdx = standings.findIndex(s => (Number(s.points) || 0) === currentPoints);
+                                            rank = firstMatchingIdx + 1;
+                                        }
+                                    }
+
                                     const correctSeries = standing.correct_series ?? 0;
                                     const incorrectSeries = Math.max(0, completedSeriesCount - correctSeries);
 
