@@ -48,8 +48,11 @@ function extractSeries(data, seriesMap) {
         const roundNum = getRound(headline);
         const league = getLeague(headline);
 
-        const homeName = homeComp.team?.displayName || "TBDH";
-        const awayName = awayComp.team?.displayName || "TBDA";
+        const homeName = homeComp.team?.displayName || "TBD Home";
+        const awayName = awayComp.team?.displayName || "TBD Away";
+
+        const homeId = String(homeComp.team?.id || homeName);
+        const awayId = String(awayComp.team?.id || awayName);
 
         const espnSeries = comp.series;
         let bracketHomeWins = 0;
@@ -69,10 +72,10 @@ function extractSeries(data, seriesMap) {
         
         const leagueSeriesList = seriesMap.get(groupKey);
         
+        // ✨ Match strictly by the unique pairing of both team IDs (order-independent)
         let existingMatchup = leagueSeriesList.find(s => {
-            const isSameHome = s.home.team?.id === homeComp.team?.id;
-            const isSameAway = s.away.team?.id === awayComp.team?.id;
-            return isSameHome || isSameAway;
+            const sTeamIds = [String(s.home.team?.id || s.homeName), String(s.away.team?.id || s.awayName)];
+            return sTeamIds.includes(homeId) && sTeamIds.includes(awayId);
         });
 
         if (!existingMatchup) {
@@ -134,7 +137,7 @@ async function syncMlb() {
 
             for (const [index, s] of matches.entries()) {
                 const placeholderId = getPlaceholderId(roundNum, league, index);
-                if (!placeholderId) return;
+                if (!placeholderId) continue;
 
                 const targetWins = ROUND_CONFIG[roundNum].targetWins;
                 let finalHomeWins = s.homeWins;
