@@ -24,6 +24,13 @@ import CfbPickemAtsPicks from './pages/cfb_pickem_ats/Picks';
 import CfbPickemAtsMyPicks from './pages/cfb_pickem_ats/MyPicks';
 import CfbPickemAtsGroupPicks from './pages/cfb_pickem_ats/GroupPicks';
 
+// CFB Bowl Confidence Pickem pages
+import BowlConfidenceHome from './pages/cfb_bowl_confidence_pickem/Home';
+import BowlConfidenceStandings from './pages/cfb_bowl_confidence_pickem/Standings';
+import BowlConfidencePicks from './pages/cfb_bowl_confidence_pickem/Picks';
+import BowlConfidenceMyPicks from './pages/cfb_bowl_confidence_pickem/MyPicks';
+import BowlConfidenceGroupPicks from './pages/cfb_bowl_confidence_pickem/GroupPicks';
+
 // ChampWeekPickem pages
 import ChampWeekPickemHome from './pages/champweek_pickem/Home';
 import ChampWeekPickemPicks from './pages/champweek_pickem/Picks';
@@ -170,6 +177,13 @@ export default function App() {
           <Route path="/cfbpickemats/mypicks" element={<CfbPickemAtsMyPicks />} />
           <Route path="/cfbpickemats/standings" element={<CfbPickemAtsStandings />} />
           <Route path="/cfbpickemats/grouppicks" element={<CfbPickemAtsGroupPicks />} />
+
+          {/* CFB Bowl Confidence Pickem */}
+          <Route path="/bowlpickem" element={<BowlConfidenceHome />} />
+          <Route path="/bowlpickem/picks" element={<BowlConfidencePicks />} />
+          <Route path="/bowlpickem/mypicks" element={<BowlConfidenceMyPicks />} />
+          <Route path="/bowlpickem/standings" element={<BowlConfidenceStandings />} />
+          <Route path="/bowlpickem/grouppicks" element={<BowlConfidenceGroupPicks />} />
 
           {/* Champ Week Pickem */}
           <Route path="/champweekpickem/" element={<ChampWeekPickemHome />} />

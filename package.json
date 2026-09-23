@@ -4,6 +4,9 @@
   "description": "This is a full stack application template. There is a form that takes 'posts' and a name field",
   "main": "server.js",
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "accepts": "^1.3.8",
     "array-flatten": "^1.1.1",
     "asynckit": "^0.4.0",
@@ -37,6 +40,7 @@
     "denque": "^2.1.0",
     "depd": "^2.0.0",
     "destroy": "^1.2.0",
+    "dnd-kit": "^0.0.2",
     "dotenv": "^16.4.7",
     "dottie": "^2.0.6",
     "dunder-proto": "^1.0.1",
