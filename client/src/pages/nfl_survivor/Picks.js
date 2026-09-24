@@ -7,11 +7,12 @@ import PoolGatekeeper from "../../components/PoolGatekeeper";
 const NFL_BLUE = "#013369";
 const NFL_RED = "#D50A0A";
 const GOLD = "#c89d3c";
+const TOTAL_NFL_WEEKS = 18; // Standard regular season limit
 
 export default function NflSurvivorPicks() {
     const { user, loading: authLoading } = useAuth();
-    const [currentWeek, setCurrentWeek] = useState(2); // Default to Week 2 for September 15, 2026
-    const [maxAvailableWeek, setMaxAvailableWeek] = useState(2);
+    const [currentWeek, setCurrentWeek] = useState(3); // Default view
+    const [maxAvailableWeek, setMaxAvailableWeek] = useState(3);
     const [games, setGames] = useState([]);
     const [userPicks, setUserPicks] = useState({});
     const [usedTeams, setUsedTeams] = useState([]);
@@ -53,11 +54,10 @@ export default function NflSurvivorPicks() {
                 setUserPicks(data.userPicks || {});
                 setUsedTeams(data.usedTeams || []);
 
-                // ✨ Dynamically honor active week returned by backend or fall back safely
-                const activeWk = data.currentWeek || weekToFetch;
-                if (activeWk >= maxAvailableWeek) {
-                    setMaxAvailableWeek(activeWk);
-                    setCurrentWeek(activeWk);
+                // Determine max unlockable week from backend (default to at least current week 3)
+                const backendMaxWk = data.maxAvailableWeek || data.currentWeek || 3;
+                if (backendMaxWk > maxAvailableWeek) {
+                    setMaxAvailableWeek(backendMaxWk);
                 }
             })
             .catch(err => {
@@ -68,19 +68,18 @@ export default function NflSurvivorPicks() {
             .finally(() => setLoading(false));
     };
 
-    // ✨ Initial load directly queries the survivor picks endpoint to pull the active week games
+    // Initial load fetches whatever week the user is currently looking at
     useEffect(() => {
         if (!user) return;
         loadSurvivorData(currentWeek);
-    }, [user]);
+    }, [user, currentWeek]);
 
     const handleWeekChange = (targetWeek) => {
-        if (targetWeek > maxAvailableWeek) {
+        if (targetWeek > Math.max(maxAvailableWeek, TOTAL_NFL_WEEKS)) {
             toast.error("You cannot look ahead or make picks for future weeks!");
             return;
         }
         setCurrentWeek(targetWeek);
-        loadSurvivorData(targetWeek);
     };
 
     const handleMakePick = async (gameId, teamName, isUsed, isLocked, isAlreadyPicked) => {
@@ -122,7 +121,7 @@ export default function NflSurvivorPicks() {
         });
     };
 
-    if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50 }}>Loading survivor dashboard...</div>;
+    if (authLoading || loading && games.length === 0) return <div style={{ textAlign: "center", padding: 50 }}>Loading survivor dashboard...</div>;
 
     const currentWeekPick = userPicks[currentWeek];
     const pickedTeamMeta = teamColors[currentWeekPick] || {};
@@ -152,7 +151,7 @@ export default function NflSurvivorPicks() {
                     <h3 style={{ color: "#0f172a", fontSize: "13px", margin: 0 }}>Select Week:</h3>
                 </div>
 
-                {/* Restricted Week Selector Bar */}
+                {/* Week Selector Bar (Renders up to TOTAL_NFL_WEEKS) */}
                 <div style={{
                     display: "flex",
                     justifyContent: "center",
@@ -171,27 +170,32 @@ export default function NflSurvivorPicks() {
                         paddingLeft: 8,
                         paddingRight: 8
                     }}>
-                        {[...Array(maxAvailableWeek)].map((_, i) => (
-                            <button
-                                key={i + 1}
-                                onClick={() => handleWeekChange(i + 1)}
-                                style={{
-                                    padding: "6px 12px",
-                                    borderRadius: 6,
-                                    border: "1px solid #cbd5e1",
-                                    backgroundColor: currentWeek === i + 1 ? NFL_BLUE : "white",
-                                    color: currentWeek === i + 1 ? "white" : "#0f172a",
-                                    cursor: "pointer",
-                                    fontWeight: 700,
-                                    flexShrink: 0,
-                                    fontSize: "13px",
-                                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                                    transition: "all 0.2s"
-                                }}
-                            >
-                                Week {i + 1}
-                            </button>
-                        ))}
+                        {[...Array(TOTAL_NFL_WEEKS)].map((_, i) => {
+                            const weekNum = i + 1;
+                            const isFutureLocked = weekNum > maxAvailableWeek;
+
+                            return (
+                                <button
+                                    key={weekNum}
+                                    onClick={() => handleWeekChange(weekNum)}
+                                    style={{
+                                        padding: "6px 12px",
+                                        borderRadius: 6,
+                                        border: "1px solid #cbd5e1",
+                                        backgroundColor: currentWeek === weekNum ? NFL_BLUE : (isFutureLocked ? "#f1f5f9" : "white"),
+                                        color: currentWeek === weekNum ? "white" : (isFutureLocked ? "#94a3b8" : "#0f172a"),
+                                        cursor: isFutureLocked ? "not-allowed" : "pointer",
+                                        fontWeight: 700,
+                                        flexShrink: 0,
+                                        fontSize: "13px",
+                                        boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                                        transition: "all 0.2s"
+                                    }}
+                                >
+                                    Week {weekNum}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
