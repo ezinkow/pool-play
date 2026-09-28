@@ -1,4 +1,4 @@
-const { MlbEntries, Users, MlbPicks, MlbSeries, MlbTiebreaker } = require("../models");
+const { MlbEntries, Users, MlbPicks, MlbSeries, MlbTiebreaker, MlbTeams } = require("../models");
 const requireAuth = require("../middleware/Requireauth");
 const { Op } = require("sequelize");
 
@@ -10,6 +10,34 @@ const ROUND_CONFIG = {
 };
 
 module.exports = function (app) {
+
+    // Helper to attach team colors to series objects
+    async function attachTeamColors(seriesList) {
+        const teams = await MlbTeams.findAll();
+        const teamMap = {};
+        teams.forEach(t => {
+            teamMap[t.name] = {
+                primary: t.primary_color,
+                secondary: t.secondary_color,
+                bg: t.bg_color
+            };
+        });
+
+        // Convert Sequelize models to plain objects or map over them
+        return seriesList.map(s => {
+            const plain = s.toJSON ? s.toJSON() : s;
+            const awayInfo = teamMap[plain.away_team] || {};
+            const homeInfo = teamMap[plain.home_team] || {};
+
+            return {
+                ...plain,
+                away_color: awayInfo.primary || "#13447a",
+                away_secondary_color: awayInfo.secondary || "#cbd5e1",
+                home_color: homeInfo.primary || "#13447a",
+                home_secondary_color: homeInfo.secondary || "#cbd5e1",
+            };
+        });
+    }
 
     // GET /api/mlb/entries/me — get current user's entry info
     app.get("/api/mlb/entries/me", requireAuth, async (req, res) => {
@@ -34,7 +62,6 @@ module.exports = function (app) {
                 return res.status(400).json({ error: "Entry name is required" });
             }
 
-            // Check if display name is taken by someone else
             const nameTaken = await MlbEntries.findOne({ where: { entry_name } });
             if (nameTaken && nameTaken.user_id !== req.user.id) {
                 return res.status(400).json({ error: "That display name is already taken" });
@@ -65,7 +92,6 @@ module.exports = function (app) {
                 return res.status(404).json({ error: "Entry not found" });
             }
 
-            // Check if pool/series have started/locked before leaving
             const activeLockedSeries = await MlbSeries.findOne({ where: { locked: true } });
             if (activeLockedSeries) {
                 return res.status(403).json({ error: "Cannot leave pool after games have locked." });
@@ -271,7 +297,8 @@ module.exports = function (app) {
             const series = await MlbSeries.findAll({
                 order: [["round", "ASC"], ["id", "ASC"]],
             });
-            res.json(series);
+            const enriched = await attachTeamColors(series);
+            res.json(enriched);
         } catch (err) {
             console.error(err);
             res.status(500).json({ error: "Failed to load series" });
@@ -285,7 +312,8 @@ module.exports = function (app) {
                 where: { locked: false },
                 order: [["round", "ASC"], ["id", "ASC"]],
             });
-            res.json(series);
+            const enriched = await attachTeamColors(series);
+            res.json(enriched);
         } catch (err) {
             console.error(err);
             res.status(500).json({ error: "Failed to load active series" });
@@ -299,7 +327,8 @@ module.exports = function (app) {
                 where: { round: req.params.round },
                 order: [["id", "ASC"]],
             });
-            res.json(series);
+            const enriched = await attachTeamColors(series);
+            res.json(enriched);
         } catch (err) {
             console.error(err);
             res.status(500).json({ error: "Failed to load series for round" });
@@ -315,7 +344,8 @@ module.exports = function (app) {
                 },
                 order: [["round", "ASC"], ["id", "ASC"]],
             });
-            res.json(series);
+            const enriched = await attachTeamColors(series);
+            res.json(enriched);
         } catch (err) {
             console.error(err);
             res.status(500).json({ error: "Failed to load live series" });
@@ -344,7 +374,7 @@ module.exports = function (app) {
                 picksByUser[p.user_id].push(p);
             });
 
-            const TOTAL_TOURNAMENT_MAX = 120; // 32 + 24*2 + 16*2 + 8 = 120 max points across tournament
+            const TOTAL_TOURNAMENT_MAX = 120;
 
             const standings = entries.map(entry => {
                 const picks = picksByUser[entry.user_id] || [];
@@ -363,7 +393,6 @@ module.exports = function (app) {
                     const awayWins = Number(s.away_wins || 0);
                     const totalPlayed = homeWins + awayWins;
                     
-                    // Wild Card is best-of-3 (target wins: 2), others are best-of-5 or best-of-7 (target wins: 4)
                     const targetWins = s.round === 1 ? 2 : 4;
                     const defaultLengthGuess = s.round === 1 ? 2 : 4;
 
