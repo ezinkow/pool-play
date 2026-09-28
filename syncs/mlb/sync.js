@@ -65,6 +65,9 @@ function extractSeries(data, seriesMap) {
             bracketAwayWins = bAwayData ? (bAwayData.wins || 0) : 0;
         }
 
+        // Grab startDate directly from event level (e.g. "2026-09-29T18:00Z"), falling back to event.date
+        let seriesStartDate = event.startDate || event.date;
+
         const groupKey = `${roundNum}-${league}`;
         if (!seriesMap.has(groupKey)) {
             seriesMap.set(groupKey, []);
@@ -72,7 +75,6 @@ function extractSeries(data, seriesMap) {
         
         const leagueSeriesList = seriesMap.get(groupKey);
         
-        // ✨ Match strictly by the unique pairing of both team IDs (order-independent)
         let existingMatchup = leagueSeriesList.find(s => {
             const sTeamIds = [String(s.home.team?.id || s.homeName), String(s.away.team?.id || s.awayName)];
             return sTeamIds.includes(homeId) && sTeamIds.includes(awayId);
@@ -86,14 +88,14 @@ function extractSeries(data, seriesMap) {
                 away: awayComp,
                 homeName,
                 awayName,
-                startDate: event.date,
+                startDate: seriesStartDate,
                 homeWins: bracketHomeWins,
                 awayWins: bracketAwayWins,
                 roundLabel: headline || ROUND_CONFIG[roundNum].label
             });
         } else {
-            if (new Date(event.date) < new Date(existingMatchup.startDate)) {
-                existingMatchup.startDate = event.date;
+            if (seriesStartDate && new Date(seriesStartDate) < new Date(existingMatchup.startDate)) {
+                existingMatchup.startDate = seriesStartDate;
             }
             if ((bracketHomeWins + bracketAwayWins) > (existingMatchup.homeWins + existingMatchup.awayWins)) {
                 existingMatchup.homeWins = bracketHomeWins;
@@ -108,7 +110,7 @@ async function syncMlb() {
     try {
         const rawSeriesMap = new Map();
 
-        const startDate = new Date(2026, 9, 1); // October 1, 2026
+        const startDate = new Date(2026, 8, 25); // Late September
         const endDate = new Date(2026, 10, 2);   // Early November
 
         for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
@@ -153,8 +155,8 @@ async function syncMlb() {
 
                 let seriesStatus = seriesOver ? "STATUS_FINAL" : (finalHomeWins + finalAwayWins > 0 ? "STATUS_IN_PROGRESS" : "STATUS_SCHEDULED");
                 const now = new Date();
-                const startTime = new Date(s.startDate);
-                const isLocked = (now >= startTime) || (finalHomeWins + finalAwayWins > 0);
+                const startTime = s.startDate ? new Date(s.startDate) : null;
+                const isLocked = (startTime && now >= startTime) || (finalHomeWins + finalAwayWins > 0);
 
                 const existingRow = await MlbSeries.findOne({ where: { id: placeholderId } });
 
