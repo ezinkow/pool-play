@@ -24,6 +24,7 @@ export default function MyPicks() {
     const [standings, setStandings] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedRound, setSelectedRound] = useState(1);
+    const [series, setSeries] = useState([]);
 
     const token = localStorage.getItem("token");
 
@@ -31,7 +32,7 @@ export default function MyPicks() {
         if (!user) return;
         setLoading(true);
         const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-        
+
         Promise.all([
             axios.get("/api/mlb/picks", { params: { name: user.name }, ...config }),
             axios.get("/api/mlb/standings", config),
@@ -42,37 +43,50 @@ export default function MyPicks() {
             .finally(() => setLoading(false));
     }, [user, token]);
 
+    useEffect(() => {
+        axios.get("/api/mlb/series")
+            .then(res => setSeries(res.data || []))
+            .catch(() => toast.error("Error loading series"));
+    }, []);
+
     const myStanding = useMemo(() =>
         standings.find(s => s.entry_name === user?.name || s.name === user?.name),
         [standings, user]
     );
 
+    // Helper to resolve full series metadata (including colors injected from backend) from either embedded prop or series list
+    const getSeries = p => {
+        const embedded = p.series || p.MlbSeries;
+        if (!embedded) return null;
+        // Match with the state series list to ensure we have the color attributes fully attached
+        const matched = series.find(s => String(s.id) === String(embedded.id || p.series_id));
+        return matched || embedded;
+    };
+
     // Filter picks based on the selected postseason round (Round 1: Wild Card, Round 2: Division, etc.)
     const filteredPicks = useMemo(() => {
         return picks.filter(p => {
-            const s = p.series || p.MlbSeries;
+            const s = getSeries(p);
             if (!s) return true; // fallback if round info is missing
             return Number(s.round) === Number(selectedRound);
         });
-    }, [picks, selectedRound]);
+    }, [picks, selectedRound, series]);
 
     const roundPointsEarned = useMemo(() => {
         return filteredPicks.reduce((sum, p) => {
-            const s = p.series || p.MlbSeries;
+            const s = getSeries(p);
             if (!s || s.status !== "STATUS_FINAL" || !s.winner) return sum;
             if (p.pick !== s.winner) return sum;
             const base = parseInt(p.confidence) || 0;
             const perfect = p.series_length_guess === s.series_length;
             return sum + base + (perfect ? base : 0);
         }, 0);
-    }, [filteredPicks]);
+    }, [filteredPicks, series]);
 
     const totalConfidenceUsed = useMemo(() => {
         return filteredPicks.reduce((sum, p) => sum + (parseInt(p.confidence) || 0), 0);
     }, [filteredPicks]);
 
-    const getSeries = p => p.series || p.MlbSeries;
-    
     const getResult = p => {
         const s = getSeries(p);
         if (!s || s.status !== "STATUS_FINAL" || !s.winner) return null;
@@ -203,7 +217,6 @@ export default function MyPicks() {
 
                             const isFinal = s?.status === "STATUS_FINAL";
                             const isLive = s?.status === "STATUS_IN_PROGRESS";
-                            const hasStarted = isLive || isFinal || (s?.game_date && new Date() >= new Date(s.game_date));
 
                             let statusBadge = null;
                             if (isFinal) {
@@ -221,8 +234,6 @@ export default function MyPicks() {
                             }
 
                             const pickedPrimary = isAwayPicked ? awayColor : (isHomePicked ? homeColor : NAVY);
-                            const pickedSecondary = isAwayPicked ? awaySecondary : (isHomePicked ? homeSecondary : "#cbd5e1");
-                            const pickedLogo = isAwayPicked ? s?.away_logo : (isHomePicked ? s?.home_logo : null);
 
                             return (
                                 <div key={i} style={{
