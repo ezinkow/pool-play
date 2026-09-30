@@ -169,7 +169,7 @@ export default function SignUp() {
                             >
                                 <option value="">Select a security question...</option>
                                 <option value="What was the name of your first pet?">What was the name of your first pet?</option>
-                                <option value="In what city were you born?">In what city were you born?</option>
+                                <option value="In what city were you born?">What city were you born in?</option>
                                 <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
                                 <option value="What was the model of your first car?">What was the model of your first car?</option>
                                 <option value="What elementary school did you attend?">What elementary school did you attend?</option>
