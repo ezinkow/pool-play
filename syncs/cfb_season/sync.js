@@ -188,8 +188,9 @@ async function extractMatchups(data, weekNum) {
         }
 
         let overUnder = oddsObj?.overUnder !== undefined && oddsObj?.overUnder !== null ? parseFloat(oddsObj.overUnder) : 0.0;
-        let finalSpread = rawSpread !== null ? Math.abs(rawSpread) : null;
-        let adjustedSpread = rawSpread !== null ? Math.abs(applyHookRule(rawSpread, favoriteTeamId === homeTeamId ? homeSpreadOdds : awaySpreadOdds)) : null;
+        let finalSpread = rawSpread !== null ? -Math.abs(rawSpread) : null;
+        let computedAdj = rawSpread !== null ? applyHookRule(rawSpread, favoriteTeamId === homeTeamId ? homeSpreadOdds : awaySpreadOdds) : null;
+        let adjustedSpread = computedAdj !== null ? -Math.abs(computedAdj) : null;
 
         const homeScore = homeCompetitor.score !== undefined ? parseInt(homeCompetitor.score, 10) : null;
         const awayScore = awayCompetitor.score !== undefined ? parseInt(awayCompetitor.score, 10) : null;
@@ -363,7 +364,7 @@ async function syncCfbSeason(targetWeek) {
 /**
  * 🧠 MAIN EXPORTED WRAPPER: Automatically syncs the rolling 3-week window (Current, Next, and Following Week)
  */
-async function syncCurrentAndNextWeeks() {
+async function synCfbSeason() {
     const currentWeek = getCurrentAndNextCfbWeeks();
 
     // ✨ Target current week, next week, and the week after (rolling 3-week sync window)
@@ -376,4 +377,4 @@ async function syncCurrentAndNextWeeks() {
     }
 }
 
-module.exports = syncCurrentAndNextWeeks;
+module.exports = synCfbSeason;

@@ -89,9 +89,6 @@ export default function SignUp() {
                     }}>
                         Create account
                     </h1>
-                    <p style={{ color: "#6b7280", fontSize: 14 }}>
-                        One account works across all games — Pick'em, Bracket, NBA Pool, and more.
-                    </p>
                 </div>
 
                 <div style={{
