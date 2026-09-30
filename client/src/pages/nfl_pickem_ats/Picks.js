@@ -607,7 +607,7 @@ export default function NflPickemAtsPicks() {
                                                         />
                                                     </span>
                                                 )}
-                                                <strong>-{rawSpread}</strong>
+                                                <strong>{rawSpread}</strong>
                                                 {game.over_under !== null && game.over_under !== undefined && (
                                                     <span style={{ marginLeft: 6, color: "#475569" }}>
                                                         | O/U: <strong>{game.over_under}</strong>
