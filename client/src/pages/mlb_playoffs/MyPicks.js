@@ -250,7 +250,7 @@ export default function MyPicks() {
                                 }}>
                                     {/* Left: Matchup */}
                                     <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
-                                        <div style={{ fontSize: "14px", color: "#1e293b", fontWeight: 600, display: "flex", gap: 8, alignItems: "center" }}>
+                                        <div style={{ fontSize: "14px", color: "#1e293b", fontWeight: 600, display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
                                             {/* Away Team */}
                                             <span style={{
                                                 display: "inline-flex",
@@ -319,19 +319,19 @@ export default function MyPicks() {
                                     </div>
 
                                     {/* Middle: Confidence */}
-                                    <div style={{ textAlign: "center", minWidth: "60px" }}>
-                                        <div style={{ fontSize: "18px", fontWeight: 800, color: NAVY, lineHeight: 1 }}>
+                                    <div style={{ textAlign: "center", minWidth: "45px", flexShrink: 0 }}>
+                                        <div style={{ fontSize: "16px", fontWeight: 800, color: NAVY, lineHeight: 1 }}>
                                             {p.confidence}
                                         </div>
                                         <div style={{ fontSize: "10px", color: "#9ca3af" }}>pts</div>
                                     </div>
 
                                     {/* Right: Status & Outcome */}
-                                    <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                                         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center" }}>
                                             {statusBadge}
                                             {result ? (
-                                                <div style={{ fontSize: "11px", fontWeight: 700, marginTop: 2, color: result.type === "loss" ? "#dc2626" : "#16a34a" }}>
+                                                <div style={{ fontSize: "11px", fontWeight: 700, marginTop: 2, color: result.type === "loss" ? "#dc2626" : "#16a34a", textAlign: "right" }}>
                                                     {result.icon} {result.label}
                                                 </div>
                                             ) : (
