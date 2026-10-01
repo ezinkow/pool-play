@@ -161,7 +161,8 @@ module.exports = function (app) {
                         "id", "round", "round_label", "round_points_max",
                         "home_team", "away_team", "home_logo", "away_logo",
                         "home_seed", "away_seed", "home_wins", "away_wins",
-                        "winner", "series_length", "status", "locked", "game_date"
+                        "winner", "series_length", "status", "locked", "game_date",
+                        "live_summary", "home_live_score", "away_live_score"
                     ],
                 }],
             });
@@ -263,7 +264,8 @@ module.exports = function (app) {
                     attributes: [
                         "id", "round", "round_label", "locked",
                         "home_team", "away_team", "home_seed", "away_seed",
-                        "home_wins", "away_wins", "winner", "series_length", "status"
+                        "home_wins", "away_wins", "winner", "series_length", "status",
+                        "live_summary", "home_live_score", "away_live_score"
                     ],
                 }],
             });

@@ -3,7 +3,7 @@ import axios from "axios";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 
-const NAVY = "#13447a";
+const NAVY = "#1c61ac";
 const GOLD = "#c89d3c";
 const LIVE_RED = "#D50A0A";
 
@@ -44,8 +44,7 @@ export default function GroupPicks() {
             const status = (s.status || "").toUpperCase();
             const isStartedOrFinished = status === "STATUS_IN_PROGRESS" || status === "IN_PROGRESS" || status === "STATUS_FINAL" || status === "FINAL";
             const hasDatePassed = s.game_date && new Date(s.game_date) <= now;
-            
-            // Only include series where Game 1 has started/locked/progressed/finished
+
             return isLocked || isStartedOrFinished || hasDatePassed;
           })
           .sort((b, a) => a.round - b.round || new Date(a.game_date) - new Date(b.game_date));
@@ -73,7 +72,6 @@ export default function GroupPicks() {
     return map;
   }, [picks]);
 
-  // Calculate round-specific points per player if sorting by round
   const sortedStandings = useMemo(() => {
     const standingsList = standings.map(st => {
       let roundPoints = 0;
@@ -108,7 +106,7 @@ export default function GroupPicks() {
     const correctWinner = pick.pick === s.winner;
     if (correctWinner) {
       return pick.series_length_guess === s.series_length
-        ? { backgroundColor: "#80fda5", color: "#854d0e" } // Perfect match highlight
+        ? { backgroundColor: "#80fda5", color: "#065f46" } // Perfect match highlight
         : { backgroundColor: "#cff8dc", color: "#166534" }; // Correct winner highlight
     }
     return { backgroundColor: "#fef2f2", color: "#991b1b" }; // Incorrect pick highlight
@@ -116,13 +114,13 @@ export default function GroupPicks() {
 
   if (authLoading) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, sans-serif" }}>Verifying session...</div>;
 
-  const PLAYER_COL_W = 175;
-  const SERIES_COL_W = 120;
+  const PLAYER_COL_W = 180;
+  const SERIES_COL_W = 135;
 
   const getBadgeStyle = (primaryColor, secondaryColor) => ({
     background: secondaryColor,
     borderRadius: 4,
-    padding: "2px 4px",
+    padding: "2px 5px",
     display: "inline-flex",
     alignItems: "center",
     boxShadow: `0 0 4px 1px ${primaryColor}, 0 1px 2px rgba(0,0,0,0.2)`,
@@ -130,7 +128,7 @@ export default function GroupPicks() {
     margin: "2px"
   });
 
-  const GameHeader = ({ s }) => {
+const GameHeader = ({ s }) => {
     const isFinal = s.status === "STATUS_FINAL";
     const isLive = s.status === "STATUS_IN_PROGRESS";
     const homeIsWinner = isFinal && s.winner === s.home_team;
@@ -141,61 +139,85 @@ export default function GroupPicks() {
     const awayPrimary = s.away_color || NAVY;
     const homePrimary = s.home_color || NAVY;
 
-    const awayBadgeStyle = getBadgeStyle(awayPrimary, awaySecondary);
-    const homeBadgeStyle = getBadgeStyle(homePrimary, homeSecondary);
+    const getWinnerBadgeStyle = (primaryColor, secondaryColor, isWinner) => ({
+      background: secondaryColor,
+      borderRadius: 4,
+      padding: "1px 3px",
+      display: "inline-flex",
+      alignItems: "center",
+      boxShadow: isWinner 
+        ? `0 0 6px 2px ${GOLD}, 0 1px 2px rgba(0,0,0,0.3)` 
+        : `0 0 4px 1px ${primaryColor}, 0 1px 2px rgba(0,0,0,0.2)`,
+      border: `2px solid ${isWinner ? GOLD : primaryColor}`,
+      margin: "2px"
+    });
+
+    const awayBadgeStyle = getWinnerBadgeStyle(awayPrimary, awaySecondary, awayIsWinner);
+    const homeBadgeStyle = getWinnerBadgeStyle(homePrimary, homeSecondary, homeIsWinner);
 
     return (
-      <div style={{ textAlign: "center", width: "100%", overflow: "visible" }}>
-        <div style={{ color: "#94a3b8", fontSize: 9, marginBottom: 4, fontWeight: 800, textTransform: "uppercase" }}>
+      <div style={{ textAlign: "center", width: "100%", overflow: "visible", padding: "2px 0" }}>
+        {/* Round Badge */}
+        <div style={{ color: NAVY, fontSize: 9, marginBottom: 4, fontWeight: 800, textTransform: "uppercase", backgroundColor: "white", borderRadius: 3, padding: "1px 5px", display: "inline-block", boxShadow: "0 1px 2px rgba(0,0,0,0.1)" }}>
           {s.round_label}
         </div>
 
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 4, padding: "3px 2px" }}>
+        {/* Matchup Teams Row */}
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 4, padding: "1px 0" }}>
           {/* Away Team */}
-          <div style={{ display: "flex", alignItems: "center", gap: 3, position: "relative" }}>
-            <span style={awayBadgeStyle}>
-              {s.away_logo && <img src={s.away_logo} alt="" height={16} style={{ flexShrink: 0, objectFit: "contain" }} />}
+          <div style={{ display: "flex", alignItems: "center", position: "relative" }}>
+            <span style={{ ...awayBadgeStyle, opacity: isFinal && !awayIsWinner ? 0.4 : 1 }}>
+              {s.away_logo && <img src={s.away_logo} alt={s.away_team} height={16} style={{ flexShrink: 0, objectFit: "contain" }} />}
             </span>
             {isFinal && !awayIsWinner && (
-              <span style={{ position: "absolute", top: -4, left: 2, color: "#ef4444", fontSize: 16, fontWeight: 900, textShadow: "0px 0px 3px black", pointerEvents: "none" }}>×</span>
+              <span style={{ position: "absolute", top: -3, left: 2, color: "#ef4444", fontSize: 14, fontWeight: 900, textShadow: "0px 0px 3px black", pointerEvents: "none" }}>×</span>
             )}
           </div>
 
-          <span style={{ fontSize: 10, color: "#cbd5e1" }}>@</span>
+          <span style={{ fontSize: 10, color: "rgba(255,255,255,0.7)", fontWeight: 700 }}>@</span>
 
           {/* Home Team */}
-          <div style={{ display: "flex", alignItems: "center", gap: 3, position: "relative" }}>
-            <span style={homeBadgeStyle}>
-              {s.home_logo && <img src={s.home_logo} alt="" height={16} style={{ flexShrink: 0, objectFit: "contain" }} />}
+          <div style={{ display: "flex", alignItems: "center", position: "relative" }}>
+            <span style={{ ...homeBadgeStyle, opacity: isFinal && !homeIsWinner ? 0.4 : 1 }}>
+              {s.home_logo && <img src={s.home_logo} alt={s.home_team} height={16} style={{ flexShrink: 0, objectFit: "contain" }} />}
             </span>
             {isFinal && !homeIsWinner && (
-              <span style={{ position: "absolute", top: -4, left: 2, color: "#ef4444", fontSize: 16, fontWeight: 900, textShadow: "0px 0px 3px black", pointerEvents: "none" }}>×</span>
+              <span style={{ position: "absolute", top: -3, left: 2, color: "#ef4444", fontSize: 14, fontWeight: 900, textShadow: "0px 0px 3px black", pointerEvents: "none" }}>×</span>
             )}
           </div>
         </div>
 
-        <div style={{ fontSize: 9, fontWeight: 700, margin: "3px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 3 }}>
+        {/* Compact Live Status / Score / Time Row */}
+        <div style={{ fontSize: 9, fontWeight: 700, margin: "3px 0 2px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
           {isFinal ? (
-            <span style={{ backgroundColor: "#16a34a", color: "white", padding: "1px 6px", borderRadius: 3 }}>FINAL</span>
+            <span style={{ backgroundColor: "#16a34a", color: "white", padding: "1px 6px", borderRadius: 3, fontSize: "8px", letterSpacing: "0.5px" }}>FINAL</span>
           ) : isLive ? (
-            <>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(0,0,0,0.25)", padding: "1px 5px", borderRadius: 3 }}>
               <span style={PULSE_STYLE} />
-              <span style={{ backgroundColor: LIVE_RED, color: "white", padding: "1px 6px", borderRadius: 3 }}>LIVE</span>
-            </>
+              <span style={{ color: "#fca5a5", fontWeight: 800 }}>{s.live_summary || "LIVE"}</span>
+              {s.away_live_score !== null && s.home_live_score !== null && (
+                <span style={{ color: "#ffffff", fontWeight: 900, marginLeft: 2 }}>
+                  ({s.away_live_score}-{s.home_live_score})
+                </span>
+              )}
+            </div>
           ) : (
-            <span style={{ color: "#cbd5e1" }}>
+            <span style={{ color: "rgba(255,255,255,0.8)", fontSize: "9px" }}>
               {s.game_date ? new Date(s.game_date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : "TBD"}
             </span>
           )}
         </div>
 
-        <div style={{ fontSize: 10, color: isLive ? "#4ade80" : GOLD, fontWeight: 800 }}>
-          Series: {s.away_wins}-{s.home_wins}
-        </div>
-
-        {isFinal && (
-          <div style={{ fontSize: 8, color: "#4ade80", fontWeight: 900, marginTop: 1 }}>
-            WON IN {s.series_length}G
+        {/* Series Score / Winner Callout - Shrink-wrapped to text width */}
+        {isFinal ? (
+          <div style={{ display: "inline-block", backgroundColor: "rgba(255,255,255,0.95)", border: `1px solid ${GOLD}`, borderRadius: 3, padding: "1px 6px", marginTop: 3 }}>
+            <div style={{ fontSize: 8, color: "#166534", fontWeight: 800 }}>
+              🏆 Winner: <strong>{s.winner}</strong> ({s.series_length}G)
+            </div>
+          </div>
+        ) : (
+          <div style={{ fontSize: 9, color: isLive ? "#4ade80" : GOLD, fontWeight: 800, marginTop: 1 }}>
+            Series: {s.away_wins}-{s.home_wins}
           </div>
         )}
       </div>
@@ -301,7 +323,7 @@ export default function GroupPicks() {
 
                   {series.map(s => (
                     <th key={s.id} style={{
-                      backgroundColor: "#1a1d23",
+                      backgroundColor: NAVY,
                       color: "white",
                       padding: "8px 6px",
                       width: SERIES_COL_W,
@@ -365,7 +387,7 @@ export default function GroupPicks() {
                         const p = pickMap[s.id]?.[player.entry_name];
                         const cellStyle = getCellStyle(s, p);
                         const pickLogo = p ? (p.pick === s.home_team ? s.home_logo : s.away_logo) : null;
-                        
+
                         const pickTeamMeta = p ? (p.pick === s.home_team ? {
                           primary: s.home_color || NAVY,
                           secondary: s.home_secondary_color || "#cbd5e1"
@@ -373,8 +395,6 @@ export default function GroupPicks() {
                           primary: s.away_color || NAVY,
                           secondary: s.away_secondary_color || "#cbd5e1"
                         }) : {};
-
-                        const pickedBadgeStyle = p ? getBadgeStyle(pickTeamMeta.primary, pickTeamMeta.secondary) : {};
 
                         return (
                           <td key={s.id} style={{
@@ -409,7 +429,7 @@ export default function GroupPicks() {
                                 </span>
                                 <div style={{ marginLeft: 6, textAlign: "left" }}>
                                   <div style={{ fontSize: 11, fontWeight: 900, color: "#0f172a", lineHeight: 1.1 }}>{p.confidence} pts</div>
-                                  <div style={{ fontSize: 9, color: "#64748b", fontWeight: 600 }}>in {p.series_length_guess}g</div>
+                                  <div style={{ fontSize: 9, color: "#475569", fontWeight: 600 }}>in {p.series_length_guess}g</div>
                                 </div>
                               </div>
                             ) : (

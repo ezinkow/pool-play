@@ -54,6 +54,18 @@ function extractSeries(data, seriesMap) {
         const homeId = String(homeComp.team?.id || homeName);
         const awayId = String(awayComp.team?.id || awayName);
 
+        const homeScore = homeComp.score !== undefined && homeComp.score !== null ? parseInt(homeComp.score, 10) : null;
+        const awayScore = awayComp.score !== undefined && awayComp.score !== null ? parseInt(awayComp.score, 10) : null;
+        
+        const statusState = comp.status?.type?.state;
+        const statusName = comp.status?.type?.name;
+        const liveDetail = comp.status?.type?.shortDetail || comp.status?.type?.detail || null;
+        
+        // Robust check for live status matching ESPN states
+        const isLive = statusState === "in" || statusName === "STATUS_IN_PROGRESS";
+
+        console.log(`[MLB Sync Debug] Game Found: ${awayName} @ ${homeName} | State: ${statusState} | IsLive: ${isLive} | LiveDetail: ${liveDetail} | Scores: ${awayScore}-${homeScore}`);
+
         const espnSeries = comp.series;
         let bracketHomeWins = 0;
         let bracketAwayWins = 0;
@@ -65,7 +77,6 @@ function extractSeries(data, seriesMap) {
             bracketAwayWins = bAwayData ? (bAwayData.wins || 0) : 0;
         }
 
-        // Grab startDate directly from event level (e.g. "2026-09-29T18:00Z"), falling back to event.date
         let seriesStartDate = event.startDate || event.date;
 
         const groupKey = `${roundNum}-${league}`;
@@ -91,7 +102,11 @@ function extractSeries(data, seriesMap) {
                 startDate: seriesStartDate,
                 homeWins: bracketHomeWins,
                 awayWins: bracketAwayWins,
-                roundLabel: headline || ROUND_CONFIG[roundNum].label
+                roundLabel: headline || ROUND_CONFIG[roundNum].label,
+                homeLiveScore: homeScore,
+                awayLiveScore: awayScore,
+                liveSummary: liveDetail,
+                isLive: isLive
             });
         } else {
             if (seriesStartDate && new Date(seriesStartDate) < new Date(existingMatchup.startDate)) {
@@ -100,6 +115,17 @@ function extractSeries(data, seriesMap) {
             if ((bracketHomeWins + bracketAwayWins) > (existingMatchup.homeWins + existingMatchup.awayWins)) {
                 existingMatchup.homeWins = bracketHomeWins;
                 existingMatchup.awayWins = bracketAwayWins;
+            }
+            // Always prefer updating live stats if this specific event payload is live
+            if (isLive) {
+                existingMatchup.homeLiveScore = homeScore;
+                existingMatchup.awayLiveScore = awayScore;
+                existingMatchup.liveSummary = liveDetail;
+                existingMatchup.isLive = true;
+            } else if (!existingMatchup.isLive) {
+                existingMatchup.homeLiveScore = homeScore;
+                existingMatchup.awayLiveScore = awayScore;
+                existingMatchup.liveSummary = liveDetail;
             }
         }
     });
@@ -110,7 +136,7 @@ async function syncMlb() {
     try {
         const rawSeriesMap = new Map();
 
-        const startDate = new Date(2026, 8, 25); // Late September
+        const startDate = new Date(2026, 8, 29); // Late September
         const endDate = new Date(2026, 10, 2);   // Early November
 
         for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
@@ -122,11 +148,16 @@ async function syncMlb() {
             try {
                 const url = `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${dateStr}`;
                 const { data } = await axios.get(url, { timeout: 10000 });
+                if (data?.events?.length > 0) {
+                    console.log(`[MLB Sync Debug] API returned ${data.events.length} events for date: ${dateStr}`);
+                }
                 extractSeries(data, rawSeriesMap);
             } catch (dayErr) {
-                // Skip empty days silently
+                // Skip empty days silently or log if needed
             }
         }
+
+        console.log(`[MLB Sync Debug] Total grouped series keys found: ${Array.from(rawSeriesMap.keys()).join(", ")}`);
 
         const { MlbSeries, MlbTeams } = db;
 
@@ -139,7 +170,10 @@ async function syncMlb() {
 
             for (const [index, s] of matches.entries()) {
                 const placeholderId = getPlaceholderId(roundNum, league, index);
-                if (!placeholderId) continue;
+                if (!placeholderId) {
+                    console.log(`[MLB Sync Debug] Skipping match: Invalid placeholder ID generated for round ${roundNum}, league ${league}, index ${index}`);
+                    continue;
+                }
 
                 const targetWins = ROUND_CONFIG[roundNum].targetWins;
                 let finalHomeWins = s.homeWins;
@@ -159,6 +193,9 @@ async function syncMlb() {
                 const isLocked = (startTime && now >= startTime) || (finalHomeWins + finalAwayWins > 0);
 
                 const existingRow = await MlbSeries.findOne({ where: { id: placeholderId } });
+                if (!existingRow) {
+                    console.log(`[MLB Sync Debug] Warning: Placeholder row ${placeholderId} not found in database table 'mlb_series'.`);
+                }
 
                 let rawHome = s.homeName;
                 if (!rawHome || rawHome === "TBD" || rawHome.startsWith("TBD")) {
@@ -178,7 +215,7 @@ async function syncMlb() {
                 const homeLogo = s.home.team?.logo || homeTeamRecord?.logo || globalTbdLogo || existingRow?.home_logo || null;
                 const awayLogo = s.away.team?.logo || awayTeamRecord?.logo || globalTbdLogo || existingRow?.away_logo || null;
 
-                await MlbSeries.update({
+                const updatePayload = {
                     round: roundNum,
                     round_label: ROUND_CONFIG[roundNum].label,
                     round_points_max: ROUND_CONFIG[roundNum].maxPoints,
@@ -195,18 +232,25 @@ async function syncMlb() {
                     away_wins: finalAwayWins,
                     locked: isLocked,
                     winner: seriesWinnerName,
-                    series_length: parsedLength
-                }, {
+                    series_length: parsedLength,
+                    live_summary: s.isLive ? s.liveSummary : null,
+                    home_live_score: s.isLive ? s.homeLiveScore : null,
+                    away_live_score: s.isLive ? s.awayLiveScore : null
+                };
+
+                console.log(`[MLB Sync Debug] Attempting DB update for slot ${placeholderId}:`, updatePayload);
+
+                await MlbSeries.update(updatePayload, {
                     where: { id: placeholderId }
                 });
 
-                console.log(`[MLB Sync] Updated placeholder slot ${placeholderId} with ${awayTeamName} @ ${homeTeamName}`);
+                console.log(`[MLB Sync] Successfully updated placeholder slot ${placeholderId} with ${awayTeamName} @ ${homeTeamName}`);
             }
         }
 
         console.log("[MLB Sync Job] Finished syncing MLB postseason series safely.");
     } catch (err) {
-        console.error("[MLB sync] Fatal Error:", err.message);
+        console.error("[MLB sync] Fatal Error:", err.message, err.stack);
     }
 }
 
