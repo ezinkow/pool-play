@@ -90,11 +90,11 @@ export default function MyPicks() {
     const getResult = p => {
         const s = getSeries(p);
         if (!s || s.status !== "STATUS_FINAL" || !s.winner) return null;
-        if (p.pick !== s.winner) return { icon: "❌", color: "#fef2f2", label: "Wrong", type: "loss" };
+        if (p.pick !== s.winner) return { icon: "❌", color: "#ff6b6b", label: "Wrong", type: "loss" };
         const perfect = p.series_length_guess === s.series_length;
         return perfect
-            ? { icon: "🌟", color: "#fef9c3", label: `Perfect! ×2 (${(parseInt(p.confidence) || 0) * 2} pts)`, type: "perfect" }
-            : { icon: "✅", color: "#f0fdf4", label: `+${p.confidence} pts`, type: "win" };
+            ? { icon: "🌟", color: "#80fda5", label: `Perfect! ×2 (${(parseInt(p.confidence) || 0) * 2} pts)`, type: "perfect" }
+            : { icon: "✅", color: "#cff8dc", label: `+${p.confidence} pts`, type: "win" };
     };
 
     const roundsList = [

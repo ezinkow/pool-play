@@ -109,7 +109,7 @@ export default function GroupPicks() {
         ? { backgroundColor: "#80fda5", color: "#065f46" } // Perfect match highlight
         : { backgroundColor: "#cff8dc", color: "#166534" }; // Correct winner highlight
     }
-    return { backgroundColor: "#fef2f2", color: "#991b1b" }; // Incorrect pick highlight
+    return { backgroundColor: "#ff6b6b", color: "#991b1b" }; // Incorrect pick highlight
   };
 
   if (authLoading) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, sans-serif" }}>Verifying session...</div>;
