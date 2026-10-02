@@ -1,4 +1,4 @@
-const { MlbEntries, Users, MlbPicks, MlbSeries, MlbTiebreaker, MlbTeams } = require("../models");
+const { MlbPlayoffsEntries, Users, MlbPlayoffsPicks, MlbPlayoffsSeries, MlbTiebreaker, MlbTeams } = require("../models");
 const requireAuth = require("../middleware/Requireauth");
 const { Op } = require("sequelize");
 
@@ -42,7 +42,7 @@ module.exports = function (app) {
     // GET /api/mlb/entries/me — get current user's entry info
     app.get("/api/mlb/entries/me", requireAuth, async (req, res) => {
         try {
-            const entry = await MlbEntries.findOne({ where: { user_id: req.user.id } });
+            const entry = await MlbPlayoffsEntries.findOne({ where: { user_id: req.user.id } });
             if (!entry) {
                 return res.json({ entry: null });
             }
@@ -62,12 +62,12 @@ module.exports = function (app) {
                 return res.status(400).json({ error: "Entry name is required" });
             }
 
-            const nameTaken = await MlbEntries.findOne({ where: { entry_name } });
+            const nameTaken = await MlbPlayoffsEntries.findOne({ where: { entry_name } });
             if (nameTaken && nameTaken.user_id !== req.user.id) {
                 return res.status(400).json({ error: "That display name is already taken" });
             }
 
-            const [entry, created] = await MlbEntries.findOrCreate({
+            const [entry, created] = await MlbPlayoffsEntries.findOrCreate({
                 where: { user_id: req.user.id },
                 defaults: { entry_name },
             });
@@ -87,17 +87,17 @@ module.exports = function (app) {
     // DELETE /api/mlb/entries/me — leave pool entry
     app.delete("/api/mlb/entries/me", requireAuth, async (req, res) => {
         try {
-            const entry = await MlbEntries.findOne({ where: { user_id: req.user.id } });
+            const entry = await MlbPlayoffsEntries.findOne({ where: { user_id: req.user.id } });
             if (!entry) {
                 return res.status(404).json({ error: "Entry not found" });
             }
 
-            const activeLockedSeries = await MlbSeries.findOne({ where: { locked: true } });
+            const activeLockedSeries = await MlbPlayoffsSeries.findOne({ where: { locked: true } });
             if (activeLockedSeries) {
                 return res.status(403).json({ error: "Cannot leave pool after games have locked." });
             }
 
-            await MlbPicks.destroy({ where: { user_id: req.user.id } });
+            await MlbPlayoffsPicks.destroy({ where: { user_id: req.user.id } });
             await MlbTiebreaker.destroy({ where: { user_id: req.user.id } });
             await entry.destroy();
 
@@ -120,7 +120,7 @@ module.exports = function (app) {
             const user = await Users.findOne({ where: { name } });
             if (!user) return res.json({ exists: false });
 
-            const entry = await MlbEntries.findOne({ where: { user_id: user.id } });
+            const entry = await MlbPlayoffsEntries.findOne({ where: { user_id: user.id } });
             res.json({ exists: !!entry });
         } catch (err) {
             console.error(err);
@@ -131,7 +131,7 @@ module.exports = function (app) {
     // GET /api/mlb/entries
     app.get("/api/mlb/entries", async (req, res) => {
         try {
-            const entries = await MlbEntries.findAll({
+            const entries = await MlbPlayoffsEntries.findAll({
                 attributes: ["id", "user_id", "entry_name", "createdAt"],
             });
             res.json(entries);
@@ -149,13 +149,13 @@ module.exports = function (app) {
                 return res.json([]);
             }
 
-            const entry = await MlbEntries.findOne({ where: { entry_name: name } });
+            const entry = await MlbPlayoffsEntries.findOne({ where: { entry_name: name } });
             if (!entry) return res.json([]);
 
-            const picks = await MlbPicks.findAll({
+            const picks = await MlbPlayoffsPicks.findAll({
                 where: { user_id: entry.user_id },
                 include: [{
-                    model: MlbSeries,
+                    model: MlbPlayoffsSeries,
                     as: 'series',
                     attributes: [
                         "id", "round", "round_label", "round_points_max",
@@ -181,11 +181,11 @@ module.exports = function (app) {
                 return res.status(400).json({ error: "No picks provided" });
             }
 
-            const entry = await MlbEntries.findOne({ where: { user_id: req.user.id } });
+            const entry = await MlbPlayoffsEntries.findOne({ where: { user_id: req.user.id } });
             if (!entry) return res.status(403).json({ error: "Join the pool first!" });
 
             const seriesIds = picks.map(p => p.series_id);
-            const seriesInDb = await MlbSeries.findAll({ where: { id: seriesIds } });
+            const seriesInDb = await MlbPlayoffsSeries.findAll({ where: { id: seriesIds } });
 
             const picksByRound = {};
 
@@ -214,7 +214,7 @@ module.exports = function (app) {
             }
 
             const lockedSeriesInDb = seriesInDb.filter(s => s.locked);
-            const existingPicks = await MlbPicks.findAll({ where: { user_id: req.user.id } });
+            const existingPicks = await MlbPlayoffsPicks.findAll({ where: { user_id: req.user.id } });
 
             for (const submittedPick of picks) {
                 const isLocked = lockedSeriesInDb.some(ls => ls.id === submittedPick.series_id);
@@ -237,7 +237,7 @@ module.exports = function (app) {
             }
 
             for (const p of picks) {
-                await MlbPicks.upsert({
+                await MlbPlayoffsPicks.upsert({
                     user_id: req.user.id,
                     series_id: p.series_id,
                     pick: p.pick,
@@ -257,9 +257,9 @@ module.exports = function (app) {
     // GET /api/mlb/picks/all (For the Group Matrix / Standings)
     app.get("/api/mlb/picks/all", async (req, res) => {
         try {
-            const picks = await MlbPicks.findAll({
+            const picks = await MlbPlayoffsPicks.findAll({
                 include: [{
-                    model: MlbSeries,
+                    model: MlbPlayoffsSeries,
                     as: 'series',
                     attributes: [
                         "id", "round", "round_label", "locked",
@@ -270,7 +270,7 @@ module.exports = function (app) {
                 }],
             });
 
-            const entries = await MlbEntries.findAll();
+            const entries = await MlbPlayoffsEntries.findAll();
             const entryMap = {};
             entries.forEach(e => { entryMap[e.user_id] = e.entry_name; });
 
@@ -296,7 +296,7 @@ module.exports = function (app) {
     // GET /api/mlb/series — all series ordered by round then slot
     app.get("/api/mlb/series", async (req, res) => {
         try {
-            const series = await MlbSeries.findAll({
+            const series = await MlbPlayoffsSeries.findAll({
                 order: [["round", "ASC"], ["id", "ASC"]],
             });
             const enriched = await attachTeamColors(series);
@@ -310,7 +310,7 @@ module.exports = function (app) {
     // GET /api/mlb/series/active — unlocked series only (open for picks)
     app.get("/api/mlb/series/active", async (req, res) => {
         try {
-            const series = await MlbSeries.findAll({
+            const series = await MlbPlayoffsSeries.findAll({
                 where: { locked: false },
                 order: [["round", "ASC"], ["id", "ASC"]],
             });
@@ -325,7 +325,7 @@ module.exports = function (app) {
     // GET /api/mlb/series/round/:round — all series for a specific round
     app.get("/api/mlb/series/round/:round", async (req, res) => {
         try {
-            const series = await MlbSeries.findAll({
+            const series = await MlbPlayoffsSeries.findAll({
                 where: { round: req.params.round },
                 order: [["id", "ASC"]],
             });
@@ -340,7 +340,7 @@ module.exports = function (app) {
     // GET /api/mlb/series/live — in-progress and final series (for results display)
     app.get("/api/mlb/series/live", async (req, res) => {
         try {
-            const series = await MlbSeries.findAll({
+            const series = await MlbPlayoffsSeries.findAll({
                 where: {
                     status: ["STATUS_IN_PROGRESS", "STATUS_FINAL"],
                 },
@@ -358,10 +358,10 @@ module.exports = function (app) {
     app.get("/api/mlb/standings", async (req, res) => {
         try {
             const [entries, series, tiebreakers, allPicks] = await Promise.all([
-                MlbEntries.findAll(),
-                MlbSeries.findAll(),
+                MlbPlayoffsEntries.findAll(),
+                MlbPlayoffsSeries.findAll(),
                 MlbTiebreaker.findAll(),
-                MlbPicks.findAll()
+                MlbPlayoffsPicks.findAll()
             ]);
 
             const seriesMap = {};
@@ -470,7 +470,7 @@ module.exports = function (app) {
     // GET /api/mlb/tiebreaker — get a user's tiebreaker
     app.get("/api/mlb/tiebreaker", requireAuth, async (req, res) => {
         try {
-            const entry = await MlbEntries.findOne({ where: { user_id: req.user.id } });
+            const entry = await MlbPlayoffsEntries.findOne({ where: { user_id: req.user.id } });
             if (!entry) return res.json(null);
             const record = await MlbTiebreaker.findOne({ where: { user_id: entry.user_id } });
             res.json(record || null);
@@ -482,7 +482,7 @@ module.exports = function (app) {
     // POST /api/mlb/tiebreaker — save tiebreaker
     app.post("/api/mlb/tiebreaker", requireAuth, async (req, res) => {
         try {
-            const finals = await MlbSeries.findOne({ where: { round: 4 } });
+            const finals = await MlbPlayoffsSeries.findOne({ where: { round: 4 } });
             if (finals && finals.status !== "STATUS_SCHEDULED") {
                 return res.status(403).json({ error: "Tiebreaker is locked — Finals has started" });
             }
@@ -505,7 +505,7 @@ module.exports = function (app) {
     // GET /api/mlb/tiebreaker/all — all tiebreakers
     app.get("/api/mlb/tiebreaker/all", async (req, res) => {
         try {
-            const entries = await MlbEntries.findAll();
+            const entries = await MlbPlayoffsEntries.findAll();
             const tiebreakers = await MlbTiebreaker.findAll();
             const tbMap = {};
             for (const t of tiebreakers) tbMap[t.user_id] = t.total_points;

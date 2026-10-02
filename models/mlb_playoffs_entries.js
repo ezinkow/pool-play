@@ -1,5 +1,5 @@
 module.exports = function (sequelize, DataTypes) {
-    const MlbEntries = sequelize.define("MlbEntries", {
+    const MlbPlayoffsEntries = sequelize.define("MlbPlayoffsEntries", {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
@@ -15,16 +15,16 @@ module.exports = function (sequelize, DataTypes) {
             allowNull: false,
         },
     }, {
-        tableName: "mlb_entries",
+        tableName: "mlb_playoffs_entries",
         timestamps: true,
         createdAt: "createdAt",
         updatedAt: false,
     });
 
     // Standard association mapping block
-    MlbEntries.associate = function (models) {
-        MlbEntries.belongsTo(models.Users, { foreignKey: "user_id" });
+    MlbPlayoffsEntries.associate = function (models) {
+        MlbPlayoffsEntries.belongsTo(models.Users, { foreignKey: "user_id" });
     };
 
-    return MlbEntries;
+    return MlbPlayoffsEntries;
 };

@@ -1,5 +1,5 @@
 module.exports = function (sequelize, DataTypes) {
-    const HrdPlayers = sequelize.define("HrdPlayers", {
+    const MlbHrdPlayers = sequelize.define("MlbHrdPlayers", {
         id: { type: DataTypes.STRING, primaryKey: true },
         name: { type: DataTypes.STRING, allowNull: false },
         short_name: { type: DataTypes.STRING },
@@ -19,9 +19,9 @@ module.exports = function (sequelize, DataTypes) {
         hr_august: { type: DataTypes.INTEGER, defaultValue: 0 },
         hr_september: { type: DataTypes.INTEGER, defaultValue: 0 }
     }, {
-        tableName: "hrd_players",
+        tableName: "mlb_hrd_players",
         timestamps: true
     });
 
-    return HrdPlayers;
+    return MlbHrdPlayers;
 };

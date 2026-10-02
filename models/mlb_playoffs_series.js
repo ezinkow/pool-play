@@ -1,5 +1,5 @@
 module.exports = function (sequelize, DataTypes) {
-    const MlbSeries = sequelize.define("MlbSeries", {
+    const MlbPlayoffsSeries = sequelize.define("MlbPlayoffsSeries", {
         id: {
             // ESPN's stable series-level ID
             type: DataTypes.STRING(64),
@@ -69,15 +69,15 @@ module.exports = function (sequelize, DataTypes) {
             allowNull: true,
         },
     }, {
-        tableName: "mlb_series",
+        tableName: "mlb_playoffs_series",
         timestamps: true,
     });
     
-    MlbSeries.associate = function (models) {
-        MlbSeries.hasMany(models.MlbPicks, {
+    MlbPlayoffsSeries.associate = function (models) {
+        MlbPlayoffsSeries.hasMany(models.MlbPlayoffsPicks, {
             foreignKey: "series_id"
         });
     };
 
-    return MlbSeries;
+    return MlbPlayoffsSeries;
 };

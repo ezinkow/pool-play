@@ -1,5 +1,5 @@
 module.exports = function (sequelize, DataTypes) {
-    const HrdRosters = sequelize.define("HrdRosters", {
+    const MlbHrdRosters = sequelize.define("MlbHrdRosters", {
         user_id: {
             type: DataTypes.INTEGER,
             allowNull: false
@@ -13,10 +13,10 @@ module.exports = function (sequelize, DataTypes) {
         timestamps: true
     });
 
-    HrdRosters.associate = (models) => {
-        HrdRosters.belongsTo(models.Users, { foreignKey: "user_id" });
-        HrdRosters.belongsTo(models.HrdPlayers, { foreignKey: "player_id" });
+    MlbHrdRosters.associate = (models) => {
+        MlbHrdRosters.belongsTo(models.Users, { foreignKey: "user_id" });
+        MlbHrdRosters.belongsTo(models.MlbHrdPlayers, { foreignKey: "player_id" });
     };
 
-    return HrdRosters;
+    return MlbHrdRosters;
 };
