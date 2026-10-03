@@ -101,31 +101,31 @@ const Countdown = ({ targetDate, label, isDarkMode }) => {
         <>
             <style>{`
                 .flip-card-unit {
-                    position: relative; display: flex; flex-direction: column; width: 20px; height: 30px;
-                    font-size: 17px; font-weight: 900; color: #01da25; perspective: 300px;
+                    position: relative; display: flex; flex-direction: column; width: 18px; height: 28px;
+                    font-size: 15px; font-weight: 900; color: #01da25; perspective: 300px;
                     font-family: 'Courier New', Courier, monospace; background: #111; border-radius: 3px;
                 }
                 .flip-card-unit .top-static, .flip-card-unit .bottom-static { position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; }
                 .flip-card-unit .top-static { top: 0; background: #181818; border-bottom: 1px solid #000; border-radius: 3px 3px 0 0; }
-                .flip-card-unit .top-static span { position: absolute; top: 0; left: 0; width: 100%; height: 30px; line-height: 30px; text-align: center; }
+                .flip-card-unit .top-static span { position: absolute; top: 0; left: 0; width: 100%; height: 28px; line-height: 28px; text-align: center; }
                 .flip-card-unit .bottom-static { bottom: 0; background: #2c2c2c; border-top: 1px solid #111; border-radius: 0 0 3px 3px; }
-                .flip-card-unit .bottom-static span { position: absolute; top: -15px; left: 0; width: 100%; height: 30px; line-height: 30px; text-align: center; }
+                .flip-card-unit .bottom-static span { position: absolute; top: -14px; left: 0; width: 100%; height: 28px; line-height: 28px; text-align: center; }
                 .flip-card-unit .bottom-shade { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.45) 100%); pointer-events: none; }
                 .flip-card-unit .flipper { position: absolute; width: 100%; height: 50%; top: 0; transform-origin: bottom; transform-style: preserve-3d; z-index: 3; }
                 .flip-card-unit.flipping .flipper { transition: transform 0.4s ease-in-out; transform: rotateX(-180deg); }
                 .flip-card-unit .front, .flip-card-unit .back { position: absolute; left: 0; width: 100%; height: 100%; overflow: hidden; backface-visibility: hidden; }
                 .flip-card-unit .front { top: 0; background: #181818; border-bottom: 1px solid #000; border-radius: 3px 3px 0 0; }
-                .flip-card-unit .front span { position: absolute; top: 0; left: 0; width: 100%; height: 30px; line-height: 30px; text-align: center; }
+                .flip-card-unit .front span { position: absolute; top: 0; left: 0; width: 100%; height: 28px; line-height: 28px; text-align: center; }
                 .flip-card-unit .back { bottom: 0; background: #2c2c2c; transform: rotateX(180deg); border-radius: 0 0 3px 3px; }
-                .flip-card-unit .back span { position: absolute; top: -15px; left: 0; width: 100%; height: 30px; line-height: 30px; text-align: center; }
+                .flip-card-unit .back span { position: absolute; top: -14px; left: 0; width: 100%; height: 28px; line-height: 28px; text-align: center; }
             `}</style>
-            <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: isDarkMode ? "#0b0f19" : "#1e293b", padding: "4px 8px", borderRadius: "6px", border: `1px solid ${isDarkMode ? "#334155" : GOLD}` }}>
-                <span style={{ color: GOLD, fontSize: "10px", fontWeight: "800", marginRight: "6px", textTransform: "uppercase" }}>{label}</span>
-                <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
-                    {timeLeft.y > 0 && (<>{renderFlipPair(timeLeft.y.toString(), "Yrs")}<span style={{ color: "#01da25", fontSize: "11px", fontWeight: "bold", marginTop: "-10px" }}>:</span></>)}
-                    {renderFlipPair(timeLeft.d, "Days")}<span style={{ color: "#01da25", fontSize: "11px", fontWeight: "bold", marginTop: "-10px" }}>:</span>
-                    {renderFlipPair(timeLeft.h, "Hrs")}<span style={{ color: "#01da25", fontSize: "11px", fontWeight: "bold", marginTop: "-10px" }}>:</span>
-                    {renderFlipPair(timeLeft.m, "Min")}<span style={{ color: "#01da25", fontSize: "11px", fontWeight: "bold", marginTop: "-10px" }}>:</span>
+            <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: isDarkMode ? "#0b0f19" : "#1e293b", padding: "4px 6px", borderRadius: "6px", border: `1px solid ${isDarkMode ? "#334155" : GOLD}`, maxWidth: "100%", overflow: "hidden" }}>
+                <span style={{ color: GOLD, fontSize: "9px", fontWeight: "800", marginRight: "4px", textTransform: "uppercase" }}>{label}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "2px", flexWrap: "nowrap" }}>
+                    {timeLeft.y > 0 && (<>{renderFlipPair(timeLeft.y.toString(), "Yrs")}<span style={{ color: "#01da25", fontSize: "10px", fontWeight: "bold" }}>:</span></>)}
+                    {renderFlipPair(timeLeft.d, "Days")}<span style={{ color: "#01da25", fontSize: "10px", fontWeight: "bold" }}>:</span>
+                    {renderFlipPair(timeLeft.h, "Hrs")}<span style={{ color: "#01da25", fontSize: "10px", fontWeight: "bold" }}>:</span>
+                    {renderFlipPair(timeLeft.m, "Min")}<span style={{ color: "#01da25", fontSize: "10px", fontWeight: "bold" }}>:</span>
                     {renderFlipPair(timeLeft.s, "Sec")}
                 </div>
             </div>
@@ -215,18 +215,20 @@ export default function Home() {
                 border: isDarkMode ? "1px solid #334155" : "1px solid #e2e8f0",
                 transition: "transform 0.2s ease"
             }}>
-                <div onClick={() => setExpandedCards(p => ({ ...p, [card.key]: !p[card.key] }))} style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
+                <div onClick={() => setExpandedCards(p => ({ ...p, [card.key]: !p[card.key] }))} style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", gap: "12px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
                         <span style={{ fontSize: 26, flexShrink: 0 }}>{card.emoji || "🎮"}</span>
-                        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px", minWidth: 0, flex: 1 }}>
-                            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: card.isActive ? (isDarkMode ? "#f8fafc" : DARK_BLUE) : GRAY }}>{card.title}</h3>
-                            {group === 'upcoming' && <Countdown label="LOCKS:" targetDate={card.lock_date} isDarkMode={isDarkMode} />}
-                            {group === 'live' && (
-                                <span style={{ background: "#dcfce7", color: "#16a34a", padding: "2px 8px", borderRadius: "12px", fontSize: "11px", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#16a34a", display: "inline-block", animation: "pulse 1.5s infinite" }}></span> Active Now
-                                </span>
-                            )}
-                            {group === 'inactive' && card.open_date > new Date() && <Countdown label="OPENS:" targetDate={card.open_date} isDarkMode={isDarkMode} />}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "6px", minWidth: 0, flex: 1 }}>
+                            <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: card.isActive ? (isDarkMode ? "#f8fafc" : DARK_BLUE) : GRAY, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{card.title}</h3>
+                            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px" }}>
+                                {group === 'upcoming' && <Countdown label="LOCKS:" targetDate={card.lock_date} isDarkMode={isDarkMode} />}
+                                {group === 'live' && (
+                                    <span style={{ background: "#dcfce7", color: "#16a34a", padding: "2px 8px", borderRadius: "12px", fontSize: "11px", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#16a34a", display: "inline-block", animation: "pulse 1.5s infinite" }}></span> Active Now
+                                    </span>
+                                )}
+                                {group === 'inactive' && card.open_date > new Date() && <Countdown label="OPENS:" targetDate={card.open_date} isDarkMode={isDarkMode} />}
+                            </div>
                         </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
@@ -288,7 +290,7 @@ export default function Home() {
                 }
             `}</style>
 
- {/* Top Hero Header Card Box with Side Widgets */}
+            {/* Top Hero Header Card Box - Clean & Responsive */}
             <div style={{
                 maxWidth: 850,
                 margin: "0 auto 20px",
@@ -298,57 +300,67 @@ export default function Home() {
                 border: `1px solid ${isDarkMode ? "#334155" : "#cbd5e1"}`,
                 padding: "24px 20px",
                 boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-                display: "grid",
-                gridTemplateColumns: "auto 1fr auto",
+                display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
-                gap: "20px"
+                textAlign: "center",
+                position: "relative",
+                gap: "14px"
             }}>
-                {/* Left Side: Live & Open Stats */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <span style={{ background: isDarkMode ? "rgba(255,255,255,0.15)" : "#e2e8f0", color: isDarkMode ? "#cbd5e1" : "#475569", padding: "6px 12px", borderRadius: "12px", fontSize: "12px", fontWeight: 700, boxShadow: "0 2px 4px rgba(0,0,0,0.1)", whiteSpace: "nowrap" }}>
+                {/* Absolute Top-Right Theme Toggle */}
+                <button
+                    onClick={toggleTheme}
+                    style={{
+                        position: "absolute",
+                        top: "16px",
+                        right: "16px",
+                        background: isDarkMode ? "rgba(255,255,255,0.15)" : "#0f172a",
+                        color: isDarkMode ? "white" : "#ffffff",
+                        border: isDarkMode ? "1px solid rgba(255,255,255,0.3)" : "none",
+                        borderRadius: "20px",
+                        padding: "6px 14px",
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.2)"
+                    }}
+                >
+                    {isDarkMode ? "☀️ Light" : "🌙 Dark"}
+                </button>
+
+                {/* Absolute Top-Left Live/Open Stats */}
+                <div style={{
+                    position: "absolute",
+                    top: "16px",
+                    left: "16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                    alignItems: "flex-start"
+                }}>
+                    <span style={{ background: isDarkMode ? "rgba(255,255,255,0.15)" : "#e2e8f0", color: isDarkMode ? "#cbd5e1" : "#475569", padding: "4px 10px", borderRadius: "10px", fontSize: "11px", fontWeight: 700, boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
                         🔥 {live.length} Live
                     </span>
-                    <span style={{ background: isDarkMode ? "rgba(255,255,255,0.15)" : "#e2e8f0", color: isDarkMode ? "#cbd5e1" : "#475569", padding: "6px 12px", borderRadius: "12px", fontSize: "12px", fontWeight: 700, boxShadow: "0 2px 4px rgba(0,0,0,0.1)", whiteSpace: "nowrap" }}>
+                    <span style={{ background: isDarkMode ? "rgba(255,255,255,0.15)" : "#e2e8f0", color: isDarkMode ? "#cbd5e1" : "#475569", padding: "4px 10px", borderRadius: "10px", fontSize: "11px", fontWeight: 700, boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
                         ⏰ {upcoming.length} Open
                     </span>
                 </div>
 
-                {/* Center: Logo, Title & Subtitle */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: "10px" }}>
+                {/* Center Content: Logo, Title & Subtitle */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", marginTop: "10px" }}>
                     <img src={logo} alt="POOL PLAY" style={{ width: "90px", height: "90px", borderRadius: "50%", border: `3px solid ${GOLD}`, boxShadow: "0 4px 12px rgba(0,0,0,0.25)" }} />
                     <div>
-                        <h1 style={{ color: isDarkMode ? "white" : DARK_BLUE, margin: 0, fontSize: "26px", fontWeight: 800, letterSpacing: "-0.5px" }}>🏆 POOL PLAY 🏊</h1>
-                        <p style={{ color: isDarkMode ? GOLD : BLUE, margin: "4px 0 0", fontSize: "12px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>Jump on in, the water's fine!</p>
+                        <h1 style={{ color: isDarkMode ? "white" : DARK_BLUE, margin: 0, fontSize: "24px", fontWeight: 800, letterSpacing: "-0.5px", whiteSpace: "nowrap" }}>🏆 POOL PLAY 🏊</h1>
+                        <p style={{ color: isDarkMode ? GOLD : BLUE, margin: "4px 0 0", fontSize: "11px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>Jump on in, the water's fine!</p>
                     </div>
-                </div>
-
-                {/* Right Side: Theme Toggle */}
-                <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                    <button
-                        onClick={toggleTheme}
-                        style={{
-                            background: isDarkMode ? "rgba(255,255,255,0.15)" : "#0f172a",
-                            color: isDarkMode ? "white" : "#ffffff",
-                            border: isDarkMode ? "1px solid rgba(255,255,255,0.3)" : "none",
-                            borderRadius: "20px",
-                            padding: "8px 16px",
-                            fontSize: "12px",
-                            fontWeight: "700",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-                            whiteSpace: "nowrap"
-                        }}
-                    >
-                        {isDarkMode ? "☀️ Light" : "🌙 Dark"}
-                    </button>
                 </div>
             </div>
 
             {/* Main Content Area */}
-            <div style={{ maxWidth: 850, margin: "20px auto 0" }}>
+            <div style={{ maxWidth: 850, margin: "0 auto" }}>
 
                 {/* Search Bar & Category Filters */}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "center", marginBottom: 20, alignItems: "center" }}>
