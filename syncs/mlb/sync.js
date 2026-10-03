@@ -56,15 +56,13 @@ function extractSeries(data, seriesMap) {
 
         const homeScore = homeComp.score !== undefined && homeComp.score !== null ? parseInt(homeComp.score, 10) : null;
         const awayScore = awayComp.score !== undefined && awayComp.score !== null ? parseInt(awayComp.score, 10) : null;
-        
+
         const statusState = comp.status?.type?.state;
         const statusName = comp.status?.type?.name;
         const liveDetail = comp.status?.type?.shortDetail || comp.status?.type?.detail || null;
-        
+
         // Robust check for live status matching ESPN states
         const isLive = statusState === "in" || statusName === "STATUS_IN_PROGRESS";
-
-        console.log(`[MLB Sync Debug] Game Found: ${awayName} @ ${homeName} | State: ${statusState} | IsLive: ${isLive} | LiveDetail: ${liveDetail} | Scores: ${awayScore}-${homeScore}`);
 
         const espnSeries = comp.series;
         let bracketHomeWins = 0;
@@ -83,9 +81,9 @@ function extractSeries(data, seriesMap) {
         if (!seriesMap.has(groupKey)) {
             seriesMap.set(groupKey, []);
         }
-        
+
         const leagueSeriesList = seriesMap.get(groupKey);
-        
+
         let existingMatchup = leagueSeriesList.find(s => {
             const sTeamIds = [String(s.home.team?.id || s.homeName), String(s.away.team?.id || s.awayName)];
             return sTeamIds.includes(homeId) && sTeamIds.includes(awayId);
@@ -149,7 +147,6 @@ async function syncMlb() {
                 const url = `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${dateStr}`;
                 const { data } = await axios.get(url, { timeout: 10000 });
                 if (data?.events?.length > 0) {
-                    console.log(`[MLB Sync Debug] API returned ${data.events.length} events for date: ${dateStr}`);
                 }
                 extractSeries(data, rawSeriesMap);
             } catch (dayErr) {
@@ -157,9 +154,7 @@ async function syncMlb() {
             }
         }
 
-        console.log(`[MLB Sync Debug] Total grouped series keys found: ${Array.from(rawSeriesMap.keys()).join(", ")}`);
-
-        const { MlbSeries, MlbTeams } = db;
+        const { MlbPlayoffsSeries, MlbTeams } = db;
 
         const tbdRecord = await MlbTeams.findOne({ where: { name: "TBD" } });
         const globalTbdLogo = tbdRecord ? tbdRecord.logo : null;
@@ -171,7 +166,6 @@ async function syncMlb() {
             for (const [index, s] of matches.entries()) {
                 const placeholderId = getPlaceholderId(roundNum, league, index);
                 if (!placeholderId) {
-                    console.log(`[MLB Sync Debug] Skipping match: Invalid placeholder ID generated for round ${roundNum}, league ${league}, index ${index}`);
                     continue;
                 }
 
@@ -192,9 +186,8 @@ async function syncMlb() {
                 const startTime = s.startDate ? new Date(s.startDate) : null;
                 const isLocked = (startTime && now >= startTime) || (finalHomeWins + finalAwayWins > 0);
 
-                const existingRow = await MlbSeries.findOne({ where: { id: placeholderId } });
+                const existingRow = await MlbPlayoffsSeries.findOne({ where: { id: placeholderId } });
                 if (!existingRow) {
-                    console.log(`[MLB Sync Debug] Warning: Placeholder row ${placeholderId} not found in database table 'mlb_series'.`);
                 }
 
                 let rawHome = s.homeName;
@@ -238,9 +231,7 @@ async function syncMlb() {
                     away_live_score: s.isLive ? s.awayLiveScore : null
                 };
 
-                console.log(`[MLB Sync Debug] Attempting DB update for slot ${placeholderId}:`, updatePayload);
-
-                await MlbSeries.update(updatePayload, {
+                await MlbPlayoffsSeries.update(updatePayload, {
                     where: { id: placeholderId }
                 });
 
