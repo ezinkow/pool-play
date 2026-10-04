@@ -181,7 +181,12 @@ async function syncMlb() {
                     seriesWinnerName = finalHomeWins === targetWins ? s.homeName : s.awayName;
                 }
 
-                let seriesStatus = seriesOver ? "STATUS_FINAL" : (finalHomeWins + finalAwayWins > 0 ? "STATUS_IN_PROGRESS" : "STATUS_SCHEDULED");
+                // Include s.isLive so status updates immediately when Game 1 is underway
+                let seriesStatus = seriesOver
+                    ? "STATUS_FINAL"
+                    : ((s.isLive || finalHomeWins + finalAwayWins > 0)
+                        ? "STATUS_IN_PROGRESS"
+                        : "STATUS_SCHEDULED");
                 const now = new Date();
                 const startTime = s.startDate ? new Date(s.startDate) : null;
                 const isLocked = (startTime && now >= startTime) || (finalHomeWins + finalAwayWins > 0);

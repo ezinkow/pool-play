@@ -110,7 +110,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/nfl_survivor_api_routes.js")(app);
 
   // MLB
-  require("./routes/mlb_api_routes.js")(app);
+  require("./routes/mlb_playoffs_api_routes.js")(app);
 
   // Olympics
   require("./routes/olympics_api_routes.js")(app);
@@ -123,7 +123,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   const syncBracket = require("./syncs/bracket/sync.js");
   const syncHrd = require("./syncs/home_run_derby/sync.js");
   const syncNba = require("./syncs/nba/sync.js");
-  const syncMlb = require("./syncs/mlb/sync.js");
+  const syncMlbPlayoffs = require("./syncs/mlb_playoffs/sync.js");
   const syncNflRegSeason = require("./syncs/nfl_season/sync.js");
   const syncCfbRegSeason = require("./syncs/cfb_season/sync.js");
   const syncCfbBowlSeason = require("./syncs/cfb_bowl_season/sync.js");
@@ -139,7 +139,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
       // await syncBracket();
       // await syncHrd();
       // await syncNba();
-      await syncMlb();
+      await syncMlbPlayoffs();
       await syncNflRegSeason();
       await syncNbaRegSeason();
       await syncCfbRegSeason();

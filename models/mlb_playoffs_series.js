@@ -55,7 +55,6 @@ module.exports = function (sequelize, DataTypes) {
             allowNull: false,
             defaultValue: false,
         },
-        // ✨ New fields for active live game tracking
         live_summary: {
             type: DataTypes.STRING,   // e.g., "Top 4th", "Mid 7th", "Final"
             allowNull: true,

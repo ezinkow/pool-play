@@ -298,6 +298,13 @@ module.exports = function (app) {
         try {
             const series = await MlbPlayoffsSeries.findAll({
                 order: [["round", "ASC"], ["id", "ASC"]],
+                attributes: [
+                    "id", "round", "round_label", "round_points_max", "league",
+                    "home_team", "away_team", "home_logo", "away_logo",
+                    "home_seed", "away_seed", "home_wins", "away_wins",
+                    "winner", "series_length", "status", "locked", "game_date",
+                    "live_summary", "home_live_score", "away_live_score" // <-- Add these here
+                ]
             });
             const enriched = await attachTeamColors(series);
             res.json(enriched);
@@ -394,7 +401,7 @@ module.exports = function (app) {
                     const homeWins = Number(s.home_wins || 0);
                     const awayWins = Number(s.away_wins || 0);
                     const totalPlayed = homeWins + awayWins;
-                    
+
                     const targetWins = s.round === 1 ? 2 : 4;
                     const defaultLengthGuess = s.round === 1 ? 2 : 4;
 

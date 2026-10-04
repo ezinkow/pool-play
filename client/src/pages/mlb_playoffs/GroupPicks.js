@@ -57,12 +57,13 @@ export default function GroupPicks() {
         console.error("Group picks load failed", err);
       }
     };
-
+    
     fetchAll();
     const interval = setInterval(fetchAll, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
-
+  
+  console.log(series)
   const pickMap = useMemo(() => {
     const map = {};
     picks.forEach(p => {
