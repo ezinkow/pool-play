@@ -383,8 +383,8 @@ module.exports = function (app) {
                             let lCount = 0;
                             if (atsStatus === 'win') wCount++;
                             if (atsStatus === 'loss') lCount++;
-                            if (ou_status === 'win') wCount++;
-                            if (ou_status === 'loss') lCount++;
+                            if (ouStatus === 'win') wCount++;  // Fixed
+                            if (ouStatus === 'loss') lCount++; // Fixed
 
                             calculatedStatus = wCount > lCount ? 'win' : (lCount > wCount ? 'loss' : (wCount > 0 ? 'push' : 'loss'));
                         }
@@ -607,7 +607,7 @@ module.exports = function (app) {
                 { week: 4, start: new Date("2026-09-30T00:00:00"), end: new Date("2026-10-06T23:59:59") },
                 { week: 5, start: new Date("2026-10-07T00:00:00"), end: new Date("2026-10-13T23:59:59") },
                 { week: 6, start: new Date("2026-10-14T00:00:00"), end: new Date("2026-10-20T23:59:59") },
-                { week: 7, start: new Date("2026-10-21T00:00:00"), end: new Date("2026-10-27T23:59:59") }, // Fixed missing week 7
+                { week: 7, start: new Date("2026-10-21T00:00:00"), end: new Date("2026-10-27T23:59:59") },
                 { week: 8, start: new Date("2026-10-28T00:00:00"), end: new Date("2026-11-03T23:59:59") },
                 { week: 9, start: new Date("2026-11-04T00:00:00"), end: new Date("2026-11-10T23:59:59") },
                 { week: 10, start: new Date("2026-11-11T00:00:00"), end: new Date("2026-11-17T23:59:59") },
