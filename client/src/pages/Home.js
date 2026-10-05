@@ -280,7 +280,7 @@ export default function Home() {
         : `linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)`;
 
     return (
-        <div style={{ minHeight: "100vh", background: bgGradient, padding: "20px 16px 80px", transition: "background 0.3s ease", fontFamily: "system-ui, -apple-system, sans-serif" }}>
+        <div style={{ minHeight: "100vh", background: bgGradient, padding: "20px 16px 80px", transition: "background 0.3s ease", fontFamily: "system-ui, -apple-system, sans-serif", scrollBehavior: "smooth" }}>
 
             <style>{`
                 @keyframes pulse {
@@ -341,12 +341,30 @@ export default function Home() {
                     gap: "6px",
                     alignItems: "flex-start"
                 }}>
-                    <span style={{ background: isDarkMode ? "rgba(255,255,255,0.15)" : "#e2e8f0", color: isDarkMode ? "#cbd5e1" : "#475569", padding: "4px 10px", borderRadius: "10px", fontSize: "11px", fontWeight: 700, boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
-                        🔥 {live.length} Live
-                    </span>
-                    <span style={{ background: isDarkMode ? "rgba(255,255,255,0.15)" : "#e2e8f0", color: isDarkMode ? "#cbd5e1" : "#475569", padding: "4px 10px", borderRadius: "10px", fontSize: "11px", fontWeight: 700, boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
-                        ⏰ {upcoming.length} Open
-                    </span>
+                    <a
+                        href="#pools-section"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            document.getElementById('pools-section')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        style={{ textDecoration: "none" }}
+                    >
+                        <span style={{ background: isDarkMode ? "rgba(255,255,255,0.15)" : "#e2e8f0", color: isDarkMode ? "#cbd5e1" : "#475569", padding: "4px 10px", borderRadius: "10px", fontSize: "11px", fontWeight: 700, boxShadow: "0 2px 4px rgba(0,0,0,0.1)", display: "inline-block", cursor: "pointer" }}>
+                            🔥 {live.length} {live.length === 1 ? "Game is Live now!" : "Games are Live now!"}
+                        </span>
+                    </a>
+                    <a
+                        href="#open-entries-section"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            document.getElementById('open-entries-section')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        style={{ textDecoration: "none" }}
+                    >
+                        <span style={{ background: isDarkMode ? "rgba(255,255,255,0.15)" : "#e2e8f0", color: isDarkMode ? "#cbd5e1" : "#475569", padding: "4px 10px", borderRadius: "10px", fontSize: "11px", fontWeight: 700, boxShadow: "0 2px 4px rgba(0,0,0,0.1)", display: "inline-block", cursor: "pointer" }}>
+                            ⏰ {upcoming.length} {upcoming.length === 1 ? "Game is Open for new entries!" : "Games are Open for new entries!"}
+                        </span>
+                    </a>
                 </div>
 
                 {/* Center Content: Logo, Title & Subtitle */}
@@ -360,7 +378,7 @@ export default function Home() {
             </div>
 
             {/* Main Content Area */}
-            <div style={{ maxWidth: 850, margin: "0 auto" }}>
+            <div id="pools-section" style={{ maxWidth: 850, margin: "0 auto", scrollMarginTop: "20px" }}>
 
                 {/* Search Bar & Category Filters */}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "center", marginBottom: 20, alignItems: "center" }}>
@@ -406,7 +424,7 @@ export default function Home() {
                 ) : (
                     <>
                         {live.length > 0 && <><h3 style={{ color: isDarkMode ? GOLD : "#1e3a8a", fontSize: "15px", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>🔥 Live & In-Play</h3>{live.map(c => renderCard(c, 'live'))}</>}
-                        {upcoming.length > 0 && <><h3 style={{ color: isDarkMode ? GOLD : "#1e3a8a", fontSize: "15px", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>⏰ Open / Accepting Entries</h3>{upcoming.map(c => renderCard(c, 'upcoming'))}</>}
+                        {upcoming.length > 0 && <><h3 id="open-entries-section" style={{ color: isDarkMode ? GOLD : "#1e3a8a", fontSize: "15px", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px", scrollMarginTop: "20px" }}>⏰ Open / Accepting Entries</h3>{upcoming.map(c => renderCard(c, 'upcoming'))}</>}
                         {inactive.length > 0 && <><h3 style={{ color: isDarkMode ? "rgba(255,255,255,0.4)" : "#64748b", fontSize: "15px", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>💤 Inactive / Upcoming Season</h3>{inactive.map(c => renderCard(c, 'inactive'))}</>}
 
                         {filteredCards.length === 0 && (
