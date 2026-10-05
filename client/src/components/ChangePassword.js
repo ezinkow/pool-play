@@ -56,7 +56,7 @@ export default function ChangePassword() {
   };
 
   return (
-    <div style={{ className:'page-content', paddingTop: 68, paddingBottom: 80 }}>
+    <div style={{ className: 'page-content', paddingTop: 68, paddingBottom: 80 }}>
       <Toaster />
       <div style={{
         maxWidth: 420, margin: "40px auto", background: "white",
@@ -155,6 +155,12 @@ export default function ChangePassword() {
             >
               Update Password
             </button>
+            <p>
+              *Note: If you did not set a security question when you signed up, use: <br />
+              "What is your mother's maiden name?" <br />
+              and your answer is "Smith" (without quotes).<br/>
+              This is the default for all accounts created before this enhancement.
+            </p>
           </div>
         )}
       </div>
