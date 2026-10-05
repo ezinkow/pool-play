@@ -32,6 +32,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/shared/myaccount-api-routes.js")(app);
   require("./routes/shared/comments-api-routes.js")(app);
   require("./routes/shared/banter-api-routes.js")(app);
+  require("./routes/shared/admin-api-routes.js")(app);
 
   // Bracket
   require("./routes/bracket/picks-api-routes.js")(app);
@@ -119,35 +120,73 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/world_cup_api_routes.js")(app);
 
   // ── 4. MOVED INSIDE: Background jobs can safely execute query sets ────────
-  const syncTourneyPickem = require("./syncs/tourney_pickem/sync.js");
-  const syncBracket = require("./syncs/bracket/sync.js");
-  const syncHrd = require("./syncs/home_run_derby/sync.js");
-  const syncNba = require("./syncs/nba/sync.js");
+  const syncTourneyPickem = require("./syncs/ncaa_tourney/sync.js");
+  const syncChampWeekPickem = require("./syncs/ncaa_champweek/sync.js");
+  const syncBracket = require("./syncs/ncaa_bracket/sync.js");
+  const syncHrd = require("./syncs/mlb_season/sync.js");
+  const syncNba = require("./syncs/nba_playoffs/sync.js");
   const syncMlbPlayoffs = require("./syncs/mlb_playoffs/sync.js");
   const syncNflRegSeason = require("./syncs/nfl_season/sync.js");
   const syncCfbRegSeason = require("./syncs/cfb_season/sync.js");
   const syncCfbBowlSeason = require("./syncs/cfb_bowl_season/sync.js");
   const syncNbaRegSeason = require("./syncs/nba_season/sync.js");
   const syncWorldCup = require("./syncs/world_cup/sync.js");
+
+
+  //move this to sync
   const tourneyPickemLockLines = require("./jobs/tourney_pickem/lockLines.js");
 
+  // Add SyncStatus model import or access it via db.SyncStatus
 
   async function runSync() {
-    // console.log(`[${new Date().toLocaleTimeString()}] 🔄 Triggering Sync...`);
     try {
-      // await syncTourneyPickem();
-      // await syncBracket();
-      // await syncHrd();
-      // await syncNba();
-      await syncMlbPlayoffs();
-      await syncNflRegSeason();
-      await syncNbaRegSeason();
-      await syncCfbRegSeason();
-      await syncCfbBowlSeason();
-      // await syncWorldCup();
-      // await tourneyPickemLockLines();
+      // 1. Define sync tasks mapping exact database sync_file_route strings to runner functions
+      const syncTasks = [
+        { route: "ncaa_tourney", run: syncTourneyPickem },
+        { route: "ncaa_champweek", run: syncChampWeekPickem }, // Added if you want champweek synced
+        { route: "bracket", run: syncBracket },                 // Ensure a row exists in DB for this if used
+        { route: "mlb_home_run_derby", run: syncHrd },          // Fixed from "hrd"
+        { route: "nba_playoffs", run: syncNba },
+        { route: "mlb_playoffs", run: syncMlbPlayoffs },
+        { route: "nfl_season", run: syncNflRegSeason },
+        { route: "nba_season", run: syncNbaRegSeason },
+        { route: "cfb_season", run: syncCfbRegSeason },
+        { route: "cfb_bowl_season", run: syncCfbBowlSeason },
+        { route: "world_cup", run: syncWorldCup },              // Ensure a row exists in DB for this if used
+        { route: "tourney_lock_lines", run: tourneyPickemLockLines }, // Ensure a row exists if used
+      ];
+
+      // 2. Fetch all sync control records in a single query
+      const syncStatuses = await db.SyncStatus.findAll();
+      const statusMap = {};
+      syncStatuses.forEach(s => {
+        statusMap[s.sync_file_route] = s;
+      });
+
+      // 3. Iterate and evaluate whether each sync is enabled
+      for (const task of syncTasks) {
+        const record = statusMap[task.route];
+
+        // If a configuration record exists, check if it's enabled
+        if (record) {
+          const isEnabled = record.sync_enabled === true || record.sync_enabled === 1;
+
+          if (!isEnabled) {
+            continue; // Skip this sync if toggled off in the admin dashboard
+          }
+        } else {
+          // Skip if no row exists in the database for this route yet
+          continue;
+        }
+
+        try {
+          await task.run();
+        } catch (taskErr) {
+          console.error(`Sync execution failed for [${task.route}]:`, taskErr.message);
+        }
+      }
     } catch (err) {
-      console.error("Background job failed:", err);
+      console.error("Background job batch failed:", err);
     }
   }
 

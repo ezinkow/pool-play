@@ -1,5 +1,5 @@
 module.exports = function (sequelize, DataTypes) {
-    const NbaEntries = sequelize.define("NbaEntries", {
+    const NbaPlayoffsEntries = sequelize.define("NbaPlayoffsEntries", {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
@@ -17,17 +17,17 @@ module.exports = function (sequelize, DataTypes) {
             unique: true,
         },
     }, {
-        tableName: "nba_entries",
+        tableName: "nba_playoffs_entries",
         timestamps: true,
         createdAt: "createdAt",
         updatedAt: false,
     });
 
     // 🧠 Standard association mapping block
-    NbaEntries.associate = function (models) {
-        // Lets you easily do NbaEntries.findAll({ include: [models.Users] }) later
-        NbaEntries.belongsTo(models.Users, { foreignKey: "user_id" });
+    NbaPlayoffsEntries.associate = function (models) {
+        // Lets you easily do NbaPlayoffsEntries.findAll({ include: [models.Users] }) later
+        NbaPlayoffsEntries.belongsTo(models.Users, { foreignKey: "user_id" });
     };
 
-    return NbaEntries;
+    return NbaPlayoffsEntries;
 };

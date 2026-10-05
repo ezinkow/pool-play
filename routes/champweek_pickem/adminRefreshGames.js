@@ -1,5 +1,5 @@
 // adminRefreshGames.js
-const syncGames = require("../../syncs/champweek_pickem/sync");
+const syncGames = require("../../syncs/ncaa_champweek/sync");
 const lockLines = require("../../jobs/champweek_pickem/lockLines");
 
 module.exports = function (app) {

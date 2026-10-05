@@ -64,7 +64,7 @@ async function syncHrdData() {
             const playerData = eligiblePlayersMap[athleteId];
             const live2026HR = stats2026Map[athleteId] || 0;
 
-            const existingPlayer = await db.HrdPlayers.findByPk(athleteId);
+            const existingPlayer = await db.MlbHrdPlayers.findByPk(athleteId);
 
             let updateData = {
                 ...playerData,
@@ -82,7 +82,7 @@ async function syncHrdData() {
                 updateData[activeMonthCol] = live2026HR;
             }
 
-            await db.HrdPlayers.upsert(updateData);
+            await db.MlbHrdPlayers.upsert(updateData);
         }
 
         console.log("HRD Eligible Sync Complete! Table now contains only qualifying sluggers.");

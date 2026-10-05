@@ -3,16 +3,22 @@ const db = require("../../models");
 
 const TOURNAMENT_IDS = new Set(["22"]);
 
-async function syncPickemGames() {
-    const { GamesPickem } = db;
+async function syncTourneyPickemGames() {
+    const { NcaaTourneyGames } = db;
     const url = "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=50&limit=306&dates=20260319-20260406";
 
     try {
         const response = await fetch(url);
         const data = await response.json();
+
+        // SAFEGUARD: Exit gracefully if data.events is missing or not an array
+        if (!data?.events || !Array.isArray(data.events)) {
+            return true;
+        }
+
         const now = new Date();
 
-        const existingGames = await GamesPickem.findAll();
+        const existingGames = await NcaaTourneyGames.findAll();
         const existingMap = {};
         for (const g of existingGames) existingMap[g.id] = g;
 
@@ -76,7 +82,7 @@ async function syncPickemGames() {
                 })()
             };
 
-            await GamesPickem.upsert(payload);
+            await NcaaTourneyGames.upsert(payload);
         }
         return true;
     } catch (error) {
@@ -84,4 +90,4 @@ async function syncPickemGames() {
         return false;
     }
 }
-module.exports = syncPickemGames;
+module.exports = syncTourneyPickemGames;

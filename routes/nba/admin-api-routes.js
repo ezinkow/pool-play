@@ -1,4 +1,4 @@
-const syncNba = require("../../syncs/nba/sync.js");
+const syncNba = require("../../syncs/nba_playoffs/sync.js");
 
 module.exports = function (app) {
 

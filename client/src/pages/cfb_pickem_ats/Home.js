@@ -21,14 +21,26 @@ export default function CfbPickemAtsHome() {
   const activeToken = token || localStorage.getItem("token");
 
   const loadData = () => {
+    // 1. Fetch active pool states and game settings
     axios.get("/api/settings/active-states")
       .then(res => {
         const pickemPool = res.data.find(p => p.game_key === "cfb_pickem_ats");
         if (pickemPool) {
-          // Ensure games_api_path is attached so the countdown can fetch live/active matchups
-          setPoolData({
-            ...pickemPool,
-            games_api_path: pickemPool.games_api_path || "/api/cfb_regular_season_matchups"
+          // Also fetch the specific pool settings to get the current dynamic week
+          axios.get("/api/cfb_pickem_ats/settings", {
+            headers: activeToken ? { Authorization: `Bearer ${activeToken}` } : {}
+          }).then(settingsRes => {
+            setPoolData({
+              ...pickemPool,
+              current_week: settingsRes.data.current_week || 1,
+              games_api_path: pickemPool.games_api_path || "/api/cfb_regular_season_matchups"
+            });
+          }).catch(() => {
+            setPoolData({
+              ...pickemPool,
+              current_week: 1,
+              games_api_path: pickemPool.games_api_path || "/api/cfb_regular_season_matchups"
+            });
           });
         }
       })

@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import Help from "./pages/Help";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import Admin from "./pages/AdminDashboard";
 
 // CFB Pickem ATS pages
 import CfbPickemAtsHome from './pages/cfb_pickem_ats/Home';
@@ -117,7 +118,6 @@ import NflBtsStandings from './pages/nfl_bts/Standings';
 import NflBtsPicks from './pages/nfl_bts/Picks';
 import NflBtsMyPicks from './pages/nfl_bts/MyPicks';
 import NflBtsGroupPicks from './pages/nfl_bts/GroupPicks';
-import AdminTeamAssignment from './pages/nfl_bts/AdminTeamAssignment';
 
 // NFL Survivor pages
 import NflSurvivorHome from './pages/nfl_survivor/Home';
@@ -169,6 +169,7 @@ export default function App() {
           <Route path="/help" element={<Help />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
 
           {/* CFB Pickem ATS*/}
@@ -270,7 +271,6 @@ export default function App() {
           <Route path="/nflbts/mypicks" element={<NflBtsMyPicks />} />
           <Route path="/nflbts/standings" element={<NflBtsStandings />} />
           <Route path="/nflbts/grouppicks" element={<NflBtsGroupPicks />} />
-          <Route path="/nflbts/admin/teamassignments" element={<AdminTeamAssignment />} />
 
           {/* NFL Survivor*/}
           <Route path="/nflsurvivor" element={<NflSurvivorHome />} />

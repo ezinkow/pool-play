@@ -1,5 +1,5 @@
 module.exports = function (sequelize, DataTypes) {
-    const NbaPicks = sequelize.define("NbaPicks", {
+    const NbaPlayoffsPicks = sequelize.define("NbaPlayoffsPicks", {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
@@ -28,7 +28,7 @@ module.exports = function (sequelize, DataTypes) {
             allowNull: true,
         },
     }, {
-        tableName: "nba_picks",
+        tableName: "nba_playoffs_picks",
         timestamps: true,
         indexes: [
             {
@@ -38,12 +38,12 @@ module.exports = function (sequelize, DataTypes) {
         ],
     });
 
-    NbaPicks.associate = function (models) {
-        NbaPicks.belongsTo(models.NbaSeries, {
+    NbaPlayoffsPicks.associate = function (models) {
+        NbaPlayoffsPicks.belongsTo(models.NbaPlayoffsSeries, {
             foreignKey: "series_id",
             as: "series"
         });
     };
 
-    return NbaPicks;
+    return NbaPlayoffsPicks;
 };
