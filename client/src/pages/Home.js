@@ -263,10 +263,10 @@ export default function Home() {
                                 {card.cta}
                             </button>
                             <button
-                                onClick={() => navigate(`${card.route}/standings`)}
+                                onClick={() => navigate(card.game_key?.includes('survivor') ? `${card.route}/grouppicks` : `${card.route}/standings`)}
                                 style={{ padding: "8px 14px", background: "transparent", color: isDarkMode ? GOLD : BLUE, border: `1px solid ${GOLD}`, borderRadius: 6, fontWeight: "bold", fontSize: "12px", cursor: "pointer" }}
                             >
-                                View Standings 🏆
+                                {card.game_key?.includes('survivor') ? "View Survivors 📊" : "View Standings 🏆"}
                             </button>
                         </div>
                     </div>

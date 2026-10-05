@@ -357,19 +357,25 @@ module.exports = function (app) {
                     let atsStatus = null;
                     let ouStatus = null;
 
-                    if (game && pick) {
+                    if (game) {
                         const isFinal = game.status === 'STATUS_FINAL' || game.game_status === 'STATUS_FINAL';
 
-                        if (pick.ats_pick && game.ats_winner) {
-                            const wonAts = pick.ats_pick.trim().toLowerCase() === game.ats_winner.trim().toLowerCase();
-                            atsStatus = wonAts ? 'win' : (game.ats_winner.trim().toLowerCase() === 'push' ? 'push' : 'loss');
-                        }
+                        if (pick) {
+                            if (pick.ats_pick && game.ats_winner) {
+                                const wonAts = pick.ats_pick.trim().toLowerCase() === game.ats_winner.trim().toLowerCase();
+                                atsStatus = wonAts ? 'win' : (game.ats_winner.trim().toLowerCase() === 'push' ? 'push' : 'loss');
+                            }
 
-                        if (pick.ou_pick && game.ou_result) {
-                            const pickClean = pick.ou_pick.replace(/^[⬆️⬇️\s]+/g, '').trim().toLowerCase();
-                            const resultClean = game.ou_result.trim().toLowerCase();
-                            const wonOu = pickClean === resultClean;
-                            ouStatus = wonOu ? 'win' : (resultClean === 'push' ? 'push' : 'loss');
+                            if (pick.ou_pick && game.ou_result) {
+                                const pickClean = pick.ou_pick.replace(/^[⬆️⬇️\s]+/g, '').trim().toLowerCase();
+                                const resultClean = game.ou_result.trim().toLowerCase();
+                                const wonOu = pickClean === resultClean;
+                                ouStatus = wonOu ? 'win' : (resultClean === 'push' ? 'push' : 'loss');
+                            }
+                        } else if (isFinal) {
+                            // If game is final and they didn't pick, count as loss for both ATS & OU
+                            atsStatus = 'loss';
+                            ouStatus = 'loss';
                         }
 
                         if (isFinal) {
@@ -377,10 +383,10 @@ module.exports = function (app) {
                             let lCount = 0;
                             if (atsStatus === 'win') wCount++;
                             if (atsStatus === 'loss') lCount++;
-                            if (ouStatus === 'win') wCount++;
-                            if (ouStatus === 'loss') lCount++;
+                            if (ou_status === 'win') wCount++;
+                            if (ou_status === 'loss') lCount++;
 
-                            calculatedStatus = wCount > lCount ? 'win' : (lCount > wCount ? 'loss' : (wCount > 0 ? 'push' : null));
+                            calculatedStatus = wCount > lCount ? 'win' : (lCount > wCount ? 'loss' : (wCount > 0 ? 'push' : 'loss'));
                         }
                     }
 
@@ -463,30 +469,46 @@ module.exports = function (app) {
             const games = await NflRegularSeasonGames.findAll({ raw: true });
 
             const getTeamRecord = (userId, teamName) => {
-                const userTeamPicks = picks.filter(p => Number(p.user_id) === Number(userId) && p.team_name === teamName);
+                if (!teamName) return { ats_wins: 0, ats_losses: 0, ou_wins: 0, ou_losses: 0, ou_pushes: 0 };
+
+                // Get all regular season games for this specific assigned team
+                const teamGames = games.filter(g => g.home_team === teamName || g.away_team === teamName);
 
                 let ats_wins = 0, ats_losses = 0, ou_wins = 0, ou_losses = 0, ou_pushes = 0;
 
-                userTeamPicks.forEach(p => {
-                    const game = games.find(g => String(g.id) === String(p.game_id));
+                teamGames.forEach(game => {
+                    // Only count final games
+                    if (game.status === 'STATUS_FINAL' || game.game_status === 'STATUS_FINAL') {
+                        const userPick = picks.find(p => Number(p.user_id) === Number(userId) && String(p.game_id) === String(game.id) && p.team_name === teamName);
 
-                    if (game && game.status === 'STATUS_FINAL') {
-                        if (p.ats_pick && game.ats_winner) {
-                            if (p.ats_pick.trim().toLowerCase() === game.ats_winner.trim().toLowerCase()) {
-                                ats_wins++;
-                            } else {
+                        if (userPick) {
+                            // Grade ATS Pick
+                            if (userPick.ats_pick && game.ats_winner) {
+                                if (userPick.ats_pick.trim().toLowerCase() === game.ats_winner.trim().toLowerCase()) {
+                                    ats_wins++;
+                                } else {
+                                    ats_losses++;
+                                }
+                            }
+
+                            // Grade OU Pick
+                            if (userPick.ou_pick && game.ou_result) {
+                                const pickedOu = userPick.ou_pick.trim().toLowerCase();
+                                const gameOu = game.ou_result.trim().toLowerCase();
+                                if (gameOu === 'push') {
+                                    ou_pushes++;
+                                } else if (pickedOu === gameOu) {
+                                    ou_wins++;
+                                } else {
+                                    ou_losses++;
+                                }
+                            }
+                        } else {
+                            // EXPLOIT FIX: If game is final and they didn't submit a pick, count as a LOSS for both ATS and OU!
+                            if (game.ats_winner && game.ats_winner.trim().toLowerCase() !== 'push') {
                                 ats_losses++;
                             }
-                        }
-
-                        if (p.ou_pick && game.ou_result) {
-                            const pickedOu = p.ou_pick.trim().toLowerCase();
-                            const gameOu = game.ou_result.trim().toLowerCase();
-                            if (gameOu === 'push') {
-                                ou_pushes++;
-                            } else if (pickedOu === gameOu) {
-                                ou_wins++;
-                            } else {
+                            if (game.ou_result && game.ou_result.trim().toLowerCase() !== 'push') {
                                 ou_losses++;
                             }
                         }
@@ -577,26 +599,26 @@ module.exports = function (app) {
                 setting = await SettingsModel.findOne({ where: { game_key: "nfl_bts" } });
             }
 
-            // 🧠 Built-in dynamic active week calculator (matches NFL Pick'em logic)
             const now = new Date();
             const weeks = [
-               { week: 1, start: new Date("2026-09-09T00:00:00"), end: new Date("2026-09-15T23:59:59") },
-        { week: 2, start: new Date("2026-09-16T00:00:00"), end: new Date("2026-09-22T23:59:59") },
-        { week: 3, start: new Date("2026-09-23T00:00:00"), end: new Date("2026-09-29T23:59:59") },
-        { week: 4, start: new Date("2026-09-30T00:00:00"), end: new Date("2026-10-06T23:59:59") },
-        { week: 5, start: new Date("2026-10-07T00:00:00"), end: new Date("2026-10-13T23:59:59") },
-        { week: 6, start: new Date("2026-10-14T00:00:00"), end: new Date("2026-10-20T23:59:59") },
-        { week: 8, start: new Date("2026-10-21T00:00:00"), end: new Date("2026-10-27T23:59:59") },
-        { week: 9, start: new Date("2026-10-28T00:00:00"), end: new Date("2026-11-03T23:59:59") },
-        { week: 10, start: new Date("2026-11-04T00:00:00"), end: new Date("2026-11-10T23:59:59") },
-        { week: 11, start: new Date("2026-11-11T00:00:00"), end: new Date("2026-11-17T23:59:59") },
-        { week: 12, start: new Date("2026-11-18T00:00:00"), end: new Date("2026-11-24T23:59:59") },
-        { week: 13, start: new Date("2026-11-25T00:00:00"), end: new Date("2026-12-01T23:59:59") },
-        { week: 14, start: new Date("2026-12-02T00:00:00"), end: new Date("2026-12-08T23:59:59") },
-        { week: 15, start: new Date("2026-12-09T00:00:00"), end: new Date("2026-12-15T23:59:59") },
-        { week: 16, start: new Date("2026-12-16T00:00:00"), end: new Date("2026-12-22T23:59:59") },
-        { week: 17, start: new Date("2026-12-23T00:00:00"), end: new Date("2026-12-29T23:59:59") },
-        { week: 18, start: new Date("2026-12-30T00:00:00"), end: new Date("2027-01-05T23:59:59") }
+                { week: 1, start: new Date("2026-09-09T00:00:00"), end: new Date("2026-09-15T23:59:59") },
+                { week: 2, start: new Date("2026-09-16T00:00:00"), end: new Date("2026-09-22T23:59:59") },
+                { week: 3, start: new Date("2026-09-23T00:00:00"), end: new Date("2026-09-29T23:59:59") },
+                { week: 4, start: new Date("2026-09-30T00:00:00"), end: new Date("2026-10-06T23:59:59") },
+                { week: 5, start: new Date("2026-10-07T00:00:00"), end: new Date("2026-10-13T23:59:59") },
+                { week: 6, start: new Date("2026-10-14T00:00:00"), end: new Date("2026-10-20T23:59:59") },
+                { week: 7, start: new Date("2026-10-21T00:00:00"), end: new Date("2026-10-27T23:59:59") }, // Fixed missing week 7
+                { week: 8, start: new Date("2026-10-28T00:00:00"), end: new Date("2026-11-03T23:59:59") },
+                { week: 9, start: new Date("2026-11-04T00:00:00"), end: new Date("2026-11-10T23:59:59") },
+                { week: 10, start: new Date("2026-11-11T00:00:00"), end: new Date("2026-11-17T23:59:59") },
+                { week: 11, start: new Date("2026-11-18T00:00:00"), end: new Date("2026-11-24T23:59:59") },
+                { week: 12, start: new Date("2026-11-25T00:00:00"), end: new Date("2026-12-01T23:59:59") },
+                { week: 13, start: new Date("2026-12-02T00:00:00"), end: new Date("2026-12-08T23:59:59") },
+                { week: 14, start: new Date("2026-12-09T00:00:00"), end: new Date("2026-12-15T23:59:59") },
+                { week: 15, start: new Date("2026-12-16T00:00:00"), end: new Date("2026-12-22T23:59:59") },
+                { week: 16, start: new Date("2026-12-23T00:00:00"), end: new Date("2026-12-29T23:59:59") },
+                { week: 17, start: new Date("2026-12-30T00:00:00"), end: new Date("2027-01-05T23:59:59") },
+                { week: 18, start: new Date("2027-01-06T00:00:00"), end: new Date("2027-01-12T23:59:59") }
             ];
 
             let activeIndex = 0;
