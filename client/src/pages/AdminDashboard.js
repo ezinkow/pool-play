@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import BTSrandomizer from '../components/nfl_bts/AdminTeamRandomizer';
 
 const NAVY = "#1c61ac";
+const GOLD = "#c89d3c";
 
 // 3D Flipping Digit Component for smooth mechanical downward animation
 function SingleFlipCard({ value }) {
@@ -173,6 +174,11 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
+    // State for CFB Pickem Must-Picks management tab
+    const [cfbWeek, setCfbWeek] = useState(1);
+    const [cfbGames, setCfbGames] = useState([]);
+    const [cfbLoading, setCfbLoading] = useState(false);
+
     const token = localStorage.getItem("token");
 
     const fetchData = async () => {
@@ -183,6 +189,14 @@ export default function AdminDashboard() {
             });
             setSyncs(res.data.statuses || []);
             setGames(res.data.gameSettings || []);
+
+            // Try to set initial active CFB week from settings if available
+            if (res.data.gameSettings) {
+                const cfbSetting = res.data.gameSettings.find(g => g.game_key === "cfb_pickem_ats");
+                if (cfbSetting && cfbSetting.current_week) {
+                    setCfbWeek(Number(cfbSetting.current_week));
+                }
+            }
         } catch (err) {
             console.error("Failed to load admin data", err);
             setError("Failed to load dashboard data. Ensure you have administrator access.");
@@ -194,6 +208,25 @@ export default function AdminDashboard() {
     useEffect(() => {
         fetchData();
     }, []);
+
+    // Fetch CFB games whenever the selected week changes on the Must-Picks tab
+    useEffect(() => {
+        if (activeTab === "cfb_must_picks" && token) {
+            setCfbLoading(true);
+            axios.get("/api/cfb_pickem_ats/games", {
+                params: { week: cfbWeek },
+                headers: { Authorization: `Bearer ${token}` }
+            })
+                .then(res => {
+                    setCfbGames(res.data.games || []);
+                })
+                .catch(err => {
+                    console.error("Failed to load CFB games for admin", err);
+                    toast.error("Failed to load matchups for Week " + cfbWeek);
+                })
+                .finally(() => setCfbLoading(false));
+        }
+    }, [activeTab, cfbWeek, token]);
 
     const handleSyncToggle = async (sync_file_route, field, currentValue) => {
         try {
@@ -237,12 +270,37 @@ export default function AdminDashboard() {
         }
     };
 
+    // Handler to toggle must_pick for a specific CFB game
+    const handleToggleMustPick = async (gameId, currentStatus) => {
+        try {
+            await axios.post("/api/admin/cfb-must-pick", {
+                game_id: gameId,
+                must_pick: !currentStatus
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setCfbGames(prev => prev.map(g => {
+                if (g.id === gameId) {
+                    return { ...g, must_pick: !currentStatus };
+                }
+                return g;
+            }));
+            toast.success(!currentStatus ? "Marked as Must-Pick ⭐" : "Removed Must-Pick status");
+        } catch (err) {
+            console.error("Failed to update must-pick status", err);
+            toast.error(err.response?.data?.error || "Failed to update must-pick status.");
+        }
+    };
+
     if (loading) {
         return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, sans-serif" }}>Loading Admin Hub...</div>;
     }
 
+    const mustPickCount = cfbGames.filter(g => g.must_pick).length;
+
     return (
-        <div  style={{ width: "100%", maxWidth: 1100, margin: "0 auto", padding: "20px 12px", fontFamily: "system-ui, sans-serif" }}>
+        <div style={{ width: "100%", maxWidth: 1100, margin: "0 auto", padding: "20px 12px", fontFamily: "system-ui, sans-serif" }}>
             <style>{`
                 .flip-card-unit {
                     position: relative;
@@ -320,7 +378,7 @@ export default function AdminDashboard() {
                     🛠️ Administrator Control Hub
                 </h2>
                 <p style={{ color: "#64748b", marginTop: 4, fontSize: "13px" }}>
-                    Manage background sync tasks and individual game configuration schedules.
+                    Manage background sync tasks, game configurations, and CFB Must-Picks.
                 </p>
             </div>
 
@@ -331,7 +389,7 @@ export default function AdminDashboard() {
             )}
 
             {/* Navigation Tabs */}
-            <div style={{ display: "flex", gap: "10px", marginBottom: "20px", borderBottom: "2px solid #e2e8f0", paddingBottom: "10px" }}>
+            <div style={{ display: "flex", gap: "10px", marginBottom: "20px", borderBottom: "2px solid #e2e8f0", paddingBottom: "10px", flexWrap: "wrap" }}>
                 <button
                     onClick={() => setActiveTab("syncs")}
                     style={{
@@ -351,6 +409,16 @@ export default function AdminDashboard() {
                     }}
                 >
                     Game Settings & Dates ({games.length})
+                </button>
+                <button
+                    onClick={() => setActiveTab("cfb_must_picks")}
+                    style={{
+                        padding: "8px 16px", fontWeight: 700, fontSize: "14px", borderRadius: "6px", border: "none",
+                        background: activeTab === "cfb_must_picks" ? NAVY : "#f1f5f9",
+                        color: activeTab === "cfb_must_picks" ? "white" : "#475569", cursor: "pointer"
+                    }}
+                >
+                    🏈 CFB Must-Picks
                 </button>
                 <button
                     onClick={() => setActiveTab("bts_randomizer")}
@@ -415,7 +483,7 @@ export default function AdminDashboard() {
 
                         return (
                             <div key={game.game_key} style={{ background: "white", borderRadius: 8, boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0", padding: "16px" }}>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", borderBottom: "1px solid #f1f5f9", paddingBottom: "8px" }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", borderBottom: "1px solid #f1f5f9", paddingBottom: "8px", flexWrap: "wrap", gap: 8 }}>
                                     <div style={{ fontSize: "16px", fontWeight: 800, color: NAVY }}>
                                         {game.emoji || "🎮"} {game.game_label} <span style={{ fontSize: "11px", color: "#64748b" }}>({game.game_key})</span>
                                     </div>
@@ -478,7 +546,115 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            {/* TAB 3: BTS Randomizer */}
+            {/* TAB 3: CFB MUST-PICKS MANAGEMENT */}
+            {activeTab === "cfb_must_picks" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                    <div style={{ background: "white", padding: "16px", borderRadius: 8, border: "1px solid #e2e8f0", boxShadow: "0 2px 6px rgba(0,0,0,0.04)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+                            <div>
+                                <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 800, color: NAVY }}>CFB Pick 'Em Must-Picks Manager</h3>
+                                <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#64748b" }}>
+                                    Select the weekly matchups below and click the button to set them as 'Must Picks' instantly. Currently set: <strong>{mustPickCount}</strong>
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Week Selector Bar */}
+                        <div style={{
+                            display: "flex",
+                            justifyContent: "flex-start",
+                            gap: 6,
+                            marginBottom: 16,
+                            flexWrap: "nowrap",
+                            overflowX: "auto",
+                            WebkitOverflowScrolling: "touch",
+                            paddingBottom: 4,
+                            width: "100%"
+                        }}>
+                            {[...Array(15)].map((_, i) => (
+                                <button
+                                    key={i + 1}
+                                    onClick={() => setCfbWeek(i + 1)}
+                                    style={{
+                                        padding: "6px 12px",
+                                        borderRadius: 6,
+                                        border: "1px solid #ddd",
+                                        backgroundColor: cfbWeek === i + 1 ? NAVY : "white",
+                                        color: cfbWeek === i + 1 ? "white" : "#333",
+                                        cursor: "pointer",
+                                        fontWeight: 600,
+                                        flexShrink: 0,
+                                        fontSize: "13px"
+                                    }}
+                                >
+                                    W{i + 1}
+                                </button>
+                            ))}
+                        </div>
+
+                        {cfbLoading ? (
+                            <div style={{ textAlign: "center", padding: "30px", color: "#64748b", fontSize: "13px" }}>Loading Week {cfbWeek} matchups...</div>
+                        ) : cfbGames.length === 0 ? (
+                            <div style={{ textAlign: "center", padding: "30px", color: "#64748b", fontSize: "13px" }}>No games found for Week {cfbWeek}.</div>
+                        ) : (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                                {cfbGames.map(game => {
+                                    const isMustPick = !!game.must_pick;
+                                    const kickoffStr = game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "TBD";
+
+                                    return (
+                                        <div key={game.id} style={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "center",
+                                            padding: "10px 14px",
+                                            borderRadius: 8,
+                                            border: isMustPick ? `2px solid ${GOLD}` : "1px solid #e2e8f0",
+                                            backgroundColor: isMustPick ? "#fef3c2" : "#ffffff",
+                                            boxShadow: isMustPick ? "0 2px 6px rgba(200, 157, 60, 0.2)" : "none",
+                                            gap: 12
+                                        }}>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0, flex: 1 }}>
+                                                <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 700 }}>
+                                                    {kickoffStr} {game.spread !== null && game.spread !== undefined ? `| Spread: ${game.spread}` : ""}
+                                                </div>
+                                                <div style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                                    {game.away_team_rank ? <span style={{ color: "#b45309", marginRight: 2 }}>({game.away_team_rank})</span> : null}
+                                                    {game.away_team} @&nbsp;
+                                                    {game.home_team_rank ? <span style={{ color: "#b45309", marginRight: 2 }}>({game.home_team_rank})</span> : null}
+                                                    {game.home_team}
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                onClick={() => handleToggleMustPick(game.id, isMustPick)}
+                                                style={{
+                                                    background: isMustPick ? GOLD : "#f1f5f9",
+                                                    color: isMustPick ? "white" : "#475569",
+                                                    border: isMustPick ? `1px solid ${GOLD}` : "1px solid #cbd5e1",
+                                                    padding: "6px 12px",
+                                                    borderRadius: 6,
+                                                    fontWeight: 700,
+                                                    fontSize: "12px",
+                                                    cursor: "pointer",
+                                                    whiteSpace: "nowrap",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: 4
+                                                }}
+                                            >
+                                                {isMustPick ? "⭐ Must-Pick" : "☆ Set Must-Pick"}
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* TAB 4: BTS Randomizer */}
             {activeTab === "bts_randomizer" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     <BTSrandomizer />

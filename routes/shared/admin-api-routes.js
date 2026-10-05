@@ -1,4 +1,4 @@
-const { SyncStatus, GameSettings, Users } = require("../../models");
+const { SyncStatus, GameSettings, Users, CfbRegularSeasonGames } = require("../../models");
 const requireAuth = require("../../middleware/Requireauth");
 
 module.exports = function (app) {
@@ -78,6 +78,34 @@ module.exports = function (app) {
         } catch (err) {
             console.error("Error updating game settings:", err);
             res.status(500).json({ error: "Failed to update game settings" });
+        }
+    });
+
+    // POST /api/admin/cfb-must-pick — toggle or set must_pick status for a CFB game (Admin Only)
+    app.post("/api/admin/cfb-must-pick", requireAuth, async (req, res) => {
+        try {
+            const user = await Users.findByPk(req.user.id);
+            if (!user || !user.is_admin) {
+                return res.status(403).json({ error: "Access denied. Administrator privileges required." });
+            }
+
+            const { game_id, must_pick } = req.body;
+            if (!game_id) {
+                return res.status(400).json({ error: "game_id is required" });
+            }
+
+            const game = await CfbRegularSeasonGames.findByPk(game_id);
+            if (!game) {
+                return res.status(404).json({ error: "CFB game not found" });
+            }
+
+            game.must_pick = must_pick !== undefined ? must_pick : !game.must_pick;
+            await game.save();
+
+            res.json({ success: true, game });
+        } catch (err) {
+            console.error("Error updating CFB must-pick status:", err);
+            res.status(500).json({ error: "Failed to update must-pick status" });
         }
     });
 };
