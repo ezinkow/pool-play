@@ -161,7 +161,7 @@ export default function PlayerPicksMatrix() {
   };
 
   return (
-    <div style={{ width: "100%", padding: "4px", boxSizing: "border-box" }}>
+    <div style={{ className:'page-content', width: "100%", padding: "4px", boxSizing: "border-box" }}>
       <style>{`
         @keyframes pulse { 
           0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 

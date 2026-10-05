@@ -421,7 +421,7 @@ export default function NflBtsPicks() {
     };
 
     return (
-        <PoolGatekeeper user={user} gameKey="nfl_bts" className='page-content'>
+        <PoolGatekeeper user={user} gameKey="nfl_bts" >
             <br />
             <div style={{
                 width: "100%",

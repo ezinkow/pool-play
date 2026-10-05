@@ -152,7 +152,7 @@ export default function Picks() {
     const maxConfidenceOption = activeRound === 2 ? 12 : 10;
 
     return (
-        <PoolGatekeeper user={user} gameKey="mlb" className='page-content'>
+        <PoolGatekeeper user={user} gameKey="mlb" >
             <div style={{ maxWidth: 850, margin: "0 auto", padding: "12px 8px", paddingBottom: 100, paddingTop: 16, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 <Toaster />
 

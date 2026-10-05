@@ -56,7 +56,7 @@ export default function ChangePassword() {
   };
 
   return (
-    <div style={{ paddingTop: 68, paddingBottom: 80 }}>
+    <div style={{ className:'page-content', paddingTop: 68, paddingBottom: 80 }}>
       <Toaster />
       <div style={{
         maxWidth: 420, margin: "40px auto", background: "white",

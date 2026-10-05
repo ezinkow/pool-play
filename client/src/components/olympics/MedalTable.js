@@ -24,7 +24,7 @@ export default function CountryPoolsTable() {
   }, [countries]);
 
   return (
-    <div style={{ padding: "16px" }}>
+    <div style={{ className:'page-content', padding: "16px" }}>
       <h2 style={{ marginBottom: "16px" }}>🏅Medal Table</h2>
 
       <div style={{ overflowX: "auto" }}>

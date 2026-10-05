@@ -333,7 +333,7 @@ export default function NflBtsMyPicks() {
     };
 
     return (
-        <PoolGatekeeper user={user} gameKey="nfl_bts" className='page-content'>
+        <PoolGatekeeper user={user} gameKey="nfl_bts" >
             <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "20px 16px", paddingBottom: 90 }}>
                 <Toaster />
 

@@ -47,7 +47,7 @@ export default function Standings() {
     }
 
     return (
-        <PoolGatekeeper user={user} gameKey="mlb" className='page-content'>
+        <PoolGatekeeper user={user} gameKey="mlb" >
             <div style={{ maxWidth: 950, margin: "0 auto", padding: "16px 8px", paddingBottom: 100, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 
                 {/* Header Banner */}

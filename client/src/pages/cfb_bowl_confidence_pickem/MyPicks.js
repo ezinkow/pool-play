@@ -102,7 +102,7 @@ export default function CfbBowlConfidenceMyPicks() {
     }
 
     return (
-        <PoolGatekeeper user={user} gameKey="cfb_bowl_pickem" className='page-content'>
+        <PoolGatekeeper user={user} gameKey="cfb_bowl_pickem" >
             <div style={{ maxWidth: 850, margin: "0 auto", padding: "20px 12px", paddingBottom: 90, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 <Toaster />
 

@@ -88,7 +88,7 @@ export default function NbaSurvivorGroupPicks() {
     if (authLoading || loading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50 }}>Loading group matrix...</div>;
 
     return (
-        <PoolGatekeeper user={user} gameKey="nba_survivor" className='page-content'>
+        <PoolGatekeeper user={user} gameKey="nba_survivor" >
             <div style={{ maxWidth: 950, margin: "0 auto", padding: "20px 12px", paddingBottom: 90 }}>
                 <Toaster />
 

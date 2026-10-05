@@ -7,7 +7,7 @@ export default function Games() {
     return (
         <>
             <div>
-                <div className='page-content'>
+                <div >
                     <MyPicks />
                 </div>
             </div>

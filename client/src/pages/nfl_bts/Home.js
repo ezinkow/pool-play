@@ -140,7 +140,7 @@ export default function NflBtsHome() {
   const hasTeamsAssigned = roomAssignment && (roomAssignment.team_name_1 || roomAssignment.team_name_2);
 
   return (
-    <div style={{ width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative" }} className='page-content'>
+    <div style={{ className:'page-content', width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative" }} >
       <Toaster />
 
       {poolData && (

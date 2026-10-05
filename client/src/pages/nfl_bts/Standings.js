@@ -137,7 +137,7 @@ export default function NflBtsStandings() {
     if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50 }}>Loading standings...</div>;
 
     return (
-        <PoolGatekeeper user={user} gameKey="nfl_bts" className='page-content'>
+        <PoolGatekeeper user={user} gameKey="nfl_bts" >
             <div style={{ maxWidth: 1400, margin: "0 auto", padding: "20px 12px", paddingBottom: 80 }}>
 
                 <div style={{ textAlign: "center", marginBottom: 20 }}>

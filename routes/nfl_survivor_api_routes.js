@@ -173,29 +173,31 @@ module.exports = function (app) {
             const { week, game_id, picked_team } = req.body;
             const userId = req.user.id;
 
-            // Check if user is already eliminated
+            // 1. STRICT ELIMINATION CHECK (Check both flag and any explicit elimination records)
             const entry = await NflSurvivorEntries.findOne({ where: { user_id: userId } });
-            if (entry && entry.is_eliminated) {
-                return res.status(400).json({ error: "Cannot make picks after being eliminated!" });
+            if (!entry) {
+                return res.status(400).json({ error: "No survivor entry found for this user." });
+            }
+            if (entry.is_eliminated) {
+                return res.status(400).json({ error: "Cannot make or modify picks after being eliminated!" });
             }
 
-            // 1. Fetch the target game being picked/interacted with
+            // 2. Fetch the target game
             const game = await NflRegularSeasonGames.findByPk(game_id);
             if (!game) {
                 return res.status(404).json({ error: "Game not found" });
             }
 
-            // 2. RULE 2: Check if this specific game has started (Locks individual pick)
+            // 3. Check if this specific game has started
             if (game.game_date && new Date() >= new Date(game.game_date)) {
                 return res.status(400).json({ error: "Cannot change or remove pick after this game has started!" });
             }
 
-            // 3. Check if user already has an existing pick for this week
+            // 4. Check if user already has an existing pick for this week
             const existingPick = await NflSurvivorPicks.findOne({
                 where: { user_id: userId, week: week }
             });
 
-            // If they already had a pick on a DIFFERENT game, check if *that* previous game started too
             if (existingPick && existingPick.game_id !== parseInt(game_id)) {
                 const prevGame = await NflRegularSeasonGames.findByPk(existingPick.game_id);
                 if (prevGame && prevGame.game_date && new Date() >= new Date(prevGame.game_date)) {
@@ -315,17 +317,18 @@ module.exports = function (app) {
                 { week: 4, start: new Date("2026-09-30T00:00:00"), end: new Date("2026-10-06T23:59:59") },
                 { week: 5, start: new Date("2026-10-07T00:00:00"), end: new Date("2026-10-13T23:59:59") },
                 { week: 6, start: new Date("2026-10-14T00:00:00"), end: new Date("2026-10-20T23:59:59") },
-                { week: 8, start: new Date("2026-10-21T00:00:00"), end: new Date("2026-10-27T23:59:59") },
-                { week: 9, start: new Date("2026-10-28T00:00:00"), end: new Date("2026-11-03T23:59:59") },
-                { week: 10, start: new Date("2026-11-04T00:00:00"), end: new Date("2026-11-10T23:59:59") },
-                { week: 11, start: new Date("2026-11-11T00:00:00"), end: new Date("2026-11-17T23:59:59") },
-                { week: 12, start: new Date("2026-11-18T00:00:00"), end: new Date("2026-11-24T23:59:59") },
-                { week: 13, start: new Date("2026-11-25T00:00:00"), end: new Date("2026-12-01T23:59:59") },
-                { week: 14, start: new Date("2026-12-02T00:00:00"), end: new Date("2026-12-08T23:59:59") },
-                { week: 15, start: new Date("2026-12-09T00:00:00"), end: new Date("2026-12-15T23:59:59") },
-                { week: 16, start: new Date("2026-12-16T00:00:00"), end: new Date("2026-12-22T23:59:59") },
-                { week: 17, start: new Date("2026-12-23T00:00:00"), end: new Date("2026-12-29T23:59:59") },
-                { week: 18, start: new Date("2026-12-30T00:00:00"), end: new Date("2027-01-05T23:59:59") }
+                { week: 7, start: new Date("2026-10-21T00:00:00"), end: new Date("2026-10-27T23:59:59") },
+                { week: 8, start: new Date("2026-10-28T00:00:00"), end: new Date("2026-11-03T23:59:59") },
+                { week: 9, start: new Date("2026-11-04T00:00:00"), end: new Date("2026-11-10T23:59:59") },
+                { week: 10, start: new Date("2026-11-11T00:00:00"), end: new Date("2026-11-17T23:59:59") },
+                { week: 11, start: new Date("2026-11-18T00:00:00"), end: new Date("2026-11-24T23:59:59") },
+                { week: 12, start: new Date("2026-11-25T00:00:00"), end: new Date("2026-12-01T23:59:59") },
+                { week: 13, start: new Date("2026-12-02T00:00:00"), end: new Date("2026-12-08T23:59:59") },
+                { week: 14, start: new Date("2026-12-09T00:00:00"), end: new Date("2026-12-15T23:59:59") },
+                { week: 15, start: new Date("2026-12-16T00:00:00"), end: new Date("2026-12-22T23:59:59") },
+                { week: 16, start: new Date("2026-12-23T00:00:00"), end: new Date("2026-12-29T23:59:59") },
+                { week: 17, start: new Date("2026-12-30T00:00:00"), end: new Date("2027-01-05T23:59:59") },
+                { week: 18, start: new Date("2027-01-06T00:00:00"), end: new Date("2027-01-12T23:59:59") }
             ];
 
             let activeIndex = 0;

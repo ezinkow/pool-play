@@ -267,7 +267,7 @@ export default function CfbPickemAtsPicks() {
     if (authLoading || loading || colorsLoading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50 }}>Loading matchups...</div>;
 
     return (
-        <PoolGatekeeper user={user} gameKey="cfb_pickem_ats" className='page-content'>
+        <PoolGatekeeper user={user} gameKey="cfb_pickem_ats">
             <div style={{ maxWidth: 850, margin: "0 auto", padding: "12px 8px", paddingBottom: 100, paddingTop: 16 }}>
                 <Toaster />
 
@@ -294,7 +294,7 @@ export default function CfbPickemAtsPicks() {
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
                             Select up to {totalMustPicks} must-pick games & up to 15 total games (up to 3 Best Bets ⭐).
                         </p>
-                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
+                        <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
                             Lines will change throughout the week until 48 hours before kickoff. Picks/games are locked at kickoff.
                         </p>
                         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 2 }}>

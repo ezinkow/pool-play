@@ -434,7 +434,7 @@ export default function CfbBowlConfidencePicks() {
     if (authLoading || loading || colorsLoading) return <div style={{ textAlign: "center", padding: 50 }}>Loading compact matchups...</div>;
 
     return (
-        <PoolGatekeeper user={user} gameKey="cfb_bowl_pickem" className='page-content'>
+        <PoolGatekeeper user={user} gameKey="cfb_bowl_pickem" >
             <div style={{ maxWidth: 850, margin: "0 auto", padding: "12px 8px", paddingBottom: 100, paddingTop: 16 }}>
                 <Toaster />
 

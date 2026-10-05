@@ -226,7 +226,7 @@ const GameHeader = ({ s }) => {
   };
 
   return (
-    <PoolGatekeeper user={user} gameKey="mlb" className='page-content'>
+    <PoolGatekeeper user={user} gameKey="mlb" >
       <div style={{ width: "100%", margin: "0 auto", padding: "12px 4px", paddingBottom: 80, fontFamily: "system-ui, -apple-system, sans-serif" }}>
         <style>{`
           @keyframes pulse { 

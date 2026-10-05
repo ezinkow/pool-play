@@ -39,9 +39,22 @@ body {
    ========================================================================== */
 
 .page-content {
+  padding-top: 100px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.home-content {
   padding-top: 50px;
   min-height: 100vh;
   box-sizing: border-box;
+}
+
+/* Use this class on inner pool layouts that have a secondary sub-navigation row */
+.page-content.has-subnav,
+.cfb-pickem-layout {
+  /* or whatever wraps your sub-nav pages */
+  padding-top: calc(var(--navbar-height, 60px) + 55px);
 }
 
 /* Mobile responsive override */

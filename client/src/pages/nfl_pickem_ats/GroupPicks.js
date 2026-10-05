@@ -376,7 +376,7 @@ export default function NflPickemAtsMatrix() {
     if (authLoading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50 }}>Loading matrix...</div>;
 
     return (
-        <PoolGatekeeper user={user} gameKey="nfl_pickem_ats" className='page-content'>
+        <PoolGatekeeper user={user} gameKey="nfl_pickem_ats" >
             <div style={{ width: "100%", margin: "0 auto", padding: "12px 4px", paddingBottom: 80 }}>
                 <style>{`
                     @keyframes pulse { 

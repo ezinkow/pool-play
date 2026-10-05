@@ -228,7 +228,7 @@ export default function Picks() {
   );
 
   return (
-    <div style={{ paddingTop: 68, paddingBottom: 80, maxWidth: 1200, margin: "0 auto" }}>
+    <div style={{ className:'page-content', paddingTop: 68, paddingBottom: 80, maxWidth: 1200, margin: "0 auto" }}>
       <Toaster />
       <div style={{ padding: "0 12px" }}>
         <Instructions />

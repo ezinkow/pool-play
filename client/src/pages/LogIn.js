@@ -35,7 +35,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ padding: "0 20px" }}>
+    <div style={{ className:'page-content', padding: "0 20px" }}>
       <Toaster />
       <div style={containerStyle}>
         <h2 style={{ color: "#13447a", marginBottom: 8 }}>Welcome Back</h2>

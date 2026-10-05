@@ -272,7 +272,7 @@ export default function CfbBowlConfidenceMatrix() {
     if (authLoading || colorsLoading) return <div style={{ textAlign: "center", padding: 50 }}>Loading bowl matrix...</div>;
 
     return (
-        <PoolGatekeeper user={user} gameKey="cfb_bowl_pickem" className='page-content'>
+        <PoolGatekeeper user={user} gameKey="cfb_bowl_pickem" >
             <div style={{ width: "100%", margin: "0 auto", padding: "12px 4px", paddingBottom: 80 }}>
                 <style>{`
                     @keyframes pulse { 

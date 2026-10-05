@@ -6,7 +6,7 @@ export default function NbaMyPicks() {
 
     return (
         <>
-            <div className='page-content'>
+            <div >
                 <MyPicks />
             </div>
         </>

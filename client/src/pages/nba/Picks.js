@@ -5,7 +5,7 @@ export default function NbaPicks() {
 
 
     return (
-        <div className='page-content'>
+        <div >
             <Picks />
         </div>
     )

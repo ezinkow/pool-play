@@ -139,7 +139,7 @@ export default function Picks() {
   if (!user) return <div style={{ paddingTop: 100, textAlign: "center" }}><h3>Please log in to make picks.</h3></div>;
 
   return (
-    <div style={{ maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
+    <div style={{ className:'page-content', maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
       <Toaster position="top-center" />
 
       {/* Hero Display Panel */}

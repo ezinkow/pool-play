@@ -99,7 +99,7 @@ export default function PlayerPicksMatrix() {
   };
 
   return (
-    <div style={{ paddingTop: 97, paddingBottom: 80 }}>
+    <div style={{ className:'page-content', paddingTop: 97, paddingBottom: 80 }}>
       <div style={{
         position: "fixed", top: 65, left: 0, right: 0, zIndex: 3,
         backgroundColor: "#f8f7f4", padding: "4px 12px 6px",

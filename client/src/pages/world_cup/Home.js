@@ -33,7 +33,7 @@ export default function Home() {
   if (authLoading) return null;
 
   return (
-    <div style={{ width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative" }} className='page-content'>
+    <div style={{ className:'page-content', width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative" }} >
       <Toaster />
 
       {/* 3. Only render when poolData is available */}

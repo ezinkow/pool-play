@@ -9,7 +9,7 @@ export default function BracketStagePicksDisplay({ currentGame }) {
     const forceShowAll = true; 
 
     return (
-        <div className='page-content'>
+        <div >
             {/* Displaying both components to ensure maximum availability */}
             <div style={{ marginBottom: "40px" }}>
                 {/* <h3 style={{ color: "#13447a" }}>Group Stage Picks</h3> */}

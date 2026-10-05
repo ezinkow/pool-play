@@ -107,7 +107,7 @@ export default function HrdHome() {
   if (authLoading) return null;
 
   return (
-    <div style={{ width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative", paddingTop: 68 }} className='page-content'>
+    <div style={{ className:'page-content', width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative", paddingTop: 68 }} >
       <Toaster />
 
       {poolData && (

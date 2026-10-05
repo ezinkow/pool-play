@@ -92,7 +92,7 @@ export default function NbaSurvivorMyPicks() {
     if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50 }}>Loading your survivor history...</div>;
 
     return (
-        <PoolGatekeeper user={user} gameKey="nba_survivor" className='page-content'>
+        <PoolGatekeeper user={user} gameKey="nba_survivor" >
             <div style={{ maxWidth: 850, margin: "0 auto", padding: "20px 12px", paddingBottom: 90 }}>
                 <Toaster />
 

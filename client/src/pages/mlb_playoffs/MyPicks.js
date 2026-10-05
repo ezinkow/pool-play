@@ -108,7 +108,7 @@ export default function MyPicks() {
     if (!user) return <div style={{ paddingTop: 100, textAlign: "center", fontFamily: "system-ui, sans-serif" }}><h3>Please log in.</h3></div>;
 
     return (
-        <PoolGatekeeper user={user} gameKey="mlb" className='page-content'>
+        <PoolGatekeeper user={user} gameKey="mlb" >
             <div style={{ maxWidth: 850, margin: "0 auto", padding: "20px 12px", paddingBottom: 90, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 <Toaster />
 

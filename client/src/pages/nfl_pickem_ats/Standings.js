@@ -63,7 +63,7 @@ export default function NflPickemAtsStandings() {
     if (loading) return <div style={{ textAlign: "center", padding: 50 }}>Loading leaderboard...</div>;
 
     return (
-        <PoolGatekeeper user={currentUser} gameKey="nfl_pickem_ats" className='page-content'>
+        <PoolGatekeeper user={currentUser} gameKey="nfl_pickem_ats" >
             <div style={{ maxWidth: "900px", margin: "0 auto", padding: "8px", paddingBottom: '100px' }}>
                 <Toaster />
                 <style>{`

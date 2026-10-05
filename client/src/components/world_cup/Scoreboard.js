@@ -53,7 +53,7 @@ export default function Scoreboard() {
   const currentDisplayMatches = activeSection === "group" ? groupMatches : bracketMatches;
 
   return (
-    <div style={{ maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
+    <div style={{ className:'page-content', maxWidth: "800px", margin: "0 auto", paddingLeft: "8px", paddingRight: "8px" }}>
       <Toaster />
       <div style={{ marginBottom: 20, paddingLeft: 8 }}>
         <h2 style={{ color: NAVY, margin: 0, fontWeight: 900, fontSize: "24px" }}>🏆 World Cup Scoreboard</h2>

@@ -182,7 +182,7 @@ export default function NbaSurvivorPicks() {
     });
 
     return (
-        <PoolGatekeeper user={user} gameKey="nba_survivor" className='page-content'>
+        <PoolGatekeeper user={user} gameKey="nba_survivor" >
             <div style={{ maxWidth: 1000, margin: "0 auto", padding: "12px 10px", paddingBottom: 80 }}>
                 <Toaster />
 

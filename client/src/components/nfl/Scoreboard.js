@@ -137,7 +137,7 @@ export default function Scoreboard() {
   };
 
   return (
-    <div style={{ padding: "16px" }}>
+    <div style={{ className:'page-content', padding: "16px" }}>
       <h2 style={{ marginBottom: "12px" }}>
         🏆 Playoff Leaderboard
       </h2>

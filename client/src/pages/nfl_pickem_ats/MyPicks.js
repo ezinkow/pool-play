@@ -130,7 +130,7 @@ export default function NflPickemAtsMyPicks() {
     if (authLoading || loading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, -apple-system, sans-serif" }}>Loading your picks summary...</div>;
 
     return (
-        <PoolGatekeeper user={user} gameKey="nfl_pickem_ats" className='page-content'>
+        <PoolGatekeeper user={user} gameKey="nfl_pickem_ats" >
             <div style={{ maxWidth: 850, margin: "0 auto", padding: "20px 12px", paddingBottom: 90, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 <Toaster />
 

@@ -23,7 +23,7 @@ const RefreshGamesButton = ({ onRefresh }) => {
   };
 
   return (
-    <div style={{ paddingTop: '80px', paddingLeft: '50px' }}>
+    <div style={{ className:'page-content', paddingTop: '80px', paddingLeft: '50px' }}>
       <button onClick={refreshGames} disabled={loading} >
         {loading ? "Refreshing..." : "Manually Refresh Games"}
       </button>

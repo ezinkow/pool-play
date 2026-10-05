@@ -211,7 +211,7 @@ export default function RosterPicks({ authInfo }) {
 
   /* -------------------- RENDER -------------------- */
   return (
-    <div style={{ padding: "12px", display: "flex", flexDirection: "column", gap: "16px" }}>
+    <div style={{ className:'page-content', padding: "12px", display: "flex", flexDirection: "column", gap: "16px" }}>
       <Toaster />
 
       {/* Roster Selection Steps */}

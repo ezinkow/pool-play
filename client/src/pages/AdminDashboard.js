@@ -242,7 +242,7 @@ export default function AdminDashboard() {
     }
 
     return (
-        <div className="page-content" style={{ width: "100%", maxWidth: 1100, margin: "0 auto", padding: "20px 12px", fontFamily: "system-ui, sans-serif" }}>
+        <div  style={{ width: "100%", maxWidth: 1100, margin: "0 auto", padding: "20px 12px", fontFamily: "system-ui, sans-serif" }}>
             <style>{`
                 .flip-card-unit {
                     position: relative;
