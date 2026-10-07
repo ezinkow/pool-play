@@ -54,21 +54,27 @@ export default function NflPickemAtsMyPicks() {
     useEffect(() => {
         if (!token) return;
 
-        axios.get("/api/nfl_pickem_ats/settings", {
+        axios.get("/api/nfl_regular_season/settings", {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => {
-                if (res.data && res.data.current_week) {
-                    setCurrentWeek(Number(res.data.current_week));
+                if (res.data) {
+                    const activeWk = res.data.current_week || res.data.active_week || res.data.currentWeek;
+                    if (activeWk) {
+                        setCurrentWeek(Number(activeWk));
+                    } else {
+                        setCurrentWeek(1);
+                    }
                 } else {
                     setCurrentWeek(1);
                 }
             })
             .catch(err => {
-                console.error("Failed to load pool settings", err);
+                console.error("Failed to load pool settings:", err);
                 setCurrentWeek(1);
             });
     }, [token]);
+
 
     // Fetch weekly schedule, user picks summary, and overall standings
     useEffect(() => {
@@ -404,7 +410,7 @@ export default function NflPickemAtsMyPicks() {
                                                 padding: "3px",
                                                 borderRadius: 6,
                                                 border: `1.5px solid ${pickedPrimary}`,
-                                                boxShadow: isBestBet 
+                                                boxShadow: isBestBet
                                                     ? `0 0 10px 3px rgba(200, 157, 60, 0.9), 0 0 4px 1px ${pickedPrimary}, 0 1px 3px rgba(0,0,0,0.15)`
                                                     : `0 0 4px 1px ${pickedPrimary}, 0 1px 3px rgba(0,0,0,0.15)`,
                                                 width: 35,

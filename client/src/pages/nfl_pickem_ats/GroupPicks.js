@@ -51,18 +51,23 @@ export default function NflPickemAtsMatrix() {
     useEffect(() => {
         if (!token) return;
 
-        axios.get("/api/nfl_pickem_ats/settings", {
+        axios.get("/api/nfl_regular_season/settings", {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => {
-                if (res.data && res.data.current_week) {
-                    setCurrentWeek(Number(res.data.current_week));
+                if (res.data) {
+                    const activeWk = res.data.current_week || res.data.active_week || res.data.currentWeek;
+                    if (activeWk) {
+                        setCurrentWeek(Number(activeWk));
+                    } else {
+                        setCurrentWeek(1);
+                    }
                 } else {
                     setCurrentWeek(1);
                 }
             })
             .catch(err => {
-                console.error("Failed to load pool settings", err);
+                console.error("Failed to load pool settings:", err);
                 setCurrentWeek(1);
             });
     }, [token]);
