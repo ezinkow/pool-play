@@ -280,7 +280,7 @@ export default function Home() {
         : `linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)`;
 
     return (
-        <div style={{ minHeight: "100vh", background: bgGradient, padding: "20px 16px 80px", transition: "background 0.3s ease", fontFamily: "system-ui, -apple-system, sans-serif", scrollBehavior: "smooth" }}>
+        <div style={{ minHeight: "100vh", background: bgGradient, padding: "16px 12px 80px", transition: "background 0.3s ease", fontFamily: "system-ui, -apple-system, sans-serif", scrollBehavior: "smooth" }}>
 
             <style>{`
                 @keyframes pulse {
@@ -290,56 +290,62 @@ export default function Home() {
                 }
             `}</style>
 
-            {/* Top Hero Header Card Box - Clean & Responsive */}
+            {/* Symmetrical & Compact Hero Header Card */}
             <div style={{
                 maxWidth: 850,
-                margin: "0 auto 20px",
-                background: isDarkMode ? "rgba(30, 41, 59, 0.75)" : "rgba(255, 255, 255, 0.85)",
+                margin: "0 auto 16px",
+                background: isDarkMode ? "rgba(30, 41, 59, 0.8)" : "rgba(255, 255, 255, 0.9)",
                 backdropFilter: "blur(8px)",
-                borderRadius: "16px",
+                borderRadius: "14px",
                 border: `1px solid ${isDarkMode ? "#334155" : "#cbd5e1"}`,
-                padding: "24px 20px",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+                padding: "16px",
+                boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 textAlign: "center",
                 position: "relative",
-                gap: "14px"
+                gap: "12px"
             }}>
                 {/* Absolute Top-Right Theme Toggle */}
                 <button
                     onClick={toggleTheme}
                     style={{
                         position: "absolute",
-                        top: "16px",
-                        right: "16px",
+                        top: "12px",
+                        right: "12px",
                         background: isDarkMode ? "rgba(255,255,255,0.15)" : "#0f172a",
                         color: isDarkMode ? "white" : "#ffffff",
                         border: isDarkMode ? "1px solid rgba(255,255,255,0.3)" : "none",
-                        borderRadius: "20px",
-                        padding: "6px 14px",
+                        borderRadius: "16px",
+                        padding: "5px 10px",
                         fontSize: "11px",
                         fontWeight: "700",
                         cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.2)"
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
                     }}
                 >
                     {isDarkMode ? "☀️ Light" : "🌙 Dark"}
                 </button>
 
-                {/* Absolute Top-Left Live/Open Stats */}
+                {/* Centered Logo, Title & Subtitle */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+                    <img src={logo} alt="POOL PLAY" style={{ width: "64px", height: "64px", borderRadius: "50%", border: `2px solid ${GOLD}`, boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }} />
+                    <div>
+                        <h1 style={{ color: isDarkMode ? "white" : DARK_BLUE, margin: 0, fontSize: "20px", fontWeight: 800, letterSpacing: "-0.5px" }}>🏆 POOL PLAY 🏊</h1>
+                        <p style={{ color: isDarkMode ? GOLD : BLUE, margin: "2px 0 0", fontSize: "10px", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase" }}>Jump on in, the water's fine!</p>
+                    </div>
+                </div>
+
+                {/* Symmetrical Centered Live/Open Stats Badges */}
                 <div style={{
-                    position: "absolute",
-                    top: "16px",
-                    left: "16px",
                     display: "flex",
-                    flexDirection: "column",
-                    gap: "6px",
-                    alignItems: "flex-start"
+                    gap: "8px",
+                    justifyContent: "center",
+                    flexWrap: "wrap",
+                    width: "100%",
+                    borderTop: isDarkMode ? "1px solid rgba(255,255,255,0.08)" : "1px solid #e2e8f0",
+                    paddingTop: "10px"
                 }}>
                     <a
                         href="#pools-section"
@@ -349,8 +355,8 @@ export default function Home() {
                         }}
                         style={{ textDecoration: "none" }}
                     >
-                        <span style={{ background: isDarkMode ? "rgba(255,255,255,0.15)" : "#e2e8f0", color: isDarkMode ? "#cbd5e1" : "#475569", padding: "4px 10px", borderRadius: "10px", fontSize: "11px", fontWeight: 700, boxShadow: "0 2px 4px rgba(0,0,0,0.1)", display: "inline-block", cursor: "pointer" }}>
-                            🔥 {live.length} {live.length === 1 ? "Game is Live now!" : "Games are Live now!"}
+                        <span style={{ background: isDarkMode ? "rgba(255,255,255,0.1)" : "#f1f5f9", color: isDarkMode ? "#cbd5e1" : "#475569", padding: "5px 10px", borderRadius: "8px", fontSize: "11px", fontWeight: 700, display: "inline-block", cursor: "pointer", border: isDarkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e2e8f0" }}>
+                            🔥 {live.length} {live.length === 1 ? "Game Live" : "Games Live"}
                         </span>
                     </a>
                     <a
@@ -361,19 +367,10 @@ export default function Home() {
                         }}
                         style={{ textDecoration: "none" }}
                     >
-                        <span style={{ background: isDarkMode ? "rgba(255,255,255,0.15)" : "#e2e8f0", color: isDarkMode ? "#cbd5e1" : "#475569", padding: "4px 10px", borderRadius: "10px", fontSize: "11px", fontWeight: 700, boxShadow: "0 2px 4px rgba(0,0,0,0.1)", display: "inline-block", cursor: "pointer" }}>
-                            ⏰ {upcoming.length} {upcoming.length === 1 ? "Game is Open for new entries!" : "Games are Open for new entries!"}
+                        <span style={{ background: isDarkMode ? "rgba(255,255,255,0.1)" : "#f1f5f9", color: isDarkMode ? "#cbd5e1" : "#475569", padding: "5px 10px", borderRadius: "8px", fontSize: "11px", fontWeight: 700, display: "inline-block", cursor: "pointer", border: isDarkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e2e8f0" }}>
+                            ⏰ {upcoming.length} {upcoming.length === 1 ? "Open Entry" : "Open Entries"}
                         </span>
                     </a>
-                </div>
-
-                {/* Center Content: Logo, Title & Subtitle */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", marginTop: "10px" }}>
-                    <img src={logo} alt="POOL PLAY" style={{ width: "90px", height: "90px", borderRadius: "50%", border: `3px solid ${GOLD}`, boxShadow: "0 4px 12px rgba(0,0,0,0.25)" }} />
-                    <div>
-                        <h1 style={{ color: isDarkMode ? "white" : DARK_BLUE, margin: 0, fontSize: "24px", fontWeight: 800, letterSpacing: "-0.5px", whiteSpace: "nowrap" }}>🏆 POOL PLAY 🏊</h1>
-                        <p style={{ color: isDarkMode ? GOLD : BLUE, margin: "4px 0 0", fontSize: "11px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>Jump on in, the water's fine!</p>
-                    </div>
                 </div>
             </div>
 
