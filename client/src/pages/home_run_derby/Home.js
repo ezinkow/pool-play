@@ -221,7 +221,7 @@ export default function HrdHome() {
         </div>
 
         {userEntry && (
-          <PoolGatekeeper user={user} gameKey="hrd">
+          <PoolGatekeeper user={user} gameKey="home_run_derby">
             <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", marginBottom: 20 }}>
               <Link to="/hrd/draft" style={{ textDecoration: 'none' }}>
                 <button className="btn-hrd-secondary">⚾ Draft Roster</button>

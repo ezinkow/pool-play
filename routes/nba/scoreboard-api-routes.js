@@ -2,7 +2,7 @@ const { NbaSeries } = require("../../models");
 
 module.exports = function (app) {
 
-  app.get("/api/nba/games/history", async (req, res) => {
+  app.get("/api/nba_playoffs/games/history", async (req, res) => {
     try {
       const games = await NbaSeries.findAll({
         order: [["game_date", "DESC"]]

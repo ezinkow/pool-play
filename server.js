@@ -33,6 +33,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/shared/comments-api-routes.js")(app);
   require("./routes/shared/banter-api-routes.js")(app);
   require("./routes/shared/admin-api-routes.js")(app);
+  require("./routes/shared/countdown-api-routes.js")(app);
 
   // Bracket
   require("./routes/bracket/picks-api-routes.js")(app);

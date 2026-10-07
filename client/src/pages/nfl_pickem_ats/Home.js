@@ -25,10 +25,20 @@ export default function NflPickemAtsHome() {
       .then(res => {
         const pickemPool = res.data.find(p => p.game_key === "nfl_pickem_ats");
         if (pickemPool) {
-          setPoolData({
-            ...pickemPool,
-            // Force a valid API path or fallback to current week matchups
-            games_api_path: "/api/nfl_regular_season_matchups?week=" + (pickemPool.current_week || 1)
+          axios.get("/api/nfl_regular_season/settings", {
+            headers: activeToken ? { Authorization: `Bearer ${activeToken}` } : {}
+          }).then(settingsRes => {
+            setPoolData({
+              ...pickemPool,
+              current_week: settingsRes.data.current_week || 1,
+              games_api_path: pickemPool.games_api_path || "/api/nfl_regular_season_games"
+            });
+          }).catch(() => {
+            setPoolData({
+              ...pickemPool,
+              current_week: 1,
+              games_api_path: pickemPool.games_api_path || "/api/nfl_regular_season_games"
+            });
           });
         }
       })
@@ -120,7 +130,7 @@ export default function NflPickemAtsHome() {
   if (authLoading) return null;
 
   return (
-    <div style={{ className:'page-content', width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative" }} >
+    <div style={{ className: 'page-content', width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative" }} >
       <Toaster />
 
       {poolData && (

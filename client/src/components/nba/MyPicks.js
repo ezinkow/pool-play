@@ -17,8 +17,8 @@ export default function MyPicks() {
         if (!user) return;
         setLoading(true);
         Promise.all([
-            axios.get("/api/nba/picks", { params: { name: user.name } }),
-            axios.get("/api/nba/standings"),
+            axios.get("/api/nba_playoffs/picks", { params: { name: user.name } }),
+            axios.get("/api/nba_playoffs/standings"),
         ]).then(([picksRes, standingsRes]) => {
             setPicks(picksRes.data || []);
             setStandings(standingsRes.data || []);
@@ -82,7 +82,7 @@ export default function MyPicks() {
     if (!user) return <div style={{ textAlign: "center" }}><h3>Please log in.</h3></div>;
 
     return (
-        <PoolGatekeeper user={user} gameKey="nba">
+        <PoolGatekeeper user={user} gameKey="nba_playoffs">
             <div style={{ maxWidth: 900, margin: "0 auto", padding: "0px 16px 80px" }}>
                 <Toaster />
 

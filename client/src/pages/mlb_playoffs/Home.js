@@ -24,13 +24,18 @@ export default function MlbHome() {
   const loadData = () => {
     axios.get("/api/settings/active-states")
       .then(res => {
-        const mlbPool = res.data.find(p => p.game_key === "mlb");
-        setPoolData(mlbPool);
+        const mlbPool = res.data.find(p => p.game_key === "mlb_playoffs");
+        if (mlbPool) {
+          setPoolData({
+            ...mlbPool,
+            games_api_path: mlbPool.games_api_path || "/api/mlb_playoffs_series" // Adjust to your actual MLB games route if different
+          });
+        }
       })
       .catch(err => console.error("Failed to load pool data", err));
 
     if (activeToken) {
-      axios.get("/api/mlb/entries/me", {
+      axios.get("/api/mlb_playoffs/entries/me", {
         headers: { Authorization: `Bearer ${activeToken}` }
       })
         .then(res => {
@@ -71,7 +76,7 @@ export default function MlbHome() {
 
     try {
       const entryNameInput = customEntryName.trim() || user?.name || "My Entry";
-      const res = await axios.post("/api/mlb/entries", {
+      const res = await axios.post("/api/mlb_playoffs/entries", {
         entry_name: entryNameInput
       }, {
         headers: { Authorization: `Bearer ${activeToken}` }
@@ -96,7 +101,7 @@ export default function MlbHome() {
     }
 
     try {
-      await axios.delete("/api/mlb/entries/me", {
+      await axios.delete("/api/mlb_playoffs/entries/me", {
         headers: { Authorization: `Bearer ${activeToken}` }
       });
       setUserEntry(null);
@@ -111,7 +116,7 @@ export default function MlbHome() {
   if (authLoading) return null;
 
   return (
-    <div style={{ className:'page-content', width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative" }} >
+    <div style={{ className: 'page-content', width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative" }} >
       <Toaster />
 
       {poolData && (
@@ -225,12 +230,12 @@ export default function MlbHome() {
         </div>
 
         {userEntry && (
-          <PoolGatekeeper user={user} gameKey="mlb">
+          <PoolGatekeeper user={user} gameKey="mlb_playoffs">
             <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", marginBottom: 20 }}>
-              <Link to="/mlb/picks" style={{ textDecoration: 'none' }}>
+              <Link to="/mlb_playoffs/picks" style={{ textDecoration: 'none' }}>
                 <button className="btn-mlb-secondary">⚾ Make My Picks</button>
               </Link>
-              <Link to="/mlb/mypicks" style={{ textDecoration: 'none' }}>
+              <Link to="/mlb_playoffs/mypicks" style={{ textDecoration: 'none' }}>
                 <button className="btn-mlb-secondary">📋 My Picks</button>
               </Link>
             </div>

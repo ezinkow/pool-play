@@ -16,7 +16,7 @@ export default function TiebreakerCard() {
         async function fetchTiebreaker() {
             try {
                 const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-                const res = await axios.get("/api/mlb/tiebreaker", config);
+                const res = await axios.get("/api/mlb_playoffs/tiebreaker", config);
                 if (res.data && res.data.total_points !== null) {
                     setTotalPoints(res.data.total_points);
                 }
@@ -39,7 +39,7 @@ export default function TiebreakerCard() {
         setSaving(true);
         try {
             const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-            await axios.post("/api/mlb/tiebreaker", { total_points: parseInt(totalPoints) }, config);
+            await axios.post("/api/mlb_playoffs/tiebreaker", { total_points: parseInt(totalPoints) }, config);
             toast.success("Championship tiebreaker saved!");
         } catch (err) {
             toast.error(err.response?.data?.error || "Failed to save tiebreaker.");

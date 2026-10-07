@@ -4,8 +4,8 @@ const db = require("../../models");
 module.exports = function (app) {
     // 2. Destructure NbaSeries from db inside each route for safety
 
-    // GET /api/nba/series — all series ordered by round then slot
-    app.get("/api/nba/series", async (req, res) => {
+    // GET /api/nba_playoffs_series — all series ordered by round then slot
+    app.get("/api/nba_playoffs_series", async (req, res) => {
         const { NbaSeries } = db;
         try {
             const series = await NbaSeries.findAll({
@@ -18,8 +18,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/nba/series/active — unlocked series only (open for picks)
-    app.get("/api/nba/series/active", async (req, res) => {
+    // GET /api/nba_playoffs_series/active — unlocked series only (open for picks)
+    app.get("/api/nba_playoffs_series/active", async (req, res) => {
         const { NbaSeries } = db;
         try {
             const series = await NbaSeries.findAll({
@@ -33,8 +33,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/nba/series/round/:round — all series for a specific round
-    app.get("/api/nba/series/round/:round", async (req, res) => {
+    // GET /api/nba_playoffs_series/round/:round — all series for a specific round
+    app.get("/api/nba_playoffs_series/round/:round", async (req, res) => {
         const { NbaSeries } = db;
         try {
             const series = await NbaSeries.findAll({
@@ -48,8 +48,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/nba/series/live — in-progress and final series (for results display)
-    app.get("/api/nba/series/live", async (req, res) => {
+    // GET /api/nba_playoffs_series/live — in-progress and final series (for results display)
+    app.get("/api/nba_playoffs_series/live", async (req, res) => {
         const { NbaSeries } = db;
         try {
             const series = await NbaSeries.findAll({

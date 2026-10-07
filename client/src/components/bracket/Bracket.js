@@ -25,7 +25,7 @@ export default function Bracket() {
 
     useEffect(() => {
         Promise.all([
-            axios.get("/api/bracket/games"),
+            axios.get("/api/ncaa_tourney_games"),
             axios.get("/api/bracket/users"),
             axios.get("/api/bracket/standings"),
         ]).then(([gamesRes, usersRes, standingsRes]) => {

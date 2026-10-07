@@ -12,7 +12,7 @@ export default function PlayerPicksMatrix() {
 
   useEffect(() => {
     const fetchAll = () => {
-      axios.get("/api/tourneypickem/games/finishedAndInProgress").then(r => {
+      axios.get("/api/ncaa_tourney_games/finishedAndInProgress").then(r => {
         const filtered = r.data
           .filter(g => g.status === "STATUS_FINAL" || g.status === "STATUS_HALFTIME" || g.status === "STATUS_IN_PROGRESS")
           .sort((b, a) => new Date(a.game_date) - new Date(b.game_date));

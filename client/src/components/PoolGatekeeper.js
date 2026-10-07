@@ -126,7 +126,7 @@ export default function PoolGatekeeper({
     if (checking) {
         return <div style={{ color: "white", padding: 20, textAlign: "center" }}>Verifying registration status...</div>;
     }
-
+    
     // If the user does NOT have an entry AND the pool is closed, show registration closed.
     if (!hasAnyEntry && !isPoolOpen) {
         return (

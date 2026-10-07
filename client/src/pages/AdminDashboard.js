@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import useAuth from "../hooks/useAuth";
+import NotFound from "../pages/NotFound"; 
 import BTSrandomizer from '../components/nfl_bts/AdminTeamRandomizer';
 
 const NAVY = "#1c61ac";
@@ -48,69 +50,57 @@ function PoolCountdown({ poolData, mode }) {
     const [subText, setSubText] = useState("");
     const token = localStorage.getItem("token");
 
+    const gameKey = poolData?.game_key;
+    const lockDate = poolData?.lock_date;
+
     useEffect(() => {
         let timer;
         let isMounted = true;
 
-        if (mode === "pre-start" && poolData?.lock_date) {
-            const target = new Date(poolData.lock_date);
+        if (mode === "pre-start" && lockDate) {
+            const target = new Date(lockDate);
             timer = setInterval(() => {
                 const diff = target - new Date();
                 if (diff <= 0) {
-                    setTimeLeft(null);
+                    if (isMounted) setTimeLeft(null);
                     clearInterval(timer);
                 } else {
-                    setTimeLeft(formatTime(diff));
-                    setSubText(`Until Entries Close`);
+                    if (isMounted) {
+                        setTimeLeft(formatTime(diff));
+                        setSubText(`Until Entries Close`);
+                    }
                 }
             }, 1000);
-        } else if (mode === "active" && poolData?.games_api_path) {
+        } else if (mode === "active" && gameKey) {
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
             const fetchNextGame = async () => {
                 try {
-                    let basePath = poolData.games_api_path;
-                    let baseWeek = poolData.current_week || 1;
+                    const res = await axios.get(`/api/pools/next-game?game_key=${gameKey}`, { headers });
+                    const nextGame = res.data;
 
-                    if (basePath.includes("week=")) {
-                        basePath = basePath.split("?")[0];
-                    }
+                    if (nextGame && isMounted) {
+                        const gameTime = new Date(nextGame.game_date || nextGame.date);
 
-                    let foundGame = null;
+                        if (timer) clearInterval(timer);
 
-                    for (let w = Number(baseWeek); w <= Number(baseWeek) + 3; w++) {
-                        const separator = basePath.includes("?") ? "&" : "?";
-                        const queryUrl = `${basePath}${separator}week=${w}`;
-
-                        const res = await axios.get(queryUrl, { headers });
-                        const games = res.data.games || res.data || [];
-
-                        const now = new Date();
-                        const upcoming = games
-                            .filter(g => new Date(g.game_date || g.date) > now)
-                            .sort((a, b) => new Date(a.game_date || a.date) - new Date(b.game_date || b.date));
-
-                        if (upcoming.length > 0) {
-                            foundGame = upcoming[0];
-                            break;
-                        }
-                    }
-
-                    if (foundGame && isMounted) {
-                        const gameTime = new Date(foundGame.game_date || foundGame.date);
                         timer = setInterval(() => {
                             const diff = gameTime - new Date();
                             if (diff <= 0) {
                                 clearInterval(timer);
                                 fetchNextGame();
                             } else {
-                                setTimeLeft(formatTime(diff));
-                                setSubText(`Next: ${foundGame.away_team} @ ${foundGame.home_team}`);
+                                if (isMounted) {
+                                    setTimeLeft(formatTime(diff));
+                                    setSubText(`Next: ${nextGame.away_team} @ ${nextGame.home_team}`);
+                                }
                             }
                         }, 1000);
+                    } else if (isMounted) {
+                        setTimeLeft(null);
                     }
                 } catch (err) {
-                    console.error("Error fetching games for countdown:", err);
+                    console.error("Error fetching countdown next game:", err);
                 }
             };
 
@@ -119,9 +109,9 @@ function PoolCountdown({ poolData, mode }) {
 
         return () => {
             isMounted = false;
-            clearInterval(timer);
+            if (timer) clearInterval(timer);
         };
-    }, [mode, poolData, token]);
+    }, [mode, gameKey, lockDate, token]);
 
     if (!timeLeft) return <div style={{ fontSize: "11px", color: "#64748b", fontStyle: "italic" }}>⚡ Games underway or lock time passed</div>;
 
@@ -168,18 +158,19 @@ function TimeBox({ label, value }) {
 }
 
 export default function AdminDashboard() {
+    const { user, loading: authLoading } = useAuth();
     const [syncs, setSyncs] = useState([]);
     const [games, setGames] = useState([]);
     const [activeTab, setActiveTab] = useState("syncs");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    // State for CFB Pickem Must-Picks management tab
     const [cfbWeek, setCfbWeek] = useState(1);
     const [cfbGames, setCfbGames] = useState([]);
     const [cfbLoading, setCfbLoading] = useState(false);
 
     const token = localStorage.getItem("token");
+    const isAdmin = user?.is_admin === 1 || user?.is_admin === true;
 
     const fetchData = async () => {
         setLoading(true);
@@ -190,7 +181,6 @@ export default function AdminDashboard() {
             setSyncs(res.data.statuses || []);
             setGames(res.data.gameSettings || []);
 
-            // Try to set initial active CFB week from settings if available
             if (res.data.gameSettings) {
                 const cfbSetting = res.data.gameSettings.find(g => g.game_key === "cfb_pickem_ats");
                 if (cfbSetting && cfbSetting.current_week) {
@@ -206,12 +196,13 @@ export default function AdminDashboard() {
     };
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        if (isAdmin) {
+            fetchData();
+        }
+    }, [isAdmin]);
 
-    // Fetch CFB games whenever the selected week changes on the Must-Picks tab
     useEffect(() => {
-        if (activeTab === "cfb_must_picks" && token) {
+        if (activeTab === "cfb_must_picks" && token && isAdmin) {
             setCfbLoading(true);
             axios.get("/api/cfb_pickem_ats/games", {
                 params: { week: cfbWeek },
@@ -226,7 +217,17 @@ export default function AdminDashboard() {
                 })
                 .finally(() => setCfbLoading(false));
         }
-    }, [activeTab, cfbWeek, token]);
+    }, [activeTab, cfbWeek, token, isAdmin]);
+
+    // If auth is still loading, show a clean loader
+    if (authLoading) {
+        return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, sans-serif" }}>Verifying access...</div>;
+    }
+
+    // If the user is not logged in or not an admin, render the 404 page
+    if (!isAdmin) {
+        return <NotFound />;
+    }
 
     const handleSyncToggle = async (sync_file_route, field, currentValue) => {
         try {
@@ -270,7 +271,6 @@ export default function AdminDashboard() {
         }
     };
 
-    // Handler to toggle must_pick for a specific CFB game
     const handleToggleMustPick = async (gameId, currentStatus) => {
         try {
             await axios.post("/api/admin/cfb-must-pick", {
@@ -488,7 +488,6 @@ export default function AdminDashboard() {
                                         {game.emoji || "🎮"} {game.game_label} <span style={{ fontSize: "11px", color: "#64748b" }}>({game.game_key})</span>
                                     </div>
 
-                                    {/* Countdown Component injected right into the header card slot */}
                                     <PoolCountdown poolData={game} mode={mode} />
 
                                     <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>

@@ -78,7 +78,7 @@ export default function Picks() {
   };
 
   useEffect(() => {
-    axios.get("/api/tourneypickem/games").then(res => setGames(res.data));
+    axios.get("/api/ncaa_tourney_games").then(res => setGames(res.data));
     axios.get("/api/tourneypickem/users").then(res =>
       setUsers(res.data.sort((a, b) => a.name.localeCompare(b.name)))
     );

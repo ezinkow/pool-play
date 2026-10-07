@@ -3,8 +3,8 @@ const requireAuth = require("../../middleware/Requireauth");
 
 module.exports = function (app) {
 
-    // GET /api/nba/entries/check/:name
-    app.get("/api/nba/entries/check/:name", async (req, res) => {
+    // GET /api/nba_playoffs/entries/check/:name
+    app.get("/api/nba_playoffs/entries/check/:name", async (req, res) => {
         try {
             const { name } = req.params;
 
@@ -26,12 +26,12 @@ module.exports = function (app) {
     });
 
     // 🧠 BONUS BACKEND PROTECTION: In case your frontend component specifically expects an exact "/me" path literal:
-    app.get("/api/nba/entries/me", async (req, res) => {
+    app.get("/api/nba_playoffs/entries/me", async (req, res) => {
         return res.json({ exists: true, entry_name: "Admin View", picks: [] });
     });
 
-    // POST /api/nba/entries/create
-    app.post("/api/nba/entries/create", requireAuth, async (req, res) => {
+    // POST /api/nba_playoffs/entries/create
+    app.post("/api/nba_playoffs/entries/create", requireAuth, async (req, res) => {
         try {
             const entry_name = (req.body.entry_name || req.user.name).trim();
 
@@ -57,8 +57,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/nba/entries
-    app.get("/api/nba/entries", async (req, res) => {
+    // GET /api/nba_playoffs/entries
+    app.get("/api/nba_playoffs/entries", async (req, res) => {
         try {
             const entries = await NbaEntries.findAll({
                 attributes: ["id", "user_id", "entry_name", "createdAt"],

@@ -5,7 +5,7 @@ export default function CountryPoolsTable() {
   const [countries, setCountries] = useState([]);
 
   useEffect(() => {
-    axios.get("/api/olympics/medaltable").then((res) => {
+    axios.get("/api/olympics_medaltable").then((res) => {
       setCountries(res.data || []);
     });
   }, []);

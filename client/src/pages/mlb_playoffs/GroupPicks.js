@@ -29,10 +29,10 @@ export default function GroupPicks() {
     const fetchAll = async () => {
       try {
         const [seriesRes, picksRes, standingsRes, tbRes] = await Promise.all([
-          axios.get("/api/mlb/series"),
-          axios.get("/api/mlb/picks/all"),
-          axios.get("/api/mlb/standings"),
-          axios.get("/api/mlb/tiebreaker/all"),
+          axios.get("/api/mlb_playoffs_series"),
+          axios.get("/api/mlb_playoffs/picks/all"),
+          axios.get("/api/mlb_playoffs/standings"),
+          axios.get("/api/mlb_playoffs/tiebreaker/all"),
         ]);
 
         const now = new Date();
@@ -226,7 +226,7 @@ const GameHeader = ({ s }) => {
   };
 
   return (
-    <PoolGatekeeper user={user} gameKey="mlb" >
+    <PoolGatekeeper user={user} gameKey="mlb_playoffs" >
       <div style={{ width: "100%", margin: "0 auto", padding: "12px 4px", paddingBottom: 80, fontFamily: "system-ui, -apple-system, sans-serif" }}>
         <style>{`
           @keyframes pulse { 

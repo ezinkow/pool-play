@@ -63,7 +63,7 @@ export default function CfbPickemAtsMatrix() {
                     params: { week: currentWeek },
                     headers: { Authorization: `Bearer ${token}` }
                 }),
-                axios.get("/api/cfb_regular_season_matchups", {
+                axios.get("/api/cfb_regular_season_games", {
                     params: { week: currentWeek }
                 }),
                 axios.get("/api/cfb_pickem_ats/standings", {

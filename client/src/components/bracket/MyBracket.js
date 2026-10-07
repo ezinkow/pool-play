@@ -272,7 +272,7 @@ export default function MyBracket() {
     };
 
     useEffect(() => {
-        axios.get("/api/bracket/games").then(res => setGames(res.data));
+        axios.get("/api/ncaa_tourney_games").then(res => setGames(res.data));
         axios.get("/api/bracket/users").then(res =>
             setUsers(res.data.sort((a, b) => a.name.localeCompare(b.name)))
         );

@@ -18,7 +18,7 @@ function SingleFlipCard({ value }) {
 
             const timer = setTimeout(() => {
                 setIsFlipping(false);
-            }, 400); // Matches CSS transition duration
+            }, 400);
             return () => clearTimeout(timer);
         }
     }, [value]);
@@ -62,57 +62,34 @@ export default function PoolCountdown({ poolData, mode }) {
                 }
             }, 1000);
 
-        } else if (mode === "active" && poolData?.games_api_path) {
+        } else if (mode === "active" && poolData?.game_key) {
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-            // Helper function to fetch and find the absolute next game across multiple weeks if needed
             const fetchNextGame = async () => {
                 try {
-                    let basePath = poolData.games_api_path;
-                    let baseWeek = poolData.current_week || 1;
+                    // Universally query the next game using our clean backend route
+                    const res = await axios.get(`/api/pools/next-game?game_key=${poolData.game_key}`, { headers });
+                    const nextGame = res.data;
 
-                    // If path has a week query param, strip it so we can search sequentially
-                    if (basePath.includes("week=")) {
-                        basePath = basePath.split("?")[0];
-                    }
-
-                    let foundGame = null;
-
-                    // Scan up to 3 consecutive weeks ahead to find the absolute next upcoming game
-                    for (let w = Number(baseWeek); w <= Number(baseWeek) + 3; w++) {
-                        const separator = basePath.includes("?") ? "&" : "?";
-                        const queryUrl = `${basePath}${separator}week=${w}`;
-
-                        const res = await axios.get(queryUrl, { headers });
-                        const games = res.data.games || res.data || [];
-
-                        const now = new Date();
-                        const upcoming = games
-                            .filter(g => new Date(g.game_date || g.date) > now)
-                            .sort((a, b) => new Date(a.game_date || a.date) - new Date(b.game_date || b.date));
-
-                        if (upcoming.length > 0) {
-                            foundGame = upcoming[0];
-                            break;
-                        }
-                    }
-
-                    if (foundGame && isMounted) {
-                        const gameTime = new Date(foundGame.game_date || foundGame.date);
+                    if (nextGame && isMounted) {
+                        const gameTime = new Date(nextGame.game_date || nextGame.date);
                         timer = setInterval(() => {
                             const diff = gameTime - new Date();
                             if (diff <= 0) {
                                 clearInterval(timer);
-                                // Re-run to fetch subsequent game when this one passes
-                                fetchNextGame();
+                                fetchNextGame(); // Fetch the subsequent game when this one passes
                             } else {
                                 setTimeLeft(formatTime(diff));
-                                setSubText(`Next Game: ${foundGame.away_team} @ ${foundGame.home_team}`);
+                                const away = nextGame.away_team || nextGame.awayTeam || "TBD";
+                                const home = nextGame.home_team || nextGame.homeTeam || "TBD";
+                                setSubText(`Next Game: ${away} @ ${home}`);
                             }
                         }, 1000);
+                    } else if (isMounted) {
+                        setTimeLeft(null);
                     }
                 } catch (err) {
-                    console.error("Error fetching games for countdown:", err);
+                    console.error("Error fetching next game for countdown:", err);
                 }
             };
 
@@ -125,7 +102,7 @@ export default function PoolCountdown({ poolData, mode }) {
         };
     }, [mode, poolData, token]);
 
-    if (!timeLeft) return <div className="countdown-card" style={{ whiteSpace: "nowrap" }}>🏀 Pool is active—games are currently underway! 🏈</div>;
+    if (!timeLeft) return <div className="countdown-card" style={{ whiteSpace: "nowrap" }}>🏟️ Pool is active—games are currently underway! 🏈⚾</div>;
 
     return (
         <>
@@ -154,7 +131,7 @@ export default function PoolCountdown({ poolData, mode }) {
                 }
                 .flip-card-unit .top-static {
                     top: 0;
-                    background: #181818; /* Dark Black Top */
+                    background: #181818;
                     border-bottom: 1px solid #000;
                     border-radius: 4px 4px 0 0;
                 }
@@ -170,7 +147,7 @@ export default function PoolCountdown({ poolData, mode }) {
                 }
                 .flip-card-unit .bottom-static {
                     bottom: 0;
-                    background: #2c2c2c; /* Lighter Gray Bottom */
+                    background: #2c2c2c;
                     border-top: 1px solid #111;
                     border-radius: 0 0 4px 4px;
                 }
@@ -183,15 +160,6 @@ export default function PoolCountdown({ poolData, mode }) {
                     line-height: 36px;
                     text-align: center;
                     text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-                }
-                .flip-card-unit .bottom-shade {
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.45) 100%);
-                    pointer-events: none;
                 }
                 .flip-card-unit .flipper {
                     position: absolute;
@@ -217,7 +185,7 @@ export default function PoolCountdown({ poolData, mode }) {
                 }
                 .flip-card-unit .front {
                     top: 0;
-                    background: #181818; /* Front of flipper matches dark black top */
+                    background: #181818;
                     border-bottom: 1px solid #000;
                     border-radius: 4px 4px 0 0;
                 }
@@ -233,7 +201,7 @@ export default function PoolCountdown({ poolData, mode }) {
                 }
                 .flip-card-unit .back {
                     bottom: 0;
-                    background: #2c2c2c; /* Back of flipper matches lighter gray bottom */
+                    background: #2c2c2c;
                     transform: rotateX(180deg);
                     border-radius: 0 0 4px 4px;
                 }

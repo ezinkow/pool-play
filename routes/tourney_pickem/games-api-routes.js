@@ -2,7 +2,7 @@ const { TourneyPickemGames } = require("../../models");
 
 module.exports = function (app) {
 
-    app.get("/api/tourneypickem/games", async (req, res) => {
+    app.get("/api/ncaa_tourney_games", async (req, res) => {
         try {
             const games = await TourneyPickemGames.findAll({
                 order: [["game_date", "ASC"]]
@@ -15,7 +15,7 @@ module.exports = function (app) {
     });
 
     // Find picks_display where set to visible
-    app.get('/api/tourneypickem/games/finishedAndInProgress', function (req, res) {
+    app.get('/api/ncaa_tourney_games/finishedAndInProgress', function (req, res) {
         TourneyPickemGames.findAll({
             where: {
                 status: ['STATUS_FINAL', 'STATUS_IN_PROGRESS', 'STATUS_HALFTIME']

@@ -1,8 +1,8 @@
 const { NbaPicks, NbaSeries, NbaEntries, NbaTiebreaker } = require("../../models");
 
 module.exports = function (app) {
-    // GET /api/nba/standings
-    app.get("/api/nba/standings", async (req, res) => {
+    // GET /api/nba_playoffs/standings
+    app.get("/api/nba_playoffs/standings", async (req, res) => {
         try {
             // 1. Fetch everything in parallel for speed
             const [entries, series, tiebreakers, allPicks] = await Promise.all([

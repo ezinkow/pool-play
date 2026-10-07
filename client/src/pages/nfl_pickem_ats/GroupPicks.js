@@ -78,7 +78,7 @@ export default function NflPickemAtsMatrix() {
                     params: { week: currentWeek },
                     headers: { Authorization: `Bearer ${token}` }
                 }),
-                axios.get("/api/nfl_regular_season_matchups", {
+                axios.get("/api/nfl_regular_season_games", {
                     params: { week: currentWeek },
                     headers: { Authorization: `Bearer ${token}` }
                 }),

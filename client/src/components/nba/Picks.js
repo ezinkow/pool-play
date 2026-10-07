@@ -36,7 +36,7 @@ export default function Picks() {
   const [tiebreakerLoss, setTiebreakerLoss] = useState("");
 
   useEffect(() => {
-    axios.get("/api/nba/series")
+    axios.get("/api/nba_playoffs_series")
       .then(res => setSeries(res.data || []))
       .catch(err => toast.error("Error loading series"));
   }, []);
@@ -46,7 +46,7 @@ export default function Picks() {
       const token = localStorage.getItem("token");
       const config = { headers: { Authorization: `Bearer ${token}` } };
 
-      axios.get("/api/nba/picks", { params: { name: user.name }, ...config })
+      axios.get("/api/nba_playoffs/picks", { params: { name: user.name }, ...config })
         .then(res => {
           if (res.data && Array.isArray(res.data)) {
             const mappedPicks = res.data.map(p => ({
@@ -61,7 +61,7 @@ export default function Picks() {
         })
         .catch(() => setDataLoaded(true));
 
-      axios.get("/api/nba/tiebreaker", { params: { name: user.name }, ...config })
+      axios.get("/api/nba_playoffs/tiebreaker", { params: { name: user.name }, ...config })
         .then(res => {
           if (res.data) {
             setTiebreakerWin(res.data.win_score || "");
@@ -139,7 +139,7 @@ export default function Picks() {
 
     const token = localStorage.getItem("token");
     try {
-      await axios.post("/api/nba/picks/bulk", {
+      await axios.post("/api/nba_playoffs/picks/bulk", {
         name: user.name,
         picks: picks.map(p => ({
           series_id: p.series,
@@ -161,7 +161,7 @@ export default function Picks() {
   if (!dataLoaded && series.length > 0) return <div style={{ textAlign: "center" }}>Loading your saved picks...</div>;
 
   return (
-    <PoolGatekeeper user={user} gameKey="nba">
+    <PoolGatekeeper user={user} gameKey="nba_playoffs">
       <div style={{ paddingBottom: 80, maxWidth: 1200, margin: "0 auto", paddingLeft: 12, paddingRight: 12 }}>
         <Toaster />
         <Instructions />

@@ -90,11 +90,11 @@ import NbaSurvivorMyPicks from './pages/nba_survivor/MyPicks';
 import NbaSurvivorGroupPicks from './pages/nba_survivor/GroupsPicks';
 
 // MLB Playoffs pages
-import MlbHome from './pages/mlb_playoffs/Home';
-import MlbPicks from './pages/mlb_playoffs/Picks';
-import MlbMyPicks from './pages/mlb_playoffs/MyPicks';
-import MlbGroupPicks from './pages/mlb_playoffs/GroupPicks';
-import MlbStandings from './pages/mlb_playoffs/Standings';
+import MlbPlayoffsHome from './pages/mlb_playoffs/Home';
+import MlbPlayoffsPicks from './pages/mlb_playoffs/Picks';
+import MlbPlayoffsMyPicks from './pages/mlb_playoffs/MyPicks';
+import MlbPlayoffsGroupPicks from './pages/mlb_playoffs/GroupPicks';
+import MlbPlayoffsStandings from './pages/mlb_playoffs/Standings';
 
 // NFL Playoffs pages
 import NflHome from './pages/nfl_playoffs/Home';
@@ -160,21 +160,20 @@ export default function App() {
       <Routes>
         {/* Homepage rendered outside page-content so it has no forced top padding */}
         <Route path="/" element={<div className="home-content"><Home /></div>} />
+        <Route path="/changepassword" element={<ChangePassword />} />
+        <Route path="/forgotusername" element={<ForgotUsername />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/myaccount" element={<MyAccount />} />
+        <Route path="/contact" element={<Comments />} />
+        <Route path="/help" element={<Help />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/admin" element={<Admin />} />
         {/* All other sub-pages wrapped inside page-content */}
         <Route path="*" element={
           <main className="page-content">
             <Routes>
               <Route path="/signup" element={<SignUp />} />
-              <Route path="/changepassword" element={<ChangePassword />} />
-              <Route path="/forgotusername" element={<ForgotUsername />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/myaccount" element={<MyAccount />} />
-              <Route path="/contact" element={<Comments />} />
-              <Route path="/help" element={<Help />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/admin" element={<Admin />} />
-
               {/* CFB Pickem ATS*/}
               <Route path="/cfbpickemats" element={<CfbPickemAtsHome />} />
               <Route path="/cfbpickemats/picks" element={<CfbPickemAtsPicks />} />
@@ -230,12 +229,12 @@ export default function App() {
               <Route path="/tourneysquares/numbers" element={<TourneySquaresNumbers />} />
               <Route path="/tourneysquares/admin" element={<TourneySquaresAdmin />} />
 
-              {/* MLB */}
-              <Route path="/mlb" element={<MlbHome />} />
-              <Route path="/mlb/picks" element={<MlbPicks />} />
-              <Route path="/mlb/mypicks" element={<MlbMyPicks />} />
-              <Route path="/mlb/grouppicks" element={<MlbGroupPicks />} />
-              <Route path="/mlb/standings" element={<MlbStandings />} />
+              {/* MLB Playoffs*/}
+              <Route path="/mlb" element={<MlbPlayoffsHome />} />
+              <Route path="/mlb/picks" element={<MlbPlayoffsPicks />} />
+              <Route path="/mlb/mypicks" element={<MlbPlayoffsMyPicks />} />
+              <Route path="/mlb/grouppicks" element={<MlbPlayoffsGroupPicks />} />
+              <Route path="/mlb/standings" element={<MlbPlayoffsStandings />} />
 
               {/* NBA Playoffs*/}
               <Route path="/nba" element={<NbaHome />} />

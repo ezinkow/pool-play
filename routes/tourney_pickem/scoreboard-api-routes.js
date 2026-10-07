@@ -2,7 +2,7 @@ const { TourneyPickemGames } = require("../../models");
 
 module.exports = function (app) {
 
-  app.get("/api/tourneypickem/games/history", async (req, res) => {
+  app.get("/api/ncaa_tourney_games/history", async (req, res) => {
     try {
       const games = await TourneyPickemGames.findAll({
         order: [["game_date", "DESC"]]

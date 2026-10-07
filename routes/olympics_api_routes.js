@@ -89,7 +89,7 @@ module.exports = function (app) {
     });
 
     // --------medal table
-    app.get("/api/olympics/medaltable", async (req, res) => {
+    app.get("/api/olympics_medaltable", async (req, res) => {
         const url =
             "https://site.web.api.espn.com/apis/site/v2/olympics/winter/2026/medals?region=us&lang=en";
 

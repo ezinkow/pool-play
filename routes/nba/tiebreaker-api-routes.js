@@ -3,8 +3,8 @@ const requireAuth = require("../../middleware/Requireauth");
 
 module.exports = function (app) {
 
-    // GET /api/nba/tiebreaker?name=X — get a user's tiebreaker
-    app.get("/api/nba/tiebreaker", async (req, res) => {
+    // GET /api/nba_playoffs/tiebreaker?name=X — get a user's tiebreaker
+    app.get("/api/nba_playoffs/tiebreaker", async (req, res) => {
         try {
             const { name } = req.query;
             const entry = await NbaEntries.findOne({ where: { entry_name: name } });
@@ -16,8 +16,8 @@ module.exports = function (app) {
         }
     });
 
-    // POST /api/nba/tiebreaker — save tiebreaker (auth required, locks when Finals tips)
-    app.post("/api/nba/tiebreaker", requireAuth, async (req, res) => {
+    // POST /api/nba_playoffs/tiebreaker — save tiebreaker (auth required, locks when Finals tips)
+    app.post("/api/nba_playoffs/tiebreaker", requireAuth, async (req, res) => {
         try {
             // Lock tiebreaker once the Finals series is no longer scheduled
             const finals = await NbaSeries.findOne({ where: { round: 4 } });
@@ -40,8 +40,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/nba/tiebreaker/all — all tiebreakers (for group display)
-    app.get("/api/nba/tiebreaker/all", async (req, res) => {
+    // GET /api/nba_playoffs/tiebreaker/all — all tiebreakers (for group display)
+    app.get("/api/nba_playoffs/tiebreaker/all", async (req, res) => {
         try {
             const entries     = await NbaEntries.findAll();
             const tiebreakers = await NbaTiebreaker.findAll();

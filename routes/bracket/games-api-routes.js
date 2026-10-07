@@ -3,7 +3,7 @@ const { Op } = require("sequelize");
 
 module.exports = function (app) {
 
-    app.get("/api/bracket/games", async (req, res) => {
+    app.get("/api/ncaa_tourney_games", async (req, res) => {
         try {
             const games = await GamesBracket.findAll({
                 order: [["round", "ASC"], ["bracket_slot", "ASC"]]
@@ -15,7 +15,7 @@ module.exports = function (app) {
         }
     });
 
-    app.get("/api/bracket/games/finishedAndInProgress", async (req, res) => {
+    app.get("/api/ncaa_tourney_games/finishedAndInProgress", async (req, res) => {
         try {
             const games = await GamesBracket.findAll({
                 where: {

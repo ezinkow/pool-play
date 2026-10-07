@@ -17,10 +17,10 @@ export default function GroupPicks() {
     const fetchAll = async () => {
       try {
         const [seriesRes, picksRes, standingsRes, tbRes] = await Promise.all([
-          axios.get("/api/nba/series"),
-          axios.get("/api/nba/picks/all"),
-          axios.get("/api/nba/standings"),
-          axios.get("/api/nba/tiebreaker/all"),
+          axios.get("/api/nba_playoffs_series"),
+          axios.get("/api/nba_playoffs/picks/all"),
+          axios.get("/api/nba_playoffs/standings"),
+          axios.get("/api/nba_playoffs/tiebreaker/all"),
         ]);
 
         // FIX: Ensure we sort by Round and then Date to keep the grid logical
@@ -68,7 +68,7 @@ export default function GroupPicks() {
   const SERIES_COL_W = 90;
 
   return (
-    <PoolGatekeeper user={user} gameKey="nba">
+    <PoolGatekeeper user={user} gameKey="nba_playoffs">
       <div  style={{ paddingBottom: 80 }}>
         <style>{`
           @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }

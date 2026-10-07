@@ -11,8 +11,8 @@ const ROUND_CONFIG = {
 
 module.exports = function (app) {
 
-    // GET /api/nba/picks?name=X
-    app.get("/api/nba/picks", async (req, res) => {
+    // GET /api/nba_playoffs/picks?name=X
+    app.get("/api/nba_playoffs/picks", async (req, res) => {
         try {
             const { name } = req.query;
 
@@ -43,8 +43,8 @@ module.exports = function (app) {
         }
     });
 
-    // POST /api/nba/picks/bulk
-    app.post("/api/nba/picks/bulk", requireAuth, async (req, res) => {
+    // POST /api/nba_playoffs/picks/bulk
+    app.post("/api/nba_playoffs/picks/bulk", requireAuth, async (req, res) => {
         try {
             const { picks } = req.body;
             if (!Array.isArray(picks) || picks.length === 0) {
@@ -130,8 +130,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/nba/picks/all (For the Group Matrix / Standings)
-    app.get("/api/nba/picks/all", async (req, res) => {
+    // GET /api/nba_playoffs/picks/all (For the Group Matrix / Standings)
+    app.get("/api/nba_playoffs/picks/all", async (req, res) => {
         try {
             const picks = await NbaPicks.findAll({
                 include: [{

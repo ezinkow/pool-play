@@ -7,7 +7,7 @@ export default function PlayerPicksMatrix() {
   const [standings, setStandings] = useState([]);
 
   useEffect(() => {
-    axios.get("/api/bracket/games/finishedAndInProgress").then(r =>
+    axios.get("/api/ncaa_tourney_games/finishedAndInProgress").then(r =>
       setGames(r.data.sort((a, b) => a.round - b.round || a.bracket_slot - b.bracket_slot))
     );
     axios.get("/api/bracket/picks/all").then(r => setPicks(r.data));

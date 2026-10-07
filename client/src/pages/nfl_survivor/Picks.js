@@ -25,7 +25,7 @@ export default function NflSurvivorPicks() {
     // Fetch pool settings & active current week on mount
     useEffect(() => {
         if (!token) return;
-        axios.get("/api/nfl_survivor/settings", {
+        axios.get("/api/nfl_regular_season/settings", {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => {

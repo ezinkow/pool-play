@@ -29,7 +29,7 @@ export default function Home() {
                 <PoolGatekeeper
                     user={user}
                     isAdmin={user?.is_admin === true}
-                    gameKey="nba"
+                    gameKey="nba_playoffs"
                 >
                     {/* Action Buttons Grid Layout Cluster */}
                     <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", marginBottom: 20 }}>

@@ -8,13 +8,13 @@ const Standings = () => {
     const [standings, setStandings] = useState([]);
 
     useEffect(() => {
-        axios.get("/api/nba/standings").then(res => setStandings(res.data));
+        axios.get("/api/nba_playoffs/standings").then(res => setStandings(res.data));
     }, []);
 
     if (authLoading) return null;
 
     return (
-        <PoolGatekeeper user={user} gameKey="nba">
+        <PoolGatekeeper user={user} gameKey="nba_playoffs">
             <div style={{paddingBottom: 80, paddingLeft: 12, paddingRight: 12 }} className="standings-table">
                 <h2 style={{ color: "#0a1628", paddingBottom: 6, fontSize: 24, fontWeight: 800 }}>Standings</h2>
 

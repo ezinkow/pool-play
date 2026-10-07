@@ -85,7 +85,7 @@ function LiveCountdown() {
     const [tipTimeLeft,   setTipTimeLeft]   = useState(null);
 
     useEffect(() => {
-        axios.get("/api/nba/series").then(res => {
+        axios.get("/api/nba_playoffs_series").then(res => {
             const now = new Date();
             const unlocked = res.data.filter(g => !g.locked && g.game_date);
 

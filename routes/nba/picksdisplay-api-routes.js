@@ -3,7 +3,7 @@ const { NbaPicks, NbaSeries, NbaEntries } = require("../../models");
 
 module.exports = function (app) {
 
-    app.get("/api/nba/picks/display", async (req, res) => {
+    app.get("/api/nba_playoffs/picks/display", async (req, res) => {
         try {
             const { name } = req.query;
             const user = await NbaEntries.findOne({ where: { name } });
@@ -30,7 +30,7 @@ module.exports = function (app) {
     });
 
     // Get all users' picks for all games (group view)
-    app.get("/api/nba/picks/all", async (req, res) => {
+    app.get("/api/nba_playoffs/picks/all", async (req, res) => {
         try {
             const picks = await NbaPicks.findAll({
                 include: [

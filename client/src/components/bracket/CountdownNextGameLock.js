@@ -10,7 +10,7 @@ export default function PoolCountdown() {
     const [tipTimeLeft, setTipTimeLeft] = useState(null);
 
     useEffect(() => {
-        axios.get("/api/bracket/games").then(res => {
+        axios.get("/api/ncaa_tourney_games").then(res => {
             const now = new Date();
 
             // Next line lock

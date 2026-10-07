@@ -33,7 +33,7 @@ export default function HrdStandings() {
     if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50 }}>Loading standings...</div>;
 
     return (
-        <PoolGatekeeper user={user} gameKey="hrd">
+        <PoolGatekeeper user={user} gameKey="home_run_derby">
             <div style={{ maxWidth: 850, margin: "0 auto", padding: "20px 16px", paddingBottom: 90, paddingTop: 90 }}>
                 <Toaster />
                 <h2 style={{ color: NAVY, fontSize: "24px", marginBottom: 4 }}>🏆 Home Run Derby Standings</h2>

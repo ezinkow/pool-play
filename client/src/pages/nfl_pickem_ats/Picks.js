@@ -25,7 +25,7 @@ export default function NflPickemAtsPicks() {
     useEffect(() => {
         if (!token) return;
 
-        axios.get("/api/nfl_pickem_ats/settings", {
+        axios.get("/api/nfl_regular_season/settings", {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => {
@@ -57,7 +57,7 @@ export default function NflPickemAtsPicks() {
         setLoading(true);
 
         Promise.all([
-            axios.get("/api/nfl_regular_season_matchups", {
+            axios.get("/api/nfl_regular_season_games", {
                 params: { week: currentWeek },
                 headers: { Authorization: `Bearer ${token}` }
             }),

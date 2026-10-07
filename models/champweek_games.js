@@ -1,5 +1,5 @@
 module.exports = function (sequelize, DataTypes) {
-    const ChampWeekPickemGames = sequelize.define("ChampWeekPickemGames", {
+    const ChampWeekGames = sequelize.define("ChampWeekGames", {
         id: {
             type: DataTypes.STRING(255),
             primaryKey: true,
@@ -93,11 +93,11 @@ module.exports = function (sequelize, DataTypes) {
             allowNull: true,
         }
     }, {
-        tableName: "champweek_pickem_games",
+        tableName: "champweek_games",
         timestamps: true,
         createdAt: "createdAt",
         updatedAt: false,
     });
 
-    return ChampWeekPickemGames;
+    return ChampWeekGames;
 };

@@ -32,7 +32,7 @@ export default function NbaSignUp() {
         async function checkEntry() {
             try {
                 const token = localStorage.getItem("token");
-                const { data } = await axios.get("/api/nba/entries/me", {
+                const { data } = await axios.get("/api/nba_playoffs/entries/me", {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 if (data.entry) setAlreadyIn(true);
@@ -55,7 +55,7 @@ export default function NbaSignUp() {
         try {
             const token = localStorage.getItem("token");
             const { data } = await axios.post(
-                "/api/nba/entries",
+                "/api/nba_playoffs/entries",
                 { entry_name: entryName.trim() },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

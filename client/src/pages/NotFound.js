@@ -9,15 +9,16 @@ export default function NotFound() {
     return (
         <div style={{
             textAlign: "center",
-            padding: "20px",
-            height: "100vh", // Force full height
+            padding: "40px 20px",
+            minHeight: "calc(100vh - 70px)", // Fills remaining viewport cleanly below navbar
             display: "flex",
             flexDirection: "column",
-            justifyContent: "center", // Center vertically
+            justifyContent: "center",
             alignItems: "center",
             backgroundColor: "#001633",
             color: "white",
-            overflow: "hidden" // Prevent scrolling
+            overflow: "hidden",
+            marginTop: "-20px" // Pulls it up to cover any default spacing from parent containers
         }}>
             <style>{`
                 .submerged-404 {
@@ -34,12 +35,12 @@ export default function NotFound() {
                     50% { transform: translateY(10px) skewX(5deg); }
                 }
             `}</style>
-            {/* Reduced image size to keep it above the fold */}
+
             <img
                 src={img}
                 alt="Drowning Mascot"
                 style={{
-                    maxWidth: "350px",
+                    maxWidth: "320px",
                     width: "100%",
                     marginBottom: "10px"
                 }}
@@ -68,12 +69,12 @@ export default function NotFound() {
 
 function btnStyle(bg, color, borderColor) {
     return {
-        padding: "8px 16px", // Tightened button padding
+        padding: "8px 16px",
         backgroundColor: bg,
         color: color,
         border: `2px solid ${borderColor}`,
         borderRadius: "6px",
-        fontSize: "13px", // Smaller text
+        fontSize: "13px",
         fontWeight: 700,
         cursor: "pointer",
         textTransform: "uppercase",

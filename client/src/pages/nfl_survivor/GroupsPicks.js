@@ -42,7 +42,7 @@ export default function NflSurvivorGroupPicks() {
         if (!user || !token) return;
         setLoading(true);
 
-        axios.get("/api/nfl_survivor/settings", {
+        axios.get("/api/nfl_regular_season/settings", {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => {

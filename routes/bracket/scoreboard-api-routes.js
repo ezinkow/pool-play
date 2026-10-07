@@ -1,7 +1,7 @@
 const { GamesBracket } = require("../../models");
 
 module.exports = function (app) {
-    app.get("/api/bracket/games/history", async (req, res) => {
+    app.get("/api/ncaa_tourney_games/history", async (req, res) => {
         try {
             const games = await GamesBracket.findAll({
                 order: [["round", "ASC"], ["bracket_slot", "ASC"]]

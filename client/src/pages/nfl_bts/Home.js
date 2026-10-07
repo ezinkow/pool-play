@@ -25,15 +25,27 @@ export default function NflBtsHome() {
   const loadData = () => {
     axios.get("/api/settings/active-states")
       .then(res => {
-        const NflBtsPool = res.data.find(p => p.game_key === "nfl_bts");
-        if (NflBtsPool) {
-          setPoolData({
-            ...NflBtsPool,
-            games_api_path: NflBtsPool.games_api_path || "/api/nfl_regular_season_matchups"
+        const btsPool = res.data.find(p => p.game_key === "nfl_bts");
+        if (btsPool) {
+          // Fetch settings endpoint for nfl_bts to get current_week and configuration
+          axios.get("/api/nfl_regular_season/settings", {
+            headers: activeToken ? { Authorization: `Bearer ${activeToken}` } : {}
+          }).then(settingsRes => {
+            setPoolData({
+              ...btsPool,
+              current_week: settingsRes.data.current_week || 1,
+              games_api_path: btsPool.games_api_path || "/api/nfl_regular_season_games"
+            });
+          }).catch(() => {
+            setPoolData({
+              ...btsPool,
+              current_week: 1,
+              games_api_path: btsPool.games_api_path || "/api/nfl_regular_season_games"
+            });
           });
         }
       })
-      .catch(err => console.error("Failed to load NFL Beat The Spread pool data", err));
+      .catch(err => console.error("Failed to load pool data", err));
 
     axios.get("/api/nfl_bts/entries")
       .then(res => {
@@ -73,8 +85,17 @@ export default function NflBtsHome() {
   }, [activeToken]);
 
   const isPoolStarted = useMemo(() => {
-    if (!poolData?.lock_date) return false;
-    return new Date() >= new Date(poolData.lock_date);
+    if (!poolData) return false;
+    const dbActive = !!poolData.is_active;
+    let isPastLockTime = false;
+    if (poolData.lock_date) {
+      let lockDateStr = poolData.lock_date;
+      if (typeof lockDateStr === 'string' && !lockDateStr.endsWith('Z') && !lockDateStr.includes('+')) {
+        lockDateStr = lockDateStr.replace(' ', 'T') + 'Z';
+      }
+      isPastLockTime = new Date() >= new Date(lockDateStr);
+    }
+    return !dbActive || isPastLockTime;
   }, [poolData]);
 
   const handleJoinPool = async (creditAmount) => {
@@ -140,7 +161,7 @@ export default function NflBtsHome() {
   const hasTeamsAssigned = roomAssignment && (roomAssignment.team_name_1 || roomAssignment.team_name_2);
 
   return (
-    <div style={{ className:'page-content', width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative" }} >
+    <div style={{ width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative" }} >
       <Toaster />
 
       {poolData && (

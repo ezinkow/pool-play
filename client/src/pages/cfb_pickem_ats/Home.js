@@ -20,31 +20,37 @@ export default function CfbPickemAtsHome() {
 
   const activeToken = token || localStorage.getItem("token");
 
+  const [dataLoaded, setDataLoaded] = useState(false);
+
   const loadData = () => {
     // 1. Fetch active pool states and game settings
     axios.get("/api/settings/active-states")
       .then(res => {
         const pickemPool = res.data.find(p => p.game_key === "cfb_pickem_ats");
         if (pickemPool) {
-          // Also fetch the specific pool settings to get the current dynamic week
           axios.get("/api/cfb_pickem_ats/settings", {
             headers: activeToken ? { Authorization: `Bearer ${activeToken}` } : {}
           }).then(settingsRes => {
             setPoolData({
               ...pickemPool,
               current_week: settingsRes.data.current_week || 1,
-              games_api_path: pickemPool.games_api_path || "/api/cfb_regular_season_matchups"
+              games_api_path: pickemPool.games_api_path || "/api/cfb_regular_season_games"
             });
+            setDataLoaded(true);
           }).catch(() => {
             setPoolData({
               ...pickemPool,
               current_week: 1,
-              games_api_path: pickemPool.games_api_path || "/api/cfb_regular_season_matchups"
+              games_api_path: pickemPool.games_api_path || "/api/cfb_regular_season_games"
             });
+            setDataLoaded(true);
           });
         }
       })
-      .catch(err => console.error("Failed to load pool data", err));
+      .catch(err => {
+        console.error("Failed to load pool data", err);
+        setDataLoaded(true);
+      });
 
     if (activeToken) {
       axios.get("/api/cfb_pickem_ats/entries/me", {
@@ -81,7 +87,7 @@ export default function CfbPickemAtsHome() {
       isPastLockTime = new Date() >= new Date(lockDateStr);
     }
     return !dbActive || isPastLockTime;
-  }, [poolData]);
+  }, [poolData?.is_active, poolData?.lock_date]);
 
   const handleJoinPool = async () => {
     if (!activeToken) {
@@ -140,18 +146,18 @@ export default function CfbPickemAtsHome() {
   };
 
   if (authLoading) return null;
+  console.log(poolData)
 
   return (
-    <div style={{ className:'page-content', width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative" }} >
+    <div style={{ className: 'page-content', width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative" }} >
       <Toaster />
 
-      {poolData && (
+      {dataLoaded && poolData && poolData.game_key && (
         <PoolCountdown
           poolData={poolData}
           mode={isPoolStarted ? "active" : "pre-start"}
         />
       )}
-
       <div className="container" style={{ textAlign: "center", padding: "20px 16px", boxSizing: "border-box" }}>
 
         {!activeToken && (

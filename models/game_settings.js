@@ -13,6 +13,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false
         },
+        season: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
         is_active: {
             type: DataTypes.BOOLEAN,
             defaultValue: false,
@@ -72,6 +76,14 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: true
         },
         games_api_path: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        games_table: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        games_model_name: {
             type: DataTypes.STRING,
             allowNull: true
         },

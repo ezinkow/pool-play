@@ -6,9 +6,9 @@ const requireAuth = require("../middleware/Requireauth");
 module.exports = function (app) {
 
     // --------------------------------------------------------
-    // GET /api/nba_regular_season_matchups (Supports both week-only and team lookups)
+    // GET /api/nba_regular_season_games (Supports both week-only and team lookups)
     // --------------------------------------------------------
-    app.get("/api/nba_regular_season_matchups", requireAuth, async (req, res) => {
+    app.get("/api/nba_regular_season_games", requireAuth, async (req, res) => {
         try {
             const { week, team } = req.query;
 

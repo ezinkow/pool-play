@@ -127,11 +127,11 @@ export default function NflBtsPicks() {
 
                 let m1 = null, m2 = null;
                 if (t1) {
-                    const matchRes1 = await axios.get("/api/nfl_regular_season_matchups", { ...config, params: { week: currentWeek, team: t1 } });
+                    const matchRes1 = await axios.get("/api/nfl_regular_season_games", { ...config, params: { week: currentWeek, team: t1 } });
                     m1 = matchRes1.data;
                 }
                 if (t2) {
-                    const matchRes2 = await axios.get("/api/nfl_regular_season_matchups", { ...config, params: { week: currentWeek, team: t2 } });
+                    const matchRes2 = await axios.get("/api/nfl_regular_season_games", { ...config, params: { week: currentWeek, team: t2 } });
                     m2 = matchRes2.data;
                 }
                 setMatchups({ match_1: m1, match_2: m2 });
@@ -222,13 +222,13 @@ export default function NflBtsPicks() {
     };
 
     if (authLoading || currentWeek === null || (loading && !assignedTeams.team_1)) {
-        return <div style={{ textAlign: "center", padding: 50 }}>Loading your team assignments...</div>;
+        return <div style={{ className:"page-content",textAlign: "center", padding: 50 }}>Loading your team assignments...</div>;
     }
 
     const renderMatchupCard = (teamKey, teamName, teamMetaInfo, matchupData, pickData) => {
         if (!teamName) {
             return (
-                <div style={{ textAlign: "center", padding: 30, background: "white", borderRadius: 12, border: "1px solid #e2e8f0", height: "100%" }}>
+                <div style={{ className:"page-content",textAlign: "center", padding: 30, background: "white", borderRadius: 12, border: "1px solid #e2e8f0", height: "100%" }}>
                     <h3 style={{ margin: "0 0 6px 0", color: FALLBACK_BLUE, fontSize: "16px" }}>Team Assignment Pending</h3>
                     <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>Waiting for random team assignment...</p>
                 </div>
@@ -237,8 +237,8 @@ export default function NflBtsPicks() {
 
         if (!matchupData) {
             return (
-                <div style={{ textAlign: "center", padding: 24, background: "white", borderRadius: 12, border: "1px solid #e2e8f0", height: "100%" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 8 }}>
+                <div style={{ className:"page-content",textAlign: "center", padding: 24, background: "white", borderRadius: 12, border: "1px solid #e2e8f0", height: "100%" }}>
+                    <div style={{ className:"page-content",display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 8 }}>
                         {renderTeamLogo(teamMetaInfo.logo, teamName, 20, 30, teamMetaInfo.primary_color, teamMetaInfo.secondary_color)}
                         <h4 style={{ margin: 0, color: FALLBACK_BLUE, fontSize: "15px" }}>{teamName}</h4>
                     </div>
@@ -311,35 +311,35 @@ export default function NflBtsPicks() {
                     justifyContent: "space-between",
                     alignItems: "center"
                 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0, flex: 1 }}>
+                    <div style={{ className:"page-content",display: "flex", alignItems: "center", gap: 6, minWidth: 0, flex: 1 }}>
                         {renderTeamLogo(awayLogo, matchupData.away_team, 18, 26, awayColor, awaySecondary)}
                         <span style={{ fontSize: 12, fontWeight: 800, textShadow: "0 1px 3px rgba(0,0,0,0.6)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{matchupData.away_team}</span>
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 700, background: "rgba(0,0,0,0.4)", padding: "2px 6px", borderRadius: 20, flexShrink: 0, margin: "0 4px" }}>@</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexDirection: "row-reverse", minWidth: 0, flex: 1, textAlign: "right" }}>
+                    <div style={{ className:"page-content",display: "flex", alignItems: "center", gap: 6, flexDirection: "row-reverse", minWidth: 0, flex: 1, textAlign: "right" }}>
                         {renderTeamLogo(homeLogo, matchupData.home_team, 18, 26, homeColor, homeSecondary)}
                         <span style={{ fontSize: 12, fontWeight: 800, textShadow: "0 1px 3px rgba(0,0,0,0.6)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{matchupData.home_team}</span>
                     </div>
                 </div>
 
-                <div style={{ padding: "14px 12px 20px 12px", display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}>
+                <div style={{ className:"page-content",padding: "14px 12px 20px 12px", display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}>
                     <div>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                            <div style={{ fontSize: 11, color: "#d97706", fontWeight: 700 }}>
+                        <div style={{ className:"page-content",display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                            <div style={{ className:"page-content",fontSize: 11, color: "#d97706", fontWeight: 700 }}>
                                 Kickoff: {matchupData.game_date ? `${new Date(matchupData.game_date).toLocaleDateString()} at ${new Date(matchupData.game_date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : "TBD"}
                             </div>
                             {isKickoffPassed && <span style={{ fontSize: "10px", color: NFL_RED, fontWeight: 700 }}>🔒 Locked</span>}
                         </div>
 
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "11px", fontWeight: 600, background: "#f8fafc", padding: "6px 8px", borderRadius: 8, marginBottom: 12, border: "1px solid #e2e8f0" }}>
+                        <div style={{ className:"page-content",display: "flex", alignItems: "center", gap: 6, fontSize: "11px", fontWeight: 600, background: "#f8fafc", padding: "6px 8px", borderRadius: 8, marginBottom: 12, border: "1px solid #e2e8f0" }}>
                             <span>Spread:</span>
                             {favoriteLogo && renderTeamLogo(favoriteLogo, favoriteTeam || "Favorite", 10, 15, favTeamMeta.color || homeColor, favTeamMeta.secondaryColor || homeSecondary)}
                             <strong style={{ color: "#1e293b" }}>{rawSpread}</strong> | O/U: <strong>{matchupData.over_under}</strong>
                         </div>
 
-                        <div style={{ marginBottom: 12 }}>
+                        <div style={{ className:"page-content",marginBottom: 12 }}>
                             <label style={{ display: "block", fontWeight: 700, fontSize: "11px", marginBottom: 4, color: "#374151" }}>ATS Pick:</label>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                            <div style={{ className:"page-content",display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                                 {[
                                     { team: matchupData.away_team, logo: awayLogo, spread: awaySpreadStr, color: awayColor, secondary: awaySecondary, isPicked: isAwayPicked },
                                     { team: matchupData.home_team, logo: homeLogo, spread: homeSpreadStr, color: homeColor, secondary: homeSecondary, isPicked: isHomePicked }
@@ -372,10 +372,10 @@ export default function NflBtsPicks() {
                                             <span style={{ position: "absolute", top: 4, right: 6, fontSize: "10px", color: "#ffffff", fontWeight: 900 }}>✓</span>
                                         )}
                                         {renderTeamLogo(item.logo, item.team, 25, 35, item.color, item.secondary)}
-                                        <div style={{ fontWeight: item.isPicked ? 800 : 600, fontSize: "12px", color: item.isPicked ? "#ffffff" : "#0f172a", marginBottom: 2, marginTop: 4, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                        <div style={{ className:"page-content",fontWeight: item.isPicked ? 800 : 600, fontSize: "12px", color: item.isPicked ? "#ffffff" : "#0f172a", marginBottom: 2, marginTop: 4, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                             {item.team}
                                         </div>
-                                        <div style={{ fontSize: "11px", fontWeight: 700, color: item.isPicked ? "#e2e8f0" : "#475569" }}>
+                                        <div style={{ className:"page-content",fontSize: "11px", fontWeight: 700, color: item.isPicked ? "#e2e8f0" : "#475569" }}>
                                             {item.spread}
                                         </div>
                                     </div>
@@ -383,12 +383,12 @@ export default function NflBtsPicks() {
                             </div>
                         </div>
 
-                        <div style={{ marginBottom: 8 }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#f8fafc", padding: "6px 8px", borderRadius: 6, border: "1px solid #e2e8f0" }}>
+                        <div style={{ className:"page-content",marginBottom: 8 }}>
+                            <div style={{ className:"page-content",display: "flex", alignItems: "center", justifyContent: "space-between", background: "#f8fafc", padding: "6px 8px", borderRadius: 6, border: "1px solid #e2e8f0" }}>
                                 <span style={{ fontSize: "11px", fontWeight: 700, color: "#475569" }}>
                                     O/U: <strong>{matchupData.over_under}</strong>
                                 </span>
-                                <div style={{ display: "flex", gap: 4 }}>
+                                <div style={{ className:"page-content",display: "flex", gap: 4 }}>
                                     {['Over', 'Under'].map(val => {
                                         const isOuSelected = ouPick === val;
                                         return (
@@ -441,11 +441,11 @@ export default function NflBtsPicks() {
                     }
                 `}</style>
 
-                <div style={{ padding: "20px 24px", minWidth: 0 }}>
+                <div style={{ className:"page-content",padding: "20px 24px", minWidth: 0 }}>
                     <Toaster />
 
                     {/* Header Title Section */}
-                    <div style={{ textAlign: "center", marginBottom: 20 }}>
+                    <div style={{ className:"page-content",textAlign: "center", marginBottom: 20 }}>
                         <h2 style={{ color: NFL_BLUE, fontSize: "22px", margin: "0 0 4px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontWeight: 800 }}>
                             <span>🏈</span> NFL Beat The Spread <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span>
                         </h2>
@@ -504,7 +504,7 @@ export default function NflBtsPicks() {
                         <div>{renderMatchupCard('team_2', assignedTeams.team_2, teamsMeta.team_2, matchups.match_2, picks.team_2)}</div>
                     </div>
 
-                    <div style={{ marginTop: 24, marginBottom: 10 }}>
+                    <div style={{ className:"page-content",marginTop: 24, marginBottom: 10 }}>
                         <button
                             onClick={handleSubmitAll}
                             style={{

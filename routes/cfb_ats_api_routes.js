@@ -95,29 +95,57 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
-    // GET /api/cfb_regular_season_matchups 
+    // GET /api/cfb_regular_season_games 
     // --------------------------------------------------------
-    app.get("/api/cfb_regular_season_matchups", async (req, res) => {
+    app.get("/api/cfb_regular_season_games", async (req, res) => {
         try {
-            let week = req.query.week ? parseInt(req.query.week) : null;
+            const { week, team } = req.query;
 
-            if (!week) {
-                const { currentWeek } = getCurrentAndNextCfbWeeks();
-                week = currentWeek;
+            if (team && team !== "undefined" && team !== "null") {
+                const matchup = await CfbRegularSeasonGames.findOne({
+                    where: {
+                        week: parseInt(week),
+                        [Op.or]: [{ home_team: team }, { away_team: team }]
+                    }
+                });
+                return res.json(matchup || null);
             }
 
+            // Calculate current week as default if none provided
+            const now = new Date();
+            const weeks = [
+                { week: 1, start: new Date("2026-08-22T00:00:00") },
+                { week: 2, start: new Date("2026-09-08T00:00:00") },
+                { week: 3, start: new Date("2026-09-14T00:00:00") },
+                { week: 4, start: new Date("2026-09-21T00:00:00") },
+                { week: 5, start: new Date("2026-09-28T00:00:00") },
+                { week: 6, start: new Date("2026-10-05T00:00:00") },
+                { week: 7, start: new Date("2026-10-12T00:00:00") },
+                { week: 8, start: new Date("2026-10-19T00:00:00") },
+                { week: 9, start: new Date("2026-10-26T00:00:00") },
+                { week: 10, start: new Date("2026-11-02T00:00:00") },
+                { week: 11, start: new Date("2026-11-09T00:00:00") },
+                { week: 12, start: new Date("2026-11-16T00:00:00") },
+                { week: 13, start: new Date("2026-11-23T00:00:00") },
+                { week: 14, start: new Date("2026-11-30T00:00:00") }
+            ];
+            let activeIndex = 0;
+            for (let i = weeks.length - 1; i >= 0; i--) {
+                if (now >= weeks[i].start) { activeIndex = i; break; }
+            }
+            const defaultWeek = weeks[activeIndex].week;
+
+            const targetWeek = parseInt(week) || defaultWeek;
             const games = await CfbRegularSeasonGames.findAll({
-                where: { week },
+                where: { week: targetWeek },
                 order: [["game_date", "ASC"]]
             });
-
             res.json(games);
         } catch (err) {
             console.error("Error fetching regular season matchups:", err);
-            res.status(500).json({ error: "Failed to load matchups" });
+            res.status(500).json({ error: "Failed to fetch matchups" });
         }
     });
-
     // --------------------------------------------------------
     // GET /api/cfb_teams (Fetch all CFB teams and colors)
     // --------------------------------------------------------
@@ -241,21 +269,41 @@ module.exports = function (app) {
     // --------------------------------------------------------
     app.get("/api/cfb_pickem_ats/settings", requireAuth, async (req, res) => {
         try {
-            const settingsModel = db.game_settings || db.GameSettings || db.GameSetting;
-            const settings = settingsModel ? await settingsModel.findOne({
-                where: { game_key: "cfb_pickem_ats" }
-            }) : null;
+            const SettingsModel = db.GameSettings || db.gameSettings || db.GameSetting || db.game_settings;
+            const setting = SettingsModel ? await SettingsModel.findOne({ where: { game_key: "cfb_pickem_ats" } }) : null;
 
-            let currentWeek = settings?.current_week;
+            // 🧠 Built-in dynamic active week calculator matching getCurrentAndNextCfbWeeks
+            const now = new Date();
+            const weeks = [
+                { week: 1, start: new Date("2026-08-22T00:00:00"), end: new Date("2026-09-07T23:59:59") },
+                { week: 2, start: new Date("2026-09-08T00:00:00"), end: new Date("2026-09-13T23:59:59") },
+                { week: 3, start: new Date("2026-09-14T00:00:00"), end: new Date("2026-09-20T23:59:59") },
+                { week: 4, start: new Date("2026-09-21T00:00:00"), end: new Date("2026-09-27T23:59:59") },
+                { week: 5, start: new Date("2026-09-28T00:00:00"), end: new Date("2026-10-04T23:59:59") },
+                { week: 6, start: new Date("2026-10-05T00:00:00"), end: new Date("2026-10-11T23:59:59") },
+                { week: 7, start: new Date("2026-10-12T00:00:00"), end: new Date("2026-10-18T23:59:59") },
+                { week: 8, start: new Date("2026-10-19T00:00:00"), end: new Date("2026-10-25T23:59:59") },
+                { week: 9, start: new Date("2026-10-26T00:00:00"), end: new Date("2026-11-01T23:59:59") },
+                { week: 10, start: new Date("2026-11-02T00:00:00"), end: new Date("2026-11-08T23:59:59") },
+                { week: 11, start: new Date("2026-11-09T00:00:00"), end: new Date("2026-11-15T23:59:59") },
+                { week: 12, start: new Date("2026-11-16T00:00:00"), end: new Date("2026-11-22T23:59:59") },
+                { week: 13, start: new Date("2026-11-23T00:00:00"), end: new Date("2026-11-29T23:59:59") },
+                { week: 14, start: new Date("2026-11-30T00:00:00"), end: new Date("2026-12-06T23:59:59") }
+            ];
 
-            if (!currentWeek) {
-                const { currentWeek: activeWeek } = getCurrentAndNextCfbWeeks();
-                currentWeek = activeWeek;
+            let activeIndex = 0;
+            for (let i = weeks.length - 1; i >= 0; i--) {
+                if (now >= weeks[i].start) {
+                    activeIndex = i;
+                    break;
+                }
             }
+            const dynamicWeek = weeks[activeIndex].week;
 
             res.json({
-                title: settings?.title,
-                current_week: Number(currentWeek) || 1
+                title: setting?.title || "CFB Pick 'em ATS",
+                current_week: dynamicWeek,
+                is_active: setting ? setting.is_active : true
             });
         } catch (err) {
             console.error("Error fetching pool settings:", err);

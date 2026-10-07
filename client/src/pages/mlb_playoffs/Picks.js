@@ -26,7 +26,7 @@ export default function Picks() {
     const [dataLoaded, setDataLoaded] = useState(false);
 
     useEffect(() => {
-        axios.get("/api/mlb/series")
+        axios.get("/api/mlb_playoffs_series")
             .then(res => setSeries(res.data || []))
             .catch(() => toast.error("Error loading series"));
     }, []);
@@ -36,7 +36,7 @@ export default function Picks() {
             const token = localStorage.getItem("token");
             const config = { headers: { Authorization: `Bearer ${token}` } };
 
-            axios.get("/api/mlb/picks", { params: { name: user.name }, ...config })
+            axios.get("/api/mlb_playoffs/picks", { params: { name: user.name }, ...config })
                 .then(res => {
                     if (res.data && Array.isArray(res.data)) {
                         const mappedPicks = res.data.map(p => ({
@@ -127,7 +127,7 @@ export default function Picks() {
 
         const token = localStorage.getItem("token");
         try {
-            await axios.post("/api/mlb/picks/bulk", {
+            await axios.post("/api/mlb_playoffs/picks/bulk", {
                 name: user.name,
                 picks: picks.map(p => ({
                     series_id: p.series,
@@ -138,7 +138,7 @@ export default function Picks() {
             }, { headers: { Authorization: `Bearer ${token}` } });
 
             toast.success("Picks submitted successfully!");
-            setTimeout(() => { window.location.hash = "#/mlb/mypicks"; }, 1500);
+            setTimeout(() => { window.location.hash = "#/mlb_playoffs/mypicks"; }, 1500);
         } catch (err) {
             toast.error(err.response?.data?.error || "Failed to save picks");
         }
@@ -152,7 +152,7 @@ export default function Picks() {
     const maxConfidenceOption = activeRound === 2 ? 12 : 10;
 
     return (
-        <PoolGatekeeper user={user} gameKey="mlb" >
+        <PoolGatekeeper user={user} gameKey="mlb_playoffs" >
             <div style={{ maxWidth: 850, margin: "0 auto", padding: "12px 8px", paddingBottom: 100, paddingTop: 16, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 <Toaster />
 

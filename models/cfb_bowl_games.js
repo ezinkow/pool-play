@@ -1,5 +1,5 @@
 module.exports = function (sequelize, DataTypes) {
-    const CfbBowlSeasonGames = sequelize.define("CfbBowlSeasonGames", {
+    const CfbBowlGames = sequelize.define("CfbBowlGames", {
         id: { type: DataTypes.STRING, allowNull: true, primaryKey: true, autoIncrement: false },
         bowl_game: { type: DataTypes.STRING, allowNull: true },
         bowl_logo: { type: DataTypes.STRING, allowNull: true },
@@ -30,9 +30,9 @@ module.exports = function (sequelize, DataTypes) {
         away_score: { type: DataTypes.INTEGER, allowNull: true },
         winner: { type: DataTypes.STRING, allowNull: true }
     }, {
-        tableName: "cfb_bowl_season_games",
+        tableName: "cfb_bowl_games",
         timestamps: true
     });
 
-    return CfbBowlSeasonGames;
+    return CfbBowlGames;
 };

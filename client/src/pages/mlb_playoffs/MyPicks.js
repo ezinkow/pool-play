@@ -34,8 +34,8 @@ export default function MyPicks() {
         const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
         Promise.all([
-            axios.get("/api/mlb/picks", { params: { name: user.name }, ...config }),
-            axios.get("/api/mlb/standings", config),
+            axios.get("/api/mlb_playoffs/picks", { params: { name: user.name }, ...config }),
+            axios.get("/api/mlb_playoffs/standings", config),
         ]).then(([picksRes, standingsRes]) => {
             setPicks(picksRes.data || []);
             setStandings(standingsRes.data || []);
@@ -44,7 +44,7 @@ export default function MyPicks() {
     }, [user, token]);
 
     useEffect(() => {
-        axios.get("/api/mlb/series")
+        axios.get("/api/mlb_playoffs_series")
             .then(res => setSeries(res.data || []))
             .catch(() => toast.error("Error loading series"));
     }, []);
@@ -108,7 +108,7 @@ export default function MyPicks() {
     if (!user) return <div style={{ paddingTop: 100, textAlign: "center", fontFamily: "system-ui, sans-serif" }}><h3>Please log in.</h3></div>;
 
     return (
-        <PoolGatekeeper user={user} gameKey="mlb" >
+        <PoolGatekeeper user={user} gameKey="mlb_playoffs" >
             <div style={{ maxWidth: 850, margin: "0 auto", padding: "20px 12px", paddingBottom: 90, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 <Toaster />
 
@@ -190,7 +190,7 @@ export default function MyPicks() {
                             No picks submitted for this round yet.
                         </p>
                         <button
-                            onClick={() => { window.location.hash = "#/mlb/picks"; }}
+                            onClick={() => { window.location.hash = "#/mlb_playoffs/picks"; }}
                             style={{
                                 marginTop: 12,
                                 padding: "8px 16px", backgroundColor: NAVY,

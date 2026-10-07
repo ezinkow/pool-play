@@ -28,7 +28,7 @@ export default function CfbBowlConfidenceHome() {
         if (bowlPool) {
           setPoolData({
             ...bowlPool,
-            games_api_path: bowlPool.games_api_path || "/api/cfb_bowl_pickem/games"
+            games_api_path: bowlPool.games_api_path || "/api/cfb_bowl_games"
           });
         }
       })

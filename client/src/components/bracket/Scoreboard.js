@@ -27,7 +27,7 @@ const Scoreboard = () => {
     const [games, setGames] = useState([]);
 
     const fetchGames = async () => {
-        const res = await axios.get("/api/bracket/games/history");
+        const res = await axios.get("/api/ncaa_tourney_games/history");
         setGames(res.data.filter((g) => isLiveOrFinal(g.status)));
     };
 

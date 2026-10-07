@@ -39,8 +39,8 @@ module.exports = function (app) {
         });
     }
 
-    // GET /api/mlb/entries/me — get current user's entry info
-    app.get("/api/mlb/entries/me", requireAuth, async (req, res) => {
+    // GET /api/mlb_playoffs/entries/me — get current user's entry info
+    app.get("/api/mlb_playoffs/entries/me", requireAuth, async (req, res) => {
         try {
             const entry = await MlbPlayoffsEntries.findOne({ where: { user_id: req.user.id } });
             if (!entry) {
@@ -53,8 +53,8 @@ module.exports = function (app) {
         }
     });
 
-    // POST /api/mlb/entries — create or join pool entry
-    app.post("/api/mlb/entries", requireAuth, async (req, res) => {
+    // POST /api/mlb_playoffs/entries — create or join pool entry
+    app.post("/api/mlb_playoffs/entries", requireAuth, async (req, res) => {
         try {
             const entry_name = (req.body.entry_name || req.user.name).trim();
 
@@ -84,8 +84,8 @@ module.exports = function (app) {
         }
     });
 
-    // DELETE /api/mlb/entries/me — leave pool entry
-    app.delete("/api/mlb/entries/me", requireAuth, async (req, res) => {
+    // DELETE /api/mlb_playoffs/entries/me — leave pool entry
+    app.delete("/api/mlb_playoffs/entries/me", requireAuth, async (req, res) => {
         try {
             const entry = await MlbPlayoffsEntries.findOne({ where: { user_id: req.user.id } });
             if (!entry) {
@@ -108,8 +108,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/mlb/entries/check/:name
-    app.get("/api/mlb/entries/check/:name", async (req, res) => {
+    // GET /api/mlb_playoffs/entries/check/:name
+    app.get("/api/mlb_playoffs/entries/check/:name", async (req, res) => {
         try {
             const { name } = req.params;
 
@@ -128,8 +128,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/mlb/entries
-    app.get("/api/mlb/entries", async (req, res) => {
+    // GET /api/mlb_playoffs/entries
+    app.get("/api/mlb_playoffs/entries", async (req, res) => {
         try {
             const entries = await MlbPlayoffsEntries.findAll({
                 attributes: ["id", "user_id", "entry_name", "createdAt"],
@@ -140,8 +140,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/mlb/picks?name=X
-    app.get("/api/mlb/picks", async (req, res) => {
+    // GET /api/mlb_playoffs/picks?name=X
+    app.get("/api/mlb_playoffs/picks", async (req, res) => {
         try {
             const { name } = req.query;
 
@@ -173,8 +173,8 @@ module.exports = function (app) {
         }
     });
 
-    // POST /api/mlb/picks/bulk
-    app.post("/api/mlb/picks/bulk", requireAuth, async (req, res) => {
+    // POST /api/mlb_playoffs/picks/bulk
+    app.post("/api/mlb_playoffs/picks/bulk", requireAuth, async (req, res) => {
         try {
             const { picks } = req.body;
             if (!Array.isArray(picks) || picks.length === 0) {
@@ -254,8 +254,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/mlb/picks/all (For the Group Matrix / Standings)
-    app.get("/api/mlb/picks/all", async (req, res) => {
+    // GET /api/mlb_playoffs/picks/all (For the Group Matrix / Standings)
+    app.get("/api/mlb_playoffs/picks/all", async (req, res) => {
         try {
             const picks = await MlbPlayoffsPicks.findAll({
                 include: [{
@@ -293,8 +293,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/mlb/series — all series ordered by round then slot
-    app.get("/api/mlb/series", async (req, res) => {
+    // GET /api/mlb_playoffs_series — all series ordered by round then slot
+    app.get("/api/mlb_playoffs_series", async (req, res) => {
         try {
             const series = await MlbPlayoffsSeries.findAll({
                 order: [["round", "ASC"], ["id", "ASC"]],
@@ -314,8 +314,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/mlb/series/active — unlocked series only (open for picks)
-    app.get("/api/mlb/series/active", async (req, res) => {
+    // GET /api/mlb_playoffs_series/active — unlocked series only (open for picks)
+    app.get("/api/mlb_playoffs_series/active", async (req, res) => {
         try {
             const series = await MlbPlayoffsSeries.findAll({
                 where: { locked: false },
@@ -329,8 +329,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/mlb/series/round/:round — all series for a specific round
-    app.get("/api/mlb/series/round/:round", async (req, res) => {
+    // GET /api/mlb_playoffs_series/round/:round — all series for a specific round
+    app.get("/api/mlb_playoffs_series/round/:round", async (req, res) => {
         try {
             const series = await MlbPlayoffsSeries.findAll({
                 where: { round: req.params.round },
@@ -344,8 +344,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/mlb/series/live — in-progress and final series (for results display)
-    app.get("/api/mlb/series/live", async (req, res) => {
+    // GET /api/mlb_playoffs_series/live — in-progress and final series (for results display)
+    app.get("/api/mlb_playoffs_series/live", async (req, res) => {
         try {
             const series = await MlbPlayoffsSeries.findAll({
                 where: {
@@ -361,8 +361,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/mlb/standings
-    app.get("/api/mlb/standings", async (req, res) => {
+    // GET /api/mlb_playoffs/standings
+    app.get("/api/mlb_playoffs/standings", async (req, res) => {
         try {
             const [entries, series, tiebreakers, allPicks] = await Promise.all([
                 MlbPlayoffsEntries.findAll(),
@@ -474,8 +474,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/mlb/tiebreaker — get a user's tiebreaker
-    app.get("/api/mlb/tiebreaker", requireAuth, async (req, res) => {
+    // GET /api/mlb_playoffs/tiebreaker — get a user's tiebreaker
+    app.get("/api/mlb_playoffs/tiebreaker", requireAuth, async (req, res) => {
         try {
             const entry = await MlbPlayoffsEntries.findOne({ where: { user_id: req.user.id } });
             if (!entry) return res.json(null);
@@ -486,8 +486,8 @@ module.exports = function (app) {
         }
     });
 
-    // POST /api/mlb/tiebreaker — save tiebreaker
-    app.post("/api/mlb/tiebreaker", requireAuth, async (req, res) => {
+    // POST /api/mlb_playoffs/tiebreaker — save tiebreaker
+    app.post("/api/mlb_playoffs/tiebreaker", requireAuth, async (req, res) => {
         try {
             const finals = await MlbPlayoffsSeries.findOne({ where: { round: 4 } });
             if (finals && finals.status !== "STATUS_SCHEDULED") {
@@ -509,8 +509,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/mlb/tiebreaker/all — all tiebreakers
-    app.get("/api/mlb/tiebreaker/all", async (req, res) => {
+    // GET /api/mlb_playoffs/tiebreaker/all — all tiebreakers
+    app.get("/api/mlb_playoffs/tiebreaker/all", async (req, res) => {
         try {
             const entries = await MlbPlayoffsEntries.findAll();
             const tiebreakers = await MlbTiebreaker.findAll();
