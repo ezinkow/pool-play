@@ -61,12 +61,13 @@ function extractSeries(data, seriesMap) {
         const statusName = comp.status?.type?.name;
         const liveDetail = comp.status?.type?.shortDetail || comp.status?.type?.detail || null;
 
-        // Robust check for live status matching ESPN states
         const isLive = statusState === "in" || statusName === "STATUS_IN_PROGRESS";
 
         const espnSeries = comp.series;
         let bracketHomeWins = 0;
         let bracketAwayWins = 0;
+        let seriesSummaryText = espnSeries?.summary || "";
+        let seriesCompleted = espnSeries?.completed || false;
 
         if (espnSeries?.competitors) {
             const bHomeData = espnSeries.competitors.find(c => String(c.id) === String(homeComp.team?.id));
@@ -100,6 +101,8 @@ function extractSeries(data, seriesMap) {
                 startDate: seriesStartDate,
                 homeWins: bracketHomeWins,
                 awayWins: bracketAwayWins,
+                seriesSummary: seriesSummaryText,
+                seriesCompleted: seriesCompleted,
                 roundLabel: headline || ROUND_CONFIG[roundNum].label,
                 homeLiveScore: homeScore,
                 awayLiveScore: awayScore,
@@ -114,7 +117,12 @@ function extractSeries(data, seriesMap) {
                 existingMatchup.homeWins = bracketHomeWins;
                 existingMatchup.awayWins = bracketAwayWins;
             }
-            // Always prefer updating live stats if this specific event payload is live
+            if (seriesSummaryText) {
+                existingMatchup.seriesSummary = seriesSummaryText;
+            }
+            if (seriesCompleted) {
+                existingMatchup.seriesCompleted = true;
+            }
             if (isLive) {
                 existingMatchup.homeLiveScore = homeScore;
                 existingMatchup.awayLiveScore = awayScore;
@@ -129,8 +137,8 @@ function extractSeries(data, seriesMap) {
     });
 }
 
-async function syncMlb() {
-    console.log("[MLB Sync Job] Starting MLB Postseason synchronization...");
+async function syncMlbPlayoffs() {
+    console.log("[MLB Playoffs Sync Job] Starting MLB Postseason synchronization...");
     try {
         const rawSeriesMap = new Map();
 
@@ -146,11 +154,9 @@ async function syncMlb() {
             try {
                 const url = `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${dateStr}`;
                 const { data } = await axios.get(url, { timeout: 10000 });
-                if (data?.events?.length > 0) {
-                }
                 extractSeries(data, rawSeriesMap);
             } catch (dayErr) {
-                // Skip empty days silently or log if needed
+                // Skip empty days silently
             }
         }
 
@@ -165,35 +171,7 @@ async function syncMlb() {
 
             for (const [index, s] of matches.entries()) {
                 const placeholderId = getPlaceholderId(roundNum, league, index);
-                if (!placeholderId) {
-                    continue;
-                }
-
-                const targetWins = ROUND_CONFIG[roundNum].targetWins;
-                let finalHomeWins = s.homeWins;
-                let finalAwayWins = s.awayWins;
-                let seriesOver = finalHomeWins === targetWins || finalAwayWins === targetWins;
-                let parsedLength = null;
-                let seriesWinnerName = null;
-
-                if (seriesOver) {
-                    parsedLength = finalHomeWins + finalAwayWins;
-                    seriesWinnerName = finalHomeWins === targetWins ? s.homeName : s.awayName;
-                }
-
-                // Include s.isLive so status updates immediately when Game 1 is underway
-                let seriesStatus = seriesOver
-                    ? "STATUS_FINAL"
-                    : ((s.isLive || finalHomeWins + finalAwayWins > 0)
-                        ? "STATUS_IN_PROGRESS"
-                        : "STATUS_SCHEDULED");
-                const now = new Date();
-                const startTime = s.startDate ? new Date(s.startDate) : null;
-                const isLocked = (startTime && now >= startTime) || (finalHomeWins + finalAwayWins > 0);
-
-                const existingRow = await MlbPlayoffsSeries.findOne({ where: { id: placeholderId } });
-                if (!existingRow) {
-                }
+                if (!placeholderId) continue;
 
                 let rawHome = s.homeName;
                 if (!rawHome || rawHome === "TBD" || rawHome.startsWith("TBD")) {
@@ -204,6 +182,8 @@ async function syncMlb() {
                     rawAway = "TBDA";
                 }
 
+                const existingRow = await MlbPlayoffsSeries.findOne({ where: { id: placeholderId } });
+
                 const homeTeamName = (rawHome === "TBDH" && existingRow?.home_team && existingRow.home_team !== "TBD") ? existingRow.home_team : rawHome;
                 const awayTeamName = (rawAway === "TBDA" && existingRow?.away_team && existingRow.away_team !== "TBD") ? existingRow.away_team : rawAway;
 
@@ -212,6 +192,43 @@ async function syncMlb() {
 
                 const homeLogo = s.home.team?.logo || homeTeamRecord?.logo || globalTbdLogo || existingRow?.home_logo || null;
                 const awayLogo = s.away.team?.logo || awayTeamRecord?.logo || globalTbdLogo || existingRow?.away_logo || null;
+
+                let finalHomeWins = s.homeWins;
+                let finalAwayWins = s.awayWins;
+                let seriesWinnerName = null;
+                let parsedLength = (finalHomeWins + finalAwayWins) > 0 ? (finalHomeWins + finalAwayWins) : null;
+
+                // Match summary parsing using team abbreviations
+                const homeAbbr = s.home.team?.abbreviation;
+                const awayAbbr = s.away.team?.abbreviation;
+                const summaryText = s.seriesSummary || ""; // e.g. "LAD win series 3-1"
+
+                if (summaryText && homeAbbr && awayAbbr) {
+                    if (summaryText.includes(homeAbbr)) {
+                        seriesWinnerName = homeTeamName;
+                    } else if (summaryText.includes(awayAbbr)) {
+                        seriesWinnerName = awayTeamName;
+                    }
+                }
+
+                // Fallback check if explicit winner wasn't caught by abbreviation text match
+                const targetWins = ROUND_CONFIG[roundNum].targetWins;
+                if (!seriesWinnerName) {
+                    if (finalHomeWins === targetWins) seriesWinnerName = homeTeamName;
+                    if (finalAwayWins === targetWins) seriesWinnerName = awayTeamName;
+                }
+
+                let seriesOver = s.seriesCompleted || finalHomeWins === targetWins || finalAwayWins === targetWins || Boolean(seriesWinnerName && (finalHomeWins === targetWins || finalAwayWins === targetWins));
+
+                let seriesStatus = seriesOver
+                    ? "STATUS_FINAL"
+                    : ((s.isLive || finalHomeWins + finalAwayWins > 0)
+                        ? "STATUS_IN_PROGRESS"
+                        : "STATUS_SCHEDULED");
+
+                const now = new Date();
+                const startTime = s.startDate ? new Date(s.startDate) : null;
+                const isLocked = (startTime && now >= startTime) || (finalHomeWins + finalAwayWins > 0);
 
                 const updatePayload = {
                     round: roundNum,
@@ -223,13 +240,13 @@ async function syncMlb() {
                     home_logo: homeLogo,
                     away_logo: awayLogo,
                     home_seed: s.home.seed || existingRow?.home_seed || null,
-                    away_seed: s.away.seed || existingRow?.away_seed || null,
+                    away_seed: s.away.seed || existingRow?.home_seed || null,
                     status: seriesStatus,
                     game_date: s.startDate || existingRow?.game_date,
                     home_wins: finalHomeWins,
                     away_wins: finalAwayWins,
                     locked: isLocked,
-                    winner: seriesWinnerName,
+                    winner: seriesOver ? seriesWinnerName : null,
                     series_length: parsedLength,
                     live_summary: s.isLive ? s.liveSummary : null,
                     home_live_score: s.isLive ? s.homeLiveScore : null,
@@ -240,14 +257,14 @@ async function syncMlb() {
                     where: { id: placeholderId }
                 });
 
-                console.log(`[MLB Sync] Successfully updated placeholder slot ${placeholderId} with ${awayTeamName} @ ${homeTeamName}`);
+                console.log(`[MLB Playoffs Sync] Successfully updated placeholder slot ${placeholderId} with ${awayTeamName} @ ${homeTeamName}`);
             }
         }
 
-        console.log("[MLB Sync Job] Finished syncing MLB postseason series safely.");
+        console.log("[MLB Playoffs Sync Job] Finished syncing MLB postseason series safely.");
     } catch (err) {
-        console.error("[MLB sync] Fatal Error:", err.message, err.stack);
+        console.error("[MLB Playoffs Sync] Fatal Error:", err.message, err.stack);
     }
 }
 
-module.exports = syncMlb;
+module.exports = syncMlbPlayoffs;
