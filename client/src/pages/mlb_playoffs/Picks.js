@@ -149,7 +149,7 @@ export default function Picks() {
     if (!dataLoaded && series.length > 0) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, sans-serif" }}>Loading your saved picks...</div>;
 
     // Second round (Division Series) max confidence option count is 12, others are 10
-    const maxConfidenceOption = activeRound === 2 ? 12 : 10;
+    const maxConfidenceOption = activeRound === 2 || activeRound === 3 ? 12 : 10;
 
     return (
         <PoolGatekeeper user={user} gameKey="mlb_playoffs" >

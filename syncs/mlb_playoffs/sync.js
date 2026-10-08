@@ -2,10 +2,10 @@ const axios = require("axios");
 const db = require("../../models");
 
 const ROUND_CONFIG = {
-    1: { label: "Wild Card", maxPoints: 24, targetWins: 2 }, // Best-of-3 (First to 2 wins)
-    2: { label: "Division Series", maxPoints: 32, targetWins: 3 }, // Best-of-5 (First to 3 wins)
-    3: { label: "League Championship", maxPoints: 16, targetWins: 4 }, // Best-of-7 (First to 4 wins)
-    4: { label: "World Series", maxPoints: 8, targetWins: 4 }, // Best-of-7 (First to 4 wins)
+    1: { label: "Wild Card", maxPoints: 24, targetWins: 2 },
+    2: { label: "Division Series", maxPoints: 32, targetWins: 3 },
+    3: { label: "League Championship", maxPoints: 16, targetWins: 4 },
+    4: { label: "World Series", maxPoints: 8, targetWins: 4 },
 };
 
 function getRound(headline = "") {
@@ -13,7 +13,7 @@ function getRound(headline = "") {
     if (text.includes("world series") || text.includes("finals")) return 4;
     if (text.includes("championship") || text.includes("alcs") || text.includes("nlcs")) return 3;
     if (text.includes("division") || text.includes("alds") || text.includes("nlds")) return 2;
-    return 1; // Wild Card
+    return 1;
 }
 
 function getLeague(headline = "") {
@@ -48,11 +48,8 @@ function extractSeries(data, seriesMap) {
         const roundNum = getRound(headline);
         const league = getLeague(headline);
 
-        const homeName = homeComp.team?.displayName || "TBD Home";
-        const awayName = awayComp.team?.displayName || "TBD Away";
-
-        const homeId = String(homeComp.team?.id || homeName);
-        const awayId = String(awayComp.team?.id || awayName);
+        const homeName = homeComp.team?.displayName || homeComp.team?.name || "TBD";
+        const awayName = awayComp.team?.displayName || awayComp.team?.name || "TBD";
 
         const homeScore = homeComp.score !== undefined && homeComp.score !== null ? parseInt(homeComp.score, 10) : null;
         const awayScore = awayComp.score !== undefined && awayComp.score !== null ? parseInt(awayComp.score, 10) : null;
@@ -76,7 +73,8 @@ function extractSeries(data, seriesMap) {
             bracketAwayWins = bAwayData ? (bAwayData.wins || 0) : 0;
         }
 
-        let seriesStartDate = event.startDate || event.date;
+        let eventDate = event.startDate || event.date;
+        const isGameOne = headline.toLowerCase().includes("game 1");
 
         const groupKey = `${roundNum}-${league}`;
         if (!seriesMap.has(groupKey)) {
@@ -85,10 +83,8 @@ function extractSeries(data, seriesMap) {
 
         const leagueSeriesList = seriesMap.get(groupKey);
 
-        let existingMatchup = leagueSeriesList.find(s => {
-            const sTeamIds = [String(s.home.team?.id || s.homeName), String(s.away.team?.id || s.awayName)];
-            return sTeamIds.includes(homeId) && sTeamIds.includes(awayId);
-        });
+        // Match existing matchup based on rounded series group rather than sloppy team ID flipping
+        let existingMatchup = leagueSeriesList.find(s => s.roundNum === roundNum && s.league === league);
 
         if (!existingMatchup) {
             leagueSeriesList.push({
@@ -98,40 +94,42 @@ function extractSeries(data, seriesMap) {
                 away: awayComp,
                 homeName,
                 awayName,
-                startDate: seriesStartDate,
+                startDate: eventDate,
+                isGameOne: isGameOne,
                 homeWins: bracketHomeWins,
                 awayWins: bracketAwayWins,
                 seriesSummary: seriesSummaryText,
                 seriesCompleted: seriesCompleted,
-                roundLabel: headline || ROUND_CONFIG[roundNum].label,
+                roundLabel: headline.replace(/ - Game \d+/i, "") || ROUND_CONFIG[roundNum].label,
                 homeLiveScore: homeScore,
                 awayLiveScore: awayScore,
                 liveSummary: liveDetail,
                 isLive: isLive
             });
         } else {
-            if (seriesStartDate && new Date(seriesStartDate) < new Date(existingMatchup.startDate)) {
-                existingMatchup.startDate = seriesStartDate;
+            // Strictly respect ESPN's home/away slot assignment and update team info from the event
+            existingMatchup.home = homeComp;
+            existingMatchup.away = awayComp;
+            existingMatchup.homeName = homeName;
+            existingMatchup.awayName = awayName;
+
+            // If this event is Game 1, override the start date with Game 1's exact timestamp
+            if (isGameOne || !existingMatchup.startDate) {
+                existingMatchup.startDate = eventDate;
+                existingMatchup.isGameOne = isGameOne;
             }
+
             if ((bracketHomeWins + bracketAwayWins) > (existingMatchup.homeWins + existingMatchup.awayWins)) {
                 existingMatchup.homeWins = bracketHomeWins;
                 existingMatchup.awayWins = bracketAwayWins;
             }
-            if (seriesSummaryText) {
-                existingMatchup.seriesSummary = seriesSummaryText;
-            }
-            if (seriesCompleted) {
-                existingMatchup.seriesCompleted = true;
-            }
+            if (seriesSummaryText) existingMatchup.seriesSummary = seriesSummaryText;
+            if (seriesCompleted) existingMatchup.seriesCompleted = true;
             if (isLive) {
                 existingMatchup.homeLiveScore = homeScore;
                 existingMatchup.awayLiveScore = awayScore;
                 existingMatchup.liveSummary = liveDetail;
                 existingMatchup.isLive = true;
-            } else if (!existingMatchup.isLive) {
-                existingMatchup.homeLiveScore = homeScore;
-                existingMatchup.awayLiveScore = awayScore;
-                existingMatchup.liveSummary = liveDetail;
             }
         }
     });
@@ -141,9 +139,8 @@ async function syncMlbPlayoffs() {
     console.log("[MLB Playoffs Sync Job] Starting MLB Postseason synchronization...");
     try {
         const rawSeriesMap = new Map();
-
-        const startDate = new Date(2026, 8, 29); // Late September
-        const endDate = new Date(2026, 10, 2);   // Early November
+        const startDate = new Date(2026, 8, 29);
+        const endDate = new Date(2026, 10, 2);
 
         for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
             const yyyy = d.getFullYear();
@@ -156,14 +153,18 @@ async function syncMlbPlayoffs() {
                 const { data } = await axios.get(url, { timeout: 10000 });
                 extractSeries(data, rawSeriesMap);
             } catch (dayErr) {
-                // Skip empty days silently
+                // Skip empty days
             }
         }
 
         const { MlbPlayoffsSeries, MlbTeams } = db;
 
+        const mlbHRecord = await MlbTeams.findOne({ where: { name: "MLBH" } });
+        const mlbARecord = await MlbTeams.findOne({ where: { name: "MLBA" } });
         const tbdRecord = await MlbTeams.findOne({ where: { name: "TBD" } });
-        const globalTbdLogo = tbdRecord ? tbdRecord.logo : null;
+
+        const mlbHLogo = mlbHRecord?.logo || tbdRecord?.logo || null;
+        const mlbALogo = mlbARecord?.logo || tbdRecord?.logo || null;
 
         for (const [groupKey, matches] of rawSeriesMap.entries()) {
             const [roundStr, league] = groupKey.split("-");
@@ -173,58 +174,50 @@ async function syncMlbPlayoffs() {
                 const placeholderId = getPlaceholderId(roundNum, league, index);
                 if (!placeholderId) continue;
 
-                let rawHome = s.homeName;
-                if (!rawHome || rawHome === "TBD" || rawHome.startsWith("TBD")) {
-                    rawHome = "TBDH";
-                }
-                let rawAway = s.awayName;
-                if (!rawAway || rawAway === "TBD" || rawAway.startsWith("TBD")) {
-                    rawAway = "TBDA";
-                }
-
                 const existingRow = await MlbPlayoffsSeries.findOne({ where: { id: placeholderId } });
 
-                const homeTeamName = (rawHome === "TBDH" && existingRow?.home_team && existingRow.home_team !== "TBD") ? existingRow.home_team : rawHome;
-                const awayTeamName = (rawAway === "TBDA" && existingRow?.away_team && existingRow.away_team !== "TBD") ? existingRow.away_team : rawAway;
+                const homeTeamId = parseInt(s.home.team?.id || "0", 10);
+                const awayTeamId = parseInt(s.away.team?.id || "0", 10);
+                
+                const isHomeTbd = homeTeamId < 0;
+                const isAwayTbd = awayTeamId < 0;
 
-                const homeTeamRecord = await MlbTeams.findOne({ where: { name: homeTeamName } });
-                const awayTeamRecord = await MlbTeams.findOne({ where: { name: awayTeamName } });
+                const homeTeamName = s.homeName;
+                const awayTeamName = s.awayName;
 
-                const homeLogo = s.home.team?.logo || homeTeamRecord?.logo || globalTbdLogo || existingRow?.home_logo || null;
-                const awayLogo = s.away.team?.logo || awayTeamRecord?.logo || globalTbdLogo || existingRow?.away_logo || null;
+                const homeTeamRecord = !isHomeTbd ? await MlbTeams.findOne({ where: { name: homeTeamName } }) : null;
+                const awayTeamRecord = !isAwayTbd ? await MlbTeams.findOne({ where: { name: awayTeamName } }) : null;
+
+                const homeLogo = isHomeTbd
+                    ? (mlbHLogo || existingRow?.home_logo || null)
+                    : (s.home.team?.logo || homeTeamRecord?.logo || existingRow?.home_logo || null);
+
+                const awayLogo = isAwayTbd
+                    ? (mlbALogo || existingRow?.away_logo || null)
+                    : (s.away.team?.logo || awayTeamRecord?.logo || existingRow?.away_logo || null);
 
                 let finalHomeWins = s.homeWins;
                 let finalAwayWins = s.awayWins;
                 let seriesWinnerName = null;
                 let parsedLength = (finalHomeWins + finalAwayWins) > 0 ? (finalHomeWins + finalAwayWins) : null;
 
-                // Match summary parsing using team abbreviations
                 const homeAbbr = s.home.team?.abbreviation;
                 const awayAbbr = s.away.team?.abbreviation;
-                const summaryText = s.seriesSummary || ""; // e.g. "LAD win series 3-1"
+                const summaryText = s.seriesSummary || "";
 
                 if (summaryText && homeAbbr && awayAbbr) {
-                    if (summaryText.includes(homeAbbr)) {
-                        seriesWinnerName = homeTeamName;
-                    } else if (summaryText.includes(awayAbbr)) {
-                        seriesWinnerName = awayTeamName;
-                    }
+                    if (summaryText.includes(homeAbbr)) seriesWinnerName = homeTeamName;
+                    else if (summaryText.includes(awayAbbr)) seriesWinnerName = awayTeamName;
                 }
 
-                // Fallback check if explicit winner wasn't caught by abbreviation text match
                 const targetWins = ROUND_CONFIG[roundNum].targetWins;
                 if (!seriesWinnerName) {
                     if (finalHomeWins === targetWins) seriesWinnerName = homeTeamName;
                     if (finalAwayWins === targetWins) seriesWinnerName = awayTeamName;
                 }
 
-                let seriesOver = s.seriesCompleted || finalHomeWins === targetWins || finalAwayWins === targetWins || Boolean(seriesWinnerName && (finalHomeWins === targetWins || finalAwayWins === targetWins));
-
-                let seriesStatus = seriesOver
-                    ? "STATUS_FINAL"
-                    : ((s.isLive || finalHomeWins + finalAwayWins > 0)
-                        ? "STATUS_IN_PROGRESS"
-                        : "STATUS_SCHEDULED");
+                let seriesOver = s.seriesCompleted || finalHomeWins === targetWins || finalAwayWins === targetWins;
+                let seriesStatus = seriesOver ? "STATUS_FINAL" : ((s.isLive || finalHomeWins + finalAwayWins > 0) ? "STATUS_IN_PROGRESS" : "STATUS_SCHEDULED");
 
                 const now = new Date();
                 const startTime = s.startDate ? new Date(s.startDate) : null;
@@ -232,7 +225,7 @@ async function syncMlbPlayoffs() {
 
                 const updatePayload = {
                     round: roundNum,
-                    round_label: ROUND_CONFIG[roundNum].label,
+                    round_label: s.roundLabel || ROUND_CONFIG[roundNum].label,
                     round_points_max: ROUND_CONFIG[roundNum].maxPoints,
                     league: league,
                     home_team: homeTeamName,
@@ -240,7 +233,7 @@ async function syncMlbPlayoffs() {
                     home_logo: homeLogo,
                     away_logo: awayLogo,
                     home_seed: s.home.seed || existingRow?.home_seed || null,
-                    away_seed: s.away.seed || existingRow?.home_seed || null,
+                    away_seed: s.away.seed || existingRow?.away_seed || null,
                     status: seriesStatus,
                     game_date: s.startDate || existingRow?.game_date,
                     home_wins: finalHomeWins,
@@ -257,10 +250,9 @@ async function syncMlbPlayoffs() {
                     where: { id: placeholderId }
                 });
 
-                console.log(`[MLB Playoffs Sync] Successfully updated placeholder slot ${placeholderId} with ${awayTeamName} @ ${homeTeamName}`);
+                console.log(`[MLB Playoffs Sync] Successfully updated placeholder slot ${placeholderId} with Away: ${awayTeamName} @ Home: ${homeTeamName}`);
             }
         }
-
         console.log("[MLB Playoffs Sync Job] Finished syncing MLB postseason series safely.");
     } catch (err) {
         console.error("[MLB Playoffs Sync] Fatal Error:", err.message, err.stack);
