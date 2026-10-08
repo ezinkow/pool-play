@@ -2,11 +2,34 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import useAuth from "../hooks/useAuth";
-import NotFound from "../pages/NotFound"; 
+import NotFound from "../pages/NotFound";
 import BTSrandomizer from '../components/nfl_bts/AdminTeamRandomizer';
 
 const NAVY = "#1c61ac";
 const GOLD = "#c89d3c";
+const GRAY = "#94a3b8";
+
+// --- CSS FOR FLIPCARDS (Exact Homepage Match) ---
+const countdownStyle = `
+.flip-card-unit {
+    position: relative; display: flex; flex-direction: column; width: 18px; height: 28px;
+    font-size: 15px; font-weight: 900; color: #ffffff; perspective: 300px;
+    font-family: 'Courier New', Courier, monospace; background: #111; border-radius: 3px;
+}
+.flip-card-unit .top-static, .flip-card-unit .bottom-static { position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; }
+.flip-card-unit .top-static { top: 0; background: #181818; border-bottom: 1px solid #000; border-radius: 3px 3px 0 0; }
+.flip-card-unit .top-static span { position: absolute; top: 0; left: 0; width: 100%; height: 28px; line-height: 28px; text-align: center; }
+.flip-card-unit .bottom-static { bottom: 0; background: #2c2c2c; border-top: 1px solid #111; border-radius: 0 0 3px 3px; }
+.flip-card-unit .bottom-static span { position: absolute; top: -14px; left: 0; width: 100%; height: 28px; line-height: 28px; text-align: center; }
+.flip-card-unit .bottom-shade { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.45) 100%); pointer-events: none; }
+.flip-card-unit .flipper { position: absolute; width: 100%; height: 50%; top: 0; transform-origin: bottom; transform-style: preserve-3d; z-index: 3; }
+.flip-card-unit.flipping .flipper { transition: transform 0.4s ease-in-out; transform: rotateX(-180deg); }
+.flip-card-unit .front, .flip-card-unit .back { position: absolute; left: 0; width: 100%; height: 100%; overflow: hidden; backface-visibility: hidden; }
+.flip-card-unit .front { top: 0; background: #181818; border-bottom: 1px solid #000; border-radius: 3px 3px 0 0; }
+.flip-card-unit .front span { position: absolute; top: 0; left: 0; width: 100%; height: 28px; line-height: 28px; text-align: center; }
+.flip-card-unit .back { bottom: 0; background: #2c2c2c; transform: rotateX(180deg); border-radius: 0 0 3px 3px; }
+.flip-card-unit .back span { position: absolute; top: -14px; left: 0; width: 100%; height: 28px; line-height: 28px; text-align: center; }
+`;
 
 // 3D Flipping Digit Component for smooth mechanical downward animation
 function SingleFlipCard({ value }) {
@@ -22,10 +45,7 @@ function SingleFlipCard({ value }) {
             setDisplayVal(strVal);
             setIsFlipping(true);
             refVal.current = strVal;
-
-            const timer = setTimeout(() => {
-                setIsFlipping(false);
-            }, 400);
+            const timer = setTimeout(() => setIsFlipping(false), 400);
             return () => clearTimeout(timer);
         }
     }, [value]);
@@ -36,7 +56,10 @@ function SingleFlipCard({ value }) {
     return (
         <div className={`flip-card-unit ${isFlipping ? 'flipping' : ''}`}>
             <div className="top-static"><span>{currentToShow}</span></div>
-            <div className="bottom-static"><span>{prevToShow}</span></div>
+            <div className="bottom-static">
+                <span>{prevToShow}</span>
+                <div className="bottom-shade"></div>
+            </div>
             <div className="flipper">
                 <div className="front"><span>{prevToShow}</span></div>
                 <div className="back"><span>{currentToShow}</span></div>
@@ -45,114 +68,186 @@ function SingleFlipCard({ value }) {
     );
 }
 
-function PoolCountdown({ poolData, mode }) {
+function PoolCountdown({ poolData, isDarkMode }) {
     const [timeLeft, setTimeLeft] = useState(null);
-    const [subText, setSubText] = useState("");
     const token = localStorage.getItem("token");
 
     const gameKey = poolData?.game_key;
     const lockDate = poolData?.lock_date;
+    const openDate = poolData?.open_date;
+    const isActive = poolData?.is_active === true || poolData?.is_active === 1 || poolData?.is_active === "true";
 
     useEffect(() => {
         let timer;
         let isMounted = true;
 
-        if (mode === "pre-start" && lockDate) {
-            const target = new Date(lockDate);
+        const now = new Date();
+        const openTime = openDate ? new Date(openDate) : null;
+        const lockTime = lockDate ? new Date(lockDate) : null;
+
+        const isBeforeOpen = !isActive || (openTime && now < openTime);
+        const isPreStart = isActive && lockTime && now >= (openTime || 0) && now < lockTime;
+
+        if (isBeforeOpen && openTime) {
             timer = setInterval(() => {
-                const diff = target - new Date();
+                const diff = openTime - new Date();
                 if (diff <= 0) {
                     if (isMounted) setTimeLeft(null);
                     clearInterval(timer);
-                } else {
-                    if (isMounted) {
-                        setTimeLeft(formatTime(diff));
-                        setSubText(`Until Entries Close`);
-                    }
+                } else if (isMounted) {
+                    setTimeLeft(formatTime(diff));
                 }
             }, 1000);
-        } else if (mode === "active" && gameKey) {
+        } else if (isPreStart && lockTime) {
+            timer = setInterval(() => {
+                const diff = lockTime - new Date();
+                if (diff <= 0) {
+                    if (isMounted) setTimeLeft(null);
+                    clearInterval(timer);
+                } else if (isMounted) {
+                    setTimeLeft(formatTime(diff));
+                }
+            }, 1000);
+        } else if (isActive && gameKey) {
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
             const fetchNextGame = async () => {
                 try {
                     const res = await axios.get(`/api/pools/next-game?game_key=${gameKey}`, { headers });
                     const nextGame = res.data;
-
                     if (nextGame && isMounted) {
                         const gameTime = new Date(nextGame.game_date || nextGame.date);
-
                         if (timer) clearInterval(timer);
-
                         timer = setInterval(() => {
                             const diff = gameTime - new Date();
                             if (diff <= 0) {
                                 clearInterval(timer);
                                 fetchNextGame();
-                            } else {
-                                if (isMounted) {
-                                    setTimeLeft(formatTime(diff));
-                                    setSubText(`Next: ${nextGame.away_team} @ ${nextGame.home_team}`);
-                                }
+                            } else if (isMounted) {
+                                setTimeLeft(formatTime(diff));
                             }
                         }, 1000);
-                    } else if (isMounted) {
-                        setTimeLeft(null);
-                    }
-                } catch (err) {
-                    console.error("Error fetching countdown next game:", err);
-                }
+                    } else if (isMounted) setTimeLeft(null);
+                } catch (err) { console.error("Error fetching countdown:", err); }
             };
-
             fetchNextGame();
-        }
+        } else if (isMounted) setTimeLeft(null);
 
         return () => {
             isMounted = false;
             if (timer) clearInterval(timer);
         };
-    }, [mode, gameKey, lockDate, token]);
+    }, [gameKey, lockDate, openDate, isActive, token]);
 
-    if (!timeLeft) return <div style={{ fontSize: "11px", color: "#64748b", fontStyle: "italic" }}>⚡ Games underway or lock time passed</div>;
+    if (!timeLeft) return <span style={{ fontSize: "11px", color: GRAY, fontStyle: "italic" }}>⚡ Check Status</span>;
+
+    const now = new Date();
+    const openTime = openDate ? new Date(openDate) : null;
+    const lockTime = lockDate ? new Date(lockDate) : null;
+    const isBeforeOpen = !isActive || (openTime && now < openTime);
+    const isPreStart = isActive && lockTime && now >= (openTime || 0) && now < lockTime;
+    const labelText = isBeforeOpen ? "OPENS:" : isPreStart ? "LOCKS:" : "NEXT:";
+
+    // Determine if we need to show years
+    const showYears = parseInt(timeLeft.y, 10) > 0;
+
+    // Helper to render a pair of digits with a label below
+    const renderFlipPair = (valStr, subLabel, digits = 2) => {
+        // Pad string based on requirement (e.g., 3 for days, 2 for others)
+        const padded = String(valStr).padStart(digits, "0");
+        const digitsArr = padded.split("");
+        return (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: "2px" }}>
+                    {digitsArr.map((d, i) => (
+                        <SingleFlipCard key={`${subLabel}-${i}`} value={d} />
+                    ))}
+                </div>
+                <span style={{ fontSize: "8px", color: "#ffffff", fontWeight: "800", marginTop: "3px", textTransform: "uppercase" }}>{subLabel}</span>
+            </div>
+        );
+    };
+
+    // Define container colors to match homepage dark/light theme
+    const containerBg = isDarkMode ? "#0b0f19" : "#1e293b";
+    const containerBorder = isDarkMode ? DARK_BORDER : GOLD;
 
     return (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#111", padding: "4px 10px", borderRadius: "6px" }}>
-            <span style={{ fontSize: "10px", color: "#c89d3c", fontWeight: 700 }}>{mode === "pre-start" ? "LOCKS IN:" : "NEXT:"}</span>
-            <div style={{ display: "flex", gap: "3px", alignItems: "center" }}>
-                <TimeBox label="D" value={timeLeft.d} />
-                <span style={{ color: "#01da25", fontWeight: "bold" }}>:</span>
-                <TimeBox label="H" value={timeLeft.h} />
-                <span style={{ color: "#01da25", fontWeight: "bold" }}>:</span>
-                <TimeBox label="M" value={timeLeft.m} />
-                <span style={{ color: "#01da25", fontWeight: "bold" }}>:</span>
-                <TimeBox label="S" value={timeLeft.s} />
+        <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: containerBg, padding: "4px 8px", borderRadius: "6px", border: `1px solid ${containerBorder}`, maxWidth: "100%", overflow: "hidden" }}>
+            <span style={{ color: "#ffffff", fontSize: "9px", fontWeight: "800", marginRight: "6px", textTransform: "uppercase" }}>{labelText}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "nowrap" }}>
+                {showYears && (
+                    <>
+                        {renderFlipPair(timeLeft.y, "Yrs", 2)}
+                        <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "10px" }}>:</span>
+                    </>
+                )}
+
+                {/* Days are padded to 3 digits, matching homepage */}
+                {renderFlipPair(timeLeft.d, "Days", 3)}
+
+                <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "16px" }}>:</span>
+
+                {renderFlipPair(timeLeft.h, "Hrs", 2)}
+
+                <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "16px" }}>:</span>
+
+                {renderFlipPair(timeLeft.m, "Min", 2)}
+
+                <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "16px" }}>:</span>
+
+                {renderFlipPair(timeLeft.s, "Sec", 2)}
             </div>
         </div>
     );
 }
 
 function formatTime(diff) {
-    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
-    const m = Math.floor((diff / (1000 * 60)) % 60);
-    const s = Math.floor((diff / 1000) % 60);
+    const msPerSecond = 1000;
+    const msPerMinute = msPerSecond * 60;
+    const msPerHour = msPerMinute * 60;
+    const msPerDay = msPerHour * 24;
+    const msPerYear = msPerDay * 365.25; // Approximate
+
+    let years = Math.floor(diff / msPerYear);
+    let remainingAfterYears = diff % msPerYear;
+
+    if (years < 0) { // Handle potential JS date math quirks
+        years = 0;
+        remainingAfterYears = diff;
+    }
+
+    const days = Math.floor(remainingAfterYears / msPerDay);
+    const remainingAfterDays = remainingAfterYears % msPerDay;
+    const hours = Math.floor(remainingAfterDays / msPerHour);
+    const remainingAfterHours = remainingAfterDays % msPerHour;
+    const minutes = Math.floor(remainingAfterHours / msPerMinute);
+    const remainingAfterMinutes = remainingAfterHours % msPerMinute;
+    const seconds = Math.floor(remainingAfterMinutes / msPerSecond);
+
     return {
-        d: String(d).padStart(2, "0"),
-        h: String(h).padStart(2, "0"),
-        m: String(m).padStart(2, "0"),
-        s: String(s).padStart(2, "0"),
+        y: String(years),
+        d: String(days), // Raw string, padding handled in component renderFlipPair
+        h: String(hours).padStart(2, "0"),
+        m: String(minutes).padStart(2, "0"),
+        s: String(seconds).padStart(2, "0"),
     };
 }
 
-function TimeBox({ label, value }) {
-    const strVal = String(value).padStart(2, "0");
-    const tens = strVal[0] || '0';
-    const ones = strVal[1] || '0';
+function TimeBox({ label, value, digits = 2, isDarkMode }) {
+    const strVal = String(value).padStart(digits, "0");
+    const cards = [];
+    for (let i = 0; i < digits; i++) {
+        cards.push(strVal[i] || '0');
+    }
 
     return (
-        <div style={{ display: "flex", alignItems: "center", gap: "1px" }}>
-            <SingleFlipCard value={tens} />
-            <SingleFlipCard value={ones} />
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: "1px" }}>
+                {cards.map((digit, index) => (
+                    <SingleFlipCard key={`${label}-${index}`} value={digit} />
+                ))}
+            </div>
+            <div style={{ fontSize: "9px", color: "#ffffff", fontWeight: 700, textTransform: "uppercase", marginTop: "4px" }}>{label}</div>
         </div>
     );
 }
@@ -306,11 +401,11 @@ export default function AdminDashboard() {
                     position: relative;
                     display: flex;
                     flex-direction: column;
-                    width: 18px;
+                    width: 14px;
                     height: 26px;
                     font-size: 15px;
                     font-weight: 900;
-                    color: #01da25;
+                    color: #ffffff;
                     perspective: 300px;
                     font-family: 'Courier New', Courier, monospace;
                     background: #111;
@@ -456,16 +551,7 @@ export default function AdminDashboard() {
                                         onChange={() => handleSyncToggle(sync.sync_file_route, "sync_enabled", sync.sync_enabled)}
                                         style={{ width: 16, height: 16, accentColor: NAVY }}
                                     />
-                                    Enabled
-                                </label>
-                                <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={!!sync.is_active}
-                                        onChange={() => handleSyncToggle(sync.sync_file_route, "is_active", sync.is_active)}
-                                        style={{ width: 16, height: 16, accentColor: "#16a34a" }}
-                                    />
-                                    Active
+                                    Sync Enabled
                                 </label>
                             </div>
                         </div>

@@ -30,7 +30,15 @@ module.exports = function (app) {
                 order: [["game_date", "ASC"]]
             });
 
-            res.json(nextGame || null);
+            if (!nextGame) {
+                return res.json(null);
+            }
+
+            // Return game data combined with the games_model_name for series checks
+            res.json({
+                ...nextGame.toJSON(),
+                games_model_name: setting.games_model_name
+            });
         } catch (err) {
             console.error("Error fetching next game:", err);
             res.status(500).json({ error: "Failed to fetch next game" });

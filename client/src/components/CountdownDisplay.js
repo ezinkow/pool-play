@@ -42,6 +42,7 @@ function SingleFlipCard({ value }) {
 export default function PoolCountdown({ poolData, mode }) {
     const [timeLeft, setTimeLeft] = useState(null);
     const [subText, setSubText] = useState("");
+    const [isSeries, setIsSeries] = useState(false);
 
     const token = localStorage.getItem("token");
 
@@ -67,22 +68,27 @@ export default function PoolCountdown({ poolData, mode }) {
 
             const fetchNextGame = async () => {
                 try {
-                    // Universally query the next game using our clean backend route
                     const res = await axios.get(`/api/pools/next-game?game_key=${poolData.game_key}`, { headers });
                     const nextGame = res.data;
 
                     if (nextGame && isMounted) {
+                        // Check if games_model_name includes 'series'
+                        if (nextGame.games_model_name && nextGame.games_model_name.toLowerCase().includes('series')) {
+                            setIsSeries(true);
+                        }
+
                         const gameTime = new Date(nextGame.game_date || nextGame.date);
                         timer = setInterval(() => {
                             const diff = gameTime - new Date();
                             if (diff <= 0) {
                                 clearInterval(timer);
-                                fetchNextGame(); // Fetch the subsequent game when this one passes
+                                fetchNextGame();
                             } else {
                                 setTimeLeft(formatTime(diff));
                                 const away = nextGame.away_team || nextGame.awayTeam || "TBD";
                                 const home = nextGame.home_team || nextGame.homeTeam || "TBD";
-                                setSubText(`Next Game: ${away} @ ${home}`);
+                                const prefix = (nextGame.games_model_name && nextGame.games_model_name.toLowerCase().includes('series')) ? "Next Series" : "Next Game";
+                                setSubText(`${prefix}: ${away} @ ${home}`);
                             }
                         }, 1000);
                     } else if (isMounted) {
@@ -103,6 +109,10 @@ export default function PoolCountdown({ poolData, mode }) {
     }, [mode, poolData, token]);
 
     if (!timeLeft) return <div className="countdown-card" style={{ whiteSpace: "nowrap" }}>🏟️ Pool is active—games are currently underway! 🏈⚾</div>;
+
+    const headerTitle = mode === "pre-start" 
+        ? "Pool Entry Closes In" 
+        : (isSeries ? "Next Series Starts In" : "Next Game Starts In");
 
     return (
         <>
@@ -217,7 +227,7 @@ export default function PoolCountdown({ poolData, mode }) {
                 }
             `}</style>
             <div className="countdown-card">
-                <div className="countdown-title">⏳ {mode === "pre-start" ? "Pool Entry Closes In" : "Next Game Starts In"}</div>
+                <div className="countdown-title">⏳ {headerTitle}</div>
                 <div className="countdown-grid" style={{ display: "flex", gap: "10px", alignItems: "center", justifyContent: "center" }}>
                     <TimeBox label="Days" value={timeLeft.d} />
                     <span style={{ color: "#01da25", fontSize: "16px", fontWeight: "bold" }}>:</span>
