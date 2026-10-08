@@ -53,9 +53,10 @@ function SingleFlipCard({ value }) {
     );
 }
 
-// --- POOL COUNTDOWN COMPONENT (Exact Admin Hub Logic & Layout) ---
+// --- POOL COUNTDOWN COMPONENT ---
 function PoolCountdown({ poolData, mode, isDarkMode }) {
     const [timeLeft, setTimeLeft] = useState(null);
+    const [isSeries, setIsSeries] = useState(false);
     const token = localStorage.getItem("token");
 
     const gameKey = poolData?.game_key;
@@ -63,6 +64,14 @@ function PoolCountdown({ poolData, mode, isDarkMode }) {
     const openDate = poolData?.open_date;
     const endDate = poolData?.end_date;
     const isActive = poolData?.is_active === true || poolData?.is_active === 1 || poolData?.is_active === "true";
+
+    useEffect(() => {
+        if (poolData?.games_model_name && poolData.games_model_name.toLowerCase().includes('series')) {
+            setIsSeries(true);
+        } else if (poolData?.sport && poolData.sport.toLowerCase().includes('baseball')) {
+            setIsSeries(true);
+        }
+    }, [poolData]);
 
     useEffect(() => {
         let timer;
@@ -83,9 +92,7 @@ function PoolCountdown({ poolData, mode, isDarkMode }) {
                 if (diff <= 0) {
                     if (isMounted) setTimeLeft(null);
                     clearInterval(timer);
-                } else if (isMounted) {
-                    setTimeLeft(formatTime(diff));
-                }
+                } else if (isMounted) setTimeLeft(formatTime(diff));
             }, 1000);
         } else if (isBeforeOpen && openTime) {
             timer = setInterval(() => {
@@ -93,9 +100,7 @@ function PoolCountdown({ poolData, mode, isDarkMode }) {
                 if (diff <= 0) {
                     if (isMounted) setTimeLeft(null);
                     clearInterval(timer);
-                } else if (isMounted) {
-                    setTimeLeft(formatTime(diff));
-                }
+                } else if (isMounted) setTimeLeft(formatTime(diff));
             }, 1000);
         } else if (isPreStart && lockTime) {
             timer = setInterval(() => {
@@ -103,9 +108,7 @@ function PoolCountdown({ poolData, mode, isDarkMode }) {
                 if (diff <= 0) {
                     if (isMounted) setTimeLeft(null);
                     clearInterval(timer);
-                } else if (isMounted) {
-                    setTimeLeft(formatTime(diff));
-                }
+                } else if (isMounted) setTimeLeft(formatTime(diff));
             }, 1000);
         } else if (isActive && gameKey && !isLiveMode) {
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -113,7 +116,11 @@ function PoolCountdown({ poolData, mode, isDarkMode }) {
                 try {
                     const res = await axios.get(`/api/pools/next-game?game_key=${gameKey}`, { headers });
                     const nextGame = res.data;
+                    
                     if (nextGame && isMounted) {
+                        if (nextGame.games_model_name && nextGame.games_model_name.toLowerCase().includes('series')) {
+                            setIsSeries(true);
+                        }
                         const gameTime = new Date(nextGame.game_date || nextGame.date);
                         if (timer) clearInterval(timer);
                         timer = setInterval(() => {
@@ -121,9 +128,7 @@ function PoolCountdown({ poolData, mode, isDarkMode }) {
                             if (diff <= 0) {
                                 clearInterval(timer);
                                 fetchNextGame();
-                            } else if (isMounted) {
-                                setTimeLeft(formatTime(diff));
-                            }
+                            } else if (isMounted) setTimeLeft(formatTime(diff));
                         }, 1000);
                     } else if (isMounted) setTimeLeft(null);
                 } catch (err) { console.error("Error fetching countdown:", err); }
@@ -137,7 +142,7 @@ function PoolCountdown({ poolData, mode, isDarkMode }) {
         };
     }, [gameKey, lockDate, openDate, endDate, isActive, mode, token]);
 
-    if (!timeLeft) return <span style={{ fontSize: "11px", color: GRAY, fontStyle: "italic" }}>⚡ Check Status</span>;
+    if (!timeLeft) return <span style={{ fontSize: "12px", color: GRAY, fontStyle: "italic" }}>⚡ Check Status</span>;
 
     const now = new Date();
     const openTime = openDate ? new Date(openDate) : null;
@@ -145,7 +150,7 @@ function PoolCountdown({ poolData, mode, isDarkMode }) {
     const isBeforeOpen = !isActive || (openTime && now < openTime);
     const isPreStart = isActive && lockTime && now >= (openTime || 0) && now < lockTime;
     
-    let labelText = "NEXT:";
+    let labelText = isSeries ? "NEXT SERIES:" : "NEXT GAME:";
     if (mode === 'live') labelText = "ENDS:";
     else if (isBeforeOpen) labelText = "OPENS:";
     else if (isPreStart) labelText = "LOCKS:";
@@ -174,39 +179,39 @@ function PoolCountdown({ poolData, mode, isDarkMode }) {
         <>
             <style>{`
                 .flip-card-unit {
-                    position: relative; display: flex; flex-direction: column; width: 18px; height: 28px;
-                    font-size: 15px; font-weight: 900; color: #ffffff; perspective: 300px;
-                    font-family: 'Courier New', Courier, monospace; background: #111; border-radius: 3px;
+                    position: relative; display: flex; flex-direction: column; width: ${showYears ? '17px' : '20px'}; height: 34px;
+                    font-size: 17px; font-weight: 900; color: #ffffff; perspective: 300px;
+                    font-family: 'Courier New', Courier, monospace; background: #111; border-radius: 4px;
                 }
                 .flip-card-unit .top-static, .flip-card-unit .bottom-static { position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; }
-                .flip-card-unit .top-static { top: 0; background: #181818; border-bottom: 1px solid #000; border-radius: 3px 3px 0 0; }
-                .flip-card-unit .top-static span { position: absolute; top: 0; left: 0; width: 100%; height: 28px; line-height: 28px; text-align: center; }
-                .flip-card-unit .bottom-static { bottom: 0; background: #2c2c2c; border-top: 1px solid #111; border-radius: 0 0 3px 3px; }
-                .flip-card-unit .bottom-static span { position: absolute; top: -14px; left: 0; width: 100%; height: 28px; line-height: 28px; text-align: center; }
+                .flip-card-unit .top-static { top: 0; background: #181818; border-bottom: 1px solid #000; border-radius: 4px 4px 0 0; }
+                .flip-card-unit .top-static span { position: absolute; top: 0; left: 0; width: 100%; height: 34px; line-height: 34px; text-align: center; }
+                .flip-card-unit .bottom-static { bottom: 0; background: #2c2c2c; border-top: 1px solid #111; border-radius: 0 0 4px 4px; }
+                .flip-card-unit .bottom-static span { position: absolute; top: -17px; left: 0; width: 100%; height: 34px; line-height: 34px; text-align: center; }
                 .flip-card-unit .bottom-shade { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.45) 100%); pointer-events: none; }
                 .flip-card-unit .flipper { position: absolute; width: 100%; height: 50%; top: 0; transform-origin: bottom; transform-style: preserve-3d; z-index: 3; }
                 .flip-card-unit.flipping .flipper { transition: transform 0.4s ease-in-out; transform: rotateX(-180deg); }
                 .flip-card-unit .front, .flip-card-unit .back { position: absolute; left: 0; width: 100%; height: 100%; overflow: hidden; backface-visibility: hidden; }
-                .flip-card-unit .front { top: 0; background: #181818; border-bottom: 1px solid #000; border-radius: 3px 3px 0 0; }
-                .flip-card-unit .front span { position: absolute; top: 0; left: 0; width: 100%; height: 28px; line-height: 28px; text-align: center; }
-                .flip-card-unit .back { bottom: 0; background: #2c2c2c; transform: rotateX(180deg); border-radius: 0 0 3px 3px; }
-                .flip-card-unit .back span { position: absolute; top: -14px; left: 0; width: 100%; height: 28px; line-height: 28px; text-align: center; }
+                .flip-card-unit .front { top: 0; background: #181818; border-bottom: 1px solid #000; border-radius: 4px 4px 0 0; }
+                .flip-card-unit .front span { position: absolute; top: 0; left: 0; width: 100%; height: 34px; line-height: 34px; text-align: center; }
+                .flip-card-unit .back { bottom: 0; background: #2c2c2c; transform: rotateX(180deg); border-radius: 0 0 4px 4px; }
+                .flip-card-unit .back span { position: absolute; top: -17px; left: 0; width: 100%; height: 34px; line-height: 34px; text-align: center; }
             `}</style>
-            <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: containerBg, padding: "4px 8px", borderRadius: "6px", border: `1px solid ${containerBorder}`, maxWidth: "100%", overflow: "hidden" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: containerBg, padding: "5px 8px", borderRadius: "8px", border: `1px solid ${containerBorder}`, maxWidth: "100%", overflow: "hidden" }}>
                 <span style={{ color: "#ffffff", fontSize: "9px", fontWeight: "800", marginRight: "6px", textTransform: "uppercase" }}>{labelText}</span>
-                <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "nowrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "3px", flexWrap: "nowrap" }}>
                     {showYears && (
                         <>
                             {renderFlipPair(timeLeft.y, "Yrs", 2)}
-                            <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "16px" }}>:</span>
+                            <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "10px" }}>:</span>
                         </>
                     )}
                     {renderFlipPair(timeLeft.d, "Days", timeLeft.d.length >= 3 ? 3 : timeLeft.d.length)}
-                    <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "16px" }}>:</span>
+                    <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "10px" }}>:</span>
                     {renderFlipPair(timeLeft.h, "Hrs", 2)}
-                    <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "16px" }}>:</span>
+                    <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "10px" }}>:</span>
                     {renderFlipPair(timeLeft.m, "Min", 2)}
-                    <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "16px" }}>:</span>
+                    <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "10px" }}>:</span>
                     {renderFlipPair(timeLeft.s, "Sec", 2)}
                 </div>
             </div>
@@ -220,11 +225,11 @@ function formatTime(diff) {
     const msPerMinute = msPerSecond * 60;
     const msPerHour = msPerMinute * 60;
     const msPerDay = msPerHour * 24;
-    const msPerYear = msPerDay * 365.25; 
+    const msPerYear = msPerDay * 365.25;
 
     let years = Math.floor(diff / msPerYear);
     let remainingAfterYears = diff % msPerYear;
-    
+
     if (years < 0) {
         years = 0;
         remainingAfterYears = diff;
@@ -330,33 +335,82 @@ export default function Home() {
                 border: isDarkMode ? "1px solid #334155" : "1px solid #e2e8f0",
                 transition: "transform 0.2s ease"
             }}>
-                <div onClick={() => setExpandedCards(p => ({ ...p, [card.key]: !p[card.key] }))} style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", gap: "12px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
-                        <span style={{ fontSize: 26, flexShrink: 0 }}>{card.emoji || "🎮"}</span>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "6px", minWidth: 0, flex: 1 }}>
-                            <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: card.isActive ? (isDarkMode ? "#f8fafc" : DEEP_NAVY) : GRAY, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{card.title}</h3>
-                            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px" }}>
-                                {group === 'upcoming' && <PoolCountdown poolData={card} mode="upcoming" isDarkMode={isDarkMode} />}
-                                {group === 'live' && <PoolCountdown poolData={card} mode="active" isDarkMode={isDarkMode} />}
-                                {group === 'inactive' && card.open_date > new Date() && <PoolCountdown poolData={card} mode="inactive" isDarkMode={isDarkMode} />}
+                <style>{`
+                .pool-card-content-${card.key} {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 16px;
+                }
+                .pool-card-titles-${card.key} {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                    gap: 14px;
+                    flex: 1;
+                    min-width: 0;
+                }
+                .pool-card-text-group-${card.key} {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                    flex: 1;
+                    min-width: 0;
+                }
+                @media (max-width: 768px) {
+                    .pool-card-content-${card.key} {
+                        flex-direction: column !important;
+                        align-items: stretch !important;
+                    }
+                    .pool-card-text-group-${card.key} {
+                        flex-direction: column !important;
+                        align-items: flex-start !important;
+                        gap: 8px !important;
+                    }
+                    .pool-card-right-${card.key} {
+                        width: 100% !important;
+                        justify-content: space-between !important;
+                        margin-top: 10px !important;
+                        padding-top: 10px !important;
+                        border-top: ${isDarkMode ? "1px solid #334155" : "1px solid #e2e8f0"};
+                    }
+                }
+            `}</style>
+
+                <div onClick={() => setExpandedCards(p => ({ ...p, [card.key]: !p[card.key] }))} style={{ padding: "16px 20px", cursor: "pointer" }}>
+                    <div className={`pool-card-content-${card.key}`}>
+
+                        {/* Left & Middle: Emoji, Title, and Timer */}
+                        <div className={`pool-card-titles-${card.key}`}>
+                            <span style={{ fontSize: 28, flexShrink: 0 }}>{card.emoji || "🎮"}</span>
+                            <div className={`pool-card-text-group-${card.key}`}>
+                                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: card.isActive ? (isDarkMode ? "#f8fafc" : DEEP_NAVY) : GRAY, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{card.title}</h3>
+                                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px" }}>
+                                    {group === 'upcoming' && <PoolCountdown poolData={card} mode="upcoming" isDarkMode={isDarkMode} />}
+                                    {group === 'live' && <PoolCountdown poolData={card} mode="active" isDarkMode={isDarkMode} />}
+                                    {group === 'inactive' && card.open_date > new Date() && <PoolCountdown poolData={card} mode="inactive" isDarkMode={isDarkMode} />}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                        {card.isActive && (
-                            <button
-                                onClick={(e) => { e.stopPropagation(); navigate(card.route); }}
-                                style={{ background: GREEN, color: "white", border: "none", borderRadius: "6px", padding: "6px 12px", fontSize: "12px", fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}
-                            >
-                                Play →
-                            </button>
-                        )}
-                        <span style={{ color: GRAY, fontSize: "12px", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>
+
+                        {/* Right Side: Play Button & Dropdown Arrow */}
+                        <div className={`pool-card-right-${card.key}`} style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                            {card.isActive && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); navigate(card.route); }}
+                                    style={{ background: GREEN, color: "white", border: "none", borderRadius: "6px", padding: "8px 18px", fontSize: "12px", fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}
+                                >
+                                    Play →
+                                </button>
+                            )}
+                            <span style={{ color: GRAY, fontSize: "12px", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", padding: "4px" }}>▼</span>
+                        </div>
+
                     </div>
                 </div>
 
                 <div style={{ maxHeight: isExpanded ? "200px" : "0px", opacity: isExpanded ? 1 : 0, transition: "all 0.25s ease-in-out", overflow: "hidden" }}>
-                    <div style={{ padding: "0 20px 20px 60px", borderTop: isDarkMode ? "1px solid #334155" : "1px solid #f1f5f9" }}>
+                    <div style={{ padding: "0 20px 20px 62px", borderTop: isDarkMode ? "1px solid #334155" : "1px solid #f1f5f9" }}>
                         <p style={{ margin: "12px 0 0", color: isDarkMode ? "#cbd5e1" : "#475569", fontSize: "13px", lineHeight: 1.5 }}>
                             {card.description || "Join this pool to compete with friends, track live standings, and test your predictive skills!"}
                         </p>
