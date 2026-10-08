@@ -6,6 +6,10 @@ module.exports = function (sequelize, DataTypes) {
             primaryKey: true,
             allowNull: false,
         },
+        series_summary: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
         round: {
             type: DataTypes.INTEGER,  // 1-4
             allowNull: false,
@@ -71,7 +75,7 @@ module.exports = function (sequelize, DataTypes) {
         tableName: "mlb_playoffs_series",
         timestamps: true,
     });
-    
+
     MlbPlayoffsSeries.associate = function (models) {
         MlbPlayoffsSeries.hasMany(models.MlbPlayoffsPicks, {
             foreignKey: "series_id"

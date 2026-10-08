@@ -32,6 +32,41 @@ function getPlaceholderId(roundNum, league, index) {
     return null;
 }
 
+function formatSeriesStartDate(dateObj) {
+    if (!dateObj || isNaN(dateObj.getTime())) return null;
+
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+    const weekday = weekdays[dateObj.getUTCDay()];
+    const month = months[dateObj.getUTCMonth()];
+    const day = dateObj.getUTCDate();
+
+    let suffix = 'th';
+    if (day === 1 || day === 21 || day === 31) suffix = 'st';
+    else if (day === 2 || day === 22) suffix = 'nd';
+    else if (day === 3 || day === 23) suffix = 'rd';
+
+    return `Series starts ${weekday}, ${month} ${day}${suffix}`;
+}
+
+// Helper to format Game 1 First Pitch string (e.g., "Game 1 First Pitch: OCT 11, 8/7 CT")
+function formatFirstPitch(dateObj) {
+    if (!dateObj || isNaN(dateObj.getTime())) return null;
+    const month = dateObj.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+    const day = dateObj.getDate();
+
+    // Format time in Central Time (CT)
+    const timeStr = dateObj.toLocaleTimeString('en-US', {
+        timeZone: 'America/Chicago',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    }).toLowerCase().replace(/\s+/g, '');
+
+    return `Game 1 First Pitch: ${month} ${day}, ${timeStr}`;
+}
+
 function extractSeries(data, seriesMap) {
     if (!data?.events) return;
 
@@ -63,7 +98,7 @@ function extractSeries(data, seriesMap) {
         const espnSeries = comp.series;
         let bracketHomeWins = 0;
         let bracketAwayWins = 0;
-        let seriesSummaryText = espnSeries?.summary || "";
+        let rawEspnSummary = espnSeries?.summary || "";
         let seriesCompleted = espnSeries?.completed || false;
 
         if (espnSeries?.competitors) {
@@ -83,7 +118,6 @@ function extractSeries(data, seriesMap) {
 
         const leagueSeriesList = seriesMap.get(groupKey);
 
-        // Match existing matchup based on rounded series group rather than sloppy team ID flipping
         let existingMatchup = leagueSeriesList.find(s => s.roundNum === roundNum && s.league === league);
 
         if (!existingMatchup) {
@@ -98,22 +132,20 @@ function extractSeries(data, seriesMap) {
                 isGameOne: isGameOne,
                 homeWins: bracketHomeWins,
                 awayWins: bracketAwayWins,
-                seriesSummary: seriesSummaryText,
+                rawSeriesSummary: rawEspnSummary,
                 seriesCompleted: seriesCompleted,
-                roundLabel: headline.replace(/ - Game \d+/i, "") || ROUND_CONFIG[roundNum].label,
+                roundLabel: ROUND_CONFIG[roundNum].label,
                 homeLiveScore: homeScore,
                 awayLiveScore: awayScore,
                 liveSummary: liveDetail,
                 isLive: isLive
             });
         } else {
-            // Strictly respect ESPN's home/away slot assignment and update team info from the event
             existingMatchup.home = homeComp;
             existingMatchup.away = awayComp;
             existingMatchup.homeName = homeName;
             existingMatchup.awayName = awayName;
 
-            // If this event is Game 1, override the start date with Game 1's exact timestamp
             if (isGameOne || !existingMatchup.startDate) {
                 existingMatchup.startDate = eventDate;
                 existingMatchup.isGameOne = isGameOne;
@@ -123,7 +155,7 @@ function extractSeries(data, seriesMap) {
                 existingMatchup.homeWins = bracketHomeWins;
                 existingMatchup.awayWins = bracketAwayWins;
             }
-            if (seriesSummaryText) existingMatchup.seriesSummary = seriesSummaryText;
+            if (rawEspnSummary) existingMatchup.rawSeriesSummary = rawEspnSummary;
             if (seriesCompleted) existingMatchup.seriesCompleted = true;
             if (isLive) {
                 existingMatchup.homeLiveScore = homeScore;
@@ -178,7 +210,7 @@ async function syncMlbPlayoffs() {
 
                 const homeTeamId = parseInt(s.home.team?.id || "0", 10);
                 const awayTeamId = parseInt(s.away.team?.id || "0", 10);
-                
+
                 const isHomeTbd = homeTeamId < 0;
                 const isAwayTbd = awayTeamId < 0;
 
@@ -203,11 +235,28 @@ async function syncMlbPlayoffs() {
 
                 const homeAbbr = s.home.team?.abbreviation;
                 const awayAbbr = s.away.team?.abbreviation;
-                const summaryText = s.seriesSummary || "";
+                let finalSeriesSummary = "";
 
-                if (summaryText && homeAbbr && awayAbbr) {
-                    if (summaryText.includes(homeAbbr)) seriesWinnerName = homeTeamName;
-                    else if (summaryText.includes(awayAbbr)) seriesWinnerName = awayTeamName;
+                const startDateObj = s.startDate ? new Date(s.startDate) : null;
+                const isPlaceholderTime = s.startDate && s.startDate.includes("04:00Z");
+
+                const totalWins = finalHomeWins + finalAwayWins;
+
+                if (isHomeTbd || isAwayTbd || isPlaceholderTime) {
+                    // Both TBD OR time is still a placeholder -> Use our clean formatted text
+                    const dateFormatted = formatSeriesStartDate(startDateObj);
+                    finalSeriesSummary = dateFormatted ? `${dateFormatted}. Time TBD` : "Series starts soon. Time TBD";
+                } else if (totalWins > 0 || s.isLive || s.seriesCompleted) {
+                    // Once series is underway/completed -> Use raw ESPN series summary (e.g. "LAD lead series 1-0")
+                    finalSeriesSummary = s.rawSeriesSummary || `Series tied ${finalHomeWins}-${finalAwayWins}`;
+                } else {
+                    // Both decided and an exact first pitch time is announced -> Format the first pitch string
+                    finalSeriesSummary = formatFirstPitch(startDateObj) || "Game 1 First Pitch Scheduled";
+                }
+
+                if (s.rawSeriesSummary && homeAbbr && awayAbbr) {
+                    if (s.rawSeriesSummary.includes(homeAbbr)) seriesWinnerName = homeTeamName;
+                    else if (s.rawSeriesSummary.includes(awayAbbr)) seriesWinnerName = awayTeamName;
                 }
 
                 const targetWins = ROUND_CONFIG[roundNum].targetWins;
@@ -217,15 +266,14 @@ async function syncMlbPlayoffs() {
                 }
 
                 let seriesOver = s.seriesCompleted || finalHomeWins === targetWins || finalAwayWins === targetWins;
-                let seriesStatus = seriesOver ? "STATUS_FINAL" : ((s.isLive || finalHomeWins + finalAwayWins > 0) ? "STATUS_IN_PROGRESS" : "STATUS_SCHEDULED");
+                let seriesStatus = seriesOver ? "STATUS_FINAL" : ((s.isLive || totalWins > 0) ? "STATUS_IN_PROGRESS" : "STATUS_SCHEDULED");
 
                 const now = new Date();
-                const startTime = s.startDate ? new Date(s.startDate) : null;
-                const isLocked = (startTime && now >= startTime) || (finalHomeWins + finalAwayWins > 0);
+                const isLocked = (startDateObj && now >= startDateObj) || (totalWins > 0);
 
                 const updatePayload = {
                     round: roundNum,
-                    round_label: s.roundLabel || ROUND_CONFIG[roundNum].label,
+                    round_label: ROUND_CONFIG[roundNum].label,
                     round_points_max: ROUND_CONFIG[roundNum].maxPoints,
                     league: league,
                     home_team: homeTeamName,
@@ -241,6 +289,7 @@ async function syncMlbPlayoffs() {
                     locked: isLocked,
                     winner: seriesOver ? seriesWinnerName : null,
                     series_length: parsedLength,
+                    series_summary: finalSeriesSummary,
                     live_summary: s.isLive ? s.liveSummary : null,
                     home_live_score: s.isLive ? s.homeLiveScore : null,
                     away_live_score: s.isLive ? s.awayLiveScore : null

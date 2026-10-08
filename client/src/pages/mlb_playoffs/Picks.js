@@ -30,7 +30,7 @@ export default function Picks() {
             .then(res => setSeries(res.data || []))
             .catch(() => toast.error("Error loading series"));
     }, []);
-
+    console.log(series)
     useEffect(() => {
         if (user && series.length > 0) {
             const token = localStorage.getItem("token");
@@ -231,7 +231,7 @@ export default function Picks() {
                                 }}>
                                     {/* Game Time Header */}
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, fontSize: "10px", fontWeight: 700, color: "#d97706", textTransform: "uppercase" }}>
-                                        <span>Game 1 First Pitch: {formatDateTime(s.game_date)} CT</span>
+                                        <span>{s.series_summary}</span>
                                     </div>
 
                                     {/* Team Selector Grid (Away vs Home) */}

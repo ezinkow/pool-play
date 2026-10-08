@@ -299,7 +299,7 @@ module.exports = function (app) {
             const series = await MlbPlayoffsSeries.findAll({
                 order: [["round", "ASC"], ["id", "ASC"]],
                 attributes: [
-                    "id", "round", "round_label", "round_points_max", "league",
+                    "id", "round", "series_summary", "round_label", "round_points_max", "league",
                     "home_team", "away_team", "home_logo", "away_logo",
                     "home_seed", "away_seed", "home_wins", "away_wins",
                     "winner", "series_length", "status", "locked", "game_date",
