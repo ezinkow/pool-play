@@ -24,14 +24,6 @@ function getLeague(headline = "") {
     return "";
 }
 
-function getPlaceholderId(roundNum, league, index) {
-    if (roundNum === 4) return "R4-MLB-WS";
-    if (roundNum === 3) return `R3-${league}-CS`;
-    if (roundNum === 2) return `R2-${league}-${league === "AL" ? "ALDS" : "NLDS"}${index + 1}`;
-    if (roundNum === 1) return `R1-${league}-${league === "AL" ? "ALWC" : "NLWC"}${index + 1}`;
-    return null;
-}
-
 function formatSeriesStartDate(dateObj) {
     if (!dateObj || isNaN(dateObj.getTime())) return null;
 
@@ -50,13 +42,11 @@ function formatSeriesStartDate(dateObj) {
     return `Series starts ${weekday}, ${month} ${day}${suffix}`;
 }
 
-// Helper to format Game 1 First Pitch string (e.g., "Game 1 First Pitch: OCT 11, 8/7 CT")
 function formatFirstPitch(dateObj) {
     if (!dateObj || isNaN(dateObj.getTime())) return null;
     const month = dateObj.toLocaleString('en-US', { month: 'short' }).toUpperCase();
     const day = dateObj.getDate();
 
-    // Format time in Central Time (CT)
     const timeStr = dateObj.toLocaleTimeString('en-US', {
         timeZone: 'America/Chicago',
         hour: 'numeric',
@@ -118,9 +108,14 @@ function extractSeries(data, seriesMap) {
 
         const leagueSeriesList = seriesMap.get(groupKey);
 
-        let existingMatchup = leagueSeriesList.find(s => s.roundNum === roundNum && s.league === league);
+        // Check if this specific matchup/teams already exist in our list for this round
+        let existingMatchup = leagueSeriesList.find(s => {
+            const teamIds = [String(s.home.team?.id), String(s.away.team?.id)];
+            return teamIds.includes(String(homeComp.team?.id)) || teamIds.includes(String(awayComp.team?.id));
+        });
 
         if (!existingMatchup) {
+            // If list has room (e.g. max 2 for DS/WC), add it, otherwise find an open slot or create new
             leagueSeriesList.push({
                 roundNum,
                 league,
@@ -202,11 +197,28 @@ async function syncMlbPlayoffs() {
             const [roundStr, league] = groupKey.split("-");
             const roundNum = parseInt(roundStr, 10);
 
-            for (const [index, s] of matches.entries()) {
-                const placeholderId = getPlaceholderId(roundNum, league, index);
-                if (!placeholderId) continue;
+            // Dynamically assign slots based on database placeholders rather than dropping unmatched indexes
+            for (let index = 0; index < (roundNum === 1 || roundNum === 2 ? 2 : 1); index++) {
+                const placeholderId = roundNum === 4 
+                    ? "R4-MLB-WS" 
+                    : (roundNum === 3 
+                        ? `R3-${league}-CS` 
+                        : `R2-${league}-${league === "AL" ? "ALDS" : "NLDS"}${index + 1}` || `R1-${league}-${league === "AL" ? "ALWC" : "NLWC"}${index + 1}`);
 
-                const existingRow = await MlbPlayoffsSeries.findOne({ where: { id: placeholderId } });
+                if (roundNum === 1) {
+                    // Specific fix for wild card naming format
+                    var pId = `R1-${league}-${league === "AL" ? "ALWC" : "NLWC"}${index + 1}`;
+                } else {
+                    var pId = placeholderId;
+                }
+
+                const s = matches[index];
+                const existingRow = await MlbPlayoffsSeries.findOne({ where: { id: pId } });
+
+                if (!s) {
+                    // If no live match data from ESPN yet for this specific slot, ensure row is preserved or initialized safely
+                    continue;
+                }
 
                 const homeTeamId = parseInt(s.home.team?.id || "0", 10);
                 const awayTeamId = parseInt(s.away.team?.id || "0", 10);
@@ -243,14 +255,11 @@ async function syncMlbPlayoffs() {
                 const totalWins = finalHomeWins + finalAwayWins;
 
                 if (isHomeTbd || isAwayTbd || isPlaceholderTime) {
-                    // Both TBD OR time is still a placeholder -> Use our clean formatted text
                     const dateFormatted = formatSeriesStartDate(startDateObj);
                     finalSeriesSummary = dateFormatted ? `${dateFormatted}. Time TBD` : "Series starts soon. Time TBD";
                 } else if (totalWins > 0 || s.isLive || s.seriesCompleted) {
-                    // Once series is underway/completed -> Use raw ESPN series summary (e.g. "LAD lead series 1-0")
                     finalSeriesSummary = s.rawSeriesSummary || `Series tied ${finalHomeWins}-${finalAwayWins}`;
                 } else {
-                    // Both decided and an exact first pitch time is announced -> Format the first pitch string
                     finalSeriesSummary = formatFirstPitch(startDateObj) || "Game 1 First Pitch Scheduled";
                 }
 
@@ -296,10 +305,10 @@ async function syncMlbPlayoffs() {
                 };
 
                 await MlbPlayoffsSeries.update(updatePayload, {
-                    where: { id: placeholderId }
+                    where: { id: pId }
                 });
 
-                console.log(`[MLB Playoffs Sync] Successfully updated placeholder slot ${placeholderId} with Away: ${awayTeamName} @ Home: ${homeTeamName}`);
+                console.log(`[MLB Playoffs Sync] Successfully updated slot ${pId} with Away: ${awayTeamName} @ Home: ${homeTeamName}`);
             }
         }
         console.log("[MLB Playoffs Sync Job] Finished syncing MLB postseason series safely.");
