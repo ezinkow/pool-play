@@ -325,7 +325,7 @@ export default function NflPickemAtsPicks() {
                 }}>
                     <div style={{ textAlign: "center" }}>
                         <h2 style={{ color: NFL_BLUE, fontSize: "19px", margin: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontWeight: 800 }}>
-                            <span>🏈</span> {poolTitle || "NFL Pick'em ATS"} <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span>
+                            <span>🏈</span> NFL Pick'em ATS <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span>
                         </h2>
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
                             Make your ATS picks & assign exactly 3 Best Bets ⭐ (worth 2 points).
