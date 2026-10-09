@@ -62,8 +62,15 @@ export default function Navbar() {
 
     const currentGame = useMemo(() => {
         if (isHome) return null;
+        // Sort by prefix length descending so more specific paths match first
         const sortedGames = [...rawGameSettings].sort((a, b) => (b.prefix?.length || 0) - (a.prefix?.length || 0));
-        return sortedGames.find(g => g.prefix && location.pathname.startsWith(g.prefix));
+
+        return sortedGames.find(g => {
+            if (!g.prefix) return false;
+            const pfx = g.prefix;
+            // Match if pathname equals the prefix OR starts with prefix followed by '/' (e.g. /nflsurvivor_secondchance/picks)
+            return location.pathname === pfx || location.pathname.startsWith(pfx + "/");
+        });
     }, [rawGameSettings, location.pathname, isHome]);
 
     const activeLinks = useMemo(() => {
@@ -320,7 +327,7 @@ export default function Navbar() {
                 <>
                     <div className="menu-overlay" onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 2998, display: "block" }} />
                     <nav className="nav-links open" style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "280px", backgroundColor: "#111827", boxShadow: "-4px 0 20px rgba(0,0,0,0.3)", zIndex: 2999, display: "flex", flexDirection: "column", padding: "16px 0", overflowY: "auto" }}>
-                        
+
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 16px 12px 20px", borderBottom: "1px solid rgba(255,255,255,0.1)", flexShrink: 0 }}>
                             <span style={{ color: GOLD, fontWeight: 900, fontSize: "12px", letterSpacing: "1px", whiteSpace: "nowrap" }}>MENU PANELS</span>
                             <button onClick={() => setMenuOpen(false)} style={{ background: "none", border: "none", color: "white", fontSize: "18px", cursor: "pointer", padding: "4px 8px", lineHeight: 1, flexShrink: 0 }}>✕</button>
@@ -344,7 +351,7 @@ export default function Navbar() {
                                     <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", width: "100%", margin: "8px 0" }} />
                                 </>
                             )}
-                            
+
                             <div style={{ padding: "0 20px 6px 20px", fontSize: "10px", color: "#64748b", fontWeight: 800, letterSpacing: "1px", width: "100%", boxSizing: "border-box" }}>ACTIVE POOLS</div>
                             {categorizedGames.active.map((game) => {
                                 const isLinkActive = true;

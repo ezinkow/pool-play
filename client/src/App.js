@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import { HashRouter as Router, Routes, Route } from "react-router-dom";
+import { HashRouter as BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 
 // Shared
 import Home from './pages/Home';
@@ -125,6 +125,12 @@ import NflSurvivorPicks from './pages/nfl_survivor/Picks';
 import NflSurvivorMyPicks from './pages/nfl_survivor/MyPicks';
 import NflSurvivorGroupPicks from './pages/nfl_survivor/GroupsPicks';
 
+// NFL 2nd Chance Survivor pages
+import NflSurvivorSecondChanceHome from './pages/nfl_survivor/Home';
+import NflSurvivorSecondChancePicks from './pages/nfl_survivor/Picks';
+import NflSurvivorSecondChanceMyPicks from './pages/nfl_survivor/MyPicks';
+import NflSurvivorSecondChanceGroupPicks from './pages/nfl_survivor/GroupsPicks';
+
 // Super Bowl Squares pages
 import SuperBowlSquaresGrid from "./pages/superbowl_squares/Grid";
 import SuperBowlSquaresResults from "./pages/superbowl_squares/Results";
@@ -151,14 +157,165 @@ import WorldCupSignUp from './pages/world_cup/SignUp';
 import WorldCupStandings from './pages/world_cup/Standings';
 import WorldCupGroupPicks from './pages/world_cup/GroupPicks';
 
+function MainLayout() {
+  return (
+    <div style={{ paddingTop: "50px" }}>
+      <div style={{ padding: "16px", paddingTop: "60px", maxWidth: "1200px", margin: "0 auto" }}>
+        <Outlet />
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   return (
-    <Router>
+    <BrowserRouter>
       <Navbar />
-
       <Routes>
-        {/* Homepage rendered outside page-content so it has no forced top padding */}
+        {/* --- GROUP 1: Pages wrapped inside MainLayout --- */}
+        <Route element={<MainLayout />}>
+          <Route path="/signup" element={<SignUp />} />
+
+          {/* CFB Pickem ATS */}
+          <Route path="/cfbpickemats" element={<CfbPickemAtsHome />} />
+          <Route path="/cfbpickemats/picks" element={<CfbPickemAtsPicks />} />
+          <Route path="/cfbpickemats/mypicks" element={<CfbPickemAtsMyPicks />} />
+          <Route path="/cfbpickemats/standings" element={<CfbPickemAtsStandings />} />
+          <Route path="/cfbpickemats/grouppicks" element={<CfbPickemAtsGroupPicks />} />
+
+          {/* CFB Bowl Confidence Pickem */}
+          <Route path="/bowlpickem" element={<BowlConfidenceHome />} />
+          <Route path="/bowlpickem/picks" element={<BowlConfidencePicks />} />
+          <Route path="/bowlpickem/mypicks" element={<BowlConfidenceMyPicks />} />
+          <Route path="/bowlpickem/standings" element={<BowlConfidenceStandings />} />
+          <Route path="/bowlpickem/grouppicks" element={<BowlConfidenceGroupPicks />} />
+
+          {/* Champ Week Pickem */}
+          <Route path="/champweekpickem" element={<ChampWeekPickemHome />} />
+          <Route path="/champweekpickem/signup" element={<ChampWeekPickemSignUp />} />
+          <Route path="/champweekpickem/picks" element={<ChampWeekPickemPicks />} />
+          <Route path="/champweekpickem/mypicks" element={<ChampWeekPickemMyPicks />} />
+          <Route path="/champweekpickem/scoreboard" element={<ChampWeekPickemScoreboard />} />
+          <Route path="/champweekpickem/picksdisplay" element={<ChampWeekPickemUserPicksDisplay />} />
+          <Route path="/champweekpickem/standings" element={<ChampWeekPickemStandings />} />
+          <Route path="/champweekpickem/adminrefresh" element={<ChampWeekPickemAdminRefresh />} />
+
+          {/* Home Run Derby */}
+          <Route path="/hrd" element={<HomeRunDerbyHome />} />
+          <Route path="/hrd/picks" element={<HomeRunDerbyPicks />} />
+          <Route path="/hrd/standings" element={<HomeRunDerbyStandings />} />
+          <Route path="/hrd/allteams" element={<ViewAllTeams />} />
+
+          {/* Tourney Pickem */}
+          <Route path="/tourneypickem" element={<TourneyPickemHome />} />
+          <Route path="/tourneypickem/picks" element={<TourneyPickemPicks />} />
+          <Route path="/tourneypickem/mypicks" element={<TourneyPickemMyPicks />} />
+          <Route path="/tourneypickem/standings" element={<TourneyPickemStandings />} />
+          <Route path="/tourneypickem/scoreboard" element={<TourneyPickemScoreboard />} />
+          <Route path="/tourneypickem/picksdisplay" element={<TourneyPickemUserPicksDisplay />} />
+          <Route path="/tourneypickem/signup" element={<TourneyPickemSignUp />} />
+          <Route path="/tourneypickem/adminrefresh" element={<TourneyPickemAdminRefresh />} />
+
+          {/* Tourney Bracket */}
+          <Route path="/bracket" element={<BracketHome />} />
+          <Route path="/bracket/bracket" element={<BracketChallenge />} />
+          <Route path="/bracket/mybracket" element={<BracketMyBracket />} />
+          <Route path="/bracket/standings" element={<BracketStandings />} />
+          <Route path="/bracket/signup" element={<BracketSignUp />} />
+
+          {/* Tourney Squares */}
+          <Route path="/tourneysquares" element={<TourneySquaresHome />} />
+          <Route path="/tourneysquares/grid" element={<TourneySquaresGrid />} />
+          <Route path="/tourneysquares/results" element={<TourneySquaresResults />} />
+          <Route path="/tourneysquares/signup" element={<TourneySquaresSignUp />} />
+          <Route path="/tourneysquares/numbers" element={<TourneySquaresNumbers />} />
+          <Route path="/tourneysquares/admin" element={<TourneySquaresAdmin />} />
+
+          {/* MLB Playoffs */}
+          <Route path="/mlb" element={<MlbPlayoffsHome />} />
+          <Route path="/mlb/picks" element={<MlbPlayoffsPicks />} />
+          <Route path="/mlb/mypicks" element={<MlbPlayoffsMyPicks />} />
+          <Route path="/mlb/grouppicks" element={<MlbPlayoffsGroupPicks />} />
+          <Route path="/mlb/standings" element={<MlbPlayoffsStandings />} />
+
+          {/* NBA Playoffs */}
+          <Route path="/nba" element={<NbaHome />} />
+          <Route path="/nba/picks" element={<NbaPicks />} />
+          <Route path="/nba/mypicks" element={<NbaMyPicks />} />
+          <Route path="/nba/standings" element={<NbaStandings />} />
+          <Route path="/nba/grouppicks" element={<NbaGroupPicks />} />
+          <Route path="/nba/signup" element={<NbaSignUp />} />
+          <Route path="/nba/adminrefresh" element={<NbaAdminRefresh />} />
+
+          {/* NBA Survivor */}
+          <Route path="/nbasurvivor" element={<NbaSurvivorHome />} />
+          <Route path="/nbasurvivor/picks" element={<NbaSurvivorPicks />} />
+          <Route path="/nbasurvivor/mypicks" element={<NbaSurvivorMyPicks />} />
+          <Route path="/nbasurvivor/grouppicks" element={<NbaSurvivorGroupPicks />} />
+
+          {/* NFL Playoffs */}
+          <Route path="/nfl" element={<NflHome />} />
+          <Route path="/nfl/signup" element={<NflSignUp />} />
+          <Route path="/nfl/rosterpicks" element={<NflRosterPicks />} />
+          <Route path="/nfl/scoreboard" element={<NflScoreboard />} />
+          <Route path="/nfl/myroster" element={<NflMyRoster />} />
+          <Route path="/nfl/standings" element={<NflStandings />} />
+          <Route path="/nfl/playerstats" element={<NflPlayerPoolsTable />} />
+
+          {/* NFL Pickem ATS */}
+          <Route path="/nflpickemats" element={<NflPickemAtsHome />} />
+          <Route path="/nflpickemats/picks" element={<NflPickemAtsPicks />} />
+          <Route path="/nflpickemats/mypicks" element={<NflPickemAtsMyPicks />} />
+          <Route path="/nflpickemats/standings" element={<NflPickemAtsStandings />} />
+          <Route path="/nflpickemats/grouppicks" element={<NflPickemAtsGroupPicks />} />
+
+          {/* NFL BTS */}
+          <Route path="/nflbts" element={<NflBtsHome />} />
+          <Route path="/nflbts/picks" element={<NflBtsPicks />} />
+          <Route path="/nflbts/mypicks" element={<NflBtsMyPicks />} />
+          <Route path="/nflbts/standings" element={<NflBtsStandings />} />
+          <Route path="/nflbts/grouppicks" element={<NflBtsGroupPicks />} />
+
+          {/* NFL Survivor */}
+          <Route path="/nflsurvivor" element={<NflSurvivorHome />} />
+          <Route path="/nflsurvivor/picks" element={<NflSurvivorPicks />} />
+          <Route path="/nflsurvivor/mypicks" element={<NflSurvivorMyPicks />} />
+          <Route path="/nflsurvivor/grouppicks" element={<NflSurvivorGroupPicks />} />
+
+          {/* NFL 2nd Chance Survivor */}
+          <Route path="/nflsurvivor_secondchance" element={<NflSurvivorSecondChanceHome />} />
+          <Route path="/nflsurvivor_secondchance/picks" element={<NflSurvivorSecondChancePicks />} />
+          <Route path="/nflsurvivor_secondchance/mypicks" element={<NflSurvivorSecondChanceMyPicks />} />
+          <Route path="/nflsurvivor_secondchance/grouppicks" element={<NflSurvivorSecondChanceGroupPicks />} />
+
+          {/* Super Bowl Squares */}
+          <Route path="/superbowlsquares" element={<SuperBowlSquaresHome />} />
+          <Route path="/superbowlsquares/grid" element={<SuperBowlSquaresGrid />} />
+          <Route path="/superbowlsquares/results" element={<SuperBowlSquaresResults />} />
+          <Route path="/superbowlsquares/signup" element={<SuperBowlSquaresSignUp />} />
+          <Route path="/superbowlsquares/numbers" element={<SuperBowlSquaresNumbers />} />
+          <Route path="/superbowlsquares/admin" element={<SuperBowlSquaresAdmin />} />
+
+          {/* Olympics */}
+          <Route path="/olympics" element={<OlympicsHome />} />
+          <Route path="/olympics/signup" element={<OlympicsSignUp />} />
+          <Route path="/olympics/countrypicks" element={<OlympicsCountryPicks />} />
+          <Route path="/olympics/scoreboard" element={<OlympicsScoreboard />} />
+          <Route path="/olympics/standings" element={<OlympicsStandings />} />
+          <Route path="/olympics/medaltable" element={<OlympicsMedalTable />} />
+          <Route path="/olympics/myroster" element={<OlympicsMyRoster />} />
+
+          {/* World Cup */}
+          <Route path="/worldcup" element={<WorldCupHome />} />
+          <Route path="/worldcup/signup" element={<WorldCupSignUp />} />
+          <Route path="/worldcup/picks" element={<WorldCupPicks />} />
+          <Route path="/worldcup/grouppicks" element={<WorldCupGroupPicks />} />
+          <Route path="/worldcup/scoreboard" element={<WorldCupScoreboard />} />
+          <Route path="/worldcup/mypicks" element={<WorldCupMyPicks />} />
+          <Route path="/worldcup/standings" element={<WorldCupStandings />} />
+        </Route>
+
+        {/* --- GROUP 2: Standalone / Full-Screen Routes OUTSIDE MainLayout --- */}
         <Route path="/" element={<div className="home-content"><Home /></div>} />
         <Route path="/changepassword" element={<ChangePassword />} />
         <Route path="/forgotusername" element={<ForgotUsername />} />
@@ -169,150 +326,9 @@ export default function App() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/admin" element={<Admin />} />
-        {/* All other sub-pages wrapped inside page-content */}
-        <Route path="*" element={
-          <main className="page-content">
-            <Routes>
-              <Route path="/signup" element={<SignUp />} />
-              {/* CFB Pickem ATS*/}
-              <Route path="/cfbpickemats" element={<CfbPickemAtsHome />} />
-              <Route path="/cfbpickemats/picks" element={<CfbPickemAtsPicks />} />
-              <Route path="/cfbpickemats/mypicks" element={<CfbPickemAtsMyPicks />} />
-              <Route path="/cfbpickemats/standings" element={<CfbPickemAtsStandings />} />
-              <Route path="/cfbpickemats/grouppicks" element={<CfbPickemAtsGroupPicks />} />
-
-              {/* CFB Bowl Confidence Pickem */}
-              <Route path="/bowlpickem" element={<BowlConfidenceHome />} />
-              <Route path="/bowlpickem/picks" element={<BowlConfidencePicks />} />
-              <Route path="/bowlpickem/mypicks" element={<BowlConfidenceMyPicks />} />
-              <Route path="/bowlpickem/standings" element={<BowlConfidenceStandings />} />
-              <Route path="/bowlpickem/grouppicks" element={<BowlConfidenceGroupPicks />} />
-
-              {/* Champ Week Pickem */}
-              <Route path="/champweekpickem/" element={<ChampWeekPickemHome />} />
-              <Route path="/champweekpickem/signup" element={<ChampWeekPickemSignUp />} />
-              <Route path="/champweekpickem/picks" element={<ChampWeekPickemPicks />} />
-              <Route path="/champweekpickem/mypicks" element={<ChampWeekPickemMyPicks />} />
-              <Route path="/champweekpickem/scoreboard" element={<ChampWeekPickemScoreboard />} />
-              <Route path="/champweekpickem/picksdisplay" element={<ChampWeekPickemUserPicksDisplay />} />
-              <Route path="/champweekpickem/standings" element={<ChampWeekPickemStandings />} />
-              <Route path="/champweekpickem/adminrefresh" element={<ChampWeekPickemAdminRefresh />} />
-
-              {/* Home Run Derby*/}
-              <Route path="/hrd" element={<HomeRunDerbyHome />} />
-              <Route path="/hrd/picks" element={<HomeRunDerbyPicks />} />
-              <Route path="/hrd/standings" element={<HomeRunDerbyStandings />} />
-              <Route path="/hrd/allteams" element={<ViewAllTeams />} />
-
-              {/* Tourney Pickem */}
-              <Route path="/tourneypickem" element={<TourneyPickemHome />} />
-              <Route path="/tourneypickem/picks" element={<TourneyPickemPicks />} />
-              <Route path="/tourneypickem/mypicks" element={<TourneyPickemMyPicks />} />
-              <Route path="/tourneypickem/standings" element={<TourneyPickemStandings />} />
-              <Route path="/tourneypickem/scoreboard" element={<TourneyPickemScoreboard />} />
-              <Route path="/tourneypickem/picksdisplay" element={<TourneyPickemUserPicksDisplay />} />
-              <Route path="/tourneypickem/signup" element={<TourneyPickemSignUp />} />
-              <Route path="/tourneypickem/adminrefresh" element={<TourneyPickemAdminRefresh />} />
-
-              {/* Tourney Bracket */}
-              <Route path="/bracket" element={<BracketHome />} />
-              <Route path="/bracket/bracket" element={<BracketChallenge />} />
-              <Route path="/bracket/mybracket" element={<BracketMyBracket />} />
-              <Route path="/bracket/standings" element={<BracketStandings />} />
-              <Route path="/bracket/signup" element={<BracketSignUp />} />
-
-              {/* Tourney Squares */}
-              <Route path="/tourneysquares" element={<TourneySquaresHome />} />
-              <Route path="/tourneysquares/grid" element={<TourneySquaresGrid />} />
-              <Route path="/tourneysquares/results" element={<TourneySquaresResults />} />
-              <Route path="/tourneysquares/signup" element={<TourneySquaresSignUp />} />
-              <Route path="/tourneysquares/numbers" element={<TourneySquaresNumbers />} />
-              <Route path="/tourneysquares/admin" element={<TourneySquaresAdmin />} />
-
-              {/* MLB Playoffs*/}
-              <Route path="/mlb" element={<MlbPlayoffsHome />} />
-              <Route path="/mlb/picks" element={<MlbPlayoffsPicks />} />
-              <Route path="/mlb/mypicks" element={<MlbPlayoffsMyPicks />} />
-              <Route path="/mlb/grouppicks" element={<MlbPlayoffsGroupPicks />} />
-              <Route path="/mlb/standings" element={<MlbPlayoffsStandings />} />
-
-              {/* NBA Playoffs*/}
-              <Route path="/nba" element={<NbaHome />} />
-              <Route path="/nba/picks" element={<NbaPicks />} />
-              <Route path="/nba/mypicks" element={<NbaMyPicks />} />
-              <Route path="/nba/standings" element={<NbaStandings />} />
-              <Route path="/nba/grouppicks" element={<NbaGroupPicks />} />
-              <Route path="/nba/signup" element={<NbaSignUp />} />
-              <Route path="/nba/adminrefresh" element={<NbaAdminRefresh />} />
-
-              {/* NBA Survivor*/}
-              <Route path="/nbasurvivor" element={<NbaSurvivorHome />} />
-              <Route path="/nbasurvivor/picks" element={<NbaSurvivorPicks />} />
-              <Route path="/nbasurvivor/mypicks" element={<NbaSurvivorMyPicks />} />
-              <Route path="/nbasurvivor/grouppicks" element={<NbaSurvivorGroupPicks />} />
-
-              {/* NFL Playoffs*/}
-              <Route path="/nfl" element={<NflHome />} />
-              <Route path="/nfl/signup" element={<NflSignUp />} />
-              <Route path="/nfl/rosterpicks" element={<NflRosterPicks />} />
-              <Route path="/nfl/scoreboard" element={<NflScoreboard />} />
-              <Route path="/nfl/myroster" element={<NflMyRoster />} />
-              <Route path="/nfl/standings" element={<NflStandings />} />
-              <Route path="/nfl/playerstats" element={<NflPlayerPoolsTable />} />
-
-              {/* NFL Pickem ATS*/}
-              <Route path="/nflpickemats" element={<NflPickemAtsHome />} />
-              <Route path="/nflpickemats/picks" element={<NflPickemAtsPicks />} />
-              <Route path="/nflpickemats/mypicks" element={<NflPickemAtsMyPicks />} />
-              <Route path="/nflpickemats/standings" element={<NflPickemAtsStandings />} />
-              <Route path="/nflpickemats/grouppicks" element={<NflPickemAtsGroupPicks />} />
-
-              {/* NFL BTS*/}
-              <Route path="/nflbts" element={<NflBtsHome />} />
-              <Route path="/nflbts/picks" element={<NflBtsPicks />} />
-              <Route path="/nflbts/mypicks" element={<NflBtsMyPicks />} />
-              <Route path="/nflbts/standings" element={<NflBtsStandings />} />
-              <Route path="/nflbts/grouppicks" element={<NflBtsGroupPicks />} />
-
-              {/* NFL Survivor*/}
-              <Route path="/nflsurvivor" element={<NflSurvivorHome />} />
-              <Route path="/nflsurvivor/picks" element={<NflSurvivorPicks />} />
-              <Route path="/nflsurvivor/mypicks" element={<NflSurvivorMyPicks />} />
-              <Route path="/nflsurvivor/grouppicks" element={<NflSurvivorGroupPicks />} />
-
-              {/* Super Bowl Squares */}
-              <Route path="/superbowlsquares" element={<SuperBowlSquaresHome />} />
-              <Route path="/superbowlsquares/grid" element={<SuperBowlSquaresGrid />} />
-              <Route path="/superbowlsquares/results" element={<SuperBowlSquaresResults />} />
-              <Route path="/superbowlsquares/signup" element={<SuperBowlSquaresSignUp />} />
-              <Route path="/superbowlsquares/numbers" element={<SuperBowlSquaresNumbers />} />
-              <Route path="/superbowlsquares/admin" element={<SuperBowlSquaresAdmin />} />
-
-              {/* Olympics */}
-              <Route path="/olympics" element={<OlympicsHome />} />
-              <Route path="/olympics/signup" element={<OlympicsSignUp />} />
-              <Route path="/olympics/countrypicks" element={<OlympicsCountryPicks />} />
-              <Route path="/olympics/scoreboard" element={<OlympicsScoreboard />} />
-              <Route path="/olympics/standings" element={<OlympicsStandings />} />
-              <Route path="/olympics/medaltable" element={<OlympicsMedalTable />} />
-              <Route path="/olympics/myroster" element={<OlympicsMyRoster />} />
-
-              {/* World Cup */}
-              <Route path="/worldcup" element={<WorldCupHome />} />
-              <Route path="/worldcup/signup" element={<WorldCupSignUp />} />
-              <Route path="/worldcup/picks" element={<WorldCupPicks />} />
-              <Route path="/worldcup/grouppicks" element={<WorldCupGroupPicks />} />
-              <Route path="/worldcup/scoreboard" element={<WorldCupScoreboard />} />
-              <Route path="/worldcup/mypicks" element={<WorldCupMyPicks />} />
-              <Route path="/worldcup/standings" element={<WorldCupStandings />} />
-              {/* <Route path="/worldcup/" element={<WorldCupCountryPoolsTable />} /> */}
-
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-        } />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
-    </Router >
+    </BrowserRouter>
   );
 }

@@ -110,6 +110,9 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
 
   // NFL Survivor
   require("./routes/nfl_survivor_api_routes.js")(app);
+ 
+  // NFL Survivor 2nd Chance
+  require("./routes/nfl_survivor_secondchance_api_routes.js")(app);
 
   // MLB
   require("./routes/mlb_playoffs_api_routes.js")(app);
@@ -125,7 +128,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   const syncChampWeekPickem = require("./syncs/ncaa_champweek/sync.js");
   const syncBracket = require("./syncs/ncaa_bracket/sync.js");
   const syncHrd = require("./syncs/mlb_season/sync.js");
-  const syncNba = require("./syncs/nba_playoffs/sync.js");
+  const syncNbaPlayoffs = require("./syncs/nba_playoffs/sync.js");
   const syncMlbPlayoffs = require("./syncs/mlb_playoffs/sync.js");
   const syncNflRegSeason = require("./syncs/nfl_season/sync.js");
   const syncCfbRegSeason = require("./syncs/cfb_season/sync.js");
@@ -147,7 +150,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
         { route: "ncaa_champweek", run: syncChampWeekPickem }, // Added if you want champweek synced
         { route: "bracket", run: syncBracket },                 // Ensure a row exists in DB for this if used
         { route: "mlb_home_run_derby", run: syncHrd },          // Fixed from "hrd"
-        { route: "nba_playoffs", run: syncNba },
+        { route: "nba_playoffs", run: syncNbaPlayoffs },
         { route: "mlb_playoffs", run: syncMlbPlayoffs },
         { route: "nfl_season", run: syncNflRegSeason },
         { route: "nba_season", run: syncNbaRegSeason },

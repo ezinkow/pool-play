@@ -11,7 +11,10 @@ const TOTAL_NFL_WEEKS = 18; // Standard regular season limit
 
 export default function NflSurvivorPicks() {
     const { user, loading: authLoading } = useAuth();
-    const [currentWeek, setCurrentWeek] = useState(1);
+    // Use a ref or handle initial loading state to avoid fetching week 1 first. 
+    // You can also default to null or your current season week if known, 
+    // or let the settings call handle it before loading data.
+    const [currentWeek, setCurrentWeek] = useState(null);
     const [maxAvailableWeek, setMaxAvailableWeek] = useState(1);
     const [games, setGames] = useState([]);
     const [userPicks, setUserPicks] = useState({});
@@ -33,7 +36,10 @@ export default function NflSurvivorPicks() {
                 setCurrentWeek(activeWk);
                 setMaxAvailableWeek(activeWk);
             })
-            .catch(err => console.error("Failed to load survivor settings", err));
+            .catch(err => {
+                console.error("Failed to load survivor settings", err);
+                setCurrentWeek(1); // fallback
+            });
     }, [token]);
 
     // Check user's entry status to see if they are eliminated
@@ -72,7 +78,7 @@ export default function NflSurvivorPicks() {
     }, [token]);
 
     const loadSurvivorData = (weekToFetch) => {
-        if (!user) return;
+        if (!user || !weekToFetch) return; // Don't fetch if week isn't set yet
         setLoading(true);
         axios.get("/api/nfl_survivor/picks", {
             params: { week: weekToFetch },
@@ -99,7 +105,7 @@ export default function NflSurvivorPicks() {
 
     // Load data when currentWeek changes
     useEffect(() => {
-        if (!user) return;
+        if (!user || currentWeek === null) return;
         loadSurvivorData(currentWeek);
     }, [user, currentWeek]);
 

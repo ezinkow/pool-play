@@ -397,7 +397,7 @@ export default function Home() {
                         <div className={`pool-card-right-${card.key}`} style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
                             {card.isActive && (
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); navigate(card.route); }}
+                                    onClick={(e) => { e.stopPropagation(); navigate(card.prefix); }}
                                     style={{ background: GREEN, color: "white", border: "none", borderRadius: "6px", padding: "8px 18px", fontSize: "12px", fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}
                                 >
                                     Play →
