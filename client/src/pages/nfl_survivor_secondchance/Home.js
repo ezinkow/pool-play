@@ -272,9 +272,11 @@ export default function NflSurvivorHome() {
           margin: "24px auto 80px auto"
         }}>
           <h3 style={{ color: NFL_BLUE, marginTop: 0, marginBottom: 16, fontSize: "1.2rem", textAlign: 'center' }}>
-            📋 NFL Survivor: <br />Rules & Overview
+            📋 NFL 2nd Chance Survivor: <br />Rules & Overview
           </h3>
           <ol style={{ paddingLeft: 20, lineHeight: "1.7", fontSize: "14px" }}>
+            <li><strong>It's a second shot at Survivor! Starts in week 6.</strong></li>
+            <h3><li><strong>50 Credits</strong></li></h3>
             <li><strong>Win Straight Up:</strong> Pick one NFL team each week to win their game outright (no point spreads).</li>
             <li><strong>Single-Use Teams:</strong> You can only use each NFL team <strong>once per season</strong>. Choose wisely!</li>
             <li><strong>Survive & Advance:</strong> If your team wins, you advance to the next week. If they lose or tie, you are eliminated.</li>

@@ -126,10 +126,10 @@ import NflSurvivorMyPicks from './pages/nfl_survivor/MyPicks';
 import NflSurvivorGroupPicks from './pages/nfl_survivor/GroupsPicks';
 
 // NFL 2nd Chance Survivor pages
-import NflSurvivorSecondChanceHome from './pages/nfl_survivor/Home';
-import NflSurvivorSecondChancePicks from './pages/nfl_survivor/Picks';
-import NflSurvivorSecondChanceMyPicks from './pages/nfl_survivor/MyPicks';
-import NflSurvivorSecondChanceGroupPicks from './pages/nfl_survivor/GroupsPicks';
+import NflSurvivorSecondChanceHome from './pages/nfl_survivor_secondchance/Home';
+import NflSurvivorSecondChancePicks from './pages/nfl_survivor_secondchance/Picks';
+import NflSurvivorSecondChanceMyPicks from './pages/nfl_survivor_secondchance/MyPicks';
+import NflSurvivorSecondChanceGroupPicks from './pages/nfl_survivor_secondchance/GroupsPicks';
 
 // Super Bowl Squares pages
 import SuperBowlSquaresGrid from "./pages/superbowl_squares/Grid";
