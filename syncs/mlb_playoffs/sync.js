@@ -70,6 +70,7 @@ function extractSeries(data, seriesMap) {
         if (!homeComp || !awayComp) return;
 
         const headline = comp.notes?.[0]?.headline || comp.name || "";
+        const shortDetail = comp.status?.type?.shortDetail || null;
         const roundNum = getRound(headline);
         const league = getLeague(headline);
 
@@ -84,6 +85,7 @@ function extractSeries(data, seriesMap) {
         const liveDetail = comp.status?.type?.shortDetail || comp.status?.type?.detail || null;
 
         const isLive = statusState === "in" || statusName === "STATUS_IN_PROGRESS";
+
 
         const espnSeries = comp.series;
         let bracketHomeWins = 0;
@@ -133,6 +135,7 @@ function extractSeries(data, seriesMap) {
                 homeLiveScore: homeScore,
                 awayLiveScore: awayScore,
                 liveSummary: liveDetail,
+                shortSummaryText: shortDetail,
                 isLive: isLive
             });
         } else {
@@ -199,10 +202,10 @@ async function syncMlbPlayoffs() {
 
             // Dynamically assign slots based on database placeholders rather than dropping unmatched indexes
             for (let index = 0; index < (roundNum === 1 || roundNum === 2 ? 2 : 1); index++) {
-                const placeholderId = roundNum === 4 
-                    ? "R4-MLB-WS" 
-                    : (roundNum === 3 
-                        ? `R3-${league}-CS` 
+                const placeholderId = roundNum === 4
+                    ? "R4-MLB-WS"
+                    : (roundNum === 3
+                        ? `R3-${league}-CS`
                         : `R2-${league}-${league === "AL" ? "ALDS" : "NLDS"}${index + 1}` || `R1-${league}-${league === "AL" ? "ALWC" : "NLWC"}${index + 1}`);
 
                 if (roundNum === 1) {
@@ -259,6 +262,19 @@ async function syncMlbPlayoffs() {
                     finalSeriesSummary = dateFormatted ? `${dateFormatted}. Time TBD` : "Series starts soon. Time TBD";
                 } else if (totalWins > 0 || s.isLive || s.seriesCompleted) {
                     finalSeriesSummary = s.rawSeriesSummary || `Series tied ${finalHomeWins}-${finalAwayWins}`;
+                } else {
+                    finalSeriesSummary = formatFirstPitch(startDateObj) || "Game 1 First Pitch Scheduled";
+                }
+
+                if (s.shortSummaryText) {
+                    finalSeriesSummary = s.shortSummaryText;
+                } else if (s.rawSeriesSummary) {
+                    finalSeriesSummary = s.rawSeriesSummary;
+                } else if (isHomeTbd || isAwayTbd || isPlaceholderTime) {
+                    const dateFormatted = formatSeriesStartDate(startDateObj);
+                    finalSeriesSummary = dateFormatted ? `${dateFormatted}. Time TBD` : "Series starts soon. Time TBD";
+                } else if (totalWins > 0 || s.isLive || s.seriesCompleted) {
+                    finalSeriesSummary = `Series tied ${finalHomeWins}-${finalAwayWins}`;
                 } else {
                     finalSeriesSummary = formatFirstPitch(startDateObj) || "Game 1 First Pitch Scheduled";
                 }
