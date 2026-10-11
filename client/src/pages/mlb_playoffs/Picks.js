@@ -138,7 +138,7 @@ export default function Picks() {
             }, { headers: { Authorization: `Bearer ${token}` } });
 
             toast.success("Picks submitted successfully!");
-            setTimeout(() => { window.location.hash = "#/mlb_playoffs/mypicks"; }, 1500);
+            setTimeout(() => { window.location.hash = "#/mlb/mypicks"; }, 1500);
         } catch (err) {
             toast.error(err.response?.data?.error || "Failed to save picks");
         }

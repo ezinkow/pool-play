@@ -257,6 +257,7 @@ export default function CfbPickemAtsPicks() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success(`Week ${currentWeek} picks submitted successfully!`);
+            setTimeout(() => { window.location.hash = "#/cfbpickemats/mypicks"; }, 1500);
         } catch (err) {
             console.error("Save Response Error:", err);
             console.error("Error Response Data:", err.response?.data);

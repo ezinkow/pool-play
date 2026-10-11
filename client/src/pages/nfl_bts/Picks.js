@@ -216,6 +216,7 @@ export default function NflBtsPicks() {
             }, { headers: { Authorization: `Bearer ${token}` } });
 
             toast.success(`Week ${currentWeek} picks saved successfully!`);
+            setTimeout(() => { window.location.hash = "#/nflbts/mypicks"; }, 1500);
         } catch (err) {
             toast.error(err.response?.data?.error || "Failed to save picks");
         }

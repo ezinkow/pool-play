@@ -296,6 +296,7 @@ export default function NflPickemAtsPicks() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success(`Week ${currentWeek} picks submitted successfully!`);
+            setTimeout(() => { window.location.hash = "#/nflpickemats/mypicks"; }, 1500);
         } catch (err) {
             toast.error(err.response?.data?.error || "Failed to submit picks");
         }

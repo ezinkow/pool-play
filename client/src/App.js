@@ -75,13 +75,13 @@ import BracketStandings from './pages/bracket/Standings';
 import BracketSignUp from './pages/bracket/SignUp';
 
 // NBA Playoffs pages
-import NbaHome from './pages/nba/Home';
-import NbaPicks from './pages/nba/Picks';
-import NbaMyPicks from './pages/nba/MyPicks';
-import NbaStandings from './pages/nba/Standings';
-import NbaGroupPicks from './pages/nba/GroupPicks';
-import NbaSignUp from './pages/nba/SignUp';
-import NbaAdminRefresh from './pages/nba/AdminRefresh';
+import NbaHome from './pages/nba_playoffs/Home';
+import NbaPicks from './pages/nba_playoffs/Picks';
+import NbaMyPicks from './pages/nba_playoffs/MyPicks';
+import NbaStandings from './pages/nba_playoffs/Standings';
+import NbaGroupPicks from './pages/nba_playoffs/GroupPicks';
+import NbaSignUp from './pages/nba_playoffs/SignUp';
+import NbaAdminRefresh from './pages/nba_playoffs/AdminRefresh';
 
 // NBA Survivor pages
 import NbaSurvivorHome from './pages/nba_survivor/Home';

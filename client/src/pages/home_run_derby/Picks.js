@@ -82,6 +82,7 @@ export default function HrdDraft() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success("Home Run Derby roster saved successfully! ⚾");
+            setTimeout(() => { window.location.hash = "#/hrd/mypicks"; }, 1500);
         } catch (err) {
             toast.error(err.response?.data?.error || "Failed to save roster");
         } finally {

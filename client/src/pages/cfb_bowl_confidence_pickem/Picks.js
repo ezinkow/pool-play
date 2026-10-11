@@ -425,6 +425,7 @@ export default function CfbBowlConfidencePicks() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success("Bowl confidence rankings saved successfully!");
+            setTimeout(() => { window.location.hash = "#/bowlpickem/mypicks"; }, 1500);
         } catch (err) {
             console.error("Save Bowl Picks Error:", err);
             toast.error(err.response?.data?.error || "Failed to submit bowl picks");
