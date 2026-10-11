@@ -42,7 +42,7 @@ export default function MyAccount() {
     const { active, inactive } = useMemo(() => {
         const activePools = myPools.filter(p => p.is_active === true || p.is_active === 1 || p.is_active === "true");
         const inactivePools = myPools.filter(p => p.is_active === false || p.is_active === 0 || p.is_active === "false");
-        
+
         return {
             active: activePools,
             inactive: inactivePools
@@ -53,6 +53,7 @@ export default function MyAccount() {
         return <div style={{ padding: 100, textAlign: "center", color: NAVY, fontWeight: 700 }}>Scanning active entry sheets profiles...</div>;
     }
 
+    console.log(myPools);
     const renderPoolCard = (pool, isActive) => (
         <div
             key={pool.key || pool.id}
