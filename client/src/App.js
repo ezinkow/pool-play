@@ -232,20 +232,20 @@ export default function App() {
           <Route path="/tourneysquares/admin" element={<TourneySquaresAdmin />} />
 
           {/* MLB Playoffs */}
-          <Route path="/mlb" element={<MlbPlayoffsHome />} />
-          <Route path="/mlb/picks" element={<MlbPlayoffsPicks />} />
-          <Route path="/mlb/mypicks" element={<MlbPlayoffsMyPicks />} />
-          <Route path="/mlb/grouppicks" element={<MlbPlayoffsGroupPicks />} />
-          <Route path="/mlb/standings" element={<MlbPlayoffsStandings />} />
+          <Route path="/mlbplayoffs" element={<MlbPlayoffsHome />} />
+          <Route path="/mlbplayoffs/picks" element={<MlbPlayoffsPicks />} />
+          <Route path="/mlbplayoffs/mypicks" element={<MlbPlayoffsMyPicks />} />
+          <Route path="/mlbplayoffs/grouppicks" element={<MlbPlayoffsGroupPicks />} />
+          <Route path="/mlbplayoffs/standings" element={<MlbPlayoffsStandings />} />
 
           {/* NBA Playoffs */}
-          <Route path="/nba" element={<NbaHome />} />
-          <Route path="/nba/picks" element={<NbaPicks />} />
-          <Route path="/nba/mypicks" element={<NbaMyPicks />} />
-          <Route path="/nba/standings" element={<NbaStandings />} />
-          <Route path="/nba/grouppicks" element={<NbaGroupPicks />} />
-          <Route path="/nba/signup" element={<NbaSignUp />} />
-          <Route path="/nba/adminrefresh" element={<NbaAdminRefresh />} />
+          <Route path="/nbaplayoffs" element={<NbaHome />} />
+          <Route path="/nbaplayoffs/picks" element={<NbaPicks />} />
+          <Route path="/nbaplayoffs/mypicks" element={<NbaMyPicks />} />
+          <Route path="/nbaplayoffs/standings" element={<NbaStandings />} />
+          <Route path="/nbaplayoffs/grouppicks" element={<NbaGroupPicks />} />
+          <Route path="/nbaplayoffs/signup" element={<NbaSignUp />} />
+          <Route path="/nbaplayoffs/adminrefresh" element={<NbaAdminRefresh />} />
 
           {/* NBA Survivor */}
           <Route path="/nbasurvivor" element={<NbaSurvivorHome />} />
