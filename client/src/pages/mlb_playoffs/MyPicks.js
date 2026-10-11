@@ -45,7 +45,26 @@ export default function MyPicks() {
 
     useEffect(() => {
         axios.get("/api/mlb_playoffs_series")
-            .then(res => setSeries(res.data || []))
+            .then(res => {
+                const fetchedSeries = res.data || [];
+                setSeries(fetchedSeries);
+
+                // 🧠 Auto-detect and jump to the current active round
+                if (fetchedSeries.length > 0) {
+                    // 1. Look for any live round first
+                    const liveSeries = fetchedSeries.find(s => s.status === "STATUS_IN_PROGRESS");
+                    if (liveSeries) {
+                        setSelectedRound(Number(liveSeries.round));
+                        return;
+                    }
+
+                    // 2. Otherwise, look for the first round that isn't fully completed yet
+                    const activeRoundSeries = fetchedSeries.find(s => s.status !== "STATUS_FINAL");
+                    if (activeRoundSeries) {
+                        setSelectedRound(Number(activeRoundSeries.round));
+                    }
+                }
+            })
             .catch(() => toast.error("Error loading series"));
     }, []);
 
