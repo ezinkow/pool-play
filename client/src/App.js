@@ -89,6 +89,13 @@ import NbaSurvivorPicks from './pages/nba_survivor/Picks';
 import NbaSurvivorMyPicks from './pages/nba_survivor/MyPicks';
 import NbaSurvivorGroupPicks from './pages/nba_survivor/GroupsPicks';
 
+// NCAAB Pickem ATS pages
+import NcaabPickemAtsHome from './pages/ncaab_pickem_ats/Home';
+import NcaabPickemAtsStandings from './pages/ncaab_pickem_ats/Standings';
+import NcaabPickemAtsPicks from './pages/ncaab_pickem_ats/Picks';
+import NcaabPickemAtsMyPicks from './pages/ncaab_pickem_ats/MyPicks';
+import NcaabPickemAtsGroupPicks from './pages/ncaab_pickem_ats/GroupPicks';
+
 // MLB Playoffs pages
 import MlbPlayoffsHome from './pages/mlb_playoffs/Home';
 import MlbPlayoffsPicks from './pages/mlb_playoffs/Picks';
@@ -252,6 +259,13 @@ export default function App() {
           <Route path="/nbasurvivor/picks" element={<NbaSurvivorPicks />} />
           <Route path="/nbasurvivor/mypicks" element={<NbaSurvivorMyPicks />} />
           <Route path="/nbasurvivor/grouppicks" element={<NbaSurvivorGroupPicks />} />
+
+           {/* NCAAB Pickem ATS */}
+          <Route path="/ncaabpickemats" element={<NcaabPickemAtsHome />} />
+          <Route path="/ncaabpickemats/picks" element={<NcaabPickemAtsPicks />} />
+          <Route path="/ncaabpickemats/mypicks" element={<NcaabPickemAtsMyPicks />} />
+          <Route path="/ncaabpickemats/standings" element={<NcaabPickemAtsStandings />} />
+          <Route path="/ncaabpickemats/grouppicks" element={<NcaabPickemAtsGroupPicks />} />
 
           {/* NFL Playoffs */}
           <Route path="/nfl" element={<NflHome />} />

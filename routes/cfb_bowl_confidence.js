@@ -1,4 +1,4 @@
-const { CfbBowlSeasonGames, CfbBowlPicks, CfbBowlEntries, CfbTeams, Users } = require("../models");
+const { CfbBowlSeasonGames, CfbBowlPicks, CfbBowlEntries, NcaaTeams, Users } = require("../models");
 const requireAuth = require("../middleware/Requireauth");
 const { Op } = require("sequelize");
 const db = require("../models");
@@ -81,7 +81,7 @@ module.exports = function (app) {
                 if (g.away_team) teamNames.add(g.away_team);
             });
 
-            const teamsData = await CfbTeams.findAll({
+            const teamsData = await NcaaTeams.findAll({
                 where: { name: Array.from(teamNames) }
             });
 
@@ -145,7 +145,7 @@ module.exports = function (app) {
                 if (g.away_team) teamNames.add(g.away_team);
             });
 
-            const teamsData = await CfbTeams.findAll({
+            const teamsData = await NcaaTeams.findAll({
                 where: { name: Array.from(teamNames) }
             });
 
@@ -195,11 +195,11 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
-    // GET /api/cfb_teams (Fetch all CFB teams and colors)
+    // GET /api/ncaa_teams (Fetch all CFB teams and colors)
     // --------------------------------------------------------
-    app.get("/api/cfb_teams", requireAuth, async (req, res) => {
+    app.get("/api/ncaa_teams", requireAuth, async (req, res) => {
         try {
-            const teams = await CfbTeams.findAll({
+            const teams = await NcaaTeams.findAll({
                 order: [["name", "ASC"]]
             });
             res.json(teams);
@@ -333,7 +333,7 @@ module.exports = function (app) {
                 if (row.away_team) teamNames.add(row.away_team);
             });
 
-            const teamsData = await CfbTeams.findAll({
+            const teamsData = await NcaaTeams.findAll({
                 where: { name: Array.from(teamNames) }
             });
 

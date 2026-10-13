@@ -66,22 +66,6 @@ module.exports = function (app) {
         }
     });
 
-
-    // --------------------------------------------------------
-    // GET /api/nfl_teams (Fetch all NFL teams and colors)
-    // --------------------------------------------------------
-    app.get("/api/nfl_teams", requireAuth, async (req, res) => {
-        try {
-            const teams = await NflTeams.findAll({
-                order: [["name", "ASC"]]
-            });
-            res.json(teams);
-        } catch (err) {
-            console.error("Error fetching NFL teams:", err);
-            res.status(500).json({ error: "Failed to fetch NFL teams" });
-        }
-    });
-
     // --------------------------------------------------------
     // GET /api/nfl_regular_season/settings (Fetch active week dynamically)
     // --------------------------------------------------------

@@ -1,4 +1,4 @@
-const { NbaSurvivorEntries, NbaSurvivorPicks, NbaRegularSeasonGames, NbaTeams, Users, Settings } = require("../models");
+const { NbaSurvivorEntries, NbaSurvivorPicks, NbaRegularSeasonGames, Users, Settings } = require("../models");
 const requireAuth = require("../middleware/Requireauth");
 const db = require("../models");
 const { Op } = require("sequelize");

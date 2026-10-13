@@ -1,0 +1,492 @@
+const { NcaabRegularSeasonGames, NcaabPickemAtsPicks, NcaabPickemAtsEntries, NcaaTeams, Users } = require("../models");
+const requireAuth = require("../middleware/Requireauth");
+const { Op } = require("sequelize");
+const db = require("../models");
+
+// 🧠 Centralized Season Weeks Definition (Defined once)
+const NCAAB_WEEKS = [
+    { week: 1, start: new Date("2026-11-02T00:00:00"), end: new Date("2026-11-08T23:59:59") },
+    { week: 2, start: new Date("2026-11-09T00:00:00"), end: new Date("2026-11-15T23:59:59") },
+    { week: 3, start: new Date("2026-11-16T00:00:00"), end: new Date("2026-11-22T23:59:59") },
+    { week: 4, start: new Date("2026-11-23T00:00:00"), end: new Date("2026-11-29T23:59:59") },
+    { week: 5, start: new Date("2026-11-30T00:00:00"), end: new Date("2026-12-06T23:59:59") },
+    { week: 6, start: new Date("2026-12-07T00:00:00"), end: new Date("2026-12-13T23:59:59") },
+    { week: 7, start: new Date("2026-12-14T00:00:00"), end: new Date("2026-12-20T23:59:59") },
+    { week: 8, start: new Date("2026-12-21T00:00:00"), end: new Date("2026-01-03T23:59:59") },
+    { week: 9, start: new Date("2027-01-04T00:00:00"), end: new Date("2027-01-10T23:59:59") },
+    { week: 10, start: new Date("2027-01-11T00:00:00"), end: new Date("2027-01-17T23:59:59") },
+    { week: 11, start: new Date("2027-01-18T00:00:00"), end: new Date("2027-01-24T23:59:59") },
+    { week: 12, start: new Date("2027-01-25T00:00:00"), end: new Date("2027-01-31T23:59:59") },
+    { week: 13, start: new Date("2027-02-01T00:00:00"), end: new Date("2027-02-07T23:59:59") },
+    { week: 14, start: new Date("2027-02-08T00:00:00"), end: new Date("2027-02-14T23:59:59") },
+    { week: 15, start: new Date("2027-02-15T00:00:00"), end: new Date("2027-02-21T23:59:59") },
+    { week: 16, start: new Date("2027-02-22T00:00:00"), end: new Date("2027-02-28T23:59:59") },
+    { week: 17, start: new Date("2027-03-01T00:00:00"), end: new Date("2027-03-07T23:59:59") }
+];
+
+// Helper to determine active week based on current date
+function getCurrentActiveWeek() {
+    const now = new Date();
+    let activeIndex = 0;
+    for (let i = NCAAB_WEEKS.length - 1; i >= 0; i--) {
+        if (now >= NCAAB_WEEKS[i].start) {
+            activeIndex = i;
+            break;
+        }
+    }
+    return NCAAB_WEEKS[activeIndex].week;
+}
+
+module.exports = function (app) {
+
+    // --------------------------------------------------------
+    // GET /api/ncaab_pickem_ats/entries/me (Check user entry status)
+    // --------------------------------------------------------
+    app.get("/api/ncaab_pickem_ats/entries/me", requireAuth, async (req, res) => {
+        try {
+            const entry = await NcaabPickemAtsEntries.findOne({
+                where: { user_id: req.user.id }
+            });
+            res.json({ entry: entry || null });
+        } catch (err) {
+            console.error("Error fetching pick'em entry:", err);
+            res.status(500).json({ error: "Failed to fetch entry" });
+        }
+    });
+
+    // --------------------------------------------------------
+    // POST /api/ncaab_pickem_ats/entries/create (Join pool)
+    // --------------------------------------------------------
+    app.post("/api/ncaab_pickem_ats/entries/create", requireAuth, async (req, res) => {
+        try {
+            const { entry_name } = req.body;
+            const finalName = entry_name?.trim() || req.user.name || "Player";
+
+            let entry = await NcaabPickemAtsEntries.findOne({
+                where: { user_id: req.user.id }
+            });
+
+            if (entry) {
+                await entry.update({ entry_name: finalName });
+            } else {
+                entry = await NcaabPickemAtsEntries.create({
+                    user_id: req.user.id,
+                    entry_name: finalName
+                });
+            }
+
+            res.json({ success: true, entry });
+        } catch (err) {
+            console.error("Error creating pick'em entry:", err);
+            res.status(500).json({ error: "Failed to join pool" });
+        }
+    });
+
+    // --------------------------------------------------------
+    // POST /api/ncaab_pickem_ats/entries/leave (Leave pool)
+    // --------------------------------------------------------
+    app.post("/api/ncaab_pickem_ats/entries/leave", requireAuth, async (req, res) => {
+        try {
+            await NcaabPickemAtsEntries.destroy({
+                where: { user_id: req.user.id }
+            });
+            res.json({ success: true, message: "Successfully left pool." });
+        } catch (err) {
+            console.error("Error leaving pick'em pool:", err);
+            res.status(500).json({ error: "Failed to leave pool" });
+        }
+    });
+
+    // --------------------------------------------------------
+    // GET /api/ncaab_pickem_ats/games (Fetch schedule & user picks for a week)
+    // --------------------------------------------------------
+    app.get("/api/ncaab_pickem_ats/games", requireAuth, async (req, res) => {
+        try {
+            const week = parseInt(req.query.week) || 1;
+
+            const games = await NcaabRegularSeasonGames.findAll({
+                where: { week },
+                order: [["game_date", "ASC"]]
+            });
+
+            const userPicks = await NcaabPickemAtsPicks.findAll({
+                where: { user_id: req.user.id, week }
+            });
+
+            const pickMap = {};
+            userPicks.forEach(p => {
+                pickMap[p.game_id] = {
+                    picked_team: p.picked_team,
+                    is_best_bet: p.is_best_bet
+                };
+            });
+
+            res.json({ games, userPicks: pickMap });
+        } catch (err) {
+            console.error("Error fetching pick'em games:", err);
+            res.status(500).json({ error: "Failed to load weekly schedule" });
+        }
+    });
+
+    // --------------------------------------------------------
+    // GET /api/ncaab_regular_season_games 
+    // --------------------------------------------------------
+    app.get("/api/ncaab_regular_season_games", async (req, res) => {
+        try {
+            const { week, team } = req.query;
+
+            if (team && team !== "undefined" && team !== "null") {
+                const matchup = await NcaabRegularSeasonGames.findOne({
+                    where: {
+                        week: parseInt(week),
+                        [Op.or]: [{ home_team: team }, { away_team: team }]
+                    }
+                });
+                return res.json(matchup || null);
+            }
+
+            const defaultWeek = getCurrentActiveWeek();
+            const targetWeek = parseInt(week) || defaultWeek;
+            
+            const games = await NcaabRegularSeasonGames.findAll({
+                where: { week: targetWeek },
+                order: [["game_date", "ASC"]]
+            });
+            res.json(games);
+        } catch (err) {
+            console.error("Error fetching regular season matchups:", err);
+            res.status(500).json({ error: "Failed to fetch matchups" });
+        }
+    });
+
+    // --------------------------------------------------------
+    // POST /api/ncaab_pickem_ats/picks (Save batch picks for the week)
+    // --------------------------------------------------------
+    app.post("/api/ncaab_pickem_ats/picks", requireAuth, async (req, res) => {
+        const t = await db.sequelize.transaction();
+        try {
+            const { week, picks } = req.body;
+            const targetWeek = parseInt(week);
+
+            if (!Array.isArray(picks)) {
+                await t.rollback();
+                return res.status(400).json({ error: "Invalid picks payload." });
+            }
+
+            const weekGames = await NcaabRegularSeasonGames.findAll({
+                where: { week: targetWeek },
+                transaction: t
+            });
+            const gameMap = {};
+            weekGames.forEach(g => { gameMap[g.id] = g; });
+
+            const existingPicks = await NcaabPickemAtsPicks.findAll({
+                where: { user_id: req.user.id, week: targetWeek },
+                transaction: t
+            });
+            const existingPickMap = {};
+            existingPicks.forEach(p => { existingPickMap[p.game_id] = p; });
+
+            const incomingGameIds = picks.map(p => Number(p.game_id));
+
+            const finalPicksMap = {};
+
+            for (const ep of existingPicks) {
+                const game = gameMap[ep.game_id];
+                const isLocked = game && game.game_date && new Date() >= new Date(game.game_date);
+                if (isLocked) {
+                    finalPicksMap[ep.game_id] = {
+                        picked_team: ep.picked_team,
+                        is_best_bet: Boolean(ep.is_best_bet)
+                    };
+                }
+            }
+
+            for (const p of picks) {
+                const game = gameMap[p.game_id];
+                const isLocked = game && game.game_date && new Date() >= new Date(game.game_date);
+                if (!isLocked) {
+                    finalPicksMap[p.game_id] = {
+                        picked_team: p.picked_team,
+                        is_best_bet: Boolean(p.is_best_bet)
+                    };
+                }
+            }
+
+            const simulatedBestBetsCount = Object.values(finalPicksMap).filter(p => p.is_best_bet).length;
+
+            if (simulatedBestBetsCount > 3) {
+                await t.rollback();
+                return res.status(400).json({ error: "You can only select a maximum of 3 Best Bets per week." });
+            }
+
+            for (const ep of existingPicks) {
+                const game = gameMap[ep.game_id];
+                const isLocked = game && game.game_date && new Date() >= new Date(game.game_date);
+
+                if (!isLocked && !incomingGameIds.includes(ep.game_id)) {
+                    await ep.destroy({ transaction: t });
+                }
+            }
+
+            for (const p of picks) {
+                const game = gameMap[p.game_id];
+                if (!game) continue;
+
+                const isLocked = game.game_date && new Date() >= new Date(game.game_date);
+                if (isLocked) continue;
+
+                let existingPick = existingPickMap[p.game_id];
+                if (existingPick) {
+                    await existingPick.update({
+                        picked_team: p.picked_team,
+                        is_best_bet: Boolean(p.is_best_bet)
+                    }, { transaction: t });
+                } else {
+                    await NcaabPickemAtsPicks.create({
+                        user_id: req.user.id,
+                        week: targetWeek,
+                        game_id: p.game_id,
+                        picked_team: p.picked_team,
+                        is_best_bet: Boolean(p.is_best_bet)
+                    }, { transaction: t });
+                }
+            }
+
+            await t.commit();
+            res.json({ success: true, message: "Weekly picks saved successfully!" });
+        } catch (err) {
+            await t.rollback();
+            console.error("CRITICAL Error saving pick'em picks:", err);
+            res.status(500).json({ error: err.message || "Failed to save picks" });
+        }
+    });
+
+    // --------------------------------------------------------
+    // GET /api/ncaab_pickem_ats/settings 
+    // --------------------------------------------------------
+    app.get("/api/ncaab_pickem_ats/settings", requireAuth, async (req, res) => {
+        try {
+            const SettingsModel = db.GameSettings || db.gameSettings || db.GameSetting || db.game_settings;
+            const setting = SettingsModel ? await SettingsModel.findOne({ where: { game_key: "ncaab_pickem_ats" } }) : null;
+
+            res.json({
+                title: setting?.title || "NCAAB Pick 'em ATS",
+                current_week: getCurrentActiveWeek(),
+                is_active: setting ? setting.is_active : true
+            });
+        } catch (err) {
+            console.error("Error fetching pool settings:", err);
+            res.status(500).json({ error: "Failed to fetch settings" });
+        }
+    });
+
+    // --------------------------------------------------------
+    // GET /api/ncaab_pickem_ats/mypicks (Fetch user's picks and results for a week)
+    // --------------------------------------------------------
+    app.get("/api/ncaab_pickem_ats/mypicks", requireAuth, async (req, res) => {
+        try {
+            const week = parseInt(req.query.week) || 1;
+
+            const games = await NcaabRegularSeasonGames.findAll({
+                where: { week },
+                order: [["game_date", "ASC"]]
+            });
+
+            const teamNames = new Set();
+            games.forEach(g => {
+                if (g.home_team) teamNames.add(g.home_team);
+                if (g.away_team) teamNames.add(g.away_team);
+            });
+
+            const teamsData = await NcaaTeams.findAll({
+                where: { name: Array.from(teamNames) }
+            });
+
+            const teamColorMap = {};
+            teamsData.forEach(t => {
+                teamColorMap[t.name] = {
+                    primaryColor: t.primary_color,
+                    secondaryColor: t.secondary_color,
+                    logo: t.logo
+                };
+            });
+
+            const enhancedGames = games.map(g => {
+                const gameJson = g.toJSON();
+                const homeTeamMeta = teamColorMap[gameJson.home_team] || {};
+                const awayTeamMeta = teamColorMap[gameJson.away_team] || {};
+
+                return {
+                    ...gameJson,
+                    home_color: homeTeamMeta.primaryColor || gameJson.home_color,
+                    home_secondary_color: homeTeamMeta.secondaryColor || gameJson.home_secondary_color,
+                    home_logo: homeTeamMeta.logo || gameJson.home_logo,
+                    away_color: awayTeamMeta.primaryColor || gameJson.away_color,
+                    away_secondary_color: awayTeamMeta.secondaryColor || gameJson.away_secondary_color,
+                    away_logo: awayTeamMeta.logo || gameJson.away_logo
+                };
+            });
+
+            const userPicks = await NcaabPickemAtsPicks.findAll({
+                where: { user_id: req.user.id, week }
+            });
+
+            const pickMap = {};
+            userPicks.forEach(p => {
+                pickMap[p.game_id] = {
+                    picked_team: p.picked_team,
+                    is_best_bet: p.is_best_bet,
+                    status: p.status
+                };
+            });
+
+            res.json({ games: enhancedGames, userPicks: pickMap });
+        } catch (err) {
+            console.error("Error fetching user pickem summary:", err);
+            res.status(500).json({ error: "Failed to load pick summary" });
+        }
+    });
+
+    // --------------------------------------------------------
+    // GET /api/ncaab_pickem_ats/matrix (Fetch group picks matrix for a week)
+    // --------------------------------------------------------
+    app.get("/api/ncaab_pickem_ats/matrix", requireAuth, async (req, res) => {
+        try {
+            const week = parseInt(req.query.week) || 1;
+
+            const query = `
+                SELECT 
+                    e.user_id,
+                    e.entry_name as user_name,
+                    g.id as game_id,
+                    g.week,
+                    g.home_team,
+                    g.home_color,
+                    g.home_secondary_color,
+                    g.home_team_nickname,
+                    g.home_logo,
+                    g.home_score,
+                    g.away_team,
+                    g.away_color,
+                    g.away_secondary_color,
+                    g.away_team_nickname,
+                    g.away_logo,
+                    g.away_score,
+                    g.game_date,
+                    g.adjusted_spread,
+                    g.favorite,
+                    g.status,
+                    p.picked_team as ats_pick,
+                    p.is_best_bet,
+                    p.status as pick_status,
+                    g.winner,
+                    g.ats_winner,
+                    g.must_pick
+                FROM ncaab_pickem_ats_entries e
+                CROSS JOIN ncaab_regular_season_games g
+                LEFT JOIN ncaab_pickem_ats_picks p ON e.user_id = p.user_id AND g.id = p.game_id
+                WHERE g.week = :week
+                ORDER BY e.entry_name ASC, g.game_date ASC;
+            `;
+
+            const [results] = await db.sequelize.query(query, {
+                replacements: { week }
+            });
+
+            const teamNames = new Set();
+            results.forEach(row => {
+                if (row.home_team) teamNames.add(row.home_team);
+                if (row.away_team) teamNames.add(row.away_team);
+            });
+
+            const teamsData = await NcaaTeams.findAll({
+                where: { name: Array.from(teamNames) }
+            });
+
+            const teamColorMap = {};
+            teamsData.forEach(t => {
+                teamColorMap[t.name] = {
+                    primaryColor: t.primary_color,
+                    secondaryColor: t.secondary_color,
+                    logo: t.logo
+                };
+            });
+
+            const mappedResults = results.map(row => {
+                let pickStatus = (row.pick_status || row.status || "").toLowerCase();
+                const atsWinner = row.ats_winner;
+                const atsPick = row.ats_pick;
+
+                if (!pickStatus || pickStatus === "" || pickStatus === "pending") {
+                    if (atsWinner && atsPick) {
+                        if (atsWinner === "PUSH") {
+                            pickStatus = "push";
+                        } else if (atsWinner === atsPick) {
+                            pickStatus = "win";
+                        } else {
+                            pickStatus = "loss";
+                        }
+                    }
+                }
+
+                const homeTeamMeta = teamColorMap[row.home_team] || {};
+                const awayTeamMeta = teamColorMap[row.away_team] || {};
+
+                return {
+                    ...row,
+                    home_color: homeTeamMeta.primaryColor || row.home_color,
+                    home_secondary_color: homeTeamMeta.secondaryColor || row.home_secondary_color,
+                    home_logo: homeTeamMeta.logo || row.home_logo,
+                    away_color: awayTeamMeta.primaryColor || row.away_color,
+                    away_secondary_color: awayTeamMeta.secondaryColor || row.away_secondary_color,
+                    away_logo: awayTeamMeta.logo || row.away_logo,
+                    pick_status: pickStatus
+                };
+            });
+
+            res.json(mappedResults);
+        } catch (err) {
+            console.error("Error fetching pickem matrix:", err);
+            res.status(500).json({ error: "Failed to fetch group matrix" });
+        }
+    });
+
+    // --------------------------------------------------------
+    // GET /api/ncaab_pickem_ats/standings (Leaderboard, ATS & O/U records)
+    // --------------------------------------------------------
+    app.get("/api/ncaab_pickem_ats/standings", requireAuth, async (req, res) => {
+        try {
+            const query = `
+                SELECT 
+                    e.user_id,
+                    e.entry_name,
+                    SUM(CASE 
+                        WHEN g.ats_winner IS NOT NULL AND g.ats_winner = p.picked_team 
+                        THEN (CASE WHEN p.is_best_bet = 1 THEN 2 ELSE 1 END) 
+                        ELSE 0 
+                    END) as total_points,
+                    SUM(CASE WHEN g.ats_winner IS NOT NULL AND g.ats_winner = p.picked_team THEN 1 ELSE 0 END) as wins,
+                    SUM(CASE WHEN g.ats_winner IS NOT NULL AND g.ats_winner != 'PUSH' AND g.ats_winner != p.picked_team THEN 1 ELSE 0 END) as losses,
+                    SUM(CASE WHEN g.ats_winner IS NOT NULL AND g.ats_winner = 'PUSH' THEN 1 ELSE 0 END) as pushes,
+                    SUM(CASE WHEN p.is_best_bet = 1 AND g.ats_winner = p.picked_team THEN 1 ELSE 0 END) as best_bet_wins,
+                    SUM(CASE WHEN p.is_best_bet = 1 AND g.ats_winner IS NOT NULL AND g.ats_winner != 'PUSH' AND g.ats_winner != p.picked_team THEN 1 ELSE 0 END) as best_bet_losses,
+                    SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result = p.ou_pick THEN 1 ELSE 0 END) as ou_wins,
+                    SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result != 'PUSH' AND g.ou_result != p.ou_pick THEN 1 ELSE 0 END) as ou_losses,
+                    SUM(CASE WHEN g.ou_result IS NOT NULL AND g.ou_result = 'PUSH' THEN 1 ELSE 0 END) as ou_pushes
+                FROM ncaab_pickem_ats_entries e
+                LEFT JOIN ncaab_pickem_ats_picks p ON e.user_id = p.user_id
+                LEFT JOIN ncaab_regular_season_games g ON p.game_id = g.id
+                GROUP BY e.user_id, e.entry_name
+                ORDER BY total_points DESC, wins DESC;
+            `;
+
+            const [results] = await db.sequelize.query(query);
+            res.json(results);
+        } catch (err) {
+            console.error("Error fetching pickem standings:", err);
+            res.status(500).json({ error: "Failed to fetch standings" });
+        }
+    });
+
+};

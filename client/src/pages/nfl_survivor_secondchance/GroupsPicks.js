@@ -6,11 +6,13 @@ import PoolGatekeeper from "../../components/PoolGatekeeper";
 
 const NFL_BLUE = "#013369";
 const NFL_RED = "#D50A0A";
+//2026 start week for 2nd chance survivor is week 6, so we do not need to view weeks prior to week 6
+const START_WEEK = 6;
 
 export default function NflSurvivorGroupPicks() {
     const { user, loading: authLoading } = useAuth();
-    const [currentWeek, setCurrentWeek] = useState(null);
-    const [maxAvailableWeek, setMaxAvailableWeek] = useState(1);
+    const [currentWeek, setCurrentWeek] = useState(START_WEEK);
+    const [maxAvailableWeek, setMaxAvailableWeek] = useState(START_WEEK);
     const [rosterData, setRosterData] = useState([]);
     const [teamColors, setTeamColors] = useState({});
     const [loading, setLoading] = useState(true);
@@ -49,17 +51,19 @@ export default function NflSurvivorGroupPicks() {
                 const activeWk = res.data?.current_week;
                 if (activeWk) {
                     const weekNum = Number(activeWk);
-                    setCurrentWeek(weekNum);
-                    setMaxAvailableWeek(weekNum); // 👈 Restricts buttons up to current week only
+                    // Ensure currentWeek doesn't fall below Week 6
+                    const effectiveWeek = Math.max(weekNum, START_WEEK);
+                    setCurrentWeek(effectiveWeek);
+                    setMaxAvailableWeek(effectiveWeek); 
                 } else {
-                    setCurrentWeek(2);
-                    setMaxAvailableWeek(2);
+                    setCurrentWeek(START_WEEK);
+                    setMaxAvailableWeek(START_WEEK);
                 }
             })
             .catch(err => {
-                console.error("Failed to load 2nd Chance Survivor settings, defaulting to week 2", err);
-                setCurrentWeek(2);
-                setMaxAvailableWeek(2);
+                console.error("Failed to load 2nd Chance Survivor settings, defaulting to week 6", err);
+                setCurrentWeek(START_WEEK);
+                setMaxAvailableWeek(START_WEEK);
             })
             .finally(() => {
                 // Fetch roster data from your existing route
@@ -78,6 +82,10 @@ export default function NflSurvivorGroupPicks() {
     }, [user, token]);
 
     const handleWeekChange = (targetWeek) => {
+        if (targetWeek < START_WEEK) {
+            toast.error("Weeks prior to Week 6 are not part of 2nd Chance Survivor!");
+            return;
+        }
         if (targetWeek > maxAvailableWeek) {
             toast.error("You cannot view future weeks matrix!");
             return;
@@ -86,6 +94,12 @@ export default function NflSurvivorGroupPicks() {
     };
 
     if (authLoading || loading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50 }}>Loading group matrix...</div>;
+
+    // Generate weeks array strictly from Week 6 up to maxAvailableWeek
+    const weeksList = [];
+    for (let w = START_WEEK; w <= maxAvailableWeek; w++) {
+        weeksList.push(w);
+    }
 
     return (
         <PoolGatekeeper user={user} gameKey="nfl_survivor_secondchance" >
@@ -99,7 +113,7 @@ export default function NflSurvivorGroupPicks() {
                     </p>
                 </div>
 
-                {/* Restricted Week Selector Bar (Shows buttons only up to current week) */}
+                {/* Restricted Week Selector Bar (Shows buttons only from Week 6 up to current week) */}
                 <div style={{
                     display: "flex",
                     justifyContent: "flex-start",
@@ -111,23 +125,23 @@ export default function NflSurvivorGroupPicks() {
                     paddingBottom: 6,
                     width: "100%"
                 }}>
-                    {[...Array(maxAvailableWeek)].map((_, i) => (
+                    {weeksList.map(weekNum => (
                         <button
-                            key={i + 1}
-                            onClick={() => handleWeekChange(i + 1)}
+                            key={weekNum}
+                            onClick={() => handleWeekChange(weekNum)}
                             style={{
                                 padding: "6px 12px",
                                 borderRadius: 6,
                                 border: "1px solid #ddd",
-                                backgroundColor: currentWeek === i + 1 ? NFL_BLUE : "white",
-                                color: currentWeek === i + 1 ? "white" : "#333",
+                                backgroundColor: currentWeek === weekNum ? NFL_BLUE : "white",
+                                color: currentWeek === weekNum ? "white" : "#333",
                                 cursor: "pointer",
                                 fontWeight: 600,
                                 flexShrink: 0,
                                 fontSize: "14px"
                             }}
                         >
-                            Week {i + 1}
+                            Week {weekNum}
                         </button>
                     ))}
                 </div>

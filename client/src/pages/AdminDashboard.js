@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import useAuth from "../hooks/useAuth";
+import useTeamColors from "../hooks/useNCAATeamColors";
 import NotFound from "../pages/NotFound";
 import BTSrandomizer from '../components/nfl_bts/AdminTeamRandomizer';
 
@@ -31,7 +32,6 @@ const countdownStyle = `
 .flip-card-unit .back span { position: absolute; top: -14px; left: 0; width: 100%; height: 28px; line-height: 28px; text-align: center; }
 `;
 
-// 3D Flipping Digit Component for smooth mechanical downward animation
 function SingleFlipCard({ value }) {
     const [displayVal, setDisplayVal] = useState(String(value));
     const [prevVal, setPrevVal] = useState(String(value));
@@ -147,12 +147,9 @@ function PoolCountdown({ poolData, isDarkMode }) {
     const isPreStart = isActive && lockTime && now >= (openTime || 0) && now < lockTime;
     const labelText = isBeforeOpen ? "OPENS:" : isPreStart ? "LOCKS:" : "NEXT:";
 
-    // Determine if we need to show years
     const showYears = parseInt(timeLeft.y, 10) > 0;
 
-    // Helper to render a pair of digits with a label below
     const renderFlipPair = (valStr, subLabel, digits = 2) => {
-        // Pad string based on requirement (e.g., 3 for days, 2 for others)
         const padded = String(valStr).padStart(digits, "0");
         const digitsArr = padded.split("");
         return (
@@ -167,9 +164,8 @@ function PoolCountdown({ poolData, isDarkMode }) {
         );
     };
 
-    // Define container colors to match homepage dark/light theme
     const containerBg = isDarkMode ? "#0b0f19" : "#1e293b";
-    const containerBorder = isDarkMode ? DARK_BORDER : GOLD;
+    const containerBorder = isDarkMode ? "#334155" : GOLD;
 
     return (
         <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: containerBg, padding: "4px 8px", borderRadius: "6px", border: `1px solid ${containerBorder}`, maxWidth: "100%", overflow: "hidden" }}>
@@ -181,20 +177,12 @@ function PoolCountdown({ poolData, isDarkMode }) {
                         <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "10px" }}>:</span>
                     </>
                 )}
-
-                {/* Days are padded to 3 digits, matching homepage */}
                 {renderFlipPair(timeLeft.d, "Days", 3)}
-
                 <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "16px" }}>:</span>
-
                 {renderFlipPair(timeLeft.h, "Hrs", 2)}
-
                 <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "16px" }}>:</span>
-
                 {renderFlipPair(timeLeft.m, "Min", 2)}
-
                 <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "16px" }}>:</span>
-
                 {renderFlipPair(timeLeft.s, "Sec", 2)}
             </div>
         </div>
@@ -206,12 +194,12 @@ function formatTime(diff) {
     const msPerMinute = msPerSecond * 60;
     const msPerHour = msPerMinute * 60;
     const msPerDay = msPerHour * 24;
-    const msPerYear = msPerDay * 365.25; // Approximate
+    const msPerYear = msPerDay * 365.25;
 
     let years = Math.floor(diff / msPerYear);
     let remainingAfterYears = diff % msPerYear;
 
-    if (years < 0) { // Handle potential JS date math quirks
+    if (years < 0) {
         years = 0;
         remainingAfterYears = diff;
     }
@@ -226,30 +214,11 @@ function formatTime(diff) {
 
     return {
         y: String(years),
-        d: String(days), // Raw string, padding handled in component renderFlipPair
+        d: String(days),
         h: String(hours).padStart(2, "0"),
         m: String(minutes).padStart(2, "0"),
         s: String(seconds).padStart(2, "0"),
     };
-}
-
-function TimeBox({ label, value, digits = 2, isDarkMode }) {
-    const strVal = String(value).padStart(digits, "0");
-    const cards = [];
-    for (let i = 0; i < digits; i++) {
-        cards.push(strVal[i] || '0');
-    }
-
-    return (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <div style={{ display: "flex", gap: "1px" }}>
-                {cards.map((digit, index) => (
-                    <SingleFlipCard key={`${label}-${index}`} value={digit} />
-                ))}
-            </div>
-            <div style={{ fontSize: "9px", color: "#ffffff", fontWeight: 700, textTransform: "uppercase", marginTop: "4px" }}>{label}</div>
-        </div>
-    );
 }
 
 export default function AdminDashboard() {
@@ -264,8 +233,15 @@ export default function AdminDashboard() {
     const [cfbGames, setCfbGames] = useState([]);
     const [cfbLoading, setCfbLoading] = useState(false);
 
+    const [ncaabWeek, setNcaabWeek] = useState(1);
+    const [ncaabGames, setNcaabGames] = useState([]);
+    const [ncaabLoading, setNcaabLoading] = useState(false);
+
     const token = localStorage.getItem("token");
     const isAdmin = user?.is_admin === 1 || user?.is_admin === true;
+
+    // Load NCAA team colors and logos mapping
+    const { teamColors } = useTeamColors(token);
 
     const fetchData = async () => {
         setLoading(true);
@@ -280,6 +256,10 @@ export default function AdminDashboard() {
                 const cfbSetting = res.data.gameSettings.find(g => g.game_key === "cfb_pickem_ats");
                 if (cfbSetting && cfbSetting.current_week) {
                     setCfbWeek(Number(cfbSetting.current_week));
+                }
+                const ncaabSetting = res.data.gameSettings.find(g => g.game_key === "ncaab_pickem_ats");
+                if (ncaabSetting && ncaabSetting.current_week) {
+                    setNcaabWeek(Number(ncaabSetting.current_week));
                 }
             }
         } catch (err) {
@@ -314,12 +294,28 @@ export default function AdminDashboard() {
         }
     }, [activeTab, cfbWeek, token, isAdmin]);
 
-    // If auth is still loading, show a clean loader
+    useEffect(() => {
+        if (activeTab === "ncaab_must_picks" && token && isAdmin) {
+            setNcaabLoading(true);
+            axios.get("/api/ncaab_pickem_ats/games", {
+                params: { week: ncaabWeek },
+                headers: { Authorization: `Bearer ${token}` }
+            })
+                .then(res => {
+                    setNcaabGames(res.data.games || []);
+                })
+                .catch(err => {
+                    console.error("Failed to load NCAAB games for admin", err);
+                    toast.error("Failed to load matchups for Week " + ncaabWeek);
+                })
+                .finally(() => setNcaabLoading(false));
+        }
+    }, [activeTab, ncaabWeek, token, isAdmin]);
+
     if (authLoading) {
         return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, sans-serif" }}>Verifying access...</div>;
     }
 
-    // If the user is not logged in or not an admin, render the 404 page
     if (!isAdmin) {
         return <NotFound />;
     }
@@ -388,92 +384,45 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleToggleNcaabMustPick = async (gameId, currentStatus) => {
+        try {
+            await axios.post("/api/admin/ncaab-must-pick", {
+                game_id: gameId,
+                must_pick: !currentStatus
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setNcaabGames(prev => prev.map(g => {
+                if (g.id === gameId) {
+                    return { ...g, must_pick: !currentStatus };
+                }
+                return g;
+            }));
+            toast.success(!currentStatus ? "Marked as Must-Pick ⭐" : "Removed Must-Pick status");
+        } catch (err) {
+            console.error("Failed to update NCAAB must-pick status", err);
+            toast.error(err.response?.data?.error || "Failed to update must-pick status.");
+        }
+    };
+
     if (loading) {
         return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, sans-serif" }}>Loading Admin Hub...</div>;
     }
 
     const mustPickCount = cfbGames.filter(g => g.must_pick).length;
+    const ncaabMustPickCount = ncaabGames.filter(g => g.must_pick).length;
 
     return (
         <div style={{ width: "100%", maxWidth: 1100, margin: "0 auto", padding: "20px 12px", fontFamily: "system-ui, sans-serif" }}>
-            <style>{`
-                .flip-card-unit {
-                    position: relative;
-                    display: flex;
-                    flex-direction: column;
-                    width: 14px;
-                    height: 26px;
-                    font-size: 15px;
-                    font-weight: 900;
-                    color: #ffffff;
-                    perspective: 300px;
-                    font-family: 'Courier New', Courier, monospace;
-                    background: #111;
-                    border-radius: 3px;
-                }
-                .flip-card-unit .top-static, .flip-card-unit .bottom-static {
-                    position: absolute;
-                    left: 0;
-                    width: 100%;
-                    height: 50%;
-                    overflow: hidden;
-                }
-                .flip-card-unit .top-static {
-                    top: 0;
-                    background: #181818;
-                    border-bottom: 1px solid #000;
-                    border-radius: 3px 3px 0 0;
-                }
-                .flip-card-unit .top-static span {
-                    position: absolute;
-                    top: 0; left: 0; width: 100%; height: 26px; line-height: 26px; text-align: center;
-                }
-                .flip-card-unit .bottom-static {
-                    bottom: 0;
-                    background: #2c2c2c;
-                    border-top: 1px solid #111;
-                    border-radius: 0 0 3px 3px;
-                }
-                .flip-card-unit .bottom-static span {
-                    position: absolute;
-                    top: -13px; left: 0; width: 100%; height: 26px; line-height: 26px; text-align: center;
-                }
-                .flip-card-unit .flipper {
-                    position: absolute;
-                    width: 100%;
-                    height: 50%;
-                    top: 0;
-                    transform-origin: bottom;
-                    transform-style: preserve-3d;
-                    z-index: 3;
-                }
-                .flip-card-unit.flipping .flipper {
-                    transition: transform 0.4s ease-in-out;
-                    transform: rotateX(-180deg);
-                }
-                .flip-card-unit .front, .flip-card-unit .back {
-                    position: absolute; left: 0; width: 100%; height: 100%; overflow: hidden; backface-visibility: hidden;
-                }
-                .flip-card-unit .front {
-                    top: 0; background: #181818; border-bottom: 1px solid #000; border-radius: 3px 3px 0 0;
-                }
-                .flip-card-unit .front span {
-                    position: absolute; top: 0; left: 0; width: 100%; height: 26px; line-height: 26px; text-align: center;
-                }
-                .flip-card-unit .back {
-                    bottom: 0; background: #2c2c2c; transform: rotateX(180deg); border-radius: 0 0 3px 3px;
-                }
-                .flip-card-unit .back span {
-                    position: absolute; top: -13px; left: 0; width: 100%; height: 26px; line-height: 26px; text-align: center;
-                }
-            `}</style>
+            <style>{countdownStyle}</style>
 
             <div style={{ textAlign: "center", marginBottom: 20 }}>
                 <h2 style={{ color: NAVY, fontSize: "26px", fontWeight: 800, margin: 0 }}>
                     🛠️ Administrator Control Hub
                 </h2>
                 <p style={{ color: "#64748b", marginTop: 4, fontSize: "13px" }}>
-                    Manage background sync tasks, game configurations, and CFB Must-Picks.
+                    Manage background sync tasks, game configurations, and Must-Picks.
                 </p>
             </div>
 
@@ -514,6 +463,16 @@ export default function AdminDashboard() {
                     }}
                 >
                     🏈 CFB Must-Picks
+                </button>
+                <button
+                    onClick={() => setActiveTab("ncaab_must_picks")}
+                    style={{
+                        padding: "8px 16px", fontWeight: 700, fontSize: "14px", borderRadius: "6px", border: "none",
+                        background: activeTab === "ncaab_must_picks" ? NAVY : "#f1f5f9",
+                        color: activeTab === "ncaab_must_picks" ? "white" : "#475569", cursor: "pointer"
+                    }}
+                >
+                    🏀 NCAAB Must-Picks
                 </button>
                 <button
                     onClick={() => setActiveTab("bts_randomizer")}
@@ -687,6 +646,15 @@ export default function AdminDashboard() {
                                     const isMustPick = !!game.must_pick;
                                     const kickoffStr = game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "TBD";
 
+                                    const awayMeta = teamColors[game.away_team] || {};
+                                    const homeMeta = teamColors[game.home_team] || {};
+
+                                    const awayLogo = awayMeta.logo || game.away_logo || null;
+                                    const homeLogo = homeMeta.logo || game.home_logo || null;
+
+                                    const awayColor = awayMeta.primaryColor || game.away_color || "#1c61ac";
+                                    const homeColor = homeMeta.primaryColor || game.home_color || "#1c61ac";
+
                                     return (
                                         <div key={game.id} style={{
                                             display: "flex",
@@ -699,15 +667,60 @@ export default function AdminDashboard() {
                                             boxShadow: isMustPick ? "0 2px 6px rgba(200, 157, 60, 0.2)" : "none",
                                             gap: 12
                                         }}>
-                                            <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0, flex: 1 }}>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0, flex: 1 }}>
                                                 <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 700 }}>
                                                     {kickoffStr} {game.spread !== null && game.spread !== undefined ? `| Spread: ${game.spread}` : ""}
                                                 </div>
-                                                <div style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                                    {game.away_team_rank ? <span style={{ color: "#b45309", marginRight: 2 }}>({game.away_team_rank})</span> : null}
-                                                    {game.away_team} @&nbsp;
-                                                    {game.home_team_rank ? <span style={{ color: "#b45309", marginRight: 2 }}>({game.home_team_rank})</span> : null}
-                                                    {game.home_team}
+                                                <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                                                    {/* Away Team Badge */}
+                                                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                                        {awayLogo && (
+                                                            <div style={{
+                                                                background: awayMeta.secondaryColor || "#cbd5e1",
+                                                                borderRadius: 4,
+                                                                padding: "2px",
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                                border: `1.5px solid ${awayColor}`,
+                                                                width: 22,
+                                                                height: 22,
+                                                                flexShrink: 0
+                                                            }}>
+                                                                <img src={awayLogo} alt={game.away_team} style={{ width: 16, height: 16, objectFit: "contain", display: "block" }} />
+                                                            </div>
+                                                        )}
+                                                        <span style={{ fontSize: "14px", fontWeight: 800, color: awayColor }}>
+                                                            {game.away_team_rank ? <span style={{ color: "#b45309", marginRight: 2 }}>({game.away_team_rank})</span> : null}
+                                                            {game.away_team}
+                                                        </span>
+                                                    </div>
+
+                                                    <span style={{ fontSize: "12px", fontWeight: 700, color: "#64748b" }}>@</span>
+
+                                                    {/* Home Team Badge */}
+                                                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                                        {homeLogo && (
+                                                            <div style={{
+                                                                background: homeMeta.secondaryColor || "#cbd5e1",
+                                                                borderRadius: 4,
+                                                                padding: "2px",
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                                border: `1.5px solid ${homeColor}`,
+                                                                width: 22,
+                                                                height: 22,
+                                                                flexShrink: 0
+                                                            }}>
+                                                                <img src={homeLogo} alt={game.home_team} style={{ width: 16, height: 16, objectFit: "contain", display: "block" }} />
+                                                            </div>
+                                                        )}
+                                                        <span style={{ fontSize: "14px", fontWeight: 800, color: homeColor }}>
+                                                            {game.home_team_rank ? <span style={{ color: "#b45309", marginRight: 2 }}>({game.home_team_rank})</span> : null}
+                                                            {game.home_team}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -739,7 +752,169 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            {/* TAB 4: BTS Randomizer */}
+            {/* TAB 4: NCAAB MUST-PICKS MANAGEMENT */}
+            {activeTab === "ncaab_must_picks" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                    <div style={{ background: "white", padding: "16px", borderRadius: 8, border: "1px solid #e2e8f0", boxShadow: "0 2px 6px rgba(0,0,0,0.04)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+                            <div>
+                                <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 800, color: NAVY }}>NCAAB Pick 'Em Must-Picks Manager</h3>
+                                <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#64748b" }}>
+                                    Select weekly college basketball matchups below and click the button to set them as 'Must Picks' instantly. Currently set: <strong>{ncaabMustPickCount}</strong>
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Week Selector Bar */}
+                        <div style={{
+                            display: "flex",
+                            justifyContent: "flex-start",
+                            gap: 6,
+                            marginBottom: 16,
+                            flexWrap: "nowrap",
+                            overflowX: "auto",
+                            WebkitOverflowScrolling: "touch",
+                            paddingBottom: 4,
+                            width: "100%"
+                        }}>
+                            {[...Array(15)].map((_, i) => (
+                                <button
+                                    key={i + 1}
+                                    onClick={() => setNcaabWeek(i + 1)}
+                                    style={{
+                                        padding: "6px 12px",
+                                        borderRadius: 6,
+                                        border: "1px solid #ddd",
+                                        backgroundColor: ncaabWeek === i + 1 ? NAVY : "white",
+                                        color: ncaabWeek === i + 1 ? "white" : "#333",
+                                        cursor: "pointer",
+                                        fontWeight: 600,
+                                        flexShrink: 0,
+                                        fontSize: "13px"
+                                    }}
+                                >
+                                    W{i + 1}
+                                </button>
+                            ))}
+                        </div>
+
+                        {ncaabLoading ? (
+                            <div style={{ textAlign: "center", padding: "30px", color: "#64748b", fontSize: "13px" }}>Loading Week {ncaabWeek} matchups...</div>
+                        ) : ncaabGames.length === 0 ? (
+                            <div style={{ textAlign: "center", padding: "30px", color: "#64748b", fontSize: "13px" }}>No games found for Week {ncaabWeek}.</div>
+                        ) : (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                                {ncaabGames.map(game => {
+                                    const isMustPick = !!game.must_pick;
+                                    const kickoffStr = game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "TBD";
+
+                                    const awayMeta = teamColors[game.away_team] || {};
+                                    const homeMeta = teamColors[game.home_team] || {};
+
+                                    const awayLogo = awayMeta.logo || game.away_logo || null;
+                                    const homeLogo = homeMeta.logo || game.home_logo || null;
+
+                                    const awayColor = awayMeta.primaryColor || game.away_color || "#009CDE";
+                                    const homeColor = homeMeta.primaryColor || game.home_color || "#009CDE";
+
+                                    return (
+                                        <div key={game.id} style={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "center",
+                                            padding: "10px 14px",
+                                            borderRadius: 8,
+                                            border: isMustPick ? `2px solid ${GOLD}` : "1px solid #e2e8f0",
+                                            backgroundColor: isMustPick ? "#fef3c2" : "#ffffff",
+                                            boxShadow: isMustPick ? "0 2px 6px rgba(200, 157, 60, 0.2)" : "none",
+                                            gap: 12
+                                        }}>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0, flex: 1 }}>
+                                                <div style={{ fontSize: "11px", color: "#64748b", fontWeight: 700 }}>
+                                                    {kickoffStr} {game.spread !== null && game.spread !== undefined ? `| Spread: ${game.spread}` : ""}
+                                                </div>
+                                                <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                                                    {/* Away Team Badge */}
+                                                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                                        {awayLogo && (
+                                                            <div style={{
+                                                                background: awayMeta.secondaryColor || "#cbd5e1",
+                                                                borderRadius: 4,
+                                                                padding: "2px",
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                                border: `1.5px solid ${awayColor}`,
+                                                                width: 22,
+                                                                height: 22,
+                                                                flexShrink: 0
+                                                            }}>
+                                                                <img src={awayLogo} alt={game.away_team} style={{ width: 16, height: 16, objectFit: "contain", display: "block" }} />
+                                                            </div>
+                                                        )}
+                                                        <span style={{ fontSize: "14px", fontWeight: 800, color: awayColor }}>
+                                                            {game.away_team_rank ? <span style={{ color: "#b45309", marginRight: 2 }}>({game.away_team_rank})</span> : null}
+                                                            {game.away_team}
+                                                        </span>
+                                                    </div>
+
+                                                    <span style={{ fontSize: "12px", fontWeight: 700, color: "#64748b" }}>@</span>
+
+                                                    {/* Home Team Badge */}
+                                                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                                        {homeLogo && (
+                                                            <div style={{
+                                                                background: homeMeta.secondaryColor || "#cbd5e1",
+                                                                borderRadius: 4,
+                                                                padding: "2px",
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                                border: `1.5px solid ${homeColor}`,
+                                                                width: 22,
+                                                                height: 22,
+                                                                flexShrink: 0
+                                                            }}>
+                                                                <img src={homeLogo} alt={game.home_team} style={{ width: 16, height: 16, objectFit: "contain", display: "block" }} />
+                                                            </div>
+                                                        )}
+                                                        <span style={{ fontSize: "14px", fontWeight: 800, color: homeColor }}>
+                                                            {game.home_team_rank ? <span style={{ color: "#b45309", marginRight: 2 }}>({game.home_team_rank})</span> : null}
+                                                            {game.home_team}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                onClick={() => handleToggleNcaabMustPick(game.id, isMustPick)}
+                                                style={{
+                                                    background: isMustPick ? GOLD : "#f1f5f9",
+                                                    color: isMustPick ? "white" : "#475569",
+                                                    border: isMustPick ? `1px solid ${GOLD}` : "1px solid #cbd5e1",
+                                                    padding: "6px 12px",
+                                                    borderRadius: 6,
+                                                    fontWeight: 700,
+                                                    fontSize: "12px",
+                                                    cursor: "pointer",
+                                                    whiteSpace: "nowrap",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: 4
+                                                }}
+                                            >
+                                                {isMustPick ? "⭐ Must-Pick" : "☆ Set Must-Pick"}
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* TAB 5: BTS Randomizer */}
             {activeTab === "bts_randomizer" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     <BTSrandomizer />

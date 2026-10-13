@@ -1,4 +1,4 @@
-const { NbaRegularSeasonGames, NbaTeams } = require("../models");
+const { NbaRegularSeasonGames } = require("../models");
 const db = require("../models");
 const { Op } = require("sequelize");
 const requireAuth = require("../middleware/Requireauth");
@@ -33,22 +33,6 @@ module.exports = function (app) {
         } catch (err) {
             console.error("Error fetching regular season matchups:", err);
             res.status(500).json({ error: "Failed to fetch matchups" });
-        }
-    });
-
-
-    // --------------------------------------------------------
-    // GET /api/nba_teams (Fetch all NBA teams and colors)
-    // --------------------------------------------------------
-    app.get("/api/nba_teams", requireAuth, async (req, res) => {
-        try {
-            const teams = await NbaTeams.findAll({
-                order: [["name", "ASC"]]
-            });
-            res.json(teams);
-        } catch (err) {
-            console.error("Error fetching NBA teams:", err);
-            res.status(500).json({ error: "Failed to fetch NBA teams" });
         }
     });
 

@@ -1,4 +1,4 @@
-const { NflRegularSeasonGames, NflPickemAtsPicks, NflPickemAtsEntries, NflTeams, Users } = require("../models");
+const { NflRegularSeasonGames, NflPickemAtsPicks, NflPickemAtsEntries } = require("../models");
 const requireAuth = require("../middleware/Requireauth");
 const { Op } = require("sequelize");
 const db = require("../models");

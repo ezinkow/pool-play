@@ -206,7 +206,7 @@ export default function CfbPickemAtsHome() {
           textAlign: "left"
         }}>
           <h3 style={{ color: NFL_BLUE, marginTop: 0, marginBottom: 16, fontSize: "1.2rem", textAlign: "center" }}>
-            🏈 CFB ATS Pick'em Pool
+            <span>🏈</span> CFB ATS Pick'em Pool <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span>
           </h3>
 
           {userEntry ? (

@@ -13,7 +13,7 @@ export default function useCFBTeamColors(token) {
     const controller = new AbortController();
     abortRef.current = controller;
     try {
-      const res = await fetch('/api/cfb_teams', { 
+      const res = await fetch('/api/ncaa_teams', { 
         signal: controller.signal,
         headers: { Authorization: `Bearer ${token}` }
       });

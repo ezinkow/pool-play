@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
-import useTeamColors from '../../hooks/useCFBTeamColors';
+import useTeamColors from '../../hooks/useNCAATeamColors';
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 
 const CFB_BLUE = "#013369";
@@ -502,6 +502,7 @@ export default function CfbPickemAtsPicks() {
                             const hasStarted = isLocked || (game.home_score !== null && game.home_score !== undefined) || (game.away_score !== null && game.away_score !== undefined);
                             const rawStatus = (game.status || "").toUpperCase();
                             const liveStatusText = game.live_status || game.status_detail || (rawStatus.includes("FINAL") || rawStatus.includes("COMPLETED") ? "Final" : (hasStarted ? "In Progress" : ""));
+                            
                             const displayDateStr = game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).toUpperCase() : "TBD";
 
                             const gameHeaderLabel = hasStarted

@@ -25,17 +25,13 @@ const db = require("./models");
 db.sequelize.sync({ force: false, alter: false }).then(() => {
   // ── 3. MOVED INSIDE: Routes only load AFTER tables exist ────────────────────
 
-  // Shared auth (single login for all games)
-  require("./routes/shared/auth-api-routes.js")(app);
+  // Shared api routes
+  require("./routes/shared-api-routes.js")(app);
 
-  require("./routes/shared/gamesettings-api-routes.js")(app);
-  require("./routes/shared/myaccount-api-routes.js")(app);
-  require("./routes/shared/comments-api-routes.js")(app);
-  require("./routes/shared/banter-api-routes.js")(app);
-  require("./routes/shared/admin-api-routes.js")(app);
-  require("./routes/shared/countdown-api-routes.js")(app);
+  // Admin api routes
+  require("./routes/admin_api_routes.js")(app);
 
-  // Bracket
+  // NCAABBracket
   require("./routes/bracket/picks-api-routes.js")(app);
   require("./routes/bracket/games-api-routes.js")(app);
   require("./routes/bracket/entries-api-routes.js")(app);
@@ -51,7 +47,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   // CFB Bowl Confidence Pickem
   require("./routes/cfb_bowl_confidence.js")(app);
 
-  // Champ Week
+  // NCAAB Champ Week
   require("./routes/champweek_pickem/picks-api-routes.js")(app);
   require("./routes/champweek_pickem/games-api-routes.js")(app);
   require("./routes/champweek_pickem/entries-api-routes.js")(app);
@@ -61,10 +57,10 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/champweek_pickem/picksdisplay-api-routes.js")(app);
   require("./routes/champweek_pickem/tiebreaker-api-routes.js")(app);
 
-  // Home Run Derby
+  // MLB Home Run Derby
   require("./routes/hrd_api_routes.js")(app);
 
-  // Tourney Pickem
+  // NCAAB Tourney Pickem
   require("./routes/tourney_pickem/picks-api-routes.js")(app);
   require("./routes/tourney_pickem/games-api-routes.js")(app);
   require("./routes/tourney_pickem/entries-api-routes.js")(app);
@@ -73,11 +69,11 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/tourney_pickem/adminRefreshGames.js")(app);
   require("./routes/tourney_pickem/picksdisplay-api-routes.js")(app);
 
-  // Tourney Squares
+  // NCAAB Tourney Squares
   require("./routes/tourney_squares/entries-api-routes.js")(app);
   require("./routes/tourney_squares/grid-api-routes.js")(app);
 
-  // NBA
+  // NBA Playoffs
   require("./routes/nba/entries-api-routes.js")(app);
   require("./routes/nba/series-api-routes.js")(app);
   require("./routes/nba/picks-api-routes.js")(app);
@@ -91,7 +87,10 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   // NBA Survivor
   require("./routes/nba_survivor_api_routes.js")(app);
 
-  // NFL
+  // NCAAB Pick em ATS
+  require("./routes/ncaab_ats_api_routes.js")(app);
+
+  // NFL Playoffs
   require("./routes/nfl/rosters-api-routes.js")(app);
   require("./routes/nfl/playerpools-api-routes.js")(app);
   require("./routes/nfl/entries-api-routes.js")(app);
@@ -110,7 +109,7 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
 
   // NFL Survivor
   require("./routes/nfl_survivor_api_routes.js")(app);
- 
+
   // NFL Survivor 2nd Chance
   require("./routes/nfl_survivor_secondchance_api_routes.js")(app);
 
@@ -124,13 +123,14 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   require("./routes/world_cup_api_routes.js")(app);
 
   // ── 4. MOVED INSIDE: Background jobs can safely execute query sets ────────
-  const syncTourneyPickem = require("./syncs/ncaa_tourney/sync.js");
+  const syncNcaaTourney = require("./syncs/ncaa_tourney/sync.js");
   const syncChampWeekPickem = require("./syncs/ncaa_champweek/sync.js");
   const syncBracket = require("./syncs/ncaa_bracket/sync.js");
   const syncHrd = require("./syncs/mlb_season/sync.js");
   const syncNbaPlayoffs = require("./syncs/nba_playoffs/sync.js");
   const syncMlbPlayoffs = require("./syncs/mlb_playoffs/sync.js");
   const syncNflRegSeason = require("./syncs/nfl_season/sync.js");
+  const syncNcaabRegSeason = require("./syncs/ncaab_season/sync.js");
   const syncCfbRegSeason = require("./syncs/cfb_season/sync.js");
   const syncCfbBowlSeason = require("./syncs/cfb_bowl_season/sync.js");
   const syncNbaRegSeason = require("./syncs/nba_season/sync.js");
@@ -146,9 +146,10 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
     try {
       // 1. Define sync tasks mapping exact database sync_file_route strings to runner functions
       const syncTasks = [
-        { route: "ncaa_tourney", run: syncTourneyPickem },
-        { route: "ncaa_champweek", run: syncChampWeekPickem }, // Added if you want champweek synced
-        { route: "bracket", run: syncBracket },                 // Ensure a row exists in DB for this if used
+        { route: "ncaab_tourney", run: syncNcaaTourney },
+        { route: "ncaab_champweek", run: syncChampWeekPickem }, // Added if you want champweek synced
+        { route: "ncaab_bracket", run: syncBracket },                 // Ensure a row exists in DB for this if used
+        { route: "ncaab_season", run: syncNcaabRegSeason },
         { route: "mlb_home_run_derby", run: syncHrd },          // Fixed from "hrd"
         { route: "nba_playoffs", run: syncNbaPlayoffs },
         { route: "mlb_playoffs", run: syncMlbPlayoffs },
