@@ -4,6 +4,7 @@ import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import useTeamColors from '../../hooks/useNCAATeamColors';
 import PoolGatekeeper from "../../components/PoolGatekeeper";
+import OpenPoolsCard from "../../components/OpenPoolsCard";
 
 const CFB_BLUE = "#013369";
 const CFB_RED = "#D50A0A";
@@ -122,6 +123,16 @@ export default function CdbPickemAtsMyPicks() {
                         100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } 
                     }
                 `}</style>
+
+                <div className="desktop-open-pools-sidebar" style={{ position: "absolute", left: "-320px", top: "16px", width: "290px" }}>
+                    <div style={{ position: "sticky", top: "70px" }}>
+                        <OpenPoolsCard />
+                    </div>
+                </div>
+
+                <div className="mobile-open-pools-banner" style={{ marginBottom: 14 }}>
+                    <OpenPoolsCard />
+                </div>
 
                 <div style={{ textAlign: "center", marginBottom: 20 }}>
                     <h2 style={{ color: CFB_BLUE, fontSize: "26px", margin: 0, fontWeight: 800, letterSpacing: "-0.025em" }}>My Week {currentWeek} Summary</h2>

@@ -53,7 +53,6 @@ export default function MyAccount() {
         return <div style={{ padding: 100, textAlign: "center", color: NAVY, fontWeight: 700 }}>Scanning active entry sheets profiles...</div>;
     }
 
-    console.log(myPools);
     const renderPoolCard = (pool, isActive) => (
         <div
             key={pool.key || pool.id}

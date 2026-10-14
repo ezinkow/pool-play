@@ -30,7 +30,7 @@ export default function Picks() {
             .then(res => setSeries(res.data || []))
             .catch(() => toast.error("Error loading series"));
     }, []);
-    console.log(series)
+
     useEffect(() => {
         if (user && series.length > 0) {
             const token = localStorage.getItem("token");

@@ -90,6 +90,10 @@ module.exports = (sequelize, DataTypes) => {
         nav_links: {
             type: DataTypes.JSON,
             allowNull: true
+        },
+        credits: {
+            type: DataTypes.INTEGER,
+            allowNull: true
         }
     }, {
         tableName: "game_settings",

@@ -655,6 +655,9 @@ export default function AdminDashboard() {
                                     const awayColor = awayMeta.primaryColor || game.away_color || "#1c61ac";
                                     const homeColor = homeMeta.primaryColor || game.home_color || "#1c61ac";
 
+                                    const awaySecondaryColor = awayMeta.secondaryColor || game.away_secondary_color || "#cbd5e1";
+                                    const homeSecondaryColor = homeMeta.secondaryColor || game.home_secondary_color || "#cbd5e1";
+
                                     return (
                                         <div key={game.id} style={{
                                             display: "flex",
@@ -676,7 +679,7 @@ export default function AdminDashboard() {
                                                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                                         {awayLogo && (
                                                             <div style={{
-                                                                background: awayMeta.secondaryColor || "#cbd5e1",
+                                                                background: awaySecondaryColor,
                                                                 borderRadius: 4,
                                                                 padding: "2px",
                                                                 display: "flex",
@@ -702,7 +705,7 @@ export default function AdminDashboard() {
                                                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                                         {homeLogo && (
                                                             <div style={{
-                                                                background: homeMeta.secondaryColor || "#cbd5e1",
+                                                                background: homeSecondaryColor,
                                                                 borderRadius: 4,
                                                                 padding: "2px",
                                                                 display: "flex",
@@ -817,6 +820,9 @@ export default function AdminDashboard() {
                                     const awayColor = awayMeta.primaryColor || game.away_color || "#009CDE";
                                     const homeColor = homeMeta.primaryColor || game.home_color || "#009CDE";
 
+                                    const awaySecondaryColor = awayMeta.secondaryColor || game.away_secondary_color || "#cbd5e1";
+                                    const homeSecondaryColor = homeMeta.secondaryColor || game.home_secondary_color || "#cbd5e1";
+                                    
                                     return (
                                         <div key={game.id} style={{
                                             display: "flex",
@@ -838,7 +844,7 @@ export default function AdminDashboard() {
                                                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                                         {awayLogo && (
                                                             <div style={{
-                                                                background: awayMeta.secondaryColor || "#cbd5e1",
+                                                                background: awaySecondaryColor,
                                                                 borderRadius: 4,
                                                                 padding: "2px",
                                                                 display: "flex",
@@ -864,7 +870,7 @@ export default function AdminDashboard() {
                                                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                                         {homeLogo && (
                                                             <div style={{
-                                                                background: homeMeta.secondaryColor || "#cbd5e1",
+                                                                background: homeSecondaryColor,
                                                                 borderRadius: 4,
                                                                 padding: "2px",
                                                                 display: "flex",

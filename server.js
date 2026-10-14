@@ -26,7 +26,8 @@ db.sequelize.sync({ force: false, alter: false }).then(() => {
   // ── 3. MOVED INSIDE: Routes only load AFTER tables exist ────────────────────
 
   // Shared api routes
-  require("./routes/shared-api-routes.js")(app);
+  require("./routes/shared_api_routes.js")(app);
+  require("./routes/team_colors_api_routes.js")(app);
 
   // Admin api routes
   require("./routes/admin_api_routes.js")(app);

@@ -404,7 +404,7 @@ export default function NcaabPickemAtsMatrix() {
                         paddingLeft: 8,
                         paddingRight: 8
                     }}>
-                        {[...Array(15)].map((_, i) => (
+                        {[...Array(17)].map((_, i) => (
                             <button
                                 key={i + 1}
                                 onClick={() => setCurrentWeek(i + 1)}

@@ -63,7 +63,6 @@ export default function GroupPicks() {
     return () => clearInterval(interval);
   }, []);
   
-  console.log(series)
   const pickMap = useMemo(() => {
     const map = {};
     picks.forEach(p => {

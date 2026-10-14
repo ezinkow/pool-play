@@ -39,7 +39,6 @@ body {
    ========================================================================== */
 
 .page-content {
-  padding-top: 100px;
   min-height: 100vh;
   box-sizing: border-box;
 }
@@ -1042,5 +1041,78 @@ Hide mobile picks on desktop
   .mypicks-desktop {
     display: none !important;
     /* Hide desktop table on mobile */
+  }
+}
+
+/* ==========================================================================
+   12. OPEN GAMES WIDGET & 3-COLUMN GRID 
+   ========================================================================== */
+
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mobile / Default layout container */
+.home-layout-grid {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1350px;
+  margin: 0 auto;
+  padding: 20px 16px;
+  padding-top: 110px;
+}
+
+.home-sidebar-col {
+  display: none; /* Hidden on mobile */
+}
+
+.home-main-col {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Mobile top banner */
+.mobile-open-pools-banner {
+  display: block;
+  margin-bottom: 20px;
+}
+
+/* Desktop 3-Column Layout (screens 1024px and wider) */
+@media (min-width: 1024px) {
+  .home-layout-grid {
+    display: grid;
+    /* 
+      Column 1: Left Widget Sidebar (290px)
+      Column 2: Center Main Content (Flexible space, e.g., 850px max or 1fr)
+      Column 3: Right Balancing Margin (matches or frames the layout)
+    */
+    grid-template-columns: 290px minmax(0, 850px) 200px;
+    justify-content: center; /* Centers the whole 3-column block on screen with outer borders */
+    gap: 32px;
+    align-items: start;
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+
+  .mobile-open-pools-banner {
+    display: none !important; /* Hide top banner on desktop */
+  }
+
+  /* Sticky widget in the left column */
+  .home-sidebar-col {
+    display: block !important;
+    position: sticky;
+    top: 120px;
+    align-self: start;
+  }
+
+  /* Ensures the main content sits comfortably in the large center column */
+  .home-main-col {
+    width: 100%;
+    max-width: 850px;
+    margin: 0 auto;
   }
 }

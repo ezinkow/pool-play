@@ -420,12 +420,8 @@ export default function Home() {
         );
     };
 
-    const bgGradient = isDarkMode
-        ? `radial-gradient(circle at 70% 20%, rgba(212, 175, 55, 0.18) 0%, transparent 40%), radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.2) 0%, transparent 50%), linear-gradient(135deg, #061a33 0%, #0b192c 50%, #020617 100%)`
-        : `radial-gradient(circle at 75% 15%, rgba(212, 175, 55, 0.25) 0%, transparent 45%), radial-gradient(circle at 25% 75%, rgba(14, 165, 233, 0.15) 0%, transparent 50%), linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)`;
-
     return (
-        <div style={{ minHeight: "100vh", background: bgGradient, backgroundAttachment: "fixed", padding: "16px 12px 80px", transition: "background 0.3s ease", fontFamily: "system-ui, -apple-system, sans-serif", scrollBehavior: "smooth" }}>
+        <div style={{ padding: "16px 12px 80px", fontFamily: "system-ui, -apple-system, sans-serif", scrollBehavior: "smooth" }}>
             <style>{`
                 @keyframes pulse {
                     0% { transform: scale(0.95); opacity: 0.8; }
