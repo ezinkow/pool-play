@@ -116,7 +116,7 @@ function PoolCountdown({ poolData, mode, isDarkMode }) {
                 try {
                     const res = await axios.get(`/api/pools/next-game?game_key=${gameKey}`, { headers });
                     const nextGame = res.data;
-                    
+
                     if (nextGame && isMounted) {
                         if (nextGame.games_model_name && nextGame.games_model_name.toLowerCase().includes('series')) {
                             setIsSeries(true);
@@ -149,7 +149,7 @@ function PoolCountdown({ poolData, mode, isDarkMode }) {
     const lockTime = lockDate ? new Date(lockDate) : null;
     const isBeforeOpen = !isActive || (openTime && now < openTime);
     const isPreStart = isActive && lockTime && now >= (openTime || 0) && now < lockTime;
-    
+
     let labelText = isSeries ? "NEXT SERIES:" : "NEXT GAME:";
     if (mode === 'live') labelText = "ENDS:";
     else if (isBeforeOpen) labelText = "OPENS:";
@@ -420,8 +420,12 @@ export default function Home() {
         );
     };
 
+    const bgGradient = isDarkMode
+        ? `radial-gradient(circle at 70% 20%, rgba(212, 175, 55, 0.18) 0%, transparent 40%), radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.2) 0%, transparent 50%), linear-gradient(135deg, #061a33 0%, #0b192c 50%, #020617 100%)`
+        : `radial-gradient(circle at 75% 15%, rgba(212, 175, 55, 0.25) 0%, transparent 45%), radial-gradient(circle at 25% 75%, rgba(14, 165, 233, 0.15) 0%, transparent 50%), linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)`;
+
     return (
-        <div style={{ padding: "16px 12px 80px", fontFamily: "system-ui, -apple-system, sans-serif", scrollBehavior: "smooth" }}>
+        <div style={{ minHeight: "50vh", background: bgGradient, backgroundAttachment: "fixed", padding: "-200px 0 80px", transition: "background 0.3s ease", fontFamily: "system-ui, -apple-system, sans-serif", scrollBehavior: "smooth" }}>
             <style>{`
                 @keyframes pulse {
                     0% { transform: scale(0.95); opacity: 0.8; }
@@ -430,18 +434,22 @@ export default function Home() {
                 }
             `}</style>
 
-            <div style={{ maxWidth: 850, margin: "0 auto 16px", background: isDarkMode ? "rgba(15, 23, 42, 0.85)" : "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", borderRadius: "14px", border: `1px solid ${isDarkMode ? "#334155" : "#cbd5e1"}`, padding: "20px 16px", boxShadow: "0 6px 20px rgba(0,0,0,0.12)", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", position: "relative", gap: "12px" }}>
+            {/* --- Main Hero Header Card --- */}
+            <div style={{ maxWidth: 850, margin: "-50px auto 16px", background: isDarkMode ? "rgba(15, 23, 42, 0.85)" : "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", borderRadius: "14px", border: `1px solid ${isDarkMode ? "#334155" : "#cbd5e1"}`, padding: "24px 20px", boxShadow: "0 6px 20px rgba(0,0,0,0.12)", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", position: "relative", gap: "14px" }}>
                 <button onClick={toggleTheme} style={{ position: "absolute", top: "12px", right: "12px", background: isDarkMode ? "rgba(255,255,255,0.15)" : "#0f172a", color: isDarkMode ? "white" : "#ffffff", border: isDarkMode ? "1px solid rgba(255,255,255,0.3)" : "none", borderRadius: "16px", padding: "5px 10px", fontSize: "11px", fontWeight: "700", cursor: "pointer", boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}>
                     {isDarkMode ? "☀️ Light" : "🌙 Dark"}
                 </button>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", marginTop: "4px" }}>
-                    <img src={logo} alt="POOL PLAY" style={{ width: "90px", height: "90px", borderRadius: "50%", border: `3px solid ${GOLD}`, boxShadow: "0 4px 12px rgba(0,0,0,0.25)" }} />
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", marginTop: "2px" }}>
+                    {/* Increased Logo Size */}
+                    <img src={logo} alt="POOL PLAY" style={{ width: "120px", height: "120px", borderRadius: "50%", border: `3px solid ${GOLD}`, boxShadow: "0 4px 16px rgba(0,0,0,0.3)" }} />
                     <div>
-                        <h1 style={{ color: isDarkMode ? "white" : DEEP_NAVY, margin: 0, fontSize: "22px", fontWeight: 800, letterSpacing: "-0.5px" }}>🏆 POOL PLAY 🏊</h1>
-                        <p style={{ color: isDarkMode ? GOLD : AQUA_BLUE, margin: "4px 0 0", fontSize: "11px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>Jump on in, the water's fine!</p>
+                        {/* Increased Title Font Size */}
+                        <h1 style={{ color: isDarkMode ? "white" : DEEP_NAVY, margin: 0, fontSize: "30px", fontWeight: 800, letterSpacing: "-0.5px" }}>🏆 POOL PLAY 🏊</h1>
+                        {/* Increased Subtitle Font Size */}
+                        <p style={{ color: isDarkMode ? GOLD : AQUA_BLUE, margin: "6px 0 0", fontSize: "13px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>Jump on in, the water's fine!</p>
                     </div>
                 </div>
-                <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap", width: "100%", borderTop: isDarkMode ? "1px solid rgba(255,255,255,0.08)" : "1px solid #e2e8f0", paddingTop: "12px" }}>
+                <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap", width: "100%", borderTop: isDarkMode ? "1px solid rgba(255,255,255,0.08)" : "1px solid #e2e8f0", paddingTop: "14px" }}>
                     <a href="#pools-section" onClick={(e) => { e.preventDefault(); document.getElementById('pools-section')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ textDecoration: "none" }}>
                         <span style={{ background: isDarkMode ? "rgba(255,255,255,0.1)" : "#f1f5f9", color: isDarkMode ? "#cbd5e1" : "#475569", padding: "5px 10px", borderRadius: "8px", fontSize: "11px", fontWeight: 700, display: "inline-block", cursor: "pointer", border: isDarkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e2e8f0" }}>
                             🔥 {live.length} {live.length === 1 ? "Game Live" : "Games Live"}

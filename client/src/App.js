@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from "react";
 import './App.css';
-import { HashRouter as BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import { HashRouter as BrowserRouter, Routes, Route, useLocation, Outlet } from "react-router-dom";
 import OpenPoolsCard from "./components/OpenPoolsCard"
 
 // Shared
@@ -85,7 +85,7 @@ import NbaAdminRefresh from './pages/nba_playoffs/AdminRefresh';
 
 // NBA Survivor pages
 import NbaSurvivorHome from './pages/nba_survivor/Home';
-import NbaSurvivorPicks from './pages/nfl_survivor/Picks'; // leaving original paths intact
+import NbaSurvivorPicks from './pages/nfl_survivor/Picks';
 import NbaSurvivorMyPicks from './pages/nba_survivor/MyPicks';
 import NbaSurvivorGroupPicks from './pages/nba_survivor/GroupsPicks';
 
@@ -186,14 +186,37 @@ function MainLayout() {
     </div>
   );
 }
+
+function RouteListener() {
+  const location = useLocation();
+  const isHome = location.pathname === "/";
+
+  useEffect(() => {
+    const container = document.getElementById('root-app-container');
+    if (container) {
+      if (isHome) {
+        container.classList.add("home-page-active");
+      } else {
+        container.classList.remove("home-page-active");
+      }
+    }
+  }, [location]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="app-container">
+      <RouteListener />
+      <div id="root-app-container" className="app-container">
         <Navbar />
         <Routes>
           {/* --- GROUP 1: Pages wrapped inside MainLayout --- */}
           <Route element={<MainLayout />}>
+            {/* Home Route now shares the layout grid and gets the blue gradient background via .home-content */}
+            <Route path="/" element={<div className="home-content"><Home /></div>} />
+
             <Route path="/signup" element={<SignUp />} />
             <Route path="/admin" element={<Admin />} />
 
@@ -341,26 +364,10 @@ export default function App() {
             <Route path="/worldcup/scoreboard" element={<WorldCupScoreboard />} />
             <Route path="/worldcup/mypicks" element={<WorldCupMyPicks />} />
             <Route path="/worldcup/standings" element={<WorldCupStandings />} />
+            <Route path="/worldcup/grouppicks" element={<WorldCupGroupPicks />} />
           </Route>
 
           {/* --- GROUP 2: Standalone / Full-Screen Routes OUTSIDE MainLayout --- */}
-          <Route path="/" element={
-            <div style={{ paddingTop: "50px" }}>
-              <div className="mobile-open-pools-banner" style={{ marginBottom: 14, padding: "0 16px", maxWidth: "1200px", margin: "0 auto" }}>
-                <OpenPoolsCard />
-              </div>
-
-              <div style={{ padding: "16px", paddingTop: "50px", maxWidth: "1200px", margin: "0 auto", position: "relative" }}>
-                <div className="desktop-open-pools-sidebar" style={{ position: "absolute", left: "-310px", top: "50px", width: "290px" }}>
-                  <div style={{ position: "sticky", top: "70px" }}>
-                    <OpenPoolsCard />
-                  </div>
-                </div>
-
-                <div className="home-content"><Home /></div>
-              </div>
-            </div>
-          } />
           <Route path="/changepassword" element={<ChangePassword />} />
           <Route path="/forgotusername" element={<ForgotUsername />} />
           <Route path="/login" element={<LoginPage />} />
