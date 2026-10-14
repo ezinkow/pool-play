@@ -6,31 +6,21 @@ const GOLD = "#c89d3c";
 export default function OpenPoolsCard() {
     const [pools, setPools] = useState([]);
     const [loading, setLoading] = useState(true);
-    const token = localStorage.getItem("token");
 
     useEffect(() => {
-        if (!token) {
-            setLoading(false);
-            return;
-        }
-
-        // Fetch game settings list from admin endpoint
-        axios.get("/api/admin/data", {
-            headers: { Authorization: `Bearer ${token}` }
-        })
+        // Fetch active states publicly (no token required)
+        axios.get("/api/settings/active-states")
             .then(async res => {
-                const gameSettings = res.data.gameSettings || [];
+                const gameSettings = res.data || [];
                 const activePools = gameSettings.filter(pool => {
                     const isActive = pool.is_active === true || pool.is_active === 1 || pool.is_active === "true";
                     return isActive;
                 });
 
-                // Check each active pool against the pool-started endpoint
+                // Check each active pool against the pool-started endpoint publicly
                 const openPoolsPromises = activePools.map(async pool => {
                     try {
-                        const statusRes = await axios.get(`/api/settings/pool-started?game_key=${pool.game_key}`, {
-                            headers: { Authorization: `Bearer ${token}` }
-                        });
+                        const statusRes = await axios.get(`/api/settings/pool-started?game_key=${pool.game_key}`);
                         // If started is false, it's open and accepting entries
                         if (statusRes.data && statusRes.data.started === false) {
                             return pool;
@@ -50,7 +40,7 @@ export default function OpenPoolsCard() {
             .finally(() => {
                 setLoading(false);
             });
-    }, [token]);
+    }, []);
 
     return (
         <div style={{
@@ -92,7 +82,6 @@ export default function OpenPoolsCard() {
             ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {pools.map(pool => {
-                        // Dynamically use prefix from gamesettings (e.g., /cfbpickemats, /nfl_bts, etc.)
                         const poolRoute = pool.prefix ? `#${pool.prefix}` : `#/${pool.game_key}`;
                         const poolLabel = pool.title || pool.game_label || pool.game_key;
                         const poolIcon = pool.emoji || "🎯";
@@ -116,7 +105,7 @@ export default function OpenPoolsCard() {
                                     transition: "all 0.2s ease"
                                 }}
                             >
-                                <span>{poolIcon} {poolLabel} ({pool.credits} cr)</span>
+                                <span>{poolIcon} {poolLabel} {pool.credits ? `(${pool.credits} cr)` : ""}</span>
                                 <span style={{ fontSize: "10px", color: GOLD }}>Sign Up →</span>
                             </a>
                         );
