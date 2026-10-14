@@ -168,13 +168,8 @@ function MainLayout() {
   return (
     <div style={{ paddingTop: "50px" }}>
       <div className="home-layout-grid">
-        {/* Mobile top banner fallback */}
-        <div className="mobile-open-pools-banner">
-          <OpenPoolsCard />
-        </div>
-
-        {/* Desktop Left-Hand Side Panel */}
-        <div className="home-sidebar-col">
+        {/* Single shared OpenPoolsCard instance positioned via CSS */}
+        <div className="home-sidebar-col mobile-open-pools-banner">
           <OpenPoolsCard />
         </div>
 

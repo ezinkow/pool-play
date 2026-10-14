@@ -1068,7 +1068,6 @@ Hide mobile picks on desktop
 
 .home-sidebar-col {
   display: none;
-  /* Hidden on mobile */
 }
 
 .home-main-col {
@@ -1076,7 +1075,7 @@ Hide mobile picks on desktop
   min-width: 0;
 }
 
-/* Mobile top banner */
+/* Mobile view style */
 .mobile-open-pools-banner {
   display: block;
   margin-bottom: 20px;
