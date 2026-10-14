@@ -1101,7 +1101,7 @@ Hide mobile picks on desktop
   .home-sidebar-col {
     display: block !important;
     position: sticky;
-    top: 75px;
+    top: 100px;
     align-self: start;
   }
 

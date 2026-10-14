@@ -33,6 +33,7 @@ export default function CfbPickemAtsPicks() {
                     if (res.data.title) {
                         setPoolTitle(res.data.title);
                     }
+                    // Automatically default to the current active week returned by settings if available
                     if (res.data.current_week) {
                         setCurrentWeek(Number(res.data.current_week));
                     } else {
@@ -174,14 +175,17 @@ export default function CfbPickemAtsPicks() {
         const isStartedA = dateA <= now || isLiveA || rawStatusA.includes("FINAL") || rawStatusA.includes("COMPLETED");
         const isStartedB = dateB <= now || isLiveB || rawStatusB.includes("FINAL") || rawStatusB.includes("COMPLETED");
 
+        // 1. Unstarted games come first, started/live/finished games go to the bottom
         if (!isStartedA && isStartedB) return -1;
         if (isStartedA && !isStartedB) return 1;
 
+        // 2. Prioritize Must-Picks among unstarted games
         if (!isStartedA && !isStartedB) {
             if (a.must_pick && !b.must_pick) return -1;
             if (!a.must_pick && b.must_pick) return 1;
         }
 
+        // 3. Apply user's sort option for unstarted games (or general sorting)
         if (sortBy === "kickoff") {
             return dateA - dateB;
         } else if (sortBy === "home_team_asc") {
@@ -256,6 +260,7 @@ export default function CfbPickemAtsPicks() {
             setTimeout(() => { window.location.hash = "#/cfbpickemats/mypicks"; }, 1500);
         } catch (err) {
             console.error("Save Response Error:", err);
+            console.error("Error Response Data:", err.response?.data);
             toast.error(err.response?.data?.error || "Failed to submit picks");
         }
     };
@@ -264,23 +269,10 @@ export default function CfbPickemAtsPicks() {
 
     return (
         <PoolGatekeeper user={user} gameKey="cfb_pickem_ats">
-            <div style={{ position: "relative", maxWidth: 850, margin: "0 auto", padding: "12px 8px", paddingBottom: 100, paddingTop: 16 }}>
+            <div style={{ maxWidth: 850, margin: "0 auto", padding: "12px 8px", paddingBottom: 100, paddingTop: 16 }}>
                 <Toaster />
 
-                <style>{`
-                    @media (max-width: 1250px) {
-                        .desktop-open-pools-sidebar {
-                            display: none !important;
-                        }
-                    }
-                    @media (min-width: 1251px) {
-                        .mobile-open-pools-banner {
-                            display: none !important;
-                        }
-                    }
-                `}</style>
-
-                {/* Sticky Header Summary Bar */}
+                {/* Sticky Header Summary Bar optimized for mobile */}
                 <div style={{
                     position: "sticky",
                     top: "48px",
@@ -374,7 +366,7 @@ export default function CfbPickemAtsPicks() {
                     ))}
                 </div>
 
-                {/* Controls Bar */}
+                {/* Controls Bar: Sort Dropdown & Clear Button */}
                 <div style={{
                     display: "flex",
                     justifyContent: "space-between",
@@ -435,7 +427,27 @@ export default function CfbPickemAtsPicks() {
                     )}
                 </div>
 
-                {/* Games List Content */}
+                {/* All Games Started Banner Notification */}
+                {allGamesStarted && sortedGames.length > 0 && (
+                    <div style={{
+                        background: "#eff6ff",
+                        borderRadius: 10,
+                        padding: "16px",
+                        textAlign: "center",
+                        border: "1px solid #bfdbfe",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+                        marginBottom: 14
+                    }}>
+                        <p style={{ fontSize: "14px", fontWeight: 800, color: "#1e40af", margin: 0 }}>
+                            🔒 All Week {currentWeek} games have started or concluded!
+                        </p>
+                        <p style={{ fontSize: "12px", color: "#3b82f6", marginTop: 4, marginBottom: 0 }}>
+                            Make sure to select <strong>W{currentWeek + 1}</strong> above to submit next week's picks.
+                        </p>
+                    </div>
+                )}
+
+                {/* Compact Games List or Notice */}
                 {sortedGames.length === 0 ? (
                     <div style={{
                         background: "white",
@@ -448,10 +460,13 @@ export default function CfbPickemAtsPicks() {
                         <p style={{ fontSize: "15px", fontWeight: 700, color: "#1e293b", margin: 0 }}>
                             Matchups for Week {currentWeek} are not yet available.
                         </p>
+                        <p style={{ fontSize: "13px", color: "#64748b", marginTop: 6, marginBottom: 0 }}>
+                            Schedules and odds typically appear two weeks out.
+                        </p>
                     </div>
                 ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                        {sortedGames.map((game) => {
+                        {sortedGames.map((game, index) => {
                             const isLocked = game.game_date && new Date() >= new Date(game.game_date);
                             const userPick = picks[game.id] || {};
                             const isBestBet = userPick.is_best_bet;
@@ -467,11 +482,13 @@ export default function CfbPickemAtsPicks() {
 
                             const awayTeamMeta = teamColors[game.away_team] || {};
                             const homeTeamMeta = teamColors[game.home_team] || {};
+
                             const awayLogo = awayTeamMeta.logo || game.away_logo || null;
                             const homeLogo = homeTeamMeta.logo || game.home_logo || null;
-                            
+
                             const awayColor = awayTeamMeta.primaryColor || game.away_color || "#1e3a8a";
                             const awaySecondary = awayTeamMeta.secondaryColor || game.away_secondary_color || "#cbd5e1";
+
                             const homeColor = homeTeamMeta.primaryColor || game.home_color || "#1e3a8a";
                             const homeSecondary = homeTeamMeta.secondaryColor || game.home_secondary_color || "#cbd5e1";
 
@@ -481,149 +498,319 @@ export default function CfbPickemAtsPicks() {
 
                             const isAwayPicked = userPick.picked_team === game.away_team;
                             const isHomePicked = userPick.picked_team === game.home_team;
+
                             const hasStarted = isLocked || (game.home_score !== null && game.home_score !== undefined) || (game.away_score !== null && game.away_score !== undefined);
+                            const rawStatus = (game.status || "").toUpperCase();
+                            const liveStatusText = game.live_status || game.status_detail || (rawStatus.includes("FINAL") || rawStatus.includes("COMPLETED") ? "Final" : (hasStarted ? "In Progress" : ""));
+                            
+                            const displayDateStr = game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).toUpperCase() : "TBD";
+
+                            const gameHeaderLabel = hasStarted
+                                ? `${liveStatusText}`
+                                : displayDateStr;
+
+                            const prevGame = sortedGames[index - 1];
+                            const showMustPickHeader = game.must_pick && (!prevGame || !prevGame.must_pick);
+                            const showRegularHeader = !game.must_pick && prevGame && prevGame.must_pick;
 
                             return (
-                                <div key={game.id} style={{
-                                    background: "#ffffff", borderRadius: 10,
-                                    boxShadow: isBestBet ? "0 4px 12px rgba(200, 157, 60, 0.25)" : "0 2px 5px rgba(0, 0, 0, 0.06)",
-                                    border: isBestBet ? `2px solid ${GOLD}` : (isMustPick ? "1px solid #f59e0b" : "1px solid #cbd5e1"),
-                                    padding: "10px",
-                                    overflow: "hidden"
-                                }}>
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                                            {game.must_pick && <span style={{ fontSize: "9px", backgroundColor: "#fef3c2", color: "#b45309", padding: "1px 4px", borderRadius: 3, fontWeight: 800 }}>MUST</span>}
-                                            <span style={{ fontSize: "10px", color: hasStarted ? CFB_RED : "#000", fontWeight: 700, textTransform: "uppercase" }}>
-                                                {game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).toUpperCase() : "TBD"}
-                                            </span>
-                                            {hasLine && (
-                                                <span style={{ fontSize: "10px", color: "#000", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3, marginLeft: 6 }}>
+                                <React.Fragment key={game.id}>
+                                    {showMustPickHeader && (
+                                        <div style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 6,
+                                            margin: "10px 0 2px 2px",
+                                            fontWeight: 800,
+                                            color: "#b45309",
+                                            fontSize: "12px",
+                                            textTransform: "uppercase",
+                                            letterSpacing: "0.5px"
+                                        }}>
+                                            <span>⭐ Must-Pick Matchups</span>
+                                        </div>
+                                    )}
+
+                                    {showRegularHeader && (
+                                        <div style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 6,
+                                            margin: "16px 0 2px 2px",
+                                            fontWeight: 800,
+                                            color: "#475569",
+                                            fontSize: "12px",
+                                            textTransform: "uppercase",
+                                            letterSpacing: "0.5px"
+                                        }}>
+                                            <span>Standard Matchups</span>
+                                        </div>
+                                    )}
+
+                                    {/* Game Card Container */}
+                                    <div style={{
+                                        background: "#ffffff",
+                                        borderRadius: 10,
+                                        boxShadow: isBestBet ? "0 4px 12px rgba(200, 157, 60, 0.25)" : "0 2px 5px rgba(0, 0, 0, 0.06)",
+                                        border: isBestBet ? `2px solid ${GOLD}` : (isMustPick ? "1px solid #f59e0b" : "1px solid #cbd5e1"),
+                                        overflow: "hidden",
+                                        padding: "10px 10px"
+                                    }}>
+                                        {/* Card Header Info */}
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 4 }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", minWidth: 0, flex: 1 }}>
+                                                {game.must_pick && (
+                                                    <span style={{ fontSize: "9px", backgroundColor: "#fef3c2", color: "#b45309", padding: "1px 4px", borderRadius: 3, fontWeight: 800, flexShrink: 0 }}>
+                                                        MUST
+                                                    </span>
+                                                )}
+                                                <span style={{ fontSize: "10px", color: hasStarted ? CFB_RED : "#000000", fontWeight: 700, textTransform: "uppercase", flexShrink: 0 }}>
+                                                    {gameHeaderLabel}
+                                                </span>
+
+                                                <span style={{ fontSize: "10px", color: "#000000", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3, minWidth: 0 }}>
                                                     <span style={{ color: "#64748b" }}>Spread:</span>
                                                     {favoriteLogo && (
                                                         <span style={{
                                                             background: favTeamMeta.secondaryColor || homeSecondary,
-                                                            borderRadius: 3, padding: "1px", display: "inline-flex", alignItems: "center", justifyContent: "center",
-                                                            border: `1px solid ${favTeamMeta.primaryColor || homeColor}`, width: 15, height: 15, flexShrink: 0
+                                                            borderRadius: 3,
+                                                            padding: "1px",
+                                                            display: "inline-flex",
+                                                            alignItems: "center",
+                                                            justifyContent: "center",
+                                                            border: `1px solid ${favTeamMeta.primaryColor || homeColor}`,
+                                                            width: 15,
+                                                            height: 15,
+                                                            flexShrink: 0
                                                         }}>
-                                                            <img src={favoriteLogo} alt={favoriteTeam || "Favorite"} style={{ width: 10, height: 10, objectFit: "contain", display: "block" }} />
+                                                            <img
+                                                                src={favoriteLogo}
+                                                                alt={favoriteTeam || "Favorite"}
+                                                                style={{ width: 10, height: 10, objectFit: "contain", display: "block" }}
+                                                            />
                                                         </span>
                                                     )}
                                                     <strong>{rawSpread}</strong>
+                                                    {game.over_under !== null && game.over_under !== undefined && (
+                                                        <span style={{ marginLeft: 6, color: "#475569" }}>
+                                                            | O/U: <strong>{game.over_under}</strong>
+                                                        </span>
+                                                    )}
                                                 </span>
-                                            )}
-                                        </div>
-                                        <button
-                                            onClick={() => handleBestBetToggle(game.id, game.game_date)}
-                                            disabled={isLocked || !userPick.picked_team}
-                                            style={{
-                                                background: userPick.is_best_bet ? GOLD : "#334155", color: userPick.is_best_bet ? "white" : "#cbd5e1",
-                                                border: userPick.is_best_bet ? `1px solid ${GOLD}` : "1px solid #475569",
-                                                padding: "3px 8px", borderRadius: 5, fontWeight: 700, fontSize: "10px", cursor: (isLocked || !userPick.picked_team) ? "not-allowed" : "pointer"
-                                            }}
-                                        >
-                                            {userPick.is_best_bet ? "★ Best" : "☆ Best"}
-                                        </button>
-                                    </div>
-
-                                    {/* Side-by-Side Team Selection Box Container */}
-                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                                        {/* Away Team Option Box */}
-                                        <div
-                                            onClick={() => !isLocked && handleTeamPick(game.id, game.away_team, game.game_date)}
-                                            style={{
-                                                backgroundImage: isAwayPicked
-                                                    ? `linear-gradient(to right, ${awayColor} 100%, ${awayColor} 100%)`
-                                                    : `linear-gradient(to right, ${awayColor} 0%, ${awayColor} 0%, transparent 0%), linear-gradient(135deg, ${awayColor}26 0%, ${awaySecondary}26 50%, #f8fafc 100%)`,
-                                                backgroundColor: isAwayPicked ? awayColor : "transparent",
-                                                borderRadius: 6,
-                                                border: isAwayPicked ? `2px solid #0284c7` : `1px solid ${awayColor}55`,
-                                                padding: "8px 6px",
-                                                cursor: isLocked ? "not-allowed" : "pointer",
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                textAlign: "center",
-                                                position: "relative",
-                                                boxShadow: isAwayPicked ? `0 0 10px rgba(2, 132, 199, 0.35), inset 0 0 8px ${awayColor}` : "none",
-                                                transition: "background-size 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border 0.2s ease",
-                                                backgroundSize: isAwayPicked ? "100% 100%" : "0% 100%, 100% 100%",
-                                                backgroundRepeat: "no-repeat",
-                                                minWidth: 0
-                                            }}
-                                        >
-                                            {isAwayPicked && (
-                                                <span style={{ position: "absolute", top: 4, right: 6, fontSize: "10px", color: "#ffffff", fontWeight: 900 }}>✓</span>
-                                            )}
-                                            {awayLogo && (
-                                                <div style={{
-                                                    background: awaySecondary,
-                                                    borderRadius: 6, padding: "3px", display: "flex", alignItems: "center", justifyContent: "center",
-                                                    boxShadow: `0 0 4px 1px ${awayColor}, 0 1px 3px rgba(0,0,0,0.15)`,
-                                                    border: `1.5px solid ${awayColor}`, marginBottom: 4, width: 35, height: 35, flexShrink: 0
-                                                }}>
-                                                    <img src={awayLogo} alt={game.away_team} style={{ width: 25, height: 25, objectFit: "contain", display: "block" }} />
-                                                </div>
-                                            )}
-                                            <div style={{ fontWeight: isAwayPicked ? 800 : 600, fontSize: "12px", color: isAwayPicked ? "#ffffff" : "#0f172a", marginBottom: 2, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                                {game.away_team}
+                                                {isLocked && <span style={{ fontSize: "9px", color: CFB_RED, fontWeight: 700 }}>🔒</span>}
                                             </div>
-                                            <div style={{ fontSize: "11px", fontWeight: 700, color: isAwayPicked ? "#e2e8f0" : "#475569" }}>
-                                                {hasLine ? awaySpreadStr : "No Line"}
+
+                                            <div style={{ flexShrink: 0 }}>
+                                                <button
+                                                    onClick={() => handleBestBetToggle(game.id, game.game_date)}
+                                                    disabled={isLocked || !userPick.picked_team}
+                                                    style={{
+                                                        background: userPick.is_best_bet ? GOLD : "#334155",
+                                                        color: userPick.is_best_bet ? "white" : "#cbd5e1",
+                                                        border: userPick.is_best_bet ? `1px solid ${GOLD}` : "1px solid #475569",
+                                                        padding: "3px 8px",
+                                                        borderRadius: 5,
+                                                        fontWeight: 700,
+                                                        fontSize: "10px",
+                                                        cursor: (isLocked || !userPick.picked_team) ? "not-allowed" : "pointer",
+                                                        whiteSpace: "nowrap"
+                                                    }}
+                                                >
+                                                    {userPick.is_best_bet ? "★ Best" : "☆ Best"}
+                                                </button>
                                             </div>
                                         </div>
 
-                                        {/* Home Team Option Box */}
-                                        <div
-                                            onClick={() => !isLocked && handleTeamPick(game.id, game.home_team, game.game_date)}
-                                            style={{
-                                                backgroundImage: isHomePicked
-                                                    ? `linear-gradient(to right, ${homeColor} 100%, ${homeColor} 100%)`
-                                                    : `linear-gradient(to right, ${homeColor} 0%, ${homeColor} 0%, transparent 0%), linear-gradient(135deg, ${homeColor}26 0%, ${homeSecondary}26 50%, #f8fafc 100%)`,
-                                                backgroundColor: isHomePicked ? homeColor : "transparent",
-                                                borderRadius: 6,
-                                                border: isHomePicked ? `2px solid #0284c7` : `1px solid ${homeColor}55`,
-                                                padding: "8px 6px",
-                                                cursor: isLocked ? "not-allowed" : "pointer",
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                textAlign: "center",
-                                                position: "relative",
-                                                boxShadow: isHomePicked ? `0 0 10px rgba(2, 132, 199, 0.35), inset 0 0 8px ${homeColor}` : "none",
-                                                transition: "background-size 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border 0.2s ease",
-                                                backgroundSize: isHomePicked ? "100% 100%" : "0% 100%, 100% 100%",
-                                                backgroundRepeat: "no-repeat",
-                                                minWidth: 0
-                                            }}
-                                        >
-                                            {isHomePicked && (
-                                                <span style={{ position: "absolute", top: 4, right: 6, fontSize: "10px", color: "#ffffff", fontWeight: 900 }}>✓</span>
-                                            )}
-                                            {homeLogo && (
-                                                <div style={{
-                                                    background: homeSecondary,
-                                                    borderRadius: 6, padding: "3px", display: "flex", alignItems: "center", justifyContent: "center",
-                                                    boxShadow: `0 0 4px 1px ${homeColor}, 0 1px 3px rgba(0,0,0,0.15)`,
-                                                    border: `1.5px solid ${homeColor}`, marginBottom: 4, width: 35, height: 35, flexShrink: 0
-                                                }}>
-                                                    <img src={homeLogo} alt={game.home_team} style={{ width: 25, height: 25, objectFit: "contain", display: "block" }} />
+                                        {/* Side-by-Side Team Selection Box Container */}
+                                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                                            {/* Away Team Option Box */}
+                                            <div
+                                                onClick={() => !isLocked && handleTeamPick(game.id, game.away_team, game.game_date)}
+                                                style={{
+                                                    backgroundImage: isAwayPicked
+                                                        ? `linear-gradient(to right, ${awayColor} 100%, ${awayColor} 100%)`
+                                                        : `linear-gradient(to right, ${awayColor} 0%, ${awayColor} 0%, transparent 0%), linear-gradient(135deg, ${awayColor}26 0%, ${awaySecondary}26 50%, #f8fafc 100%)`,
+                                                    backgroundColor: isAwayPicked ? awayColor : "transparent",
+                                                    borderRadius: 6,
+                                                    border: isAwayPicked ? `2px solid #0284c7` : `1px solid ${awayColor}55`,
+                                                    padding: "8px 6px",
+                                                    cursor: isLocked ? "not-allowed" : "pointer",
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    alignItems: "center",
+                                                    textAlign: "center",
+                                                    position: "relative",
+                                                    boxShadow: isAwayPicked ? `0 0 10px rgba(2, 132, 199, 0.35), inset 0 0 8px ${awayColor}` : "none",
+                                                    transition: "background-size 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border 0.2s ease",
+                                                    backgroundSize: isAwayPicked ? "100% 100%" : "0% 100%, 100% 100%",
+                                                    backgroundRepeat: "no-repeat",
+                                                    minWidth: 0
+                                                }}
+                                            >
+                                                {isAwayPicked && (
+                                                    <span style={{
+                                                        position: "absolute",
+                                                        top: 4,
+                                                        right: 6,
+                                                        fontSize: "10px",
+                                                        color: "#ffffff",
+                                                        fontWeight: 900
+                                                    }}>
+                                                        ✓
+                                                    </span>
+                                                )}
+                                                {awayLogo && (
+                                                    <div style={{
+                                                        background: awaySecondary,
+                                                        borderRadius: 6,
+                                                        padding: "3px",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        boxShadow: `0 0 4px 1px ${awayColor}, 0 1px 3px rgba(0,0,0,0.15)`,
+                                                        border: `1.5px solid ${awayColor}`,
+                                                        marginBottom: 4,
+                                                        width: 35,
+                                                        height: 35,
+                                                        flexShrink: 0
+                                                    }}>
+                                                        <img src={awayLogo} alt={game.away_team} style={{ width: 25, height: 25, objectFit: "contain", display: "block" }} />
+                                                    </div>
+                                                )}
+                                                <div style={{ fontWeight: isAwayPicked ? 800 : 600, fontSize: "12px", color: isAwayPicked ? "#ffffff" : "#0f172a", marginBottom: 2, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                    {game.away_team_rank ? <span style={{ color: isAwayPicked ? "#fef08a" : "#b45309", marginRight: 2 }}>({game.away_team_rank})</span> : null}
+                                                    {game.away_team}
                                                 </div>
-                                            )}
-                                            <div style={{ fontWeight: isHomePicked ? 800 : 600, fontSize: "12px", color: isHomePicked ? "#ffffff" : "#0f172a", marginBottom: 2, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                                {game.home_team}
+                                                <div style={{ fontSize: "11px", fontWeight: 700, color: isAwayPicked ? "#e2e8f0" : "#475569", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                                                    <span>{hasLine ? awaySpreadStr : "No Line"}</span>
+                                                    {hasStarted && game.status && !game.status.toUpperCase().includes("STATUS_SCHEDULED") && !game.status.toUpperCase().includes("PRE") && game.away_score !== null && game.away_score !== undefined && (
+                                                        <span style={{
+                                                            background: isAwayPicked ? "rgba(0,0,0,0.25)" : "#0f172a",
+                                                            color: "#ffffff",
+                                                            padding: "1px 6px",
+                                                            borderRadius: 4,
+                                                            fontSize: "12px",
+                                                            fontWeight: 800
+                                                        }}>
+                                                            {game.away_score}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div style={{ fontSize: "11px", fontWeight: 700, color: isHomePicked ? "#e2e8f0" : "#475569" }}>
-                                                {hasLine ? homeSpreadStr : "No Line"}
+
+                                            {/* Home Team Option Box */}
+                                            <div
+                                                onClick={() => !isLocked && handleTeamPick(game.id, game.home_team, game.game_date)}
+                                                style={{
+                                                    backgroundImage: isHomePicked
+                                                        ? `linear-gradient(to right, ${homeColor} 100%, ${homeColor} 100%)`
+                                                        : `linear-gradient(to right, ${homeColor} 0%, ${homeColor} 0%, transparent 0%), linear-gradient(135deg, ${homeColor}26 0%, ${homeSecondary}26 50%, #f8fafc 100%)`,
+                                                    backgroundColor: isHomePicked ? homeColor : "transparent",
+                                                    borderRadius: 6,
+                                                    border: isHomePicked ? `2px solid #0284c7` : `1px solid ${homeColor}55`,
+                                                    padding: "8px 6px",
+                                                    cursor: isLocked ? "not-allowed" : "pointer",
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    alignItems: "center",
+                                                    textAlign: "center",
+                                                    position: "relative",
+                                                    boxShadow: isHomePicked ? `0 0 10px rgba(2, 132, 199, 0.35), inset 0 0 8px ${homeColor}` : "none",
+                                                    transition: "background-size 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border 0.2s ease",
+                                                    backgroundSize: isHomePicked ? "100% 100%" : "0% 100%, 100% 100%",
+                                                    backgroundRepeat: "no-repeat",
+                                                    minWidth: 0
+                                                }}
+                                            >
+                                                {isHomePicked && (
+                                                    <span style={{
+                                                        position: "absolute",
+                                                        top: 4,
+                                                        right: 6,
+                                                        fontSize: "10px",
+                                                        color: "#ffffff",
+                                                        fontWeight: 900
+                                                    }}>
+                                                        ✓
+                                                    </span>
+                                                )}
+                                                {homeLogo && (
+                                                    <div style={{
+                                                        background: homeSecondary,
+                                                        borderRadius: 6,
+                                                        padding: "3px",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        boxShadow: `0 0 4px 1px ${homeColor}, 0 1px 3px rgba(0,0,0,0.15)`,
+                                                        border: `1.5px solid ${homeColor}`,
+                                                        marginBottom: 4,
+                                                        width: 35,
+                                                        height: 35,
+                                                        flexShrink: 0
+                                                    }}>
+                                                        <img src={homeLogo} alt={game.home_team} style={{ width: 25, height: 25, objectFit: "contain", display: "block" }} />
+                                                    </div>
+                                                )}
+                                                <div style={{ fontWeight: isHomePicked ? 800 : 600, fontSize: "12px", color: isHomePicked ? "#ffffff" : "#0f172a", marginBottom: 2, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                    {game.home_team_rank ? <span style={{ color: isHomePicked ? "#fef08a" : "#b45309", marginRight: 2 }}>({game.home_team_rank})</span> : null}
+                                                    {game.home_team}
+                                                </div>
+                                                <div style={{ fontSize: "11px", fontWeight: 700, color: isHomePicked ? "#e2e8f0" : "#475569", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                                                    <span>{hasLine ? homeSpreadStr : "No Line"}</span>
+                                                    {hasStarted && game.status && !game.status.toUpperCase().includes("STATUS_SCHEDULED") && !game.status.toUpperCase().includes("PRE") && game.home_score !== null && game.home_score !== undefined && (
+                                                        <span style={{
+                                                            background: isHomePicked ? "rgba(0,0,0,0.25)" : "#0f172a",
+                                                            color: "#ffffff",
+                                                            padding: "1px 6px",
+                                                            borderRadius: 4,
+                                                            fontSize: "12px",
+                                                            fontWeight: 800
+                                                        }}>
+                                                            {game.home_score}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </React.Fragment>
                             );
                         })}
                     </div>
                 )}
+
+                {sortedGames.length > 0 && (
+                    <div style={{ marginTop: 20 }}>
+                        {(completedMustPicks < totalMustPicks || bestBetCount > 3) && (
+                            <div style={{
+                                backgroundColor: "#fff7ed",
+                                border: "1px solid #fdba74",
+                                color: "#c2410c",
+                                padding: "8px 10px",
+                                borderRadius: 8,
+                                fontSize: "12px",
+                                fontWeight: 600,
+                                textAlign: "center",
+                                marginBottom: 10
+                            }}>
+                                ⚠️ Note: You have completed {completedMustPicks} of {totalMustPicks} must-pick matchups. You can save with partial selections.
+                            </div>
+                        )}
+                        <button
+                            onClick={handleSubmitAll}
+                            style={{
+                                width: "100%", padding: 12, backgroundColor: "#16a34a", color: "white",
+                                borderRadius: 8, border: "none", fontWeight: 800, fontSize: "14px", cursor: "pointer",
+                                boxShadow: "0 4px 12px rgba(22,163,74,0.35)", textTransform: "uppercase", letterSpacing: "0.5px"
+                            }}
+                        >
+                            Save Week {currentWeek} Picks
+                        </button>
+                    </div>
+                )}
+
             </div>
-        </PoolGatekeeper>
+        </PoolGatekeeper >
     );
 }
