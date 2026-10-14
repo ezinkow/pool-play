@@ -72,7 +72,6 @@ export default function PoolCountdown({ poolData, mode }) {
                     const nextGame = res.data;
 
                     if (nextGame && isMounted) {
-                        // Check if games_model_name includes 'series'
                         if (nextGame.games_model_name && nextGame.games_model_name.toLowerCase().includes('series')) {
                             setIsSeries(true);
                         }
@@ -117,15 +116,43 @@ export default function PoolCountdown({ poolData, mode }) {
     return (
         <>
             <style>{`
+                .countdown-card {
+                    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+                    border: 1px solid #334155;
+                    border-radius: 12px;
+                    padding: 16px 20px;
+                    margin: 0 auto 24px auto;
+                    max-width: 650px;
+                    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+                    color: white;
+                    text-align: center;
+                    box-sizing: border-box;
+                }
+                .countdown-title {
+                    font-size: 15px;
+                    font-weight: 800;
+                    color: #d4af37;
+                    margin-bottom: 12px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                .countdown-grid {
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                    justify-content: center;
+                    flex-wrap: nowrap;
+                }
                 .flip-card-unit {
                     position: relative;
                     display: flex;
+                    flex-init: 0 0 auto;
                     flex-direction: column;
-                    width: 26px;
-                    height: 36px;
-                    font-size: 22px;
+                    width: 24px;
+                    height: 34px;
+                    font-size: 20px;
                     font-weight: 900;
-                    color: #01da25;
+                    color: #ffffff;
                     perspective: 300px;
                     font-family: 'Courier New', Courier, monospace;
                     background: #111;
@@ -150,8 +177,8 @@ export default function PoolCountdown({ poolData, mode }) {
                     top: 0;
                     left: 0;
                     width: 100%;
-                    height: 36px;
-                    line-height: 36px;
+                    height: 34px;
+                    line-height: 34px;
                     text-align: center;
                     text-shadow: 0 1px 2px rgba(0,0,0,0.8);
                 }
@@ -163,11 +190,11 @@ export default function PoolCountdown({ poolData, mode }) {
                 }
                 .flip-card-unit .bottom-static span {
                     position: absolute;
-                    top: -18px;
+                    top: -17px;
                     left: 0;
                     width: 100%;
-                    height: 36px;
-                    line-height: 36px;
+                    height: 34px;
+                    line-height: 34px;
                     text-align: center;
                     text-shadow: 0 1px 2px rgba(0,0,0,0.8);
                 }
@@ -204,8 +231,8 @@ export default function PoolCountdown({ poolData, mode }) {
                     top: 0;
                     left: 0;
                     width: 100%;
-                    height: 36px;
-                    line-height: 36px;
+                    height: 34px;
+                    line-height: 34px;
                     text-align: center;
                     text-shadow: 0 1px 2px rgba(0,0,0,0.8);
                 }
@@ -217,24 +244,59 @@ export default function PoolCountdown({ poolData, mode }) {
                 }
                 .flip-card-unit .back span {
                     position: absolute;
-                    top: -18px;
+                    top: -17px;
                     left: 0;
                     width: 100%;
-                    height: 36px;
-                    line-height: 36px;
+                    height: 34px;
+                    line-height: 34px;
                     text-align: center;
                     text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+                }
+                .countdown-sub {
+                    margin-top: 10px;
+                    font-size: 12px;
+                    color: #94a3b8;
+                    font-weight: 600;
+                }
+                
+                /* Mobile responsiveness adjustments */
+                @media (max-width: 480px) {
+                    .countdown-card {
+                        padding: 12px 8px;
+                        margin-left: 10px;
+                        margin-right: 10px;
+                        max-width: calc(100vw - 20px);
+                    }
+                    .flip-card-unit {
+                        width: 20px;
+                        height: 30px;
+                        font-size: 17px;
+                    }
+                    .flip-card-unit .top-static span,
+                    .flip-card-unit .bottom-static span,
+                    .flip-card-unit .front span,
+                    .flip-card-unit .back span {
+                        height: 30px;
+                        line-height: 30px;
+                    }
+                    .flip-card-unit .bottom-static span,
+                    .flip-card-unit .back span {
+                        top: -15px;
+                    }
+                    .countdown-grid {
+                        gap: 4px;
+                    }
                 }
             `}</style>
             <div className="countdown-card">
                 <div className="countdown-title">⏳ {headerTitle}</div>
-                <div className="countdown-grid" style={{ display: "flex", gap: "10px", alignItems: "center", justifyContent: "center" }}>
+                <div className="countdown-grid">
                     <TimeBox label="Days" value={timeLeft.d} />
-                    <span style={{ color: "#01da25", fontSize: "16px", fontWeight: "bold" }}>:</span>
+                    <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "12px" }}>:</span>
                     <TimeBox label="Hours" value={timeLeft.h} />
-                    <span style={{ color: "#01da25", fontSize: "16px", fontWeight: "bold" }}>:</span>
+                    <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "12px" }}>:</span>
                     <TimeBox label="Minutes" value={timeLeft.m} />
-                    <span style={{ color: "#01da25", fontSize: "16px", fontWeight: "bold" }}>:</span>
+                    <span style={{ color: "#ffffff", fontSize: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "12px" }}>:</span>
                     <TimeBox label="Seconds" value={timeLeft.s} />
                 </div>
                 <div className="countdown-sub">{subText}</div>
@@ -262,12 +324,12 @@ function TimeBox({ label, value }) {
     const ones = strVal[1] || '0';
 
     return (
-        <div className="countdown-box" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <div style={{ display: "flex", gap: "3px" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: "2px" }}>
                 <SingleFlipCard value={tens} />
                 <SingleFlipCard value={ones} />
             </div>
-            <div className="countdown-label" style={{ fontSize: "9px", color: "#c89d3c", fontWeight: 700, textTransform: "uppercase", marginTop: "4px" }}>{label}</div>
+            <div style={{ fontSize: "8px", color: "#c89d3c", fontWeight: 700, textTransform: "uppercase", marginTop: "4px" }}>{label}</div>
         </div>
     );
 }

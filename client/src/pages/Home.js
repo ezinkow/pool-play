@@ -1,257 +1,14 @@
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import logo from '../../src/images/logo.jpg';
+import PoolCountdown from "../components/PoolCountdown";
 
 const DEEP_NAVY = "#061a33";
 const AQUA_BLUE = "#0ea5e9";
 const GOLD = "#d4af37";
 const GRAY = "#9ca3af";
 const GREEN = "#10b981";
-const DARK_BORDER = "#334155";
-
-// --- 3D Flipping Digit Component (Exact Admin Hub Style) ---
-function SingleFlipCard({ value }) {
-    const [displayVal, setDisplayVal] = useState(String(value));
-    const [prevVal, setPrevVal] = useState(String(value));
-    const [isFlipping, setIsFlipping] = useState(false);
-    const refVal = useRef(value);
-
-    useEffect(() => {
-        const strVal = String(value);
-        if (strVal !== refVal.current) {
-            setPrevVal(refVal.current);
-            setDisplayVal(strVal);
-            setIsFlipping(true);
-            refVal.current = strVal;
-
-            const timer = setTimeout(() => {
-                setIsFlipping(false);
-            }, 400);
-            return () => clearTimeout(timer);
-        }
-    }, [value]);
-
-    const currentToShow = isFlipping ? displayVal : String(value);
-    const prevToShow = isFlipping ? prevVal : String(value);
-
-    return (
-        <div className={`flip-card-unit ${isFlipping ? 'flipping' : ''}`}>
-            <div className="top-static"><span>{currentToShow}</span></div>
-            <div className="bottom-static">
-                <span>{prevToShow}</span>
-                <div className="bottom-shade"></div>
-            </div>
-            <div className="flipper">
-                <div className="front"><span>{prevToShow}</span></div>
-                <div className="back">
-                    <span>{currentToShow}</span>
-                    <div className="bottom-shade"></div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// --- POOL COUNTDOWN COMPONENT ---
-function PoolCountdown({ poolData, mode, isDarkMode }) {
-    const [timeLeft, setTimeLeft] = useState(null);
-    const [isSeries, setIsSeries] = useState(false);
-    const token = localStorage.getItem("token");
-
-    const gameKey = poolData?.game_key;
-    const lockDate = poolData?.lock_date;
-    const openDate = poolData?.open_date;
-    const endDate = poolData?.end_date;
-    const isActive = poolData?.is_active === true || poolData?.is_active === 1 || poolData?.is_active === "true";
-
-    useEffect(() => {
-        if (poolData?.games_model_name && poolData.games_model_name.toLowerCase().includes('series')) {
-            setIsSeries(true);
-        } else if (poolData?.sport && poolData.sport.toLowerCase().includes('baseball')) {
-            setIsSeries(true);
-        }
-    }, [poolData]);
-
-    useEffect(() => {
-        let timer;
-        let isMounted = true;
-
-        const now = new Date();
-        const openTime = openDate ? new Date(openDate) : null;
-        const lockTime = lockDate ? new Date(lockDate) : null;
-        const endTime = endDate ? new Date(endDate) : null;
-
-        const isBeforeOpen = !isActive || (openTime && now < openTime);
-        const isPreStart = isActive && lockTime && now >= (openTime || 0) && now < lockTime;
-        const isLiveMode = mode === 'live';
-
-        if (isLiveMode && endTime) {
-            timer = setInterval(() => {
-                const diff = endTime - new Date();
-                if (diff <= 0) {
-                    if (isMounted) setTimeLeft(null);
-                    clearInterval(timer);
-                } else if (isMounted) setTimeLeft(formatTime(diff));
-            }, 1000);
-        } else if (isBeforeOpen && openTime) {
-            timer = setInterval(() => {
-                const diff = openTime - new Date();
-                if (diff <= 0) {
-                    if (isMounted) setTimeLeft(null);
-                    clearInterval(timer);
-                } else if (isMounted) setTimeLeft(formatTime(diff));
-            }, 1000);
-        } else if (isPreStart && lockTime) {
-            timer = setInterval(() => {
-                const diff = lockTime - new Date();
-                if (diff <= 0) {
-                    if (isMounted) setTimeLeft(null);
-                    clearInterval(timer);
-                } else if (isMounted) setTimeLeft(formatTime(diff));
-            }, 1000);
-        } else if (isActive && gameKey && !isLiveMode) {
-            const headers = token ? { Authorization: `Bearer ${token}` } : {};
-            const fetchNextGame = async () => {
-                try {
-                    const res = await axios.get(`/api/pools/next-game?game_key=${gameKey}`, { headers });
-                    const nextGame = res.data;
-
-                    if (nextGame && isMounted) {
-                        if (nextGame.games_model_name && nextGame.games_model_name.toLowerCase().includes('series')) {
-                            setIsSeries(true);
-                        }
-                        const gameTime = new Date(nextGame.game_date || nextGame.date);
-                        if (timer) clearInterval(timer);
-                        timer = setInterval(() => {
-                            const diff = gameTime - new Date();
-                            if (diff <= 0) {
-                                clearInterval(timer);
-                                fetchNextGame();
-                            } else if (isMounted) setTimeLeft(formatTime(diff));
-                        }, 1000);
-                    } else if (isMounted) setTimeLeft(null);
-                } catch (err) { console.error("Error fetching countdown:", err); }
-            };
-            fetchNextGame();
-        } else if (isMounted) setTimeLeft(null);
-
-        return () => {
-            isMounted = false;
-            if (timer) clearInterval(timer);
-        };
-    }, [gameKey, lockDate, openDate, endDate, isActive, mode, token]);
-
-    if (!timeLeft) return <span style={{ fontSize: "12px", color: GRAY, fontStyle: "italic" }}>⚡ Check Status</span>;
-
-    const now = new Date();
-    const openTime = openDate ? new Date(openDate) : null;
-    const lockTime = lockDate ? new Date(lockDate) : null;
-    const isBeforeOpen = !isActive || (openTime && now < openTime);
-    const isPreStart = isActive && lockTime && now >= (openTime || 0) && now < lockTime;
-
-    let labelText = isSeries ? "NEXT SERIES:" : "NEXT GAME:";
-    if (mode === 'live') labelText = "ENDS:";
-    else if (isBeforeOpen) labelText = "OPENS:";
-    else if (isPreStart) labelText = "LOCKS:";
-
-    const showYears = parseInt(timeLeft.y, 10) > 0;
-
-    const renderFlipPair = (valStr, subLabel, digits = 2) => {
-        const padded = String(valStr).padStart(digits, "0");
-        const digitsArr = padded.split("");
-        return (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <div style={{ display: "flex", gap: "2px" }}>
-                    {digitsArr.map((d, i) => (
-                        <SingleFlipCard key={`${subLabel}-${i}`} value={d} />
-                    ))}
-                </div>
-                <span style={{ fontSize: "8px", color: GOLD, fontWeight: "800", marginTop: "3px", textTransform: "uppercase" }}>{subLabel}</span>
-            </div>
-        );
-    };
-
-    const containerBg = isDarkMode ? "#0b0f19" : "#1e293b";
-    const containerBorder = isDarkMode ? DARK_BORDER : GOLD;
-
-    return (
-        <>
-            <style>{`
-                .flip-card-unit {
-                    position: relative; display: flex; flex-direction: column; width: ${showYears ? '17px' : '20px'}; height: 34px;
-                    font-size: 17px; font-weight: 900; color: #ffffff; perspective: 300px;
-                    font-family: 'Courier New', Courier, monospace; background: #111; border-radius: 4px;
-                }
-                .flip-card-unit .top-static, .flip-card-unit .bottom-static { position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; }
-                .flip-card-unit .top-static { top: 0; background: #181818; border-bottom: 1px solid #000; border-radius: 4px 4px 0 0; }
-                .flip-card-unit .top-static span { position: absolute; top: 0; left: 0; width: 100%; height: 34px; line-height: 34px; text-align: center; }
-                .flip-card-unit .bottom-static { bottom: 0; background: #2c2c2c; border-top: 1px solid #111; border-radius: 0 0 4px 4px; }
-                .flip-card-unit .bottom-static span { position: absolute; top: -17px; left: 0; width: 100%; height: 34px; line-height: 34px; text-align: center; }
-                .flip-card-unit .bottom-shade { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.45) 100%); pointer-events: none; }
-                .flip-card-unit .flipper { position: absolute; width: 100%; height: 50%; top: 0; transform-origin: bottom; transform-style: preserve-3d; z-index: 3; }
-                .flip-card-unit.flipping .flipper { transition: transform 0.4s ease-in-out; transform: rotateX(-180deg); }
-                .flip-card-unit .front, .flip-card-unit .back { position: absolute; left: 0; width: 100%; height: 100%; overflow: hidden; backface-visibility: hidden; }
-                .flip-card-unit .front { top: 0; background: #181818; border-bottom: 1px solid #000; border-radius: 4px 4px 0 0; }
-                .flip-card-unit .front span { position: absolute; top: 0; left: 0; width: 100%; height: 34px; line-height: 34px; text-align: center; }
-                .flip-card-unit .back { bottom: 0; background: #2c2c2c; transform: rotateX(180deg); border-radius: 0 0 4px 4px; }
-                .flip-card-unit .back span { position: absolute; top: -17px; left: 0; width: 100%; height: 34px; line-height: 34px; text-align: center; }
-            `}</style>
-            <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: containerBg, padding: "5px 8px", borderRadius: "8px", border: `1px solid ${containerBorder}`, maxWidth: "100%", overflow: "hidden" }}>
-                <span style={{ color: "#ffffff", fontSize: "9px", fontWeight: "800", marginRight: "6px", textTransform: "uppercase" }}>{labelText}</span>
-                <div style={{ display: "flex", alignItems: "center", gap: "3px", flexWrap: "nowrap" }}>
-                    {showYears && (
-                        <>
-                            {renderFlipPair(timeLeft.y, "Yrs", 2)}
-                            <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "10px" }}>:</span>
-                        </>
-                    )}
-                    {renderFlipPair(timeLeft.d, "Days", timeLeft.d.length >= 3 ? 3 : timeLeft.d.length)}
-                    <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "10px" }}>:</span>
-                    {renderFlipPair(timeLeft.h, "Hrs", 2)}
-                    <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "10px" }}>:</span>
-                    {renderFlipPair(timeLeft.m, "Min", 2)}
-                    <span style={{ color: "#ffffff", fontSize: "14px", fontWeight: "bold", paddingBottom: "10px" }}>:</span>
-                    {renderFlipPair(timeLeft.s, "Sec", 2)}
-                </div>
-            </div>
-        </>
-    );
-}
-
-// --- FORMAT TIME HELPER ---
-function formatTime(diff) {
-    const msPerSecond = 1000;
-    const msPerMinute = msPerSecond * 60;
-    const msPerHour = msPerMinute * 60;
-    const msPerDay = msPerHour * 24;
-    const msPerYear = msPerDay * 365.25;
-
-    let years = Math.floor(diff / msPerYear);
-    let remainingAfterYears = diff % msPerYear;
-
-    if (years < 0) {
-        years = 0;
-        remainingAfterYears = diff;
-    }
-
-    const days = Math.floor(remainingAfterYears / msPerDay);
-    const remainingAfterDays = remainingAfterYears % msPerDay;
-    const hours = Math.floor(remainingAfterDays / msPerHour);
-    const remainingAfterHours = remainingAfterDays % msPerHour;
-    const minutes = Math.floor(remainingAfterHours / msPerMinute);
-    const remainingAfterMinutes = remainingAfterHours % msPerMinute;
-    const seconds = Math.floor(remainingAfterMinutes / msPerSecond);
-
-    return {
-        y: String(years),
-        d: String(days),
-        h: String(hours).padStart(2, "0"),
-        m: String(minutes).padStart(2, "0"),
-        s: String(seconds).padStart(2, "0"),
-    };
-}
-
 
 // --- MAIN HOMEPAGE COMPONENT ---
 export default function Home() {
@@ -335,55 +92,11 @@ export default function Home() {
                 border: isDarkMode ? "1px solid #334155" : "1px solid #e2e8f0",
                 transition: "transform 0.2s ease"
             }}>
-                <style>{`
-                .pool-card-content-${card.key} {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    gap: 16px;
-                }
-                .pool-card-titles-${card.key} {
-                    display: flex;
-                    flex-direction: row;
-                    align-items: center;
-                    gap: 14px;
-                    flex: 1;
-                    min-width: 0;
-                }
-                .pool-card-text-group-${card.key} {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                    flex: 1;
-                    min-width: 0;
-                }
-                @media (max-width: 768px) {
-                    .pool-card-content-${card.key} {
-                        flex-direction: column !important;
-                        align-items: stretch !important;
-                    }
-                    .pool-card-text-group-${card.key} {
-                        flex-direction: column !important;
-                        align-items: flex-start !important;
-                        gap: 8px !important;
-                    }
-                    .pool-card-right-${card.key} {
-                        width: 100% !important;
-                        justify-content: space-between !important;
-                        margin-top: 10px !important;
-                        padding-top: 10px !important;
-                        border-top: ${isDarkMode ? "1px solid #334155" : "1px solid #e2e8f0"};
-                    }
-                }
-            `}</style>
-
                 <div onClick={() => setExpandedCards(p => ({ ...p, [card.key]: !p[card.key] }))} style={{ padding: "16px 20px", cursor: "pointer" }}>
-                    <div className={`pool-card-content-${card.key}`}>
-
-                        {/* Left & Middle: Emoji, Title, and Timer */}
-                        <div className={`pool-card-titles-${card.key}`}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px" }}>
+                        <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "14px", flex: 1, minWidth: 0 }}>
                             <span style={{ fontSize: 28, flexShrink: 0 }}>{card.emoji || "🎮"}</span>
-                            <div className={`pool-card-text-group-${card.key}`}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "16px", flex: 1, minWidth: 0 }}>
                                 <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: card.isActive ? (isDarkMode ? "#f8fafc" : DEEP_NAVY) : GRAY, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{card.title}</h3>
                                 <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px" }}>
                                     {group === 'upcoming' && <PoolCountdown poolData={card} mode="upcoming" isDarkMode={isDarkMode} />}
@@ -392,9 +105,7 @@ export default function Home() {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Right Side: Play Button & Dropdown Arrow */}
-                        <div className={`pool-card-right-${card.key}`} style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
                             {card.isActive && (
                                 <button
                                     onClick={(e) => { e.stopPropagation(); navigate(card.prefix); }}
@@ -405,7 +116,6 @@ export default function Home() {
                             )}
                             <span style={{ color: GRAY, fontSize: "12px", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", padding: "4px" }}>▼</span>
                         </div>
-
                     </div>
                 </div>
 
@@ -425,27 +135,15 @@ export default function Home() {
         : `radial-gradient(circle at 75% 15%, rgba(212, 175, 55, 0.25) 0%, transparent 45%), radial-gradient(circle at 25% 75%, rgba(14, 165, 233, 0.15) 0%, transparent 50%), linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)`;
 
     return (
-        <div style={{ minHeight: "50vh", background: bgGradient, backgroundAttachment: "fixed", padding: "-200px 0 80px", transition: "background 0.3s ease", fontFamily: "system-ui, -apple-system, sans-serif", scrollBehavior: "smooth" }}>
-            <style>{`
-                @keyframes pulse {
-                    0% { transform: scale(0.95); opacity: 0.8; }
-                    50% { transform: scale(1.2); opacity: 1; }
-                    100% { transform: scale(0.95); opacity: 0.8; }
-                }
-            `}</style>
-
-            {/* --- Main Hero Header Card --- */}
+        <div style={{ minHeight: "50vh", background: bgGradient, backgroundAttachment: "fixed", padding: "0 0 80px", transition: "background 0.3s ease", fontFamily: "system-ui, -apple-system, sans-serif", scrollBehavior: "smooth" }}>
             <div style={{ maxWidth: 850, margin: "-50px auto 16px", background: isDarkMode ? "rgba(15, 23, 42, 0.85)" : "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", borderRadius: "14px", border: `1px solid ${isDarkMode ? "#334155" : "#cbd5e1"}`, padding: "24px 20px", boxShadow: "0 6px 20px rgba(0,0,0,0.12)", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", position: "relative", gap: "14px" }}>
                 <button onClick={toggleTheme} style={{ position: "absolute", top: "12px", right: "12px", background: isDarkMode ? "rgba(255,255,255,0.15)" : "#0f172a", color: isDarkMode ? "white" : "#ffffff", border: isDarkMode ? "1px solid rgba(255,255,255,0.3)" : "none", borderRadius: "16px", padding: "5px 10px", fontSize: "11px", fontWeight: "700", cursor: "pointer", boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}>
                     {isDarkMode ? "☀️ Light" : "🌙 Dark"}
                 </button>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", marginTop: "2px" }}>
-                    {/* Increased Logo Size */}
                     <img src={logo} alt="POOL PLAY" style={{ width: "120px", height: "120px", borderRadius: "50%", border: `3px solid ${GOLD}`, boxShadow: "0 4px 16px rgba(0,0,0,0.3)" }} />
                     <div>
-                        {/* Increased Title Font Size */}
                         <h1 style={{ color: isDarkMode ? "white" : DEEP_NAVY, margin: 0, fontSize: "30px", fontWeight: 800, letterSpacing: "-0.5px" }}>🏆 POOL PLAY 🏊</h1>
-                        {/* Increased Subtitle Font Size */}
                         <p style={{ color: isDarkMode ? GOLD : AQUA_BLUE, margin: "6px 0 0", fontSize: "13px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>Jump on in, the water's fine!</p>
                     </div>
                 </div>

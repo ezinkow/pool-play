@@ -294,7 +294,7 @@ export default function NflBtsHome() {
           <PoolGatekeeper user={user} isAdmin={user?.is_admin === true} gameKey="nfl_bts">
             <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", marginBottom: 20 }}>
               <Link to="/nflbts/picks" style={{ textDecoration: 'none' }}>
-                <button className="btn-fb-secondary">🏈 Make Weekly Picks</button>
+                <button className="btn-fb-secondary">🎯 Make Weekly Picks</button>
               </Link>
               <Link to="/nflbts/grouppicks" style={{ textDecoration: 'none' }}>
                 <button className="btn-fb-secondary">📊 Weekly Matrix</button>

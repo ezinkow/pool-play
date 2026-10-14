@@ -271,7 +271,7 @@ export default function CfbPickemAtsHome() {
           <PoolGatekeeper user={user} gameKey="cfb_pickem_ats">
             <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", marginBottom: 20 }}>
               <Link to="/cfbpickemats/picks" style={{ textDecoration: 'none' }}>
-                <button className="btn-fb-secondary">🏈 Make Weekly Picks</button>
+                <button className="btn-fb-secondary">🎯 Make Weekly Picks</button>
               </Link>
               <Link to="/cfbpickemats/mypicks" style={{ textDecoration: 'none' }}>
                 <button className="btn-fb-secondary">📋 My Picks</button>

@@ -270,7 +270,7 @@ export default function NcaabPickemAtsHome() {
           <PoolGatekeeper user={user} gameKey="ncaab_pickem_ats">
             <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", marginBottom: 20 }}>
               <Link to="/ncaabpickemats/picks" style={{ textDecoration: 'none' }}>
-                <button className="btn-fb-secondary">🏀 Make Weekly Picks</button>
+                <button className="btn-fb-secondary">🎯 Make Weekly Picks</button>
               </Link>
               <Link to="/ncaabpickemats/mypicks" style={{ textDecoration: 'none' }}>
                 <button className="btn-fb-secondary">📋 My Picks</button>

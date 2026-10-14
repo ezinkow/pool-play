@@ -224,7 +224,7 @@ export default function NbaSurvivorHome() {
           <PoolGatekeeper user={user} gameKey="nba_survivor">
             <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", marginBottom: 20 }}>
               <Link to="/nbasurvivor/picks" style={{ textDecoration: 'none' }}>
-                <button className="btn-survivor-secondary">🏈 Make Weekly Pick</button>
+                <button className="btn-survivor-secondary">🎯 🎯 Make Weekly Pick</button>
               </Link>
               <Link to="/nbasurvivor/roster" style={{ textDecoration: 'none' }}>
                 <button className="btn-survivor-secondary">📋 Master Roster & History</button>

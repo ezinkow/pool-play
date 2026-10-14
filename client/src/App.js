@@ -85,7 +85,7 @@ import NbaAdminRefresh from './pages/nba_playoffs/AdminRefresh';
 
 // NBA Survivor pages
 import NbaSurvivorHome from './pages/nba_survivor/Home';
-import NbaSurvivorPicks from './pages/nfl_survivor/Picks';
+import NbaSurvivorPicks from './pages/nba_survivor/Picks';
 import NbaSurvivorMyPicks from './pages/nba_survivor/MyPicks';
 import NbaSurvivorGroupPicks from './pages/nba_survivor/GroupsPicks';
 
