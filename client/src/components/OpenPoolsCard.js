@@ -31,7 +31,16 @@ export default function OpenPoolsCard() {
                 });
 
                 const results = await Promise.all(openPoolsPromises);
-                setPools(results.filter(Boolean));
+                const validPools = results.filter(Boolean);
+
+                // Sort pools by next game up (earliest lock_date or open_date first)
+                validPools.sort((a, b) => {
+                    const dateA = new Date(a.lock_date || a.open_date || 0);
+                    const dateB = new Date(b.lock_date || b.open_date || 0);
+                    return dateA - dateB;
+                });
+
+                setPools(validPools);
             })
             .catch(err => {
                 console.error("Failed to fetch pool settings for card", err);
