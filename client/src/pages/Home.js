@@ -21,6 +21,17 @@ export default function Home() {
     const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("poolplay_theme") !== "light");
 
     useEffect(() => {
+        const container = document.getElementById('root-app-container');
+        if (container) {
+            if (isDarkMode) {
+                container.classList.add("home-page-active");
+            } else {
+                container.classList.remove("home-page-active");
+            }
+        }
+    }, [isDarkMode]);
+
+    useEffect(() => {
         axios.get("/api/settings/active-states").then(res => {
             const dynamicCards = (res.data || []).map(row => {
                 const key = row.game_key || row.route;
@@ -93,27 +104,27 @@ export default function Home() {
                 transition: "transform 0.2s ease"
             }}>
                 <div onClick={() => setExpandedCards(p => ({ ...p, [card.key]: !p[card.key] }))} style={{ padding: "16px 20px", cursor: "pointer" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px" }}>
-                        <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "14px", flex: 1, minWidth: 0 }}>
-                            <span style={{ fontSize: 28, flexShrink: 0 }}>{card.emoji || "🎮"}</span>
-                            <div style={{ display: "flex", alignItems: "center", gap: "16px", flex: 1, minWidth: 0 }}>
-                                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: card.isActive ? (isDarkMode ? "#f8fafc" : DEEP_NAVY) : GRAY, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{card.title}</h3>
-                                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px" }}>
-                                    {group === 'upcoming' && <PoolCountdown poolData={card} mode="upcoming" isDarkMode={isDarkMode} />}
-                                    {group === 'live' && <PoolCountdown poolData={card} mode="active" isDarkMode={isDarkMode} />}
-                                    {group === 'inactive' && card.open_date > new Date() && <PoolCountdown poolData={card} mode="inactive" isDarkMode={isDarkMode} />}
-                                </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", width: "100%" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, minWidth: 0 }}>
+                                <span style={{ fontSize: 24, flexShrink: 0 }}>{card.emoji || "🎮"}</span>
+                                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: card.isActive ? (isDarkMode ? "#f8fafc" : DEEP_NAVY) : GRAY, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{card.title}</h3>
                             </div>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
                             {card.isActive && (
                                 <button
                                     onClick={(e) => { e.stopPropagation(); navigate(card.prefix); }}
-                                    style={{ background: GREEN, color: "white", border: "none", borderRadius: "6px", padding: "8px 18px", fontSize: "12px", fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}
+                                    style={{ background: GREEN, color: "white", border: "none", borderRadius: "6px", padding: "6px 12px", fontSize: "11px", fontWeight: 700, cursor: "pointer", flexShrink: 0, boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}
                                 >
                                     Play →
                                 </button>
                             )}
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", paddingLeft: "36px" }}>
+                            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px" }}>
+                                {group === 'upcoming' && <PoolCountdown poolData={card} mode="upcoming" isDarkMode={isDarkMode} compact={true} />}
+                                {group === 'live' && <PoolCountdown poolData={card} mode="active" isDarkMode={isDarkMode} compact={true} />}
+                                {group === 'inactive' && card.open_date > new Date() && <PoolCountdown poolData={card} mode="inactive" isDarkMode={isDarkMode} compact={true} />}
+                            </div>
                             <span style={{ color: GRAY, fontSize: "12px", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", padding: "4px" }}>▼</span>
                         </div>
                     </div>
@@ -130,13 +141,9 @@ export default function Home() {
         );
     };
 
-    const bgGradient = isDarkMode
-        ? `radial-gradient(circle at 70% 20%, rgba(212, 175, 55, 0.18) 0%, transparent 40%), radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.2) 0%, transparent 50%), linear-gradient(135deg, #061a33 0%, #0b192c 50%, #020617 100%)`
-        : `radial-gradient(circle at 75% 15%, rgba(212, 175, 55, 0.25) 0%, transparent 45%), radial-gradient(circle at 25% 75%, rgba(14, 165, 233, 0.15) 0%, transparent 50%), linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)`;
-
     return (
-        <div style={{ minHeight: "50vh", background: bgGradient, backgroundAttachment: "fixed", padding: "0 0 80px", transition: "background 0.3s ease", fontFamily: "system-ui, -apple-system, sans-serif", scrollBehavior: "smooth" }}>
-            <div style={{ maxWidth: 850, margin: "-50px auto 16px", background: isDarkMode ? "rgba(15, 23, 42, 0.85)" : "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(8px)", borderRadius: "14px", border: `1px solid ${isDarkMode ? "#334155" : "#cbd5e1"}`, padding: "24px 20px", boxShadow: "0 6px 20px rgba(0,0,0,0.12)", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", position: "relative", gap: "14px" }}>
+        <div style={{ minHeight: "100vh", backgroundColor: isDarkMode ? undefined : "#f8fafc", padding: "0 16px 80px", transition: "background 0.3s ease", fontFamily: "system-ui, -apple-system, sans-serif", scrollBehavior: "smooth" }}>
+            <div style={{ maxWidth: 850, margin: "0 auto 16px", background: isDarkMode ? "rgba(15, 23, 42, 0.85)" : "#ffffff", backdropFilter: "blur(8px)", borderRadius: "14px", border: `1px solid ${isDarkMode ? "#334155" : "#e2e8f0"}`, padding: "24px 20px", boxShadow: isDarkMode ? "0 6px 20px rgba(0,0,0,0.12)" : "0 4px 12px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", position: "relative", gap: "14px" }}>
                 <button onClick={toggleTheme} style={{ position: "absolute", top: "12px", right: "12px", background: isDarkMode ? "rgba(255,255,255,0.15)" : "#0f172a", color: isDarkMode ? "white" : "#ffffff", border: isDarkMode ? "1px solid rgba(255,255,255,0.3)" : "none", borderRadius: "16px", padding: "5px 10px", fontSize: "11px", fontWeight: "700", cursor: "pointer", boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}>
                     {isDarkMode ? "☀️ Light" : "🌙 Dark"}
                 </button>
@@ -144,7 +151,7 @@ export default function Home() {
                     <img src={logo} alt="POOL PLAY" style={{ width: "120px", height: "120px", borderRadius: "50%", border: `3px solid ${GOLD}`, boxShadow: "0 4px 16px rgba(0,0,0,0.3)" }} />
                     <div>
                         <h1 style={{ color: isDarkMode ? "white" : DEEP_NAVY, margin: 0, fontSize: "30px", fontWeight: 800, letterSpacing: "-0.5px" }}>🏆 POOL PLAY 🏊</h1>
-                        <p style={{ color: isDarkMode ? GOLD : AQUA_BLUE, margin: "6px 0 0", fontSize: "13px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>Jump on in, the water's fine!</p>
+                        <p style={{ color: isDarkMode ? GOLD : DEEP_NAVY, margin: "6px 0 0", fontSize: "13px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>Jump on in, the water's fine!</p>
                     </div>
                 </div>
                 <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap", width: "100%", borderTop: isDarkMode ? "1px solid rgba(255,255,255,0.08)" : "1px solid #e2e8f0", paddingTop: "14px" }}>

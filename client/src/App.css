@@ -1,7 +1,9 @@
 /* ==========================================================================
    1. GLOBAL RESET, CONFIGURATION & THEMES
    ========================================================================== */
-* {
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -13,7 +15,6 @@
   --bg-body: #f4f7f9;
   --white: #ffffff;
   --navbar-height: 50px;
-  /* 🧠 Synchronized at a tight 50px cross-platform frame */
 }
 
 html,
@@ -34,9 +35,28 @@ body {
   color: #333;
 }
 
+button {
+  min-height: 44px;
+}
+
 /* ==========================================================================
-   2. APPARATUS LAYOUT TRACKS (DESKTOP VS MOBILE VIEWPORTS)
+   2. APP LAYOUT & CONTAINERS
    ========================================================================== */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8fafc;
+  transition: background 0.3s ease;
+}
+
+.app-container.home-page-active {
+  background-image:
+    radial-gradient(circle at 70% 20%, rgba(212, 175, 55, 0.18) 0%, transparent 40%),
+    radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.2) 0%, transparent 50%),
+    linear-gradient(135deg, #061a33 0%, #0b192c 50%, #020617 100%) !important;
+  background-attachment: fixed !important;
+}
 
 .page-content {
   min-height: 100vh;
@@ -49,22 +69,12 @@ body {
   box-sizing: border-box;
 }
 
-/* Use this class on inner pool layouts that have a secondary sub-navigation row */
 .page-content.has-subnav,
 .cfb-pickem-layout {
-  /* or whatever wraps your sub-nav pages */
   padding-top: calc(var(--navbar-height, 60px) + 55px);
 }
 
-/* Mobile responsive override */
-@media (max-width: 768px) {
-  .page-content {
-    padding-top: 20px;
-    padding-bottom: 5px;
-  }
-}
-
-/* 🧼 STRUCTURAL ANTI-COLLISION SHIELDS */
+/* Structural Anti-Collision Shields */
 .page-content>div:first-of-type,
 .page-content>main:first-of-type,
 .container,
@@ -81,14 +91,14 @@ body {
 }
 
 .card {
-  background: white;
+  background: var(--white);
   border-radius: 14px;
   padding: 24px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
 
 /* ==========================================================================
-   3. FIXED NAVBAR HEADER
+   3. FIXED NAVBAR & SUBNAV HEADERS
    ========================================================================== */
 .navbar-header {
   width: 100%;
@@ -131,102 +141,6 @@ body {
   align-items: center;
 }
 
-/* ==========================================================================
-   4. STICKY HEADERS & TABLES
-   ========================================================================== */
-.scoreboard-table thead th,
-.scoreboard-sticky,
-.standings-table thead th {
-  position: sticky;
-  top: var(--navbar-height) !important;
-  /* Aligns flat against the 50px header line */
-  z-index: 100;
-  background-color: #13447a;
-  color: var(--white);
-  border-bottom: 2px solid var(--accent-gold);
-}
-
-.table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.table-wrapper table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.table-wrapper th,
-.table-wrapper td {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-}
-
-.scoreboard-container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 15px;
-}
-
-.scoreboard-container h2 {
-  font-size: 1.4rem;
-  color: var(--primary-navy);
-  margin-bottom: 6px;
-}
-
-.table-scroll-wrapper {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-}
-
-.scoreboard-table {
-  width: 100%;
-  min-width: 750px;
-  border-collapse: collapse;
-  background: var(--white);
-  font-size: 14px;
-}
-
-.scoreboard-table th,
-.scoreboard-table td {
-  padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid #e5e7eb;
-  white-space: nowrap;
-  vertical-align: middle;
-}
-
-.scoreboard-table thead th,
-.table-wrapper thead th {
-  background-color: var(--primary-navy) !important;
-  color: var(--white) !important;
-  border-bottom: 2px solid var(--accent-gold) !important;
-  text-transform: uppercase;
-  font-size: 12px;
-  letter-spacing: 0.5px;
-}
-
-.scoreboard-table tbody tr:hover {
-  background-color: #f0f4f8;
-}
-
-.scoreboard-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.home-team-logo {
-  outline: 2px solid var(--accent-gold);
-  border-radius: 3px;
-}
-
-/* ==========================================================================
-   5. MOBILE SUBNAV LAYER WHEELS
-   ========================================================================== */
 .sub-nav-container {
   display: flex;
   align-items: center;
@@ -247,7 +161,216 @@ body {
 }
 
 /* ==========================================================================
-   6. HOMEPAGE COUNTDOWN APPARATUS
+   4. TABLES & MATRIX GRIDS
+   ========================================================================== */
+.table-wrapper,
+.table-scroll-wrapper,
+.picks-matrix-scroll,
+.picks-page-scroll,
+.scoreboard-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-wrapper table,
+.table-wrapper th,
+.table-wrapper td {
+  border-bottom: 1px solid #eee;
+}
+
+.table-wrapper table,
+.scoreboard-table,
+.standings-table,
+.picks-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-wrapper th,
+.table-wrapper td,
+.scoreboard-table th,
+.scoreboard-table td,
+.standings-table th,
+.standings-table td {
+  padding: 10px;
+  vertical-align: middle;
+}
+
+/* Standardized Sticky & Thead Headers */
+.scoreboard-table thead th,
+.scoreboard-sticky,
+.standings-table thead th,
+.picks-matrix-table thead th {
+  background-color: var(--primary-navy) !important;
+  color: var(--white) !important;
+  border-bottom: 2px solid var(--accent-gold) !important;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.scoreboard-table thead th,
+.scoreboard-sticky,
+.standings-table thead th {
+  position: sticky;
+  top: var(--navbar-height) !important;
+  z-index: 100;
+}
+
+.picks-matrix-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
+
+.scoreboard-container,
+.picks-matrix-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.scoreboard-container {
+  padding: 15px;
+}
+
+.scoreboard-container h2 {
+  font-size: 1.4rem;
+  color: var(--primary-navy);
+  margin-bottom: 6px;
+}
+
+.table-scroll-wrapper {
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.scoreboard-table {
+  min-width: 750px;
+  background: var(--white);
+  font-size: 14px;
+}
+
+.scoreboard-table th,
+.scoreboard-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.scoreboard-table tbody tr:hover {
+  background-color: #f0f4f8;
+}
+
+.scoreboard-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.home-team-logo {
+  outline: 2px solid var(--accent-gold);
+  border-radius: 3px;
+}
+
+.standings-table {
+  table-layout: fixed;
+}
+
+.standings-table th,
+.standings-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picks-matrix-table {
+  font-size: 13px;
+  width: max-content;
+}
+
+.picks-matrix-table td:first-child,
+.picks-matrix-table th:first-child,
+.picks-sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: var(--white);
+  border-right: 2px solid var(--accent-gold);
+}
+
+.picks-matrix-container {
+  padding: 12px 0;
+}
+
+.picks-sticky-col {
+  z-index: 2;
+  white-space: nowrap;
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+}
+
+.picks-game-header {
+  min-width: 66px;
+  max-width: 66px;
+  width: 66px;
+  padding: 4px 2px !important;
+}
+
+.picks-player-cell {
+  padding: 6px 8px;
+  min-width: 80px;
+  max-width: 80px;
+}
+
+.picks-player-name {
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--primary-navy);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 55px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.picks-rank {
+  font-size: 13px;
+}
+
+.picks-points {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.picks-pick-cell {
+  padding: 6px 4px;
+  text-align: center;
+  vertical-align: middle;
+  border-bottom: 1px solid #f3f4f6;
+  border-right: 1px solid #f3f4f6;
+}
+
+.picks-matrix-table tbody tr:hover .picks-pick-cell,
+.picks-matrix-table tbody tr:hover .picks-sticky-col {
+  filter: brightness(0.96);
+}
+
+.pick-win {
+  background-color: #f0fdf4 !important;
+}
+
+.pick-loss {
+  background-color: #fef2f2 !important;
+}
+
+.pick-missed {
+  background-color: #fffbeb !important;
+}
+
+/* ==========================================================================
+   5. COMPONENTS (COUNTDOWN, HERO, NEWS, DROPDOWNS)
    ========================================================================== */
 .countdown-card {
   background: linear-gradient(135deg, #111827, #1f2937);
@@ -295,413 +418,6 @@ body {
   color: #9ca3af;
 }
 
-/* ==========================================================================
-   7. STABLE MOBILE BOTTOM NAV
-   ========================================================================== */
-.mobile-bottom-nav {
-  display: none;
-  width: 100vw;
-}
-
-@media (max-width: 992px) {
-  .sub-nav-container::-webkit-scrollbar {
-    display: none !important;
-  }
-
-  .mobile-bottom-nav {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 2000;
-    background-color: var(--primary-navy);
-    border-top: 3px solid var(--accent-gold);
-    justify-content: space-around;
-    align-items: center;
-    height: 60px;
-    padding: 0 4px;
-  }
-
-  .mobile-nav-link {
-    background: none;
-    border: none;
-    color: var(--white);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    font-size: 20px;
-    cursor: pointer;
-    padding: 6px 8px;
-    border-radius: 8px;
-    transition: background 0.15s;
-    flex: 1;
-  }
-
-  .mobile-nav-link span {
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: #cbd5e1;
-  }
-
-  .mobile-nav-link:hover,
-  .mobile-nav-link:active {
-    background: rgba(200, 157, 60, 0.2);
-  }
-
-  .sub-nav-container {
-    padding: 4px 8px;
-    background: rgba(0, 0, 0, 0.15);
-    border-radius: 6px;
-    margin-left: auto;
-  }
-}
-
-/* ==========================================================================
-   8. INTERACTIVE PANELS & DRAW MENU OVERLAYS
-   ========================================================================== */
-.menu-overlay {
-  display: none;
-}
-
-@media (max-width: 992px) {
-  .menu-overlay {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 1998;
-  }
-
-  .menu-toggle {
-    display: block !important;
-    z-index: 2200;
-  }
-
-  .desktop-subnav-row {
-    display: none !important;
-  }
-
-  .navbar-links {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 240px;
-    background: #111827;
-    flex-direction: column;
-    padding-top: 80px;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-    z-index: 2150;
-  }
-
-  .navbar-links.open {
-    transform: translateX(0);
-  }
-
-  .navbar-links button {
-    background: transparent;
-    border: none;
-    color: #facc15;
-  }
-
-  .navbar-links button:hover {
-    background: rgba(0, 0, 0, 0.05);
-  }
-}
-
-/* ==========================================================================
-   9. TABLES & MATRIX GRIDS
-   ========================================================================== */
-.standings-table {
-  width: 100%;
-  table-layout: fixed;
-}
-
-.standings-table th,
-.standings-table td {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.picks-matrix-scroll {
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: visible;
-  -webkit-overflow-scrolling: touch;
-}
-
-.picks-matrix-table {
-  border-collapse: collapse;
-  background: var(--white);
-  font-size: 13px;
-  width: max-content;
-}
-
-.picks-matrix-table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 4;
-  background-color: var(--primary-navy);
-  color: var(--white);
-  border-bottom: 2px solid var(--accent-gold);
-}
-
-.picks-matrix-table td:first-child,
-.picks-matrix-table th:first-child {
-  position: sticky;
-  left: 0;
-  z-index: 5;
-  background: var(--white);
-  border-right: 2px solid var(--accent-gold);
-}
-
-.picks-matrix-container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 12px 0;
-}
-
-.picks-sticky-col {
-  position: sticky;
-  left: 0;
-  z-index: 2;
-  background: var(--white);
-  border-right: 2px solid var(--accent-gold);
-  white-space: nowrap;
-  width: 120px;
-  min-width: 120px;
-  max-width: 120px;
-}
-
-.picks-game-header {
-  min-width: 66px;
-  max-width: 66px;
-  width: 66px;
-  padding: 4px 2px !important;
-}
-
-.picks-player-cell {
-  padding: 6px 8px;
-  min-width: 80px;
-  max-width: 80px;
-}
-
-.picks-player-name {
-  font-weight: 700;
-  font-size: 12px;
-  color: var(--primary-navy);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 55px;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-.picks-page-scroll {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.picks-rank {
-  font-size: 13px;
-}
-
-.picks-points {
-  font-size: 11px;
-  color: #6b7280;
-}
-
-.picks-pick-cell {
-  padding: 6px 4px;
-  text-align: center;
-  vertical-align: middle;
-  border-bottom: 1px solid #f3f4f6;
-  border-right: 1px solid #f3f4f6;
-}
-
-.picks-matrix-table tbody tr:hover .picks-pick-cell,
-.picks-matrix-table tbody tr:hover .picks-sticky-col {
-  filter: brightness(0.96);
-}
-
-.pick-win {
-  background-color: #f0fdf4 !important;
-}
-
-.pick-loss {
-  background-color: #fef2f2 !important;
-}
-
-.pick-missed {
-  background-color: #fffbeb !important;
-}
-
-/* ==========================================================================
-   10. MEDIA SCREENS LAYER OVERRIDES
-   ========================================================================== */
-@media (max-width: 768px) {
-  .hide-mobile {
-    display: none !important;
-  }
-
-  .show-mobile {
-    display: inline !important;
-  }
-
-  .scoreboard-table th,
-  .scoreboard-table td {
-    padding: 6px 4px;
-    font-size: 11px;
-  }
-
-  .scoreboard-table {
-    min-width: unset;
-  }
-
-  .scoreboard-table img {
-    width: 16px !important;
-    height: 16px;
-    object-fit: contain;
-    margin-right: 2px !important;
-    margin-left: 2px !important;
-  }
-
-  .scoreboard-header strong {
-    display: none;
-  }
-
-  .standings-table th,
-  .standings-table td {
-    padding: 8px 4px;
-    font-size: 11px;
-  }
-
-  .standings-table th {
-    letter-spacing: 0;
-    text-transform: none;
-    white-space: normal;
-    word-break: break-word;
-  }
-
-  .picks-player-cell {
-    min-width: 100px;
-    padding: 6px 8px;
-  }
-
-  .picks-player-name {
-    font-size: 12px;
-  }
-
-  .picks-points {
-    display: none;
-  }
-
-  .picks-matrix-table {
-    font-size: 11px;
-  }
-
-  .mypicks-desktop,
-  .bracket-desktop {
-    display: none;
-  }
-
-  .mypicks-mobile {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 8px 0;
-  }
-
-  .bracket-mobile {
-    display: block;
-  }
-
-  .table-wrapper table,
-  .table-wrapper thead,
-  .table-wrapper tbody,
-  .table-wrapper th,
-  .table-wrapper td,
-  .table-wrapper tr {
-    display: block;
-    width: 100%;
-  }
-
-  .table-wrapper thead {
-    display: none;
-  }
-
-  .table-wrapper tr {
-    background: white;
-    margin-bottom: 12px;
-    border-radius: 12px;
-    padding: 12px;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
-  }
-
-  .table-wrapper td {
-    display: flex;
-    justify-content: space-between;
-    padding: 6px 0;
-    border: none;
-  }
-
-  .table-wrapper td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: #666;
-  }
-
-  .sticky-submit {
-    position: sticky;
-    bottom: 0;
-    background: white;
-    padding: 10px;
-  }
-
-  .roster-auth-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .roster-name-dropdown,
-  .roster-password,
-  .roster-verify-btn {
-    width: 100%;
-  }
-
-  .roster-name-dropdown .dropdown-menu {
-    width: calc(100vw - 32px);
-    left: 16px !important;
-    right: 16px !important;
-  }
-
-  .scoreboard-top-scroll {
-    display: none;
-  }
-
-  .scoreboard-scroll {
-    overflow-x: hidden;
-  }
-
-  .scoreboard-cards {
-    flex-direction: column;
-  }
-
-  .scoreboard-card {
-    min-width: 100%;
-  }
-}
-
-/* ==========================================================================
-   11. LEGACY APP PANELS
-   ========================================================================== */
 .home-hero {
   color: #002366;
   padding: 80px 16px;
@@ -740,12 +456,12 @@ body {
 
 .primary-btn {
   background: #2563eb;
-  color: white;
+  color: var(--white);
 }
 
 .secondary-btn {
-  border: 1px solid white;
-  color: white;
+  border: 1px solid var(--white);
+  color: var(--white);
 }
 
 .home-section {
@@ -763,7 +479,7 @@ body {
 }
 
 .step {
-  background: white;
+  background: var(--white);
   padding: 24px;
   border-radius: 16px;
   font-weight: 600;
@@ -771,7 +487,7 @@ body {
 }
 
 .news-feed {
-  background: #fff;
+  background: var(--white);
   border-radius: 14px;
   padding: 14px;
   margin: 16px auto;
@@ -828,18 +544,6 @@ body {
   flex-shrink: 0;
 }
 
-.roster-name-dropdown .dropdown-menu {
-  max-height: 260px;
-  overflow-y: auto;
-  font-size: 16px;
-  z-index: 2000;
-}
-
-.roster-name-dropdown .dropdown-item {
-  padding: 12px 16px;
-  font-size: 16px;
-}
-
 .roster-password {
   flex: 1;
   min-height: 44px;
@@ -852,10 +556,6 @@ body {
 .roster-verify-btn {
   min-height: 44px;
   white-space: nowrap;
-}
-
-.dropdown-menu {
-  z-index: 3000 !important;
 }
 
 .roster-dropdown-toggle {
@@ -887,10 +587,6 @@ body {
   margin-bottom: 10px;
 }
 
-.scoreboard-scroll {
-  overflow-x: auto;
-}
-
 .scoreboard-cards {
   display: flex;
   gap: 16px;
@@ -906,7 +602,7 @@ body {
 .scoreboard-card-header {
   position: sticky;
   top: 0;
-  background: #fff;
+  background: var(--white);
   border-bottom: 1px solid #e5e7eb;
   padding: 10px;
   text-align: center;
@@ -941,120 +637,35 @@ body {
   text-align: center;
 }
 
-.show-mobile {
-  display: none;
-}
-
-button {
-  min-height: 44px;
-}
-
-/*
-World cup cta buttons
-*/
+/* CTA Buttons */
 .cta-button-grid {
   display: flex;
   flex-direction: column;
-  /* Force column by default for mobile-first */
-  gap: 2px;
-  /* Small gap to separate them */
+  gap: 8px;
   margin: 20px auto;
   width: 100%;
   max-width: 320px;
-  /* Keep them constrained */
 }
 
-/* Button styling */
 .cta-button {
   display: block;
-  /* Forces full width */
   padding: 14px 20px;
   background-color: #2563eb;
-  color: white;
+  color: var(--white);
   text-decoration: none;
   text-align: center;
   font-weight: 700;
   border-radius: 8px;
-  /* Subtle radius instead of 999px to prevent overlap */
   margin-bottom: 8px;
-  /* Clear spacing between buttons */
 }
 
-/* Desktop override: return to row if needed */
-@media (min-width: 601px) {
-  .cta-button-grid {
-    flex-direction: row;
-    max-width: 100%;
-    justify-content: center;
-  }
-
-  .cta-button {
-    width: auto;
-    margin-bottom: 0;
-  }
-}
-
-@media (min-width: 601px) {
-  .cta-button-grid {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 16px;
-    /* Increased gap for better breathing room */
-    margin: 32px 0;
-  }
-
-  .cta-button {
-    padding: 14px 28px;
-    border-radius: 8px;
-    /* Slightly softer corners instead of pill-shape */
-    font-size: 15px;
-    font-weight: 700;
-    transition: transform 0.1s ease, background-color 0.2s ease;
-  }
-
-  /* Hover interactivity */
-  .cta-button:hover {
-    transform: translateY(-2px);
-    opacity: 0.95;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  }
-
-  /* Specific styling for the outline button */
-  .cta-button.secondary {
-    background-color: transparent !important;
-    border: 2px solid #ffffff !important;
-  }
-}
-
-/*
-Hide mobile picks on desktop
-*/
-@media (min-width: 769px) {
-  .mypicks-mobile {
-    display: none !important;
-    /* Hide mobile cards on desktop */
-  }
-}
-
-@media (max-width: 768px) {
-  .mypicks-desktop {
-    display: none !important;
-    /* Hide desktop table on mobile */
-  }
-}
-
-/* ==========================================================================
-   12. OPEN GAMES WIDGET & 3-COLUMN GRID LAYOUT FIXES
-   ========================================================================== */
-
+/* Home Layout Grid */
 .app-container {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* Base Grid Container */
 .home-layout-grid {
   display: flex;
   flex-direction: column;
@@ -1063,7 +674,6 @@ Hide mobile picks on desktop
   margin: 0 auto;
   padding: 16px 24px;
   padding-top: 60px;
-  /* Clean standard padding right below navbar */
 }
 
 .home-sidebar-col {
@@ -1075,18 +685,330 @@ Hide mobile picks on desktop
   min-width: 0;
 }
 
-/* Mobile view style */
 .mobile-open-pools-banner {
   display: block;
   margin-bottom: 20px;
 }
 
-/* Desktop 3-Column Layout (screens 1024px and wider) */
+.menu-overlay {
+  display: none;
+}
+
+.mobile-bottom-nav {
+  display: none;
+  width: 100vw;
+}
+
+.show-mobile {
+  display: none;
+}
+
+/* ==========================================================================
+   6. RESPONSIVE MEDIA QUERIES (CONSOLIDATED)
+   ========================================================================== */
+
+/* Tablet & Mobile Breakpoints (max-width: 992px) */
+@media (max-width: 992px) {
+  .sub-nav-container::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2000;
+    background-color: var(--primary-navy);
+    border-top: 3px solid var(--accent-gold);
+    justify-content: space-around;
+    align-items: center;
+    height: 60px;
+    padding: 0 4px;
+  }
+
+  .mobile-nav-link {
+    background: none;
+    border: none;
+    color: var(--white);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 8px;
+    transition: background 0.15s;
+    flex: 1;
+  }
+
+  .mobile-nav-link span {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #cbd5e1;
+  }
+
+  .mobile-nav-link:hover,
+  .mobile-nav-link:active {
+    background: rgba(200, 157, 60, 0.2);
+  }
+
+  .sub-nav-container {
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    margin-left: auto;
+  }
+
+  .menu-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1998;
+  }
+
+  .menu-toggle {
+    display: block !important;
+    z-index: 2200;
+  }
+
+  .desktop-subnav-row {
+    display: none !important;
+  }
+
+  .navbar-links {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 240px;
+    background: #111827;
+    flex-direction: column;
+    padding-top: 80px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 2150;
+  }
+
+  .navbar-links.open {
+    transform: translateX(0);
+  }
+
+  .navbar-links button {
+    background: transparent;
+    border: none;
+    color: #facc15;
+  }
+
+  .navbar-links button:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+}
+
+/* Mobile Small Breakpoints (max-width: 768px) */
+@media (max-width: 768px) {
+  .page-content {
+    padding-top: 20px;
+    padding-bottom: 5px;
+  }
+
+  .hide-mobile {
+    display: none !important;
+  }
+
+  .show-mobile {
+    display: inline !important;
+  }
+
+  .mypicks-desktop,
+  .bracket-desktop,
+  .scoreboard-top-scroll {
+    display: none !important;
+  }
+
+  .mypicks-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 8px 0;
+  }
+
+  .bracket-mobile {
+    display: block;
+  }
+
+  .scoreboard-table th,
+  .scoreboard-table td {
+    padding: 6px 4px;
+    font-size: 11px;
+  }
+
+  .scoreboard-table {
+    min-width: unset;
+  }
+
+  .scoreboard-table img {
+    width: 16px !important;
+    height: 16px;
+    object-fit: contain;
+    margin-right: 2px !important;
+    margin-left: 2px !important;
+  }
+
+  .scoreboard-header strong {
+    display: none;
+  }
+
+  .standings-table th,
+  .standings-table td {
+    padding: 8px 4px;
+    font-size: 11px;
+  }
+
+  .standings-table th {
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .picks-player-cell {
+    min-width: 100px;
+    padding: 6px 8px;
+  }
+
+  .picks-player-name {
+    font-size: 12px;
+  }
+
+  .picks-points {
+    display: none;
+  }
+
+  .picks-matrix-table {
+    font-size: 11px;
+  }
+
+  .table-wrapper table,
+  .table-wrapper thead,
+  .table-wrapper tbody,
+  .table-wrapper th,
+  .table-wrapper td,
+  .table-wrapper tr {
+    display: block;
+    width: 100%;
+  }
+
+  .table-wrapper thead {
+    display: none;
+  }
+
+  .table-wrapper tr {
+    background: var(--white);
+    margin-bottom: 12px;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+  }
+
+  .table-wrapper td {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border: none;
+  }
+
+  .table-wrapper td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #666;
+  }
+
+  .sticky-submit {
+    position: sticky;
+    bottom: 0;
+    background: var(--white);
+    padding: 10px;
+  }
+
+  .roster-auth-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .roster-name-dropdown,
+  .roster-password,
+  .roster-verify-btn {
+    width: 100%;
+  }
+
+  .roster-name-dropdown .dropdown-menu {
+    width: calc(100vw - 32px);
+    left: 16px !important;
+    right: 16px !important;
+  }
+
+  .scoreboard-scroll {
+    overflow-x: hidden;
+  }
+
+  .scoreboard-cards {
+    flex-direction: column;
+  }
+
+  .scoreboard-card {
+    min-width: 100%;
+  }
+}
+
+/* Desktop CTA Buttons & Layout Overrides (min-width: 601px / 1024px) */
+@media (min-width: 601px) {
+  .cta-button-grid {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin: 32px 0;
+    max-width: 100%;
+  }
+
+  .cta-button {
+    width: auto;
+    margin-bottom: 0;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    transition: transform 0.1s ease, background-color 0.2s ease;
+  }
+
+  .cta-button:hover {
+    transform: translateY(-2px);
+    opacity: 0.95;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  .cta-button.secondary {
+    background-color: transparent !important;
+    border: 2px solid var(--white) !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mypicks-mobile {
+    display: none !important;
+  }
+}
+
 @media (min-width: 1024px) {
   .home-layout-grid {
     display: grid;
     grid-template-columns: 290px minmax(0, 850px) 250px;
-    /* Left widget, Center main content, Right balancing column */
     justify-content: center;
     gap: 32px;
     align-items: start;
@@ -1110,24 +1032,4 @@ Hide mobile picks on desktop
     max-width: 850px;
     margin: 0 auto;
   }
-}
-
-/* ==========================================================================
-   HOMEPAGE FULL-SCREEN GRADIENT BACKGROUND
-   ========================================================================== */
-
-/* Default app container background for inner pages */
-.app-container {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Full-window background specifically when viewing the homepage layout */
-.app-container.home-page-active {
-  min-height: 100vh;
-  background: radial-gradient(circle at 70% 20%, rgba(212, 175, 55, 0.18) 0%, transparent 40%),
-    radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.2) 0%, transparent 50%),
-    linear-gradient(135deg, #061a33 0%, #0b192c 50%, #020617 100%) !important;
-  background-attachment: fixed !important;
 }

@@ -168,12 +168,9 @@ function MainLayout() {
   return (
     <div style={{ paddingTop: "50px" }}>
       <div className="home-layout-grid">
-        {/* Single shared OpenPoolsCard instance positioned via CSS */}
         <div className="home-sidebar-col mobile-open-pools-banner">
           <OpenPoolsCard />
         </div>
-
-        {/* Inner Page Content */}
         <div className="home-main-col">
           <Outlet />
         </div>
@@ -182,28 +179,9 @@ function MainLayout() {
   );
 }
 
-function RouteListener() {
-  const location = useLocation();
-  const isHome = location.pathname === "/";
-
-  useEffect(() => {
-    const container = document.getElementById('root-app-container');
-    if (container) {
-      if (isHome) {
-        container.classList.add("home-page-active");
-      } else {
-        container.classList.remove("home-page-active");
-      }
-    }
-  }, [location]);
-
-  return null;
-}
-
 export default function App() {
   return (
     <BrowserRouter>
-      <RouteListener />
       <div id="root-app-container" className="app-container">
         <Navbar />
         <Routes>
