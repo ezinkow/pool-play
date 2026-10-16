@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import PoolEmoji from "../PoolEmoji";
 
 /* COMPONENT */
 export default function Standings() {
@@ -55,7 +56,7 @@ export default function Standings() {
 
   return (
     <div className="page-content" style={{ padding: "16px" }}>
-      <h2 style={{ marginBottom: "16px" }}>🏅Standings⛷</h2>
+      <h2 style={{ marginBottom: "16px" }}><PoolEmoji gameKey="olympics" /> Standings</h2>
 
       <div style={{ overflowX: "auto", maxHeight: "600px", overflowY: "auto" }}>
         <table

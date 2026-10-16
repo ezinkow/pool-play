@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PoolEmoji from "../PoolEmoji";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -206,7 +207,7 @@ export default function MyPicks() {
     return (
         <div style={{ maxWidth: 1000, margin: "0 auto", padding: "68px 16px 80px" }}>
             <Toaster />
-            <h2 style={{ color: "var(--primary-navy)", marginBottom: 16 }}>🏀 My Picks 📝</h2>
+            <h2 style={{ color: "var(--primary-navy)", marginBottom: 16 }}><PoolEmoji gameKey="ncaab_champ_week_pickem" /> My Picks 📝</h2>
             {!authenticated && (
                 <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
                     <select

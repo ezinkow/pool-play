@@ -6,6 +6,7 @@ import useTeamColors from '../../hooks/useNFLTeamColors';
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 import PickSortSelect from "../../components/picks/PickSortSelect";
 import ClearPicksButton from "../../components/picks/ClearPicksButton";
+import PoolEmoji from "../../components/PoolEmoji";
 
 const NFL_BLUE = "#013369";
 const NFL_RED = "#D50A0A";
@@ -328,7 +329,7 @@ export default function NflPickemAtsPicks() {
                 }}>
                     <div style={{ textAlign: "center" }}>
                         <h2 style={{ color: NFL_BLUE, fontSize: "19px", margin: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontWeight: 800 }}>
-                            <span>🏈</span> NFL Pick'em ATS <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span>
+                            <PoolEmoji gameKey="nfl_pickem_ats" /> NFL Pick'em ATS <PoolEmoji gameKey="nfl_pickem_ats" />
                         </h2>
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
                             Make your ATS picks & assign exactly 3 Best Bets ⭐ (worth 2 points).

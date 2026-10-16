@@ -3,6 +3,7 @@ import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
+import PoolEmoji from "../../components/PoolEmoji";
 
 const NAVY = "#13447a";
 const GOLD = "%23c89d3c";
@@ -174,7 +175,7 @@ export default function Picks() {
                 }}>
                     <div style={{ textAlign: "center" }}>
                         <h2 style={{ color: NAVY, fontSize: "19px", margin: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontWeight: 800 }}>
-                            <span>⚾</span> MLB Postseason Pick'em <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>⚾</span>
+                            <PoolEmoji gameKey="mlb_playoffs" /> MLB Postseason Pick'em <PoolEmoji gameKey="mlb_playoffs" />
                         </h2>
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
                             Correctly guessing the number of games gives you a <strong>2x bonus</strong>! Allocate up to {roundMax} confidence points for the {currentRoundLabel} round.

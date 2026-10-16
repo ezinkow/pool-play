@@ -2,13 +2,14 @@ import React from "react";
 import { Link } from "react-router-dom";
 import NewsFeed from "../../components/olympics/NewsFeed";
 import PoolHomeActions from "../../components/PoolHomeActions";
+import PoolEmoji from "../../components/PoolEmoji";
 
 export default function Home() {
   return (
     <>
       <div className="home-hero">
         <div className="hero-content">
-          <h1>🏅 Fantasy Olympics Salary Cap</h1>
+          <h1><PoolEmoji gameKey="olympics" /> Fantasy Olympics Salary Cap</h1>
           <p>
             Draft countries. Rack up the medals.  
             Chase Olympic glory.

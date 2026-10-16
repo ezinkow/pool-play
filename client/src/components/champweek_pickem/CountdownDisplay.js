@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import PoolEmoji from "../PoolEmoji";
 
 export default function PoolCountdown() {
   // 👉 Set pool start time (Central Time)
@@ -30,7 +31,7 @@ export default function PoolCountdown() {
   if (!timeLeft) {
     return (
       <div className="countdown-card">
-        🏀 The pool has started!
+        <PoolEmoji gameKey="ncaab_champ_week_pickem" /> The pool has started!
       </div>
     );
   }

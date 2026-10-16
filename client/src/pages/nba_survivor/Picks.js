@@ -6,6 +6,7 @@ import PoolGatekeeper from "../../components/PoolGatekeeper";
 import SurvivorWeekSelector from "../../components/picks/SurvivorWeekSelector";
 import SurvivorSelectionBanner from "../../components/picks/SurvivorSelectionBanner";
 import NbaSurvivorScheduleTable from "../../components/picks/NbaSurvivorScheduleTable";
+import PoolEmoji from "../../components/PoolEmoji";
 
 const NBA_BLUE = "#013369";
 
@@ -123,7 +124,7 @@ export default function NbaSurvivorPicks() {
                 <Toaster />
 
                 <div style={{ textAlign: "center", marginBottom: 12, padding: "0 8px" }}>
-                    <h2 style={{ color: NBA_BLUE, fontSize: "22px", margin: 0 }}>🏀 NBA Survivor: Week {currentWeek} <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏀</span></h2>
+                    <h2 style={{ color: NBA_BLUE, fontSize: "22px", margin: 0 }}><PoolEmoji gameKey="nba_survivor" /> NBA Survivor: Week {currentWeek} <PoolEmoji gameKey="nba_survivor" /></h2>
                     <p style={{ color: "#64748b", marginTop: 4, fontSize: "13px" }}>
                         Select a team for week {currentWeek}.<br/>
                         Your team must win ONCE in any of their Friday, Saturday, or Sunday games for you to advance!<br/>

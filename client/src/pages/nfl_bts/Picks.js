@@ -3,6 +3,7 @@ import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
+import PoolEmoji from "../../components/PoolEmoji";
 
 const FALLBACK_BLUE = "#013369";
 const GOLD = "#c89d3c";
@@ -448,7 +449,7 @@ export default function NflBtsPicks() {
                     {/* Header Title Section */}
                     <div style={{ className:"page-content",textAlign: "center", marginBottom: 20 }}>
                         <h2 style={{ color: NFL_BLUE, fontSize: "22px", margin: "0 0 4px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontWeight: 800 }}>
-                            <span>🏈</span> NFL Beat The Spread <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span>
+                            <PoolEmoji gameKey="nfl_bts" /> NFL Beat The Spread <PoolEmoji gameKey="nfl_bts" />
                         </h2>
                         <p style={{ color: "#64748b", margin: 0, fontSize: "12px" }}>
                             Make your ATS and Over/Under picks for your assigned weekly teams.

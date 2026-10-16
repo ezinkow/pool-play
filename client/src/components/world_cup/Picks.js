@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import PoolEmoji from "../PoolEmoji";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
@@ -144,7 +145,7 @@ export default function Picks() {
 
       {/* Hero Display Panel */}
       <div style={{ marginBottom: "20px", textAlign: "center" }}>
-        <h2 style={{ color: NAVY, margin: 0, fontWeight: 800 }}>⚽ World Cup Pick'em</h2>
+        <h2 style={{ color: NAVY, margin: 0, fontWeight: 800 }}><PoolEmoji gameKey="world_cup" /> World Cup Pick'em</h2>
         <p style={{ color: "#6b7280", fontSize: 14, marginTop: 4 }}>
           Winner = 1pt | Draw = 2pts. Fill your picks for every Group Stage match.
           <br />Matches lock at scheduled kickoff time.

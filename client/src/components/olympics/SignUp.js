@@ -4,6 +4,7 @@ import Button from 'react-bootstrap/Button'
 import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
 import Form from 'react-bootstrap/Form';
+import PoolEmoji from "../PoolEmoji";
 
 
 export default function NameSubmit() {
@@ -68,7 +69,7 @@ export default function NameSubmit() {
                     color: 'white',
                     backgroundColor: 'rgb(60, 179, 113, 0.7)'
                 },
-                icon: '🏀',
+                icon: <PoolEmoji gameKey="olympics" />,
                 role: 'status',
                 ariaLive: 'polite',
             });

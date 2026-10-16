@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PoolEmoji from "../PoolEmoji";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
@@ -44,7 +45,7 @@ export default function MyRoster() {
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
                 <div>
-                    <h2 style={{ margin: 0, color: NAVY }}>🏅 My Olympic Roster</h2>
+                    <h2 style={{ margin: 0, color: NAVY }}><PoolEmoji gameKey="olympics" /> My Olympic Roster</h2>
                     <p style={{ color: "#6b7280", margin: "4px 0 0", fontSize: 13 }}>
                         User: <strong>{user.name}</strong>
                     </p>

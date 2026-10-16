@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import PoolEmoji from "../PoolEmoji";
 import axios from "axios";
 
 const SCOREBOARD_UNLOCK = new Date("2026-02-07T09:00:00Z"); // 3:00 AM CT
@@ -69,7 +70,7 @@ export default function Scoreboard() {
   if (locked) {
     return (
       <div className="scoreboard-locked">
-        <h2>🏅 Scoreboard Locked</h2>
+        <h2><PoolEmoji gameKey="olympics" /> Scoreboard Locked</h2>
         <p>
           The Olympic Pool scoreboard goes live at
           <br />

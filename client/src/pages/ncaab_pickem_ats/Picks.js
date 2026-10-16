@@ -6,6 +6,7 @@ import useTeamColors from '../../hooks/useNCAATeamColors';
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 import PickSortSelect from "../../components/picks/PickSortSelect";
 import ClearPicksButton from "../../components/picks/ClearPicksButton";
+import PoolEmoji from "../../components/PoolEmoji";
 
 const NCAAB_BLUE = "#009CDE";
 const NCAAB_DARK_BLUE = "#002855";
@@ -304,7 +305,7 @@ export default function NcaabPickemAtsPicks() {
                 }}>
                     <div style={{ textAlign: "center" }}>
                         <h2 style={{ color: NCAAB_BLUE, fontSize: "19px", margin: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                            <span>🏀</span> {poolTitle || "NCAAB PICK 'EM ATS"} <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏀</span>
+                            <PoolEmoji gameKey="ncaab_pickem_ats" /> {poolTitle || "NCAAB PICK 'EM ATS"} <PoolEmoji gameKey="ncaab_pickem_ats" />
                         </h2>
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
                             Select up to {totalMustPicks} must-pick weekend games & up to 15 total games (up to 3 Best Bets ⭐).

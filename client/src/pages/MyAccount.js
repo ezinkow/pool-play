@@ -4,6 +4,7 @@ import axios from "axios";
 import useAuth from "../hooks/useAuth";
 import ChangePassword from '../components/PasswordReset';
 import SecurityQuestions from '../components/SecurityQuestions';
+import PoolEmoji from "../components/PoolEmoji";
 
 const NAVY = "#13447a";
 const GOLD = "#c89d3c";
@@ -67,7 +68,7 @@ export default function MyAccount() {
             }}
         >
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <span style={{ fontSize: 32 }}>{pool.emoji || "🏈"}</span>
+                <PoolEmoji gameKey={pool.key} style={{ fontSize: 32 }} />
                 <div>
                     <h4 style={{ margin: 0, color: "#1e293b", fontWeight: 800 }}>
                         {pool.label || pool.name} {!isActive && <span style={{ fontSize: 10, color: "#64748b" }}>(Ended)</span>}

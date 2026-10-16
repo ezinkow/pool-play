@@ -168,7 +168,7 @@ export default function NcaabPickemAtsHome() {
           setCustomEntryName={setCustomEntryName}
           user={user}
           accentColor={poolMetadata?.accent_color || NCAA_BLUE}
-          icon="🏀"
+          poolEmoji={poolMetadata?.emoji}
           joinDescription="Pick 15 weekend games (Friday–Sunday) against the spread from Power 4 conferences each week, including your 3 Best Bets and up to 3 must-picks."
           joinButtonText="Join NCAAB ATS Pick'em Pool"
         />

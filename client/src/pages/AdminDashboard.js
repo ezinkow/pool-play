@@ -5,6 +5,7 @@ import useAuth from "../hooks/useAuth";
 import useTeamColors from "../hooks/useNCAATeamColors";
 import NotFound from "../pages/NotFound";
 import BTSrandomizer from '../components/nfl_bts/AdminTeamRandomizer';
+import PoolEmoji from "../components/PoolEmoji";
 
 const NAVY = "#1c61ac";
 const GOLD = "#c89d3c";
@@ -462,7 +463,7 @@ export default function AdminDashboard() {
                         color: activeTab === "cfb_must_picks" ? "white" : "#475569", cursor: "pointer"
                     }}
                 >
-                    🏈 CFB Must-Picks
+                    <PoolEmoji gameKey="cfb_pickem_ats" /> CFB Must-Picks
                 </button>
                 <button
                     onClick={() => setActiveTab("ncaab_must_picks")}
@@ -472,7 +473,7 @@ export default function AdminDashboard() {
                         color: activeTab === "ncaab_must_picks" ? "white" : "#475569", cursor: "pointer"
                     }}
                 >
-                    🏀 NCAAB Must-Picks
+                    <PoolEmoji gameKey="ncaab_pickem_ats" /> NCAAB Must-Picks
                 </button>
                 <button
                     onClick={() => setActiveTab("bts_randomizer")}
@@ -530,7 +531,7 @@ export default function AdminDashboard() {
                             <div key={game.game_key} style={{ background: "white", borderRadius: 8, boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0", padding: "16px" }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", borderBottom: "1px solid #f1f5f9", paddingBottom: "8px", flexWrap: "wrap", gap: 8 }}>
                                     <div style={{ fontSize: "16px", fontWeight: 800, color: NAVY }}>
-                                        {game.emoji || "🎮"} {game.game_label} <span style={{ fontSize: "11px", color: "#64748b" }}>({game.game_key})</span>
+                                        <PoolEmoji gameKey={game.game_key} /> {game.game_label} <span style={{ fontSize: "11px", color: "#64748b" }}>({game.game_key})</span>
                                     </div>
 
                                     <PoolCountdown poolData={game} mode={mode} />

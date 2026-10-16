@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import PoolEmoji from "../PoolEmoji";
 import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
 
@@ -22,7 +23,7 @@ export default function UserSubmit() {
                 color: 'white',
                 backgroundColor: 'rgb(60, 179, 113, 0.7)'
             },
-            icon: '🏀',
+            icon: <PoolEmoji gameKey="ncaab_tourney_pickem" />,
         });
         setName("")
     }
@@ -64,7 +65,7 @@ export default function UserSubmit() {
                 marginTop: 24,
             }}>
                 <Toaster />
-                <h2 style={{ color: "var(--primary-navy)", marginBottom: 4,textAlign: "center"  }}>🏀 Sign Up 🏀</h2>
+                <h2 style={{ color: "var(--primary-navy)", marginBottom: 4,textAlign: "center"  }}><PoolEmoji gameKey="ncaab_tourney_pickem" /> Sign Up <PoolEmoji gameKey="ncaab_tourney_pickem" /></h2>
                 <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 24, textAlign: "center"  }}>
                     Create your entry to start making picks.
                 </p>

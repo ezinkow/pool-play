@@ -2,6 +2,7 @@ import React from "react";
 
 export default function PoolJoinCard({
     poolTitle,
+    poolEmoji,
     userEntry,
     isPoolStarted,
     confirmLeave,
@@ -12,16 +13,22 @@ export default function PoolJoinCard({
     setCustomEntryName,
     user,
     accentColor = "#013369",
-    icon = "🏈",
+    icon,
     joinDescription,
     joinButtonText = "Join Pool",
     registeredMessage = "✓ You are officially registered!",
     closedMessage = "This pool has already started or reached its lock time. New entries are no longer accepted."
 }) {
+    const displayIcon = poolEmoji || icon;
+
     return (
         <section className="pool-card pool-join-card" style={{ "--pool-accent": accentColor }}>
             <h3>
-                <span>{icon}</span> {poolTitle} <span className="pool-reversed-icon">{icon}</span>
+                {displayIcon && <span>{displayIcon}</span>}
+                {displayIcon ? " " : ""}
+                {poolTitle}
+                {displayIcon ? " " : ""}
+                {displayIcon && <span className="pool-reversed-icon">{displayIcon}</span>}
             </h3>
 
             {userEntry ? (

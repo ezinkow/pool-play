@@ -218,7 +218,7 @@ export default function NflPickemAtsMyPicks() {
                             const pickedLogo = isAwayPicked ? awayLogo : (isHomePicked ? homeLogo : null);
 
                             return (
-                                <div key={game.id} style={{
+                                <div key={game.id} className="pickem-my-picks-card" style={{
                                     background: isBestBet ? "linear-gradient(135deg, #fffdf4 0%, #ffffff 100%)" : "white",
                                     borderRadius: 12,
                                     boxShadow: isBestBet ? "0 4px 12px rgba(200, 157, 60, 0.15)" : "0 2px 6px rgba(0,0,0,0.04)",
@@ -234,7 +234,7 @@ export default function NflPickemAtsMyPicks() {
                                     gap: 12
                                 }}>
                                     {/* Left: Matchup */}
-                                    <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, overflow: "visible" }}>
+                                    <div className="pickem-my-picks-matchup" style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, overflow: "visible" }}>
                                         <div className="matchup-header-row" style={{ fontSize: "14px", color: "#1e293b", fontWeight: 600, display: "flex", gap: 8, alignItems: "center", flexWrap: "nowrap", whiteSpace: "nowrap", overflow: "visible" }}>
 
                                             {/* Away Team Section */}
@@ -321,8 +321,8 @@ export default function NflPickemAtsMyPicks() {
                                     </div>
 
                                     {/* Right: Status/Live Score first, then Pick Logo with unblocked Star badge */}
-                                    <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0, overflow: "visible" }}>
-                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center", minWidth: "85px" }}>
+                                    <div className="pickem-my-picks-status-group" style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0, overflow: "visible" }}>
+                                        <div className="pickem-my-picks-status" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center", minWidth: "85px" }}>
                                             {statusBadge}
                                         </div>
 

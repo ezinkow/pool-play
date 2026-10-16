@@ -4,6 +4,7 @@ import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import useTeamColors from '../../hooks/useNCAATeamColors';
 import PoolGatekeeper from "../../components/PoolGatekeeper";
+import PoolEmoji from "../../components/PoolEmoji";
 
 import {
     DndContext,
@@ -457,7 +458,7 @@ export default function CfbBowlConfidencePicks() {
                 }}>
                     <div style={{ textAlign: "center" }}>
                         <h2 style={{ color: CFB_BLUE, fontSize: "19px", margin: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                            <span>🏈</span> {poolTitle || "Bowl Confidence Pick'em"} <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span>
+                            <PoolEmoji gameKey="cfb_bowl_pickem" /> {poolTitle || "Bowl Confidence Pick'em"} <PoolEmoji gameKey="cfb_bowl_pickem" />
                         </h2>
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
                             Drag rows or use ▲▼ to rank confidence points. Click teams to select. Partial saves are allowed!<br />

@@ -135,7 +135,7 @@ export default function NbaSurvivorHome() {
           setCustomEntryName={setCustomEntryName}
           user={user}
           accentColor={poolMetadata?.accent_color || NBA_BLUE}
-          icon="🏆"
+          poolEmoji={poolMetadata?.emoji}
           joinDescription="Pick one team to win straight up each week. Survive and advance!"
           joinButtonText="Join Survivor Pool"
           registeredMessage={userEntry?.is_eliminated ? `❌ Eliminated in Week ${userEntry.eliminated_week}` : undefined}

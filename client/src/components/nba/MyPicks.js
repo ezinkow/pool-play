@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import PoolEmoji from "../PoolEmoji";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
@@ -92,7 +93,7 @@ export default function MyPicks() {
                     alignItems: "flex-start", marginBottom: 10, flexWrap: "wrap", gap: 12,
                 }}>
                     <div>
-                        <h2 style={{ color: NAVY, margin: 0 }}>🏀 My Picks</h2>
+                        <h2 style={{ color: NAVY, margin: 0 }}><PoolEmoji gameKey="nba_playoffs" /> My Picks</h2>
                         <p style={{ color: "#6b7280", margin: "4px 0 0", fontSize: 13 }}>
                             {user.name}
                         </p>

@@ -1,13 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import PoolHomeActions from "../../components/PoolHomeActions";
+import PoolEmoji from "../../components/PoolEmoji";
 
 export default function Home() {
   return (
     <>
       <div className="home-hero">
         <div className="hero-content">
-          <h1>🏈 NFL Playoff Pool</h1>
+          <h1><PoolEmoji gameKey="nfl_playoffs" /> NFL Playoff Pool</h1>
           <p>
             Build your roster. Start your guys.
             Most points wins.

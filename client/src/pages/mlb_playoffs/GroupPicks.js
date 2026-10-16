@@ -3,6 +3,7 @@ import axios from "axios";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 import LivePulseIndicator from "../../components/picks/LivePulseIndicator";
+import PoolEmoji from "../../components/PoolEmoji";
 
 const NAVY = "#1c61ac";
 const GOLD = "#c89d3c";
@@ -231,7 +232,7 @@ const GameHeader = ({ s }) => {
 
         <div style={{ textAlign: "center", marginBottom: 12, padding: "0 8px" }}>
           <h2 style={{ color: NAVY, fontSize: "20px", margin: 0, fontWeight: 800 }}>
-            <span>⚾</span> Group Picks Matrix <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>⚾</span>
+            <PoolEmoji gameKey="mlb_playoffs" /> Group Picks Matrix <PoolEmoji gameKey="mlb_playoffs" />
           </h2>
           <p style={{ color: "#64748b", marginTop: 4, fontSize: "12px" }}>Track participant selections, confidence points, and series length outcomes for active/started series.</p>
         </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import PoolEmoji from "../PoolEmoji";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import Instructions from "./Instructions";
@@ -246,7 +247,7 @@ export default function Picks() {
       <Toaster />
       <div style={{ padding: "0 12px" }}>
         <Instructions />
-        <h2 style={{ color: "var(--primary-navy)", marginBottom: 12 }}>🏀 Make Your Picks 🗑️</h2>
+        <h2 style={{ color: "var(--primary-navy)", marginBottom: 12 }}><PoolEmoji gameKey="ncaab_tourney_pickem" /> Make Your Picks 🗑️</h2>
         {!authenticated && (
           <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
             <select value={user} onChange={e => setUser(e.target.value)}

@@ -141,6 +141,7 @@ export default function NflPickemAtsHome() {
 
         <PoolJoinCard
           poolTitle={poolMetadata?.pool_title || "Standard ATS Pick'em Pool"}
+          poolEmoji={poolMetadata?.emoji}
           userEntry={userEntry}
           isPoolStarted={isPoolStarted}
           confirmLeave={confirmLeave}

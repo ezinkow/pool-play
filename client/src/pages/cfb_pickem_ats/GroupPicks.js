@@ -4,6 +4,7 @@ import useAuth from "../../hooks/useAuth";
 import useTeamColors from '../../hooks/useNCAATeamColors';
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 import AtsGroupGameHeader from "../../components/picks/AtsGroupGameHeader";
+import PoolEmoji from "../../components/PoolEmoji";
 
 const CFB_BLUE = "#013369";
 const GOLD = "#c89d3c";
@@ -253,7 +254,7 @@ export default function CfbPickemAtsMatrix() {
                 `}</style>
 
                 <div style={{ textAlign: "center", marginBottom: 12, padding: "0 8px" }}>
-                    <h2 className="cfb-matrix-title" style={{ color: CFB_BLUE, fontSize: "20px", margin: 0 }}>🏈 Weekly Group Matrix</h2>
+                    <h2 className="cfb-matrix-title" style={{ color: CFB_BLUE, fontSize: "20px", margin: 0 }}><PoolEmoji gameKey="cfb_pickem_ats" /> Weekly Group Matrix</h2>
                     <p style={{ color: "#64748b", marginTop: 4, fontSize: "12px" }}>Showing live & completed games (newest first).</p>
                 </div>
 

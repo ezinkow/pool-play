@@ -136,7 +136,7 @@ export default function HrdHome() {
           setCustomEntryName={setCustomEntryName}
           user={user}
           accentColor={poolMetadata?.accent_color || NAVY}
-          icon="⚾"
+          poolEmoji={poolMetadata?.emoji}
           joinDescription="Build a team of 12 hitters under a 300 salary cap and track home runs all season long!"
           joinButtonText="Join Home Run Derby Pool"
         />

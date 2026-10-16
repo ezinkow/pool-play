@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import PoolEmoji from "../PoolEmoji";
 import axios from "axios";
 
 export default function PoolCountdown() {
@@ -120,7 +121,7 @@ export default function PoolCountdown() {
             {nextTipTime && (
                 <div className="countdown-card" style={{ flex: 1, minWidth: 140, maxWidth: "none", padding: "14px 12px" }}>
                     <div className="countdown-title" style={{ fontSize: "0.95rem" }}>
-                        🏀 Next Tip Off
+                        <PoolEmoji gameKey="ncaab_tourney_bracket" /> Next Tip Off
                     </div>
                     {tipTimeLeft ? (
                         <div className="countdown-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>

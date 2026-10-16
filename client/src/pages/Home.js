@@ -44,7 +44,7 @@ export default function Home() {
                         title: metadata?.pool_title || row.title || row.game_label || key,
                         description: metadata?.pool_description || row.description || "",
                         rules_html: metadata?.rules_html || "",
-                        emoji: metadata?.emoji || row.emoji,
+                        emoji: metadata?.emoji,
                         accent: metadata?.accent_color || row.accent,
                         category: (row.sport || "other").toLowerCase().trim(),
                         open_date: new Date(row.open_date),
@@ -116,7 +116,7 @@ export default function Home() {
                     <div className="homepage-pool-card-row">
                         {/* Left: Emoji & Game Title */}
                         <div className="homepage-pool-card-name">
-                            <span className="homepage-pool-card-emoji">{card.emoji || "🎮"}</span>
+                            {card.emoji && <span className="homepage-pool-card-emoji">{card.emoji}</span>}
                             <h3 className="homepage-pool-card-title">
                                 {card.title}
                             </h3>

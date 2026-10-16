@@ -156,7 +156,7 @@ export default function CfbBowlConfidenceHome() {
           setCustomEntryName={setCustomEntryName}
           user={user}
           accentColor={poolMetadata?.accent_color || BROWN}
-          icon="🏆"
+          poolEmoji={poolMetadata?.emoji}
           joinDescription="Pick every college bowl game winner and rank them by confidence from highest points to lowest."
           joinButtonText="Join Bowl Confidence Pool"
           registeredMessage="✓ You are officially registered for the Bowls!"

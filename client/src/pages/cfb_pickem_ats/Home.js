@@ -165,6 +165,7 @@ export default function CfbPickemAtsHome() {
         {/* Reusable Join Card Component */}
         <PoolJoinCard
           poolTitle={poolTitle}
+          poolEmoji={poolMetadata?.emoji}
           userEntry={userEntry}
           isPoolStarted={isPoolStarted}
           confirmLeave={confirmLeave}

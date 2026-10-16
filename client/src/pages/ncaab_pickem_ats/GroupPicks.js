@@ -4,6 +4,7 @@ import useAuth from "../../hooks/useAuth";
 import useTeamColors from '../../hooks/useNCAATeamColors';
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 import AtsGroupGameHeader from "../../components/picks/AtsGroupGameHeader";
+import PoolEmoji from "../../components/PoolEmoji";
 
 const NCAAB_BLUE = "#009CDE";
 const NCAAB_DARK_BLUE = "#002855";
@@ -254,7 +255,7 @@ export default function NcaabPickemAtsMatrix() {
                 `}</style>
 
                 <div style={{ textAlign: "center", marginBottom: 12, padding: "0 8px" }}>
-                    <h2 style={{ color: NCAAB_BLUE, fontSize: "20px", margin: 0 }}>🏀 Weekly Group Matrix</h2>
+                    <h2 style={{ color: NCAAB_BLUE, fontSize: "20px", margin: 0 }}><PoolEmoji gameKey="ncaab_pickem_ats" /> Weekly Group Matrix</h2>
                     <p style={{ color: "#64748b", marginTop: 4, fontSize: "12px" }}>Showing live & completed games (newest first).</p>
                 </div>
 

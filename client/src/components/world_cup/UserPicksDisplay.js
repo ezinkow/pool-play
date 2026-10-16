@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import PoolEmoji from "../PoolEmoji";
 import axios from "axios";
 import useAuth from "../../hooks/useAuth";
 
@@ -175,7 +176,7 @@ export default function PlayerPicksMatrix() {
 
       {/* ✨ UPDATED TITLE */}
       <h2 style={{ color: "#13447a", textAlign: "center", fontWeight: 800, fontSize: "1.2rem", margin: "8px 0" }}>
-        ⚽ Tournament Prediction Matrix
+        <PoolEmoji gameKey="world_cup" /> Tournament Prediction Matrix
       </h2>
 
       <div style={{ paddingBottom: "100px" }}>

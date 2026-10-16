@@ -141,7 +141,7 @@ export default function MlbHome() {
           setCustomEntryName={setCustomEntryName}
           user={user}
           accentColor={poolMetadata?.accent_color || NAVY}
-          icon="⚾"
+          poolEmoji={poolMetadata?.emoji}
           joinDescription="Pick the winner of every postseason series, assign confidence points, and guess series lengths."
           joinButtonText="Join MLB Playoff Pool"
         />

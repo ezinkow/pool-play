@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import PoolCountdown from "./PoolCountdown";
+import PoolEmoji from "./PoolEmoji";
 
 export default function OpenPoolsCard({ isDarkMode = true }) {
     const [pools, setPools] = useState([]);
@@ -76,8 +77,6 @@ export default function OpenPoolsCard({ isDarkMode = true }) {
                         {pools.map(pool => {
                             const poolRoute = pool.prefix ? `#${pool.prefix}` : `#/${pool.game_key}`;
                             const poolLabel = pool.title || pool.game_label || pool.game_key;
-                            const poolIcon = pool.emoji || "🎯";
-
                             return (
                                 <a
                                     key={pool.game_key}
@@ -87,7 +86,7 @@ export default function OpenPoolsCard({ isDarkMode = true }) {
                                     {/* Left: Title & Sign Up */}
                                     <div className="open-pools-card-pool-copy">
                                         <div className="open-pools-card-pool-title">
-                                            <span className="open-pools-card-pool-icon">{poolIcon}</span>
+                                            <PoolEmoji gameKey={pool.game_key} className="open-pools-card-pool-icon" />
                                             <span className="open-pools-card-pool-name">
                                                 {poolLabel}
                                             </span>

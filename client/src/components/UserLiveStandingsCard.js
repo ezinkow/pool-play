@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import useAuth from "../hooks/useAuth";
+import PoolEmoji from "./PoolEmoji";
 
 const STANDINGS_ENDPOINTS = {
     cfb_pickem_ats: "/api/cfb_pickem_ats/standings",
@@ -134,7 +135,6 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                             return {
                                 gameKey,
                                 label: pool.game_label || gameKey,
-                                emoji: pool.emoji || "🏆",
                                 route: pool.prefix,
                                 linkTo: pool.prefix,
                                 status: getSurvivorStatus(entry),
@@ -144,7 +144,6 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                             return {
                                 gameKey,
                                 label: pool.game_label || gameKey,
-                                emoji: pool.emoji || "🏆",
                                 route: pool.prefix,
                                 linkTo: pool.prefix,
                                 status: "Unavailable",
@@ -156,7 +155,6 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                         return {
                             gameKey,
                             label: pool.game_label || gameKey,
-                            emoji: pool.emoji || "🏆",
                             route: pool.prefix,
                             linkTo: pool.prefix,
                             rank: null,
@@ -172,7 +170,6 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                             return {
                                 gameKey,
                                 label: pool.game_label || gameKey,
-                                emoji: pool.emoji || "🏆",
                                 route: pool.prefix,
                                 linkTo: pool.prefix,
                                 records: getBtsRecords(response.data, user.id),
@@ -181,7 +178,6 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                         return {
                             gameKey,
                             label: pool.game_label || gameKey,
-                            emoji: pool.emoji || "🏆",
                             route: pool.prefix,
                             linkTo: `${pool.prefix}/standings`,
                             rank: getUserSpot(response.data, user, config),
@@ -191,7 +187,6 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                         return {
                             gameKey,
                             label: pool.game_label || gameKey,
-                            emoji: pool.emoji || "🏆",
                             route: pool.prefix,
                             linkTo: `${pool.prefix}/standings`,
                             rank: null,
@@ -246,7 +241,7 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                                 key={pool.gameKey}
                             >
                                 <span className="user-live-standings-pool-name">
-                                    <span>{pool.emoji}</span>
+                                    <PoolEmoji gameKey={pool.gameKey} />
                                     <span>{pool.label}</span>
                                 </span>
                                 {pool.rank != null && <strong>{formatRank(pool.rank)}</strong>}

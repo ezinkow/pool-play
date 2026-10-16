@@ -5,6 +5,7 @@ import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 import SurvivorWeekSelector from "../../components/picks/SurvivorWeekSelector";
 import SurvivorSelectionBanner from "../../components/picks/SurvivorSelectionBanner";
+import PoolEmoji from "../../components/PoolEmoji";
 
 const NFL_BLUE = "#013369";
 const NFL_RED = "#D50A0A";
@@ -173,7 +174,7 @@ export default function NflSurvivorPicks() {
                 <Toaster />
 
                 <div style={{ textAlign: "center", marginBottom: 12, padding: "0 8px" }}>
-                    <h2 style={{ color: NFL_BLUE, fontSize: "20px", margin: 0 }}>🏈 NFL Survivor: Week {currentWeek}</h2>
+                    <h2 style={{ color: NFL_BLUE, fontSize: "20px", margin: 0 }}><PoolEmoji gameKey="nfl_survivor" /> NFL Survivor: Week {currentWeek}</h2>
                     <p style={{ color: "#64748b", marginTop: 4, fontSize: "12px" }}>
                         Pick one team straight up. Click your selected team again to de-select.
                     </p>

@@ -4,6 +4,7 @@ import useAuth from "../hooks/useAuth";
 import axios from "axios";
 import BanterDrawer from './BanterDrawer';
 import AuthModal from "./AuthModal";
+import PoolEmoji from "./PoolEmoji";
 import logo from '../../src/images/logo.jpg'
 
 const GOLD = "#c89d3c";
@@ -193,7 +194,7 @@ export default function Navbar({ isDarkMode, toggleTheme }) {
                     cursor: isLinkActive ? "pointer" : "default"
                 }}
             >
-                <span style={{ width: "18px", textAlign: "center", flexShrink: 0 }}>{game.emoji}</span> {game.game_label.toUpperCase()}
+                <PoolEmoji gameKey={game.game_key} style={{ width: "18px", textAlign: "center", flexShrink: 0 }} /> {game.game_label.toUpperCase()}
             </Link>
         );
     };
@@ -447,7 +448,7 @@ export default function Navbar({ isDarkMode, toggleTheme }) {
                                 const isSelected = currentGame?.game_key === game.game_key;
                                 return (
                                     <Link key={game.game_key} to={`${game.prefix}/picks`} onClick={(e) => handleDropdownLinkClick(e, isLinkActive, `${game.prefix}/picks`)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 16px", textDecoration: "none", fontSize: "12px", fontWeight: isSelected ? 700 : 500, color: isSelected ? GOLD : "#f3f4f6", width: "100%", boxSizing: "border-box" }}>
-                                        <span style={{ width: "16px", textAlign: "center", flexShrink: 0 }}>{game.emoji}</span> {game.game_label.toUpperCase()}
+                                        <PoolEmoji gameKey={game.game_key} style={{ width: "16px", textAlign: "center", flexShrink: 0 }} /> {game.game_label.toUpperCase()}
                                     </Link>
                                 );
                             })}

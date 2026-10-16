@@ -3,6 +3,7 @@ import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
+import PoolEmoji from "../../components/PoolEmoji";
 
 const NAVY = "#0a1628";
 const GOLD = "#c89d3c";
@@ -111,7 +112,7 @@ export default function HrdDraft() {
                     display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16
                 }}>
                     <div>
-                        <h2 style={{ color: NAVY, fontSize: "22px", margin: 0 }}>⚾ Home Run Derby Draft</h2>
+                        <h2 style={{ color: NAVY, fontSize: "22px", margin: 0 }}><PoolEmoji gameKey="mlb_hrd" /> Home Run Derby Draft</h2>
                         <p style={{ color: "#666", margin: "4px 0 0 0", fontSize: "13px" }}>
                             Pick 12 hitters under the 300 salary cap (Salary = 2025 Home Runs).
                         </p>

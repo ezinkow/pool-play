@@ -3,6 +3,7 @@ import axios from "axios";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 import AtsGroupGameHeader from "../../components/picks/AtsGroupGameHeader";
+import PoolEmoji from "../../components/PoolEmoji";
 
 const NFL_BLUE = "#0a1628";
 const GOLD = "#c89d3c";
@@ -272,7 +273,7 @@ export default function NflPickemAtsMatrix() {
                 `}</style>
 
                 <div style={{ textAlign: "center", marginBottom: 12, padding: "0 8px" }}>
-                    <h2 style={{ color: NFL_BLUE, fontSize: "20px", margin: 0 }}>🏈 Weekly Group Matrix</h2>
+                    <h2 style={{ color: NFL_BLUE, fontSize: "20px", margin: 0 }}><PoolEmoji gameKey="nfl_pickem_ats" /> Weekly Group Matrix</h2>
                     <p style={{ color: "#64748b", marginTop: 4, fontSize: "12px" }}>Showing live & completed games (newest first).</p>
                 </div>
 

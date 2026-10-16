@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import PoolEmoji from "./PoolEmoji";
 
 const NAVY = "#0a1628";
 const RED = "#c8102e";
@@ -21,7 +22,6 @@ export default function PoolGatekeeper({
     const [otherActivePools, setOtherActivePools] = useState([]);
 
     const [poolName, setPoolName] = useState("");
-    const [poolEmoji, setPoolEmoji] = useState("🏆");
 
     const isUserAdmin = user?.is_admin === 1 || user?.is_admin === true;
 
@@ -63,7 +63,6 @@ export default function PoolGatekeeper({
 
                     setIsPoolOpen(dbActive && !isPastLockTime && !leagueStarted);
                     setPoolName(currentPool.title || currentPool.game_label || gameKey.toUpperCase());
-                    setPoolEmoji(currentPool.emoji || "🏆");
                 } else {
                     setPoolName(gameKey.toUpperCase());
                 }
@@ -116,7 +115,7 @@ export default function PoolGatekeeper({
     if (!user) {
         return (
             <div style={{ maxWidth: 480, margin: "20px auto", padding: 40, textAlign: "center", background: "#fdfdfd", borderRadius: 12, border: "1px solid #e5e7eb" }}>
-                <span style={{ fontSize: 40 }}>{poolEmoji}</span>
+                <PoolEmoji gameKey={gameKey} style={{ fontSize: 40 }} />
                 <h2 style={{ color: NAVY, marginTop: 10 }}>{poolName} Pool</h2>
                 <p style={{ color: "#4b5563" }}>Please log in to participate.</p>
             </div>
@@ -146,7 +145,7 @@ export default function PoolGatekeeper({
                                 {otherActivePools.map(pool => (
                                     <div key={pool.game_key} onClick={() => navigate(pool.prefix)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, cursor: "pointer", transition: "all 0.15s ease" }} onMouseEnter={e => e.currentTarget.style.borderColor = pool.accent || RED} onMouseLeave={e => e.currentTarget.style.borderColor = "#e2e8f0"}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                            <span style={{ fontSize: 24 }}>{pool.emoji}</span>
+                                            <PoolEmoji gameKey={pool.game_key} style={{ fontSize: 24 }} />
                                             <span style={{ fontWeight: 700, color: NAVY, fontSize: 15 }}>{pool.title}</span>
                                         </div>
                                         <span style={{ fontSize: 13, fontWeight: 700, color: pool.accent || RED }}>Join Now →</span>

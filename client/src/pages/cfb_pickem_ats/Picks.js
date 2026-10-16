@@ -6,6 +6,7 @@ import useTeamColors from '../../hooks/useNCAATeamColors';
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 import PickSortSelect from "../../components/picks/PickSortSelect";
 import ClearPicksButton from "../../components/picks/ClearPicksButton";
+import PoolEmoji from "../../components/PoolEmoji";
 
 const CFB_BLUE = "#013369";
 const CFB_RED = "#D50A0A";
@@ -292,7 +293,7 @@ export default function CfbPickemAtsPicks() {
                 }}>
                     <div style={{ textAlign: "center" }}>
                         <h2 style={{ color: CFB_BLUE, fontSize: "19px", margin: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                            <span>🏈</span> {poolTitle || "CFB PICK 'EM ATS"} <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🏈</span>
+                            <PoolEmoji gameKey="cfb_pickem_ats" /> {poolTitle || "CFB PICK 'EM ATS"} <PoolEmoji gameKey="cfb_pickem_ats" />
                         </h2>
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
                             Select up to {totalMustPicks} must-pick games & up to 15 total games (up to 3 Best Bets ⭐).

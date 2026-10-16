@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import PoolEmoji from "../PoolEmoji";
 import axios from "axios";
 
 // First tip-off: Saturday April 18 at noon Central (UTC-5 in April)
@@ -169,7 +170,7 @@ function LiveCountdown() {
 
             {nextTipTime && (
                 <div className="countdown-card" style={{ flex: 1, minWidth: 140, maxWidth: "none", padding: "14px 12px" }}>
-                    <div className="countdown-title" style={{ fontSize: "0.95rem" }}>🏀 Next Tip Off</div>
+                    <div className="countdown-title" style={{ fontSize: "0.95rem" }}><PoolEmoji gameKey="nba_playoffs" /> Next Tip Off</div>
                     {tipTimeLeft ? (
                         <div className="countdown-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
                             <TimeBox label="Hrs" value={tipTimeLeft.hours} />

@@ -107,7 +107,7 @@ export default function PoolCountdown({ poolData, mode }) {
         };
     }, [mode, poolData, token]);
 
-    if (!timeLeft) return <div className="countdown-card" style={{ whiteSpace: "nowrap" }}>🏟️ Pool is active—games are currently underway! 🏈⚾</div>;
+    if (!timeLeft) return <div className="countdown-card" style={{ whiteSpace: "nowrap" }}>🏟️ Pool is active—games are currently underway!</div>;
 
     const headerTitle = mode === "pre-start" 
         ? "Pool Entry Closes In" 
