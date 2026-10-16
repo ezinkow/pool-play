@@ -3,20 +3,12 @@ import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
+import PickPeriodSelector from "../../components/picks/PickPeriodSelector";
+import LivePulseIndicator from "../../components/picks/LivePulseIndicator";
 
 const NAVY = "#13447a";
 const GOLD = "#c89d3c";
 const LIVE_RED = "#D50A0A";
-
-const PULSE_STYLE = {
-    width: "6px",
-    height: "6px",
-    backgroundColor: "#22c55e",
-    borderRadius: "50%",
-    display: "inline-block",
-    boxShadow: "0 0 0 rgba(34, 197, 94, 0.4)",
-    animation: "pulse 2s infinite"
-};
 
 export default function MyPicks() {
     const { user, loading: authLoading } = useAuth();
@@ -131,14 +123,6 @@ export default function MyPicks() {
             <div style={{ maxWidth: 850, margin: "0 auto", padding: "20px 12px", paddingBottom: 90, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 <Toaster />
 
-                <style>{`
-                    @keyframes pulse { 
-                        0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 
-                        70% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0); } 
-                        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } 
-                    }
-                `}</style>
-
                 {/* Header & Stats Summary */}
                 <div style={{ textAlign: "center", marginBottom: 20 }}>
                     <h2 style={{ color: NAVY, fontSize: "26px", margin: 0, fontWeight: 800, letterSpacing: "-0.025em" }}>
@@ -161,38 +145,13 @@ export default function MyPicks() {
                     </div>
                 </div>
 
-                {/* Round Selector Bar */}
-                <div style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    gap: 6,
-                    marginBottom: 20,
-                    flexWrap: "nowrap",
-                    overflowX: "auto",
-                    WebkitOverflowScrolling: "touch",
-                    paddingBottom: 6,
-                    width: "100%"
-                }}>
-                    {roundsList.map(r => (
-                        <button
-                            key={r.id}
-                            onClick={() => setSelectedRound(r.id)}
-                            style={{
-                                padding: "6px 14px",
-                                borderRadius: 6,
-                                border: "1px solid #ddd",
-                                backgroundColor: selectedRound === r.id ? NAVY : "white",
-                                color: selectedRound === r.id ? "white" : "#333",
-                                cursor: "pointer",
-                                fontWeight: 600,
-                                flexShrink: 0,
-                                fontSize: "13px"
-                            }}
-                        >
-                            {r.label}
-                        </button>
-                    ))}
-                </div>
+                <PickPeriodSelector
+                    periods={roundsList.map(round => ({ value: round.id, label: round.label }))}
+                    value={selectedRound}
+                    onChange={setSelectedRound}
+                    accentColor={NAVY}
+                    label="Select postseason round"
+                />
 
                 {loading ? (
                     <div style={{ color: "#9ca3af", textAlign: "center", padding: 40 }}>Loading your picks…</div>
@@ -243,7 +202,7 @@ export default function MyPicks() {
                             } else if (isLive) {
                                 statusBadge = (
                                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                        <span style={PULSE_STYLE} />
+                                        <LivePulseIndicator />
                                         <span style={{ backgroundColor: LIVE_RED, color: "white", padding: "1px 5px", borderRadius: 3, fontSize: "9px", fontWeight: 700 }}>LIVE ({s.away_wins}-{s.home_wins})</span>
                                     </div>
                                 );

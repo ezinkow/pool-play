@@ -20,7 +20,7 @@ module.exports = function (sequelize, DataTypes) {
             allowNull: true
         },
     }, {
-        tableName: "mlb_tiebreaker",
+        tableName: "mlb_playoffs_tiebreaker",
         timestamps: true,
         createdAt: "createdAt",
         updatedAt: false,

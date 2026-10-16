@@ -267,7 +267,7 @@ module.exports = function (app) {
     // --------------------------------------------------------
     app.get("/api/ncaab_pickem_ats/settings", requireAuth, async (req, res) => {
         try {
-            const SettingsModel = db.GameSettings || db.gameSettings || db.GameSetting || db.game_settings;
+            const SettingsModel = db.PoolSettings || db.gameSettings || db.GameSetting || db.game_settings;
             const setting = SettingsModel ? await SettingsModel.findOne({ where: { game_key: "ncaab_pickem_ats" } }) : null;
 
             res.json({

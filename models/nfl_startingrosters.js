@@ -1,5 +1,5 @@
 module.exports = function (sequelize, DataTypes) {
-    const NflStartingLineups = sequelize.define("NflStartingLineups", {
+    const NflPlayoffsStartingLineups = sequelize.define("NflPlayoffsStartingLineups", {
         name: {
             type: DataTypes.STRING(255),
             allowNull: false
@@ -25,11 +25,11 @@ module.exports = function (sequelize, DataTypes) {
             allowNull: false
         }
     }, {
-        tableName: "nfl_starting_lineups",
+        tableName: "nfl_playoffs_starting_lineups",
         timestamps: true,
         createdAt: "createdAt",
         updatedAt: true,
     });
 
-    return NflStartingLineups;
+    return NflPlayoffsStartingLineups;
 };

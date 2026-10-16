@@ -71,7 +71,7 @@ module.exports = function (app) {
     // --------------------------------------------------------
     app.get("/api/nfl_regular_season/settings", requireAuth, async (req, res) => {
         try {
-            const SettingsModel = db.GameSettings || db.gameSettings || db.GameSetting || db.game_settings;
+            const SettingsModel = db.PoolSettings || db.gameSettings || db.GameSetting || db.game_settings;
             const setting = SettingsModel ? await SettingsModel.findOne({ where: { season: "nfl_regular_season" } }) : null;
 
             // Dynamic week calculator fallback

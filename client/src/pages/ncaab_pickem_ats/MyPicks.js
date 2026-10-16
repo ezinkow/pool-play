@@ -4,21 +4,14 @@ import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import useTeamColors from '../../hooks/useNCAATeamColors';
 import PoolGatekeeper from "../../components/PoolGatekeeper";
+import PickPeriodSelector from "../../components/picks/PickPeriodSelector";
+import AtsPicksSummary from "../../components/picks/AtsPicksSummary";
+import LivePulseIndicator from "../../components/picks/LivePulseIndicator";
+import { calculateAtsPickSummary } from "../../utils/atsPickSummary";
 
 const NCAAB_BLUE = "#009CDE";
 const NCAAB_RED = "#D50A0A";
 const GOLD = "#c89d3c";
-
-// ✨ Condensation-optimized pulsing live indicator
-const PULSE_STYLE = {
-    width: "6px",
-    height: "6px",
-    backgroundColor: "#22c55e",
-    borderRadius: "50%",
-    display: "inline-block",
-    boxShadow: "0 0 0 rgba(34, 197, 94, 0.4)",
-    animation: "pulse 2s infinite"
-};
 
 export default function NcaabPickemAtsMyPicks() {
     const { user, loading: authLoading } = useAuth();
@@ -76,27 +69,7 @@ export default function NcaabPickemAtsMyPicks() {
             .finally(() => setLoading(false));
     }, [user, currentWeek, token]);
 
-    // Calculate weekly points and records dynamically using ats_winner from the game
-    let weekPoints = 0;
-    let wins = 0;
-    let losses = 0;
-    let pushes = 0;
-
-    games.forEach(game => {
-        const userPick = picks[game.id];
-        if (!userPick || !userPick.picked_team) return;
-
-        if (game.ats_winner !== null && game.ats_winner !== undefined) {
-            if (game.ats_winner === "PUSH") {
-                pushes++;
-            } else if (game.ats_winner === userPick.picked_team) {
-                wins++;
-                weekPoints += userPick.is_best_bet ? 2 : 1;
-            } else {
-                losses++;
-            }
-        }
-    });
+    const { wins, losses, pushes, weekPoints } = calculateAtsPickSummary(games, picks);
 
     // Find overall points for the current logged-in user from standings
     const currentUserStanding = standings.find(s => Number(s.user_id) === Number(user?.id));
@@ -115,66 +88,25 @@ export default function NcaabPickemAtsMyPicks() {
             <div style={{ maxWidth: 850, margin: "0 auto", padding: "20px 12px", paddingBottom: 90, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 <Toaster />
 
-                <style>{`
-                    @keyframes pulse { 
-                        0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 
-                        70% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0); } 
-                        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } 
-                    }
-                `}</style>
-
-                <div style={{ textAlign: "center", marginBottom: 20 }}>
-                    <h2 style={{ color: NCAAB_BLUE, fontSize: "26px", margin: 0, fontWeight: 800, letterSpacing: "-0.025em" }}>My Week {currentWeek} Summary</h2>
-                    <p style={{ color: "#64748b", marginTop: 6, fontSize: "14px", fontWeight: 500 }}>
-                        Review your ATS selections and Best Bet outcomes.
-                    </p>
-
-                    {/* Score / Stats Banner */}
-                    <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: 12, flexWrap: "wrap" }}>
-                        <div style={{ background: "#f1f5f9", padding: "8px 16px", borderRadius: 8, fontWeight: 700, fontSize: "13px", color: "#334155" }}>
-                            Record: {wins}-{losses} {pushes > 0 ? `- ${pushes}` : ""}
-                        </div>
-                        <div style={{ background: "#f8fafc", padding: "8px 16px", borderRadius: 8, fontWeight: 700, fontSize: "13px", color: "#0284c7", border: "1px solid #e2e8f0" }}>
-                            Week Points: {weekPoints} pts
-                        </div>
-                        <div style={{ background: "#ecfdf5", padding: "8px 16px", borderRadius: 8, fontWeight: 700, fontSize: "13px", color: "#047857" }}>
-                            Overall Points: {overallPoints} pts
-                        </div>
-                    </div>
-                </div>
-
-                {/* Week Selector Bar */}
-                <div style={{
-                    display: "flex",
-                    justifyContent: "flex-start",
-                    gap: 6,
-                    marginBottom: 20,
-                    flexWrap: "nowrap",
-                    overflowX: "auto",
-                    WebkitOverflowScrolling: "touch",
-                    paddingBottom: 6,
-                    width: "100%"
-                }}>
-                    {[...Array(15)].map((_, i) => (
-                        <button
-                            key={i + 1}
-                            onClick={() => setCurrentWeek(i + 1)}
-                            style={{
-                                padding: "6px 12px",
-                                borderRadius: 6,
-                                border: "1px solid #ddd",
-                                backgroundColor: currentWeek === i + 1 ? NCAAB_BLUE : "white",
-                                color: currentWeek === i + 1 ? "white" : "#333",
-                                cursor: "pointer",
-                                fontWeight: 600,
-                                flexShrink: 0,
-                                fontSize: "14px"
-                            }}
-                        >
-                            Week {i + 1}
-                        </button>
-                    ))}
-                </div>
+                <AtsPicksSummary
+                    week={currentWeek}
+                    wins={wins}
+                    losses={losses}
+                    pushes={pushes}
+                    weekPoints={weekPoints}
+                    overallPoints={overallPoints}
+                    accentColor={NCAAB_BLUE}
+                />
+                <PickPeriodSelector
+                    periods={Array.from({ length: 15 }, (_, index) => ({
+                        value: index + 1,
+                        label: `Week ${index + 1}`
+                    }))}
+                    value={currentWeek}
+                    onChange={setCurrentWeek}
+                    accentColor={NCAAB_BLUE}
+                    label="Select week"
+                />
 
                 {/* Compact Picks List */}
                 {pickedGames.length === 0 ? (
@@ -240,7 +172,7 @@ export default function NcaabPickemAtsMyPicks() {
                                 statusBadge = (
                                     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                            <span style={PULSE_STYLE} />
+                                            <LivePulseIndicator />
                                             <span style={{ backgroundColor: NCAAB_RED, color: "white", padding: "1px 5px", borderRadius: 3, fontSize: "9px", fontWeight: 700 }}>{liveStatusText}</span>
                                         </div>
                                         {hasScores && (

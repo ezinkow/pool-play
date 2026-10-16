@@ -1,60 +1,72 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import axios from "axios";
 import logo from '../../src/images/logo.jpg';
 import PoolCountdown from "../components/PoolCountdown";
 
-const DEEP_NAVY = "#061a33";
-const AQUA_BLUE = "#0ea5e9";
-const GOLD = "#d4af37";
+const GOLD = "#c89d3c";
 const GRAY = "#9ca3af";
-const GREEN = "#10b981";
 
 // --- MAIN HOMEPAGE COMPONENT ---
 export default function Home() {
     const navigate = useNavigate();
+    const { isDarkMode } = useOutletContext();
     const [cards, setCards] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedCards, setExpandedCards] = useState({});
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [searchQuery, setSearchQuery] = useState("");
-    const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("poolplay_theme") !== "light");
 
     useEffect(() => {
-        const container = document.getElementById('root-app-container');
-        if (container) {
-            if (isDarkMode) {
-                container.classList.add("home-page-active");
-            } else {
-                container.classList.remove("home-page-active");
+        let isCurrent = true;
+
+        const loadPools = async () => {
+            try {
+                const response = await axios.get("/api/settings/active-states");
+                const dynamicCards = await Promise.all((response.data || []).map(async row => {
+                    const key = row.game_key || row.route;
+                    let metadata = null;
+
+                    if (row.game_key) {
+                        try {
+                            const metadataResponse = await axios.get(`/api/pools/metadata/${encodeURIComponent(row.game_key)}`);
+                            metadata = metadataResponse.data;
+                        } catch (error) {
+                            if (error.response?.status !== 404) {
+                                console.error(`Failed to load ${row.game_key} homepage metadata`, error);
+                            }
+                        }
+                    }
+
+                    return {
+                        ...row,
+                        key,
+                        title: metadata?.pool_title || row.title || row.game_label || key,
+                        description: metadata?.pool_description || row.description || "",
+                        rules_html: metadata?.rules_html || "",
+                        emoji: metadata?.emoji || row.emoji,
+                        accent: metadata?.accent_color || row.accent,
+                        category: (row.sport || "other").toLowerCase().trim(),
+                        open_date: new Date(row.open_date),
+                        lock_date: new Date(row.lock_date),
+                        end_date: row.end_date ? new Date(row.end_date) : new Date("2100-01-01"),
+                        isActive: row.is_active === true || row.is_active === 1 || row.is_active === "true",
+                    };
+                }));
+
+                if (isCurrent) setCards(dynamicCards);
+            } catch (error) {
+                console.error("Failed to load homepage pools", error);
+            } finally {
+                if (isCurrent) setLoading(false);
             }
-        }
-    }, [isDarkMode]);
+        };
 
-    useEffect(() => {
-        axios.get("/api/settings/active-states").then(res => {
-            const dynamicCards = (res.data || []).map(row => {
-                const key = row.game_key || row.route;
-                return {
-                    ...row,
-                    key,
-                    category: (row.sport || "other").toLowerCase().trim(),
-                    open_date: new Date(row.open_date),
-                    lock_date: new Date(row.lock_date),
-                    end_date: row.end_date ? new Date(row.end_date) : new Date("2100-01-01"),
-                    isActive: row.is_active === true || row.is_active === 1 || row.is_active === "true",
-                };
-            });
-            setCards(dynamicCards);
-            setLoading(false);
-        }).catch(err => { console.error(err); setLoading(false); });
+        loadPools();
+        return () => {
+            isCurrent = false;
+        };
     }, []);
-
-    const toggleTheme = () => {
-        const nextMode = !isDarkMode;
-        setIsDarkMode(nextMode);
-        localStorage.setItem("poolplay_theme", nextMode ? "dark" : "light");
-    };
 
     const categories = [
         { id: "all", label: "All Pools" },
@@ -68,7 +80,7 @@ export default function Home() {
         return cards.filter(c => {
             const matchesCategory = selectedCategory === "all" || c.category === selectedCategory;
             const matchesSearch = searchQuery.trim() === "" ||
-                c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (c.title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (c.description && c.description.toLowerCase().includes(searchQuery.toLowerCase()));
             return matchesCategory && matchesSearch;
         });
@@ -93,48 +105,60 @@ export default function Home() {
     const renderCard = (card, group) => {
         const isExpanded = !!expandedCards[card.key];
         return (
-            <div key={card.key} style={{
-                background: isDarkMode ? (card.isActive ? "#1e293b" : "rgba(255, 255, 255, 0.08)") : (card.isActive ? "#ffffff" : "#f8fafc"),
+            <div key={card.key} className="card homepage-pool-card" style={{
                 borderRadius: 12,
                 borderLeft: `6px solid ${card.isActive ? (card.accent || GOLD) : GRAY}`,
                 marginBottom: 14,
                 overflow: "hidden",
-                boxShadow: isDarkMode ? "0 4px 12px rgba(0,0,0,0.2)" : "0 4px 12px rgba(212,175,55,0.06)",
-                border: isDarkMode ? "1px solid #334155" : "1px solid #e2e8f0",
                 transition: "transform 0.2s ease"
             }}>
-                <div onClick={() => setExpandedCards(p => ({ ...p, [card.key]: !p[card.key] }))} style={{ padding: "16px 20px", cursor: "pointer" }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", width: "100%" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, minWidth: 0 }}>
-                                <span style={{ fontSize: 24, flexShrink: 0 }}>{card.emoji || "🎮"}</span>
-                                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: card.isActive ? (isDarkMode ? "#f8fafc" : DEEP_NAVY) : GRAY, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{card.title}</h3>
-                            </div>
+                <div className="homepage-pool-card-heading" onClick={() => setExpandedCards(p => ({ ...p, [card.key]: !p[card.key] }))}>
+                    <div className="homepage-pool-card-row">
+                        {/* Left: Emoji & Game Title */}
+                        <div className="homepage-pool-card-name">
+                            <span className="homepage-pool-card-emoji">{card.emoji || "🎮"}</span>
+                            <h3 className="homepage-pool-card-title">
+                                {card.title}
+                            </h3>
+                        </div>
+
+                        {/* Middle: Full-Size Inline Countdown */}
+                        <div className="homepage-pool-card-countdown">
+                            {group === 'upcoming' && <PoolCountdown poolData={card} mode="upcoming" isDarkMode={isDarkMode} compact={false} />}
+                            {group === 'live' && <PoolCountdown poolData={card} mode="active" isDarkMode={isDarkMode} compact={false} />}
+                            {group === 'inactive' && card.open_date > new Date() && <PoolCountdown poolData={card} mode="inactive" isDarkMode={isDarkMode} compact={false} />}
+                        </div>
+
+                        {/* Right: Play Button & Expand Arrow */}
+                        <div className="homepage-pool-card-actions">
                             {card.isActive && (
                                 <button
                                     onClick={(e) => { e.stopPropagation(); navigate(card.prefix); }}
-                                    style={{ background: GREEN, color: "white", border: "none", borderRadius: "6px", padding: "6px 12px", fontSize: "11px", fontWeight: 700, cursor: "pointer", flexShrink: 0, boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}
+                                    className="homepage-pool-card-play"
                                 >
                                     Play →
                                 </button>
                             )}
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", paddingLeft: "36px" }}>
-                            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px" }}>
-                                {group === 'upcoming' && <PoolCountdown poolData={card} mode="upcoming" isDarkMode={isDarkMode} compact={true} />}
-                                {group === 'live' && <PoolCountdown poolData={card} mode="active" isDarkMode={isDarkMode} compact={true} />}
-                                {group === 'inactive' && card.open_date > new Date() && <PoolCountdown poolData={card} mode="inactive" isDarkMode={isDarkMode} compact={true} />}
-                            </div>
-                            <span style={{ color: GRAY, fontSize: "12px", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", padding: "4px" }}>▼</span>
+                            <span className={`homepage-pool-card-chevron${isExpanded ? " homepage-pool-card-chevron--expanded" : ""}`}>▼</span>
                         </div>
                     </div>
                 </div>
 
-                <div style={{ maxHeight: isExpanded ? "200px" : "0px", opacity: isExpanded ? 1 : 0, transition: "all 0.25s ease-in-out", overflow: "hidden" }}>
-                    <div style={{ padding: "0 20px 20px 62px", borderTop: isDarkMode ? "1px solid #334155" : "1px solid #f1f5f9" }}>
-                        <p style={{ margin: "12px 0 0", color: isDarkMode ? "#cbd5e1" : "#475569", fontSize: "13px", lineHeight: 1.5 }}>
-                            {card.description || "Join this pool to compete with friends, track live standings, and test your predictive skills!"}
-                        </p>
+                <div style={{ maxHeight: isExpanded ? "600px" : "0px", opacity: isExpanded ? 1 : 0, transition: "all 0.25s ease-in-out", overflow: "hidden" }}>
+                    <div style={{ padding: "0 20px 20px 62px", borderTop: "1px solid rgba(100, 116, 139, 0.2)" }}>
+                        {card.description && (
+                            <p style={{ margin: "12px 0 0", fontSize: "13px", lineHeight: 1.5 }}>
+                                {card.description}
+                            </p>
+                        )}
+                        {card.rules_html && (
+                            <div className="pool-rules-content homepage-pool-rules" dangerouslySetInnerHTML={{ __html: card.rules_html }} />
+                        )}
+                        {!card.description && !card.rules_html && (
+                            <p style={{ margin: "12px 0 0", fontSize: "13px", lineHeight: 1.5 }}>
+                                Join this pool to compete with friends, track live standings, and test your predictive skills!
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
@@ -142,26 +166,23 @@ export default function Home() {
     };
 
     return (
-        <div style={{ minHeight: "100vh", backgroundColor: isDarkMode ? undefined : "#f8fafc", padding: "0 16px 80px", transition: "background 0.3s ease", fontFamily: "system-ui, -apple-system, sans-serif", scrollBehavior: "smooth" }}>
-            <div style={{ maxWidth: 850, margin: "0 auto 16px", background: isDarkMode ? "rgba(15, 23, 42, 0.85)" : "#ffffff", backdropFilter: "blur(8px)", borderRadius: "14px", border: `1px solid ${isDarkMode ? "#334155" : "#e2e8f0"}`, padding: "24px 20px", boxShadow: isDarkMode ? "0 6px 20px rgba(0,0,0,0.12)" : "0 4px 12px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", position: "relative", gap: "14px" }}>
-                <button onClick={toggleTheme} style={{ position: "absolute", top: "12px", right: "12px", background: isDarkMode ? "rgba(255,255,255,0.15)" : "#0f172a", color: isDarkMode ? "white" : "#ffffff", border: isDarkMode ? "1px solid rgba(255,255,255,0.3)" : "none", borderRadius: "16px", padding: "5px 10px", fontSize: "11px", fontWeight: "700", cursor: "pointer", boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}>
-                    {isDarkMode ? "☀️ Light" : "🌙 Dark"}
-                </button>
+        <div style={{ minHeight: "100vh", transition: "background 0.3s ease", fontFamily: "system-ui, -apple-system, sans-serif", scrollBehavior: "smooth" }}>
+            <div className="card" style={{ maxWidth: 850, margin: "0 auto 16px", borderRadius: "14px", padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", position: "relative", gap: "14px" }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", marginTop: "2px" }}>
                     <img src={logo} alt="POOL PLAY" style={{ width: "120px", height: "120px", borderRadius: "50%", border: `3px solid ${GOLD}`, boxShadow: "0 4px 16px rgba(0,0,0,0.3)" }} />
                     <div>
-                        <h1 style={{ color: isDarkMode ? "white" : DEEP_NAVY, margin: 0, fontSize: "30px", fontWeight: 800, letterSpacing: "-0.5px" }}>🏆 POOL PLAY 🏊</h1>
-                        <p style={{ color: isDarkMode ? GOLD : DEEP_NAVY, margin: "6px 0 0", fontSize: "13px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>Jump on in, the water's fine!</p>
+                        <h1 style={{ margin: 0, fontSize: "30px", fontWeight: 800, letterSpacing: "-0.5px" }}>🏆 POOL PLAY 🏊</h1>
+                        <p style={{ color: GOLD, margin: "6px 0 0", fontSize: "13px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>Jump on in, the water's fine!</p>
                     </div>
                 </div>
-                <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap", width: "100%", borderTop: isDarkMode ? "1px solid rgba(255,255,255,0.08)" : "1px solid #e2e8f0", paddingTop: "14px" }}>
+                <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap", width: "100%", borderTop: "1px solid rgba(100, 116, 139, 0.2)", paddingTop: "14px" }}>
                     <a href="#pools-section" onClick={(e) => { e.preventDefault(); document.getElementById('pools-section')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ textDecoration: "none" }}>
-                        <span style={{ background: isDarkMode ? "rgba(255,255,255,0.1)" : "#f1f5f9", color: isDarkMode ? "#cbd5e1" : "#475569", padding: "5px 10px", borderRadius: "8px", fontSize: "11px", fontWeight: 700, display: "inline-block", cursor: "pointer", border: isDarkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e2e8f0" }}>
+                        <span style={{ padding: "5px 10px", borderRadius: "8px", fontSize: "11px", fontWeight: 700, display: "inline-block", cursor: "pointer", border: "1px solid rgba(100, 116, 139, 0.2)" }}>
                             🔥 {live.length} {live.length === 1 ? "Game Live" : "Games Live"}
                         </span>
                     </a>
                     <a href="#open-entries-section" onClick={(e) => { e.preventDefault(); document.getElementById('open-entries-section')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ textDecoration: "none" }}>
-                        <span style={{ background: isDarkMode ? "rgba(255,255,255,0.1)" : "#f1f5f9", color: isDarkMode ? "#cbd5e1" : "#475569", padding: "5px 10px", borderRadius: "8px", fontSize: "11px", fontWeight: 700, display: "inline-block", cursor: "pointer", border: isDarkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e2e8f0" }}>
+                        <span style={{ padding: "5px 10px", borderRadius: "8px", fontSize: "11px", fontWeight: 700, display: "inline-block", cursor: "pointer", border: "1px solid rgba(100, 116, 139, 0.2)" }}>
                             ⏰ {upcoming.length} {upcoming.length === 1 ? "Open Entry" : "Open Entries"}
                         </span>
                     </a>
@@ -170,10 +191,10 @@ export default function Home() {
 
             <div id="pools-section" style={{ maxWidth: 850, margin: "0 auto", scrollMarginTop: "20px" }}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "center", marginBottom: 20, alignItems: "center" }}>
-                    <input type="text" placeholder="🔍 Search pools..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ padding: "8px 16px", borderRadius: "20px", border: `1px solid ${GOLD}`, background: isDarkMode ? "rgba(11, 15, 25, 0.85)" : "#ffffff", color: isDarkMode ? "white" : "#0f172a", fontSize: "13px", outline: "none", width: "200px", boxShadow: "0 2px 6px rgba(0,0,0,0.1)" }} />
+                    <input type="text" placeholder="🔍 Search pools..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ padding: "8px 16px", borderRadius: "20px", border: `1px solid ${GOLD}`, fontSize: "13px", outline: "none", width: "200px", boxShadow: "0 2px 6px rgba(0,0,0,0.1)" }} />
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", justifyContent: "center" }}>
                         {categories.map(cat => (
-                            <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} style={{ background: selectedCategory === cat.id ? GOLD : (isDarkMode ? "rgba(255, 255, 255, 0.1)" : "#ffffff"), color: selectedCategory === cat.id ? DEEP_NAVY : (isDarkMode ? "white" : "#1e293b"), border: selectedCategory === cat.id ? `1px solid ${GOLD}` : "1px solid #cbd5e1", borderRadius: "20px", padding: "6px 12px", fontSize: "12px", fontWeight: "700", cursor: "pointer", boxShadow: selectedCategory === cat.id ? "0 2px 4px rgba(0,0,0,0.2)" : "none" }}>
+                            <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} style={{ background: selectedCategory === cat.id ? GOLD : undefined, border: selectedCategory === cat.id ? `1px solid ${GOLD}` : "1px solid #cbd5e1", borderRadius: "20px", padding: "6px 12px", fontSize: "12px", fontWeight: "700", cursor: "pointer", boxShadow: selectedCategory === cat.id ? "0 2px 4px rgba(0,0,0,0.2)" : "none" }}>
                                 {cat.label}
                             </button>
                         ))}
@@ -184,12 +205,12 @@ export default function Home() {
                     <div style={{ textAlign: "center", padding: "40px", color: GRAY, fontSize: "14px" }}>Loading your pools...</div>
                 ) : (
                     <>
-                        {live.length > 0 && <><h3 style={{ color: isDarkMode ? GOLD : "#0369a1", fontSize: "15px", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>🔥 Live & In-Play</h3>{live.map(c => renderCard(c, 'live'))}</>}
-                        {upcoming.length > 0 && <><h3 id="open-entries-section" style={{ color: isDarkMode ? GOLD : "#0369a1", fontSize: "15px", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px", scrollMarginTop: "20px" }}>⏰ Open / Accepting Entries</h3>{upcoming.map(c => renderCard(c, 'upcoming'))}</>}
-                        {inactive.length > 0 && <><h3 style={{ color: isDarkMode ? "rgba(255,255,255,0.4)" : "#64748b", fontSize: "15px", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>💤 Inactive / Upcoming Season</h3>{inactive.map(c => renderCard(c, 'inactive'))}</>}
+                        {live.length > 0 && <><h3 style={{ color: GOLD, fontSize: "15px", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>🔥 Live & In-Play</h3>{live.map(c => renderCard(c, 'live'))}</>}
+                        {upcoming.length > 0 && <><h3 id="open-entries-section" style={{ color: GOLD, fontSize: "15px", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px", scrollMarginTop: "20px" }}>⏰ Open / Accepting Entries</h3>{upcoming.map(c => renderCard(c, 'upcoming'))}</>}
+                        {inactive.length > 0 && <><h3 style={{ color: GRAY, fontSize: "15px", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>💤 Inactive / Upcoming Season</h3>{inactive.map(c => renderCard(c, 'inactive'))}</>}
 
                         {filteredCards.length === 0 && (
-                            <div style={{ textAlign: "center", padding: "40px", color: GRAY, background: isDarkMode ? "rgba(255,255,255,0.05)" : "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
+                            <div className="card" style={{ textAlign: "center", padding: "40px", borderRadius: "12px" }}>
                                 No pools match your search criteria.
                             </div>
                         )}

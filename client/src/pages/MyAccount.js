@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import useAuth from "../hooks/useAuth";
-import ChangePassword from '../components/ChangePassword';
+import ChangePassword from '../components/PasswordReset';
 import SecurityQuestions from '../components/SecurityQuestions';
 
 const NAVY = "#13447a";
@@ -91,7 +91,7 @@ export default function MyAccount() {
     );
 
     return (
-        <div style={{ maxWidth: 800, margin: "0 auto", padding: "85px 16px 80px" }}>
+        <div className="account-manager-page">
             <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: 20, marginBottom: 24 }}>
                 <h2 style={{ color: NAVY, margin: 0, fontWeight: 900 }}>👤 Account Manager</h2>
                 <p style={{ color: "#64748b", fontSize: 13, marginTop: 4 }}>
@@ -109,7 +109,7 @@ export default function MyAccount() {
                         color: activeTab === "pools" ? "white" : "#475569", transition: "all 0.2s"
                     }}
                 >
-                    🏈 My Pool Entries
+                    🏆 My Pool Entries
                 </button>
                 <button
                     onClick={() => setActiveTab("security")}
@@ -125,7 +125,7 @@ export default function MyAccount() {
 
             {activeTab === "pools" ? (
                 <div>
-                    <h3 style={{ color: "#1e293b", fontWeight: 800, fontSize: "18px", marginBottom: 16 }}>🏃 Live Active Entries</h3>
+                    <h3 style={{ color: "#d0d2d3", fontWeight: 800, fontSize: "18px", marginBottom: 16 }}>🏃 Live Active Entries</h3>
                     {active.length === 0 ? (
                         <div style={{ padding: 20, textAlign: "center", background: "#f8fafc", borderRadius: 12, border: "1px dashed #cbd5e1", marginBottom: 30 }}>
                             <p style={{ color: "#64748b", margin: 0, fontSize: 14 }}>No active pools at this time.</p>
@@ -146,13 +146,9 @@ export default function MyAccount() {
                     )}
                 </div>
             ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-                    <div style={{ background: "white", borderRadius: 16, padding: "24px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", border: "1px solid #e2e8f0" }}>
-                        <ChangePassword />
-                    </div>
-                    <div style={{ background: "white", borderRadius: 16, padding: "24px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", border: "1px solid #e2e8f0" }}>
-                        <SecurityQuestions />
-                    </div>
+                <div className="account-security-grid">
+                    <ChangePassword embedded />
+                    <SecurityQuestions />
                 </div>
             )}
         </div>

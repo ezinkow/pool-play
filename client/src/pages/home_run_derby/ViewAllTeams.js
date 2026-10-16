@@ -26,7 +26,7 @@ export default function HrdAllTeams() {
     if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50 }}>Loading pool rosters...</div>;
 
     return (
-        <PoolGatekeeper user={user} gameKey="home_run_derby">
+        <PoolGatekeeper user={user} gameKey="mlb_hrd">
             <div style={{ maxWidth: 1000, margin: "0 auto", padding: "20px 16px", paddingBottom: 90, paddingTop: 90 }}>
                 <Toaster />
                 <h2 style={{ color: NAVY, fontSize: "24px", marginBottom: 8 }}>📋 All Pool Rosters</h2>

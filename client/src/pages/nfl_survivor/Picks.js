@@ -3,6 +3,8 @@ import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
+import SurvivorWeekSelector from "../../components/picks/SurvivorWeekSelector";
+import SurvivorSelectionBanner from "../../components/picks/SurvivorSelectionBanner";
 
 const NFL_BLUE = "#013369";
 const NFL_RED = "#D50A0A";
@@ -164,12 +166,6 @@ export default function NflSurvivorPicks() {
 
     const currentWeekPick = userPicks[currentWeek];
     const pickedTeamMeta = teamColors[currentWeekPick] || {};
-    const pickedPrimary = pickedTeamMeta.primaryColor || NFL_BLUE;
-    const pickedSecondary = pickedTeamMeta.secondaryColor || "#cbd5e1";
-
-    const bannerBg = currentWeekPick
-        ? `linear-gradient(135deg, ${pickedPrimary}, ${pickedSecondary})`
-        : "#fffbeb";
 
     return (
         <PoolGatekeeper user={user} gameKey="nfl_survivor" >
@@ -211,92 +207,19 @@ export default function NflSurvivorPicks() {
                             <h3 style={{ color: "#0f172a", fontSize: "13px", margin: 0 }}>Select Week:</h3>
                         </div>
 
-                        {/* Week Selector Bar (Renders up to TOTAL_NFL_WEEKS) */}
-                        <div style={{
-                            display: "flex",
-                            justifyContent: "center",
-                            width: "100%",
-                            marginBottom: 14,
-                            marginTop: 4
-                        }}>
-                            <div style={{
-                                display: "flex",
-                                gap: 6,
-                                flexWrap: "nowrap",
-                                overflowX: "auto",
-                                WebkitOverflowScrolling: "touch",
-                                paddingBottom: 6,
-                                maxWidth: "100%",
-                                paddingLeft: 8,
-                                paddingRight: 8
-                            }}>
-                                {[...Array(TOTAL_NFL_WEEKS)].map((_, i) => {
-                                    const weekNum = i + 1;
-                                    const isFutureLocked = weekNum > maxAvailableWeek;
-
-                                    return (
-                                        <button
-                                            key={weekNum}
-                                            onClick={() => handleWeekChange(weekNum)}
-                                            style={{
-                                                padding: "6px 12px",
-                                                borderRadius: 6,
-                                                border: "1px solid #cbd5e1",
-                                                backgroundColor: currentWeek === weekNum ? NFL_BLUE : (isFutureLocked ? "#f1f5f9" : "white"),
-                                                color: currentWeek === weekNum ? "white" : (isFutureLocked ? "#94a3b8" : "#0f172a"),
-                                                cursor: isFutureLocked ? "not-allowed" : "pointer",
-                                                fontWeight: 700,
-                                                flexShrink: 0,
-                                                fontSize: "13px",
-                                                boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                                                transition: "all 0.2s"
-                                            }}
-                                        >
-                                            Week {weekNum}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Current Week Pick Banner */}
-                        <div style={{
-                            background: bannerBg,
-                            color: currentWeekPick ? "#ffffff" : "#b45309",
-                            border: `1px solid ${currentWeekPick ? pickedSecondary : "#fde68a"}`,
-                            borderRadius: 8,
-                            padding: "10px 14px",
-                            marginBottom: 16,
-                            textAlign: "center",
-                            fontWeight: 700,
-                            fontSize: "13px",
-                            boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: 8
-                        }}>
-                            {currentWeekPick ? (
-                                <>
-                                    {pickedTeamMeta.logo && (
-                                        <span style={{
-                                            background: pickedSecondary,
-                                            borderRadius: 4,
-                                            padding: "2px 4px",
-                                            display: "inline-flex",
-                                            alignItems: "center",
-                                            border: `2px solid ${pickedPrimary}`,
-                                            boxShadow: `0 0 4px 1px ${pickedPrimary}, 0 1px 3px rgba(0,0,0,0.3)`
-                                        }}>
-                                            <img src={pickedTeamMeta.logo} alt={currentWeekPick} style={{ width: 18, height: 18, objectFit: "contain", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))" }} />
-                                        </span>
-                                    )}
-                                    <span style={{ textShadow: "0 1px 2px rgba(0,0,0,0.2)" }}>✓ Week {currentWeek} Selection: {currentWeekPick}</span>
-                                </>
-                            ) : (
-                                `⚠️ No selection made for Week ${currentWeek} yet.`
-                            )}
-                        </div>
+                        <SurvivorWeekSelector
+                            currentWeek={currentWeek}
+                            maxAvailableWeek={maxAvailableWeek}
+                            totalWeeks={TOTAL_NFL_WEEKS}
+                            onWeekChange={handleWeekChange}
+                            accentColor={NFL_BLUE}
+                        />
+                        <SurvivorSelectionBanner
+                            week={currentWeek}
+                            team={currentWeekPick}
+                            teamMeta={pickedTeamMeta}
+                            accentColor={NFL_BLUE}
+                        />
 
                         {/* Games List Container */}
                         <div style={{

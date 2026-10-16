@@ -2,20 +2,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
+import LivePulseIndicator from "../../components/picks/LivePulseIndicator";
 
 const NAVY = "#1c61ac";
 const GOLD = "#c89d3c";
 const LIVE_RED = "#D50A0A";
-
-const PULSE_STYLE = {
-  width: "6px",
-  height: "6px",
-  backgroundColor: "#22c55e",
-  borderRadius: "50%",
-  display: "inline-block",
-  boxShadow: "0 0 0 rgba(34, 197, 94, 0.4)",
-  animation: "pulse 2s infinite"
-};
 
 export default function GroupPicks() {
   const [series, setSeries] = useState([]);
@@ -193,7 +184,7 @@ const GameHeader = ({ s }) => {
             <span style={{ backgroundColor: "#16a34a", color: "white", padding: "1px 6px", borderRadius: 3, fontSize: "8px", letterSpacing: "0.5px" }}>FINAL</span>
           ) : isLive ? (
             <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(0,0,0,0.25)", padding: "1px 5px", borderRadius: 3 }}>
-              <span style={PULSE_STYLE} />
+              <LivePulseIndicator />
               <span style={{ color: "#fca5a5", fontWeight: 800 }}>{s.live_summary || "LIVE"}</span>
               {s.away_live_score !== null && s.home_live_score !== null && (
                 <span style={{ color: "#ffffff", fontWeight: 900, marginLeft: 2 }}>

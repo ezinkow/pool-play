@@ -310,7 +310,7 @@ module.exports = function (app) {
     // --------------------------------------------------------
     app.get("/api/nba_survivor/settings", requireAuth, async (req, res) => {
         try {
-            const SettingsModel = db.GameSettings || db.gameSettings || db.GameSetting || db.game_settings;
+            const SettingsModel = db.PoolSettings || db.gameSettings || db.GameSetting || db.game_settings;
             const setting = SettingsModel ? await SettingsModel.findOne({ where: { game_key: "nba_survivor" } }) : null;
 
             // Dynamic week calculator fallback

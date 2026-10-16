@@ -1,4 +1,4 @@
-const { Users, SyncStatus, GameSettings, CfbRegularSeasonGames, NcaabRegularSeasonGames } = require("../models");
+const { Users, SyncStatus, PoolSettings, CfbRegularSeasonGames, NcaabRegularSeasonGames } = require("../models");
 const requireAuth = require("../middleware/Requireauth");
 
 module.exports = function (app) {
@@ -16,7 +16,7 @@ module.exports = function (app) {
                 order: [["sync_file_route", "ASC"]]
             });
 
-            const gameSettings = await GameSettings.findAll({
+            const gameSettings = await PoolSettings.findAll({
                 order: [["game_key", "ASC"]]
             });
 
@@ -70,7 +70,7 @@ module.exports = function (app) {
                 return res.status(400).json({ error: "game_key and updates object are required" });
             }
 
-            const setting = await GameSettings.findOne({ where: { game_key } });
+            const setting = await PoolSettings.findOne({ where: { game_key } });
             if (!setting) {
                 return res.status(404).json({ error: "Game setting not found" });
             }

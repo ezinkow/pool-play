@@ -1,19 +1,25 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Toaster, toast } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import axios from "axios";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 import PoolCountdown from "../../components/CountdownDisplay";
+import PoolJoinCard from "../../components/PoolJoinCard";
+import PoolRulesCard from "../../components/PoolRulesCard";
+import usePoolMetadata from "../../hooks/usePoolMetadata";
+import PoolLoginPrompt from "../../components/PoolLoginPrompt";
+import PoolHomeActions from "../../components/PoolHomeActions";
+import { isPoolStarted as getIsPoolStarted } from "../../utils/poolStatus";
 
 const NAVY = "#0a1628";
-const RED = "#c8102e";
 const WHITE = "#FFFFFF";
 const GOLD = "#c89d3c";
 
 export default function MlbHome() {
   const { user, loading: authLoading, token } = useAuth();
   const navigate = useNavigate();
+  const poolMetadata = usePoolMetadata("mlb_playoffs");
   const [poolData, setPoolData] = useState(null);
   const [userEntry, setUserEntry] = useState(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
@@ -58,14 +64,7 @@ export default function MlbHome() {
     loadData();
   }, [activeToken]);
 
-  const isPoolStarted = useMemo(() => {
-    if (!poolData?.lock_date) return false;
-    let lockStr = poolData.lock_date;
-    if (typeof lockStr === 'string' && !lockStr.endsWith('Z') && !lockStr.includes('+')) {
-      lockStr = lockStr.replace(' ', 'T') + 'Z';
-    }
-    return new Date() >= new Date(lockStr);
-  }, [poolData]);
+  const isPoolStarted = getIsPoolStarted(poolData, { requireActive: false });
 
   const handleJoinPool = async () => {
     if (!activeToken) {
@@ -128,117 +127,28 @@ export default function MlbHome() {
 
       <div className="container" style={{ textAlign: "center", padding: "20px 16px", boxSizing: "border-box" }}>
 
-        {!activeToken && (
-          <div style={{
-            background: "#fffbeb",
-            border: "1px solid #fde68a",
-            borderRadius: 16,
-            padding: "20px 24px",
-            marginBottom: 24,
-            maxWidth: "650px",
-            margin: "0 auto 24px auto",
-            textAlign: "center",
-            boxShadow: "0 2px 12px rgba(0,0,0,0.05)"
-          }}>
-            <h4 style={{ color: "#92400e", margin: "0 0 8px 0", fontSize: "1.1rem" }}>
-              🔒 Account Required to Join Pool
-            </h4>
-            <p style={{ margin: "0 0 16px 0", color: "#78350f", fontSize: "14px", lineHeight: "1.5" }}>
-              You must be logged in or create an account before you can select a display name and join this pool.
-            </p>
-            <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap" }}>
-              <Link to="/login" style={{ textDecoration: "none" }}>
-                <button style={{ backgroundColor: NAVY, color: WHITE, border: "none", padding: "10px 20px", borderRadius: 8, fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}>
-                  Log In
-                </button>
-              </Link>
-              <Link to="/signup" style={{ textDecoration: "none" }}>
-                <button style={{ backgroundColor: WHITE, color: NAVY, border: `2px solid ${NAVY}`, padding: "10px 20px", borderRadius: 8, fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}>
-                  Create Account
-                </button>
-              </Link>
-            </div>
-          </div>
-        )}
+        {!activeToken && <PoolLoginPrompt accentColor={NAVY} />}
 
-        {/* Join & Leave Pool Section */}
-        <div style={{
-          background: WHITE,
-          borderRadius: 16,
-          padding: "24px 20px",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
-          marginBottom: 24,
-          borderTop: `4px solid ${NAVY}`,
-          maxWidth: "650px",
-          margin: "0 auto 24px auto",
-          textAlign: "left"
-        }}>
-          <h3 style={{ color: NAVY, marginTop: 0, marginBottom: 16, fontSize: "1.2rem", textAlign: "center" }}>
-            ⚾ MLB Playoff Pool Entry <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>⚾</span>
-          </h3>
-
-          {userEntry ? (
-            <div style={{ textAlign: "center" }}>
-              <p style={{ fontSize: "15px", color: "#16a34a", fontWeight: "bold" }}>✓ You are officially registered!</p>
-              <p style={{ fontSize: "13px", color: "#475569", margin: "4px 0 16px 0" }}>Display Name: <strong>{userEntry.entry_name}</strong></p>
-
-              {!isPoolStarted && (
-                <div>
-                  {confirmLeave ? (
-                    <div style={{ marginTop: 12, background: "#fee2e2", padding: 10, borderRadius: 8, textAlign: "center" }}>
-                      <p style={{ fontSize: "13px", margin: "0 0 8px 0", color: "#b91c1c", fontWeight: "bold" }}>Are you sure you want to leave?</p>
-                      <button onClick={handleLeavePool} style={{ background: RED, color: WHITE, border: "none", padding: "6px 12px", borderRadius: 6, marginRight: 8, cursor: "pointer", fontWeight: "bold" }}>Yes, Leave</button>
-                      <button onClick={() => setConfirmLeave(false)} style={{ background: "#cbd5e1", border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>Cancel</button>
-                    </div>
-                  ) : (
-                    <button onClick={() => setConfirmLeave(true)} style={{ background: "transparent", color: RED, border: `1px solid ${RED}`, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: "13px", fontWeight: "bold", display: "block", margin: "0 auto" }}>
-                      Leave Pool
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div>
-              <p style={{ fontSize: "13px", color: "#64748b", textAlign: "center", marginBottom: 16 }}>Pick the winner of every postseason series, assign confidence points, and guess series lengths.</p>
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                  <label style={{ fontSize: "12px", fontWeight: "bold", color: NAVY }}>Entry / Display Name:</label>
-                  {user?.name && (
-                    <button
-                      type="button"
-                      onClick={() => setCustomEntryName(user.name)}
-                      style={{ background: "none", border: "none", color: "#2563eb", fontSize: "11px", cursor: "pointer", padding: 0, fontWeight: 600 }}
-                    >
-                      Use Username ({user.name})
-                    </button>
-                  )}
-                </div>
-                <input
-                  type="text"
-                  value={customEntryName}
-                  onChange={(e) => setCustomEntryName(e.target.value)}
-                  placeholder={user?.name || "Enter display name"}
-                  style={{ width: "100%", padding: "10px", borderRadius: 6, border: "1px solid #cbd5e1", boxSizing: "border-box" }}
-                />
-              </div>
-              <button onClick={handleJoinPool} className="btn-mlb-secondary" style={{ width: "100%", padding: "12px 20px", fontSize: "14px", textAlign: "center" }}>
-                Join MLB Playoff Pool
-              </button>
-            </div>
-          )}
-        </div>
+        <PoolJoinCard
+          poolTitle={poolMetadata?.pool_title || "MLB Playoff Pool Entry"}
+          userEntry={userEntry}
+          isPoolStarted={isPoolStarted}
+          confirmLeave={confirmLeave}
+          setConfirmLeave={setConfirmLeave}
+          handleJoinPool={handleJoinPool}
+          handleLeavePool={handleLeavePool}
+          customEntryName={customEntryName}
+          setCustomEntryName={setCustomEntryName}
+          user={user}
+          accentColor={poolMetadata?.accent_color || NAVY}
+          icon="⚾"
+          joinDescription="Pick the winner of every postseason series, assign confidence points, and guess series lengths."
+          joinButtonText="Join MLB Playoff Pool"
+        />
 
         {userEntry && (
           <PoolGatekeeper user={user} gameKey="mlb_playoffs">
-            <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", marginBottom: 20 }}>
-              <Link to="/mlb_playoffs/picks" style={{ textDecoration: 'none' }}>
-                <button className="btn-mlb-secondary">⚾ Make My Picks</button>
-              </Link>
-              <Link to="/mlb_playoffs/mypicks" style={{ textDecoration: 'none' }}>
-                <button className="btn-mlb-secondary">📋 My Picks</button>
-              </Link>
-            </div>
+            <PoolHomeActions gameKey="mlb_playoffs" />
           </PoolGatekeeper>
         )}
 
@@ -264,33 +174,12 @@ export default function MlbHome() {
           </a>
         </div>
 
-        {/* Rules Card */}
-        <div style={{
-          background: "white",
-          borderRadius: 16,
-          padding: "24px 20px",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
-          marginTop: 24,
-          marginBottom: 80,
-          borderTop: `4px solid ${GOLD}`,
-          textAlign: "left",
-          maxWidth: "850px",
-          margin: "24px auto 80px auto"
-        }}>
-          <h3 style={{ color: RED, marginTop: 0, marginBottom: 16, fontSize: "1.2rem", textAlign: 'center' }}>
-            📋 MLB Playoff Pool Rules
-          </h3>
-          <ul style={{ paddingLeft: 20, lineHeight: "1.8", fontSize: "14px" }}>
-            <li>Pick the winner of each postseason series.</li>
-            <li>Assign <strong>Confidence Points</strong> to each pick.</li>
-            <li>Correct winner = confidence points earned.</li>
-            <li>
-              <strong>Double points:</strong> correctly guess the exact series length
-              (number of games).
-            </li>
-            <li>Series lock at Game 1 first pitch for each series.</li>
-          </ul>
-        </div>
+        <PoolRulesCard
+          title={poolMetadata?.pool_title || "MLB Playoff Pool"}
+          rulesHtml={poolMetadata?.rules_html}
+          accentColor={poolMetadata?.accent_color || GOLD}
+          subtitle="Rules"
+        />
       </div>
 
       <style>{`

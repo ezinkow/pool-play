@@ -255,7 +255,7 @@ module.exports = function (app) {
     // --------------------------------------------------------
     app.get("/api/cfb_pickem_ats/settings", requireAuth, async (req, res) => {
         try {
-            const SettingsModel = db.GameSettings || db.gameSettings || db.GameSetting || db.game_settings;
+            const SettingsModel = db.PoolSettings || db.gameSettings || db.GameSetting || db.game_settings;
             const setting = SettingsModel ? await SettingsModel.findOne({ where: { game_key: "cfb_pickem_ats" } }) : null;
 
             // 🧠 Built-in dynamic active week calculator matching getCurrentAndNextCfbWeeks

@@ -4,22 +4,12 @@ import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import useTeamColors from '../../hooks/useNCAATeamColors';
 import PoolGatekeeper from "../../components/PoolGatekeeper";
+import LivePulseIndicator from "../../components/picks/LivePulseIndicator";
 
 const BOWL_BLUE = "#0369a1";
 const BOWL_DARK = "#0a1628";
 const BOWL_RED = "#D50A0A";
 const GOLD = "#c89d3c";
-
-// Condensation-optimized pulsing live indicator
-const PULSE_STYLE = {
-    width: "6px",
-    height: "6px",
-    backgroundColor: "#22c55e",
-    borderRadius: "50%",
-    display: "inline-block",
-    boxShadow: "0 0 0 rgba(34, 197, 94, 0.4)",
-    animation: "pulse 2s infinite"
-};
 
 export default function CfbBowlConfidenceMyPicks() {
     const { user, loading: authLoading } = useAuth();
@@ -106,14 +96,6 @@ export default function CfbBowlConfidenceMyPicks() {
             <div style={{ maxWidth: 850, margin: "0 auto", padding: "20px 12px", paddingBottom: 90, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 <Toaster />
 
-                <style>{`
-                    @keyframes pulse { 
-                        0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 
-                        70% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0); } 
-                        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } 
-                    }
-                `}</style>
-
                 {/* Header Section */}
                 <div style={{ textAlign: "center", marginBottom: 24 }}>
                     <h2 style={{ color: BOWL_BLUE, fontSize: "26px", margin: 0, fontWeight: 800, letterSpacing: "-0.025em" }}>
@@ -198,7 +180,7 @@ export default function CfbBowlConfidenceMyPicks() {
                                 statusBadge = (
                                     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                            <span style={PULSE_STYLE} />
+                                            <LivePulseIndicator />
                                             <span style={{ backgroundColor: BOWL_RED, color: "white", padding: "1px 5px", borderRadius: 3, fontSize: "9px", fontWeight: 700 }}>{liveStatusText}</span>
                                         </div>
                                         {hasScores && (

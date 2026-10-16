@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import axios from "axios";
 import BanterDrawer from './BanterDrawer';
@@ -8,17 +8,35 @@ import logo from '../../src/images/logo.jpg'
 
 const GOLD = "#c89d3c";
 
-export default function Navbar() {
+const SPECIAL_POOL_NAV_LINKS = {
+    ncaab_tourney_bracket: [
+        { to: "/", label: "Home", emoji: "🏠" },
+        { to: "/bracket", label: "Make Picks", emoji: "🎯" },
+        { to: "/mybracket", label: "My Bracket", emoji: "📋" },
+        { to: "/standings", label: "Standings", emoji: "🏆" }
+    ],
+    ncaab_tourney_squares: [
+        { to: "/", label: "Home", emoji: "🏠" },
+        { to: "/grid", label: "Grids", emoji: "🟩" },
+        { to: "/results", label: "Results", emoji: "💰" }
+    ],
+    nfl_super_bowl_squares: [
+        { to: "/", label: "Home", emoji: "🏠" },
+        { to: "/grid", label: "Grids", emoji: "🟩" },
+        { to: "/results", label: "Results", emoji: "💰" }
+    ]
+};
+
+export default function Navbar({ isDarkMode, toggleTheme }) {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, logout, loading } = useAuth();
     const [chatOpen, setChatOpen] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
     const [showLogin, setShowLogin] = useState(false);
-
     const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
     const dropdownRef = useRef(null);
-    const [rawGameSettings, setRawGameSettings] = useState([]);
+    const [rawPoolSettings, setRawPoolSettings] = useState([]);
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
     const isHome = location.pathname === "/";
@@ -31,7 +49,7 @@ export default function Navbar() {
 
     useEffect(() => {
         axios.get("/api/settings/active-states")
-            .then(res => setRawGameSettings(res.data || []))
+            .then(res => setRawPoolSettings(res.data || []))
             .catch(err => console.error("❌ Navbar dynamic data load failure:", err));
     }, []);
 
@@ -62,16 +80,14 @@ export default function Navbar() {
 
     const currentGame = useMemo(() => {
         if (isHome) return null;
-        // Sort by prefix length descending so more specific paths match first
-        const sortedGames = [...rawGameSettings].sort((a, b) => (b.prefix?.length || 0) - (a.prefix?.length || 0));
+        const sortedGames = [...rawPoolSettings].sort((a, b) => (b.prefix?.length || 0) - (a.prefix?.length || 0));
 
         return sortedGames.find(g => {
             if (!g.prefix) return false;
             const pfx = g.prefix;
-            // Match if pathname equals the prefix OR starts with prefix followed by '/' (e.g. /nflsurvivor_secondchance/picks)
             return location.pathname === pfx || location.pathname.startsWith(pfx + "/");
         });
-    }, [rawGameSettings, location.pathname, isHome]);
+    }, [rawPoolSettings, location.pathname, isHome]);
 
     const activeLinks = useMemo(() => {
         if (!currentGame || !currentGame.prefix) return [];
@@ -92,23 +108,27 @@ export default function Navbar() {
             }
         }
 
+        const specialLinks = SPECIAL_POOL_NAV_LINKS[currentGame.game_key];
         let templateLinks = parsedNavLinks && Array.isArray(parsedNavLinks)
             ? parsedNavLinks.map(link => ({
                 ...link,
                 to: link.to.startsWith("http") ? link.to : `${pfx}${link.to === "/" ? "" : link.to}`
             }))
-            : [
+            : (specialLinks || [
                 { to: `${pfx}`, label: "Home", emoji: "🏠" },
                 { to: `${pfx}/picks`, label: "Make Picks", emoji: "🎯" },
                 { to: `${pfx}/mypicks`, label: "My Picks", emoji: "📋" },
                 { to: `${pfx}/grouppicks`, label: "Group Picks", emoji: "📊" },
                 { to: `${pfx}/standings`, label: "Standings", emoji: "🏆" }
-            ];
+            ]).map(link => ({
+                ...link,
+                to: link.to.startsWith("http") ? link.to : `${pfx}${link.to === "/" ? "" : link.to}`
+            }));
 
         return templateLinks.filter(({ to }) => isAdmin || !signupLocked || !to.endsWith("/signup"));
     }, [currentGame, user]);
 
-    const brandLabel = currentGame ? `${currentGame.emoji} ${currentGame.game_label.toUpperCase()}` : "🏆 POOL PLAY 🏊";
+    const brandLabel = currentGame ? `| ${currentGame.game_label.toUpperCase()}` : "🏆 POOL PLAY 🏊";
     const navBg = currentGame ? currentGame.navBg : "#13447a";
 
     const getCompactLabel = (label) => {
@@ -135,20 +155,21 @@ export default function Navbar() {
         const active = [];
         const inactive = [];
 
-        const sorted = [...rawGameSettings].sort((a, b) =>
+        const sorted = [...rawPoolSettings].sort((a, b) =>
             a.game_label.localeCompare(b.game_label)
         );
-
         sorted.forEach(game => {
-            const isActive = game.is_active === true || game.is_active === 1 || game.is_active === "true";
-            if (isActive) {
+            const isActiveState = game.is_active === true || game.is_active === 1 || game.is_active === "true";
+            const userJoined = user?.is_admin === true || (game.user_ids && user && game.user_ids.includes(user.id));
+
+            if (isActiveState && userJoined) {
                 active.push(game);
             } else {
                 inactive.push(game);
             }
         });
         return { active, inactive };
-    }, [rawGameSettings]);
+    }, [rawPoolSettings, user]);
 
     const renderGameLink = (game) => {
         const isLinkActive = (game.is_active === true || game.is_active === 1 || game.is_active === "true") || user?.is_admin === true;
@@ -162,9 +183,13 @@ export default function Navbar() {
                 onClick={(e) => handleDropdownLinkClick(e, isLinkActive, destination)}
                 style={{
                     display: "flex", alignItems: "center", gap: "6px", padding: "8px 20px", fontSize: "12px",
-                    color: !isLinkActive ? "#9ca3af" : (isSelected ? GOLD : "#334155"),
+                    color: !isLinkActive
+                        ? (isDarkMode ? "#94a3b8" : "#9ca3af")
+                        : (isSelected ? GOLD : (isDarkMode ? "#e2e8f0" : "#334155")),
                     textDecoration: "none", fontWeight: isSelected ? "700" : "500",
-                    backgroundColor: isSelected ? "#f8fafc" : "transparent",
+                    backgroundColor: isSelected
+                        ? (isDarkMode ? "rgba(255,255,255,0.08)" : "#f8fafc")
+                        : "transparent",
                     cursor: isLinkActive ? "pointer" : "default"
                 }}
             >
@@ -206,29 +231,13 @@ export default function Navbar() {
 
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
                         <div ref={dropdownRef} style={{ position: "relative" }}>
-                            <button
-                                onClick={() => setDropdownOpen(!dropdownOpen)}
-                                style={{
-                                    backgroundColor: "rgba(200, 157, 60, 0.25)", color: GOLD,
-                                    border: `1px solid ${GOLD}`, borderRadius: "6px",
-                                    padding: "4px 8px", fontSize: "11px", fontWeight: 700,
-                                    cursor: "pointer", display: "flex", alignItems: "center", gap: "3px",
-                                    whiteSpace: "nowrap"
-                                }}
-                            >
-                                ⚡ Quick Jump {dropdownOpen ? "▲" : "▼"}
-                            </button>
                             {dropdownOpen && (
-                                <div style={{ position: "absolute", top: "110%", right: 0, backgroundColor: "white", minWidth: "240px", borderRadius: "8px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", border: "1px solid #e2e8f0", padding: "6px 0", zIndex: 2500, maxHeight: "70vh", overflowY: "auto" }}>
-                                    <div style={{ padding: "6px 16px 4px", fontSize: "10px", fontWeight: 800, color: "#64748b", textTransform: "uppercase" }}>Active Pools (Quick Picks)</div>
-                                    {categorizedGames.active.map(game => renderGameLink(game))}
-
-                                    {categorizedGames.inactive.length > 0 && (
-                                        <>
-                                            <div style={{ height: "1px", background: "#e2e8f0", margin: "6px 0" }} />
-                                            <div style={{ padding: "6px 16px 4px", fontSize: "10px", fontWeight: 800, color: "#9ca3af", textTransform: "uppercase" }}>Inactive Pools</div>
-                                            {categorizedGames.inactive.map(game => renderGameLink(game))}
-                                        </>
+                                <div style={{ position: "absolute", top: "110%", right: 0, backgroundColor: isDarkMode ? "#172438" : "white", minWidth: "240px", borderRadius: "8px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", border: `1px solid ${isDarkMode ? "#2a3a50" : "#e2e8f0"}`, padding: "6px 0", zIndex: 2500, maxHeight: "70vh", overflowY: "auto" }}>
+                                    <div style={{ padding: "6px 16px 4px", fontSize: "10px", fontWeight: 800, color: isDarkMode ? "#a9b8cb" : "#64748b", textTransform: "uppercase" }}>My Active Pools (Quick Picks)</div>
+                                    {categorizedGames.active.length > 0 ? (
+                                        categorizedGames.active.map(game => renderGameLink(game))
+                                    ) : (
+                                        <div style={{ padding: "10px 16px", fontSize: "12px", color: isDarkMode ? "#a9b8cb" : "#64748b" }}>No active joined pools found.</div>
                                     )}
                                 </div>
                             )}
@@ -237,24 +246,110 @@ export default function Navbar() {
                         {!isMobile && !loading && (
                             user ? (
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                    <button
+                                        onClick={() => setDropdownOpen(!dropdownOpen)}
+                                        style={{
+                                            backgroundColor: "rgba(200, 157, 60, 0.25)", color: GOLD,
+                                            border: `1px solid ${GOLD}`, borderRadius: "6px",
+                                            padding: "4px 8px", fontSize: "11px", fontWeight: 700,
+                                            cursor: "pointer", display: "flex", alignItems: "center", gap: "3px",
+                                            whiteSpace: "nowrap"
+                                        }}
+                                    >
+                                        ⚡ Quick Jump {dropdownOpen ? "▲" : "▼"}
+                                    </button>
                                     <button onClick={() => navigate("/contact")} style={{ fontSize: "12px", fontWeight: 700, padding: "5px 12px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.4)", backgroundColor: "rgba(255,255,255,0.1)", color: "white", cursor: "pointer" }}>📩 Contact Us</button>
                                     <button onClick={() => navigate("/myaccount")} style={{ fontSize: "12px", fontWeight: 700, padding: "5px 12px", borderRadius: 12, border: `1px solid ${GOLD}`, backgroundColor: "transparent", color: GOLD, cursor: "pointer" }}>👤 My Pools</button>
                                     <span style={{ color: GOLD, fontSize: 12, fontWeight: 700 }}>{user.name}</span>
                                     <button onClick={handleLogout} style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.3)", background: "transparent", color: "white", cursor: "pointer" }}>Log out</button>
                                     <button onClick={() => setChatOpen(true)} style={{ background: "rgba(255, 255, 255, 0.15)", color: "white", border: "1px solid rgba(255, 255, 255, 0.25)", borderRadius: "4px", padding: "4px 12px", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>💬 Open Chat</button>
+                                    <button
+                                        onClick={toggleTheme}
+                                        style={{
+                                            background: isDarkMode ? "rgba(255,255,255,0.15)" : "#0f172a",
+                                            color: isDarkMode ? "white" : "#ffffff",
+                                            border: isDarkMode ? "1px solid rgba(255,255,255,0.3)" : "none",
+                                            borderRadius: "16px",
+                                            padding: "6px 12px",
+                                            fontSize: "11px",
+                                            fontWeight: "700",
+                                            cursor: "pointer",
+                                            boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
+                                        }}
+                                    >
+                                        {isDarkMode ? "☀️ Light" : "🌙 Dark"}
+                                    </button>
                                 </div>
                             ) : (
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                     <button onClick={() => navigate("/contact")} style={{ fontSize: "12px", fontWeight: 700, padding: "5px 12px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "transparent", color: "white", cursor: "pointer" }}>📩 Contact Us</button>
                                     <button onClick={() => setShowLogin(true)} style={{ fontSize: "12px", fontWeight: 700, padding: "5px 12px", borderRadius: 12, border: "none", background: GOLD, color: "#0a1628", cursor: "pointer" }}>Log in</button>
+                                    <button
+                                        onClick={toggleTheme}
+                                        style={{
+                                            background: isDarkMode ? "rgba(255,255,255,0.15)" : "#0f172a",
+                                            color: isDarkMode ? "white" : "#ffffff",
+                                            border: isDarkMode ? "1px solid rgba(255,255,255,0.3)" : "none",
+                                            borderRadius: "16px",
+                                            padding: "6px 12px",
+                                            fontSize: "11px",
+                                            fontWeight: "700",
+                                            cursor: "pointer",
+                                            boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
+                                        }}
+                                    >
+                                        {isDarkMode ? "☀️ Light" : "🌙 Dark"}
+                                    </button>
                                 </div>
                             )
                         )}
 
                         {isMobile && (
-                            <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu" style={{ background: "none", border: "none", color: "white", fontSize: "22px", cursor: "pointer", padding: "4px", display: "block" }}>
-                                {menuOpen ? "✕" : "☰"}
-                            </button>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <button
+                                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                                    style={{
+                                        backgroundColor: "rgba(200, 157, 60, 0.25)", color: GOLD,
+                                        border: `1px solid ${GOLD}`, borderRadius: "6px",
+                                        padding: "4px 8px", fontSize: "11px", fontWeight: 700,
+                                        cursor: "pointer", display: "flex", alignItems: "center", gap: "3px",
+                                        whiteSpace: "nowrap"
+                                    }}
+                                >
+                                    ⚡{dropdownOpen ? "▲" : "▼"}
+                                </button>
+                                <button
+                                    onClick={toggleTheme}
+                                    style={{
+                                        background: isDarkMode ? "rgba(255,255,255,0.15)" : "#0f172a",
+                                        color: isDarkMode ? "white" : "#ffffff",
+                                        border: isDarkMode ? "1px solid rgba(255,255,255,0.3)" : "none",
+                                        borderRadius: "16px",
+                                        padding: "5px 10px",
+                                        fontSize: "11px",
+                                        fontWeight: "700",
+                                        cursor: "pointer",
+                                        boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                                        whiteSpace: "nowrap"
+                                    }}
+                                >
+                                    {isDarkMode ? "☀️" : "🌙"}
+                                </button>
+                                <button
+                                    className="menu-toggle"
+                                    onClick={() => setMenuOpen(!menuOpen)}
+                                    aria-label="Toggle menu"
+                                    style={{ background: "none", border: "none", color: "white", fontSize: "22px", cursor: "pointer", padding: "4px", display: "block" }}
+                                >
+                                    <span style={{
+                                        display: "inline-block",
+                                        transition: "transform 0.3s ease, opacity 0.2s ease",
+                                        transform: menuOpen ? "rotate(90deg) scale(1.1)" : "rotate(0deg) scale(1)",
+                                    }}>
+                                        {menuOpen ? "✕" : "☰"}
+                                    </span>
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -325,74 +420,53 @@ export default function Navbar() {
 
             {isMobile && menuOpen && (
                 <>
-                    <div className="menu-overlay" onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 2998, display: "block" }} />
-                    <nav className="nav-links open" style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "280px", backgroundColor: "#111827", boxShadow: "-4px 0 20px rgba(0,0,0,0.3)", zIndex: 2999, display: "flex", flexDirection: "column", padding: "16px 0", overflowY: "auto" }}>
-
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 16px 12px 20px", borderBottom: "1px solid rgba(255,255,255,0.1)", flexShrink: 0 }}>
-                            <span style={{ color: GOLD, fontWeight: 900, fontSize: "12px", letterSpacing: "1px", whiteSpace: "nowrap" }}>MENU PANELS</span>
-                            <button onClick={() => setMenuOpen(false)} style={{ background: "none", border: "none", color: "white", fontSize: "18px", cursor: "pointer", padding: "4px 8px", lineHeight: 1, flexShrink: 0 }}>✕</button>
-                        </div>
-
-                        <div style={{ padding: "10px 0", flex: "1 0 auto", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                    <div className="menu-overlay" onClick={() => setMenuOpen(false)} style={{ position: "fixed", top: "60px", insetX: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)", zIndex: 2998, display: "block" }} />
+                    <nav className="nav-links open" style={{ position: "absolute", top: "60px", right: "12px", width: "260px", maxHeight: "calc(100vh - 75px)", backgroundColor: "#0b132b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", boxShadow: "0 10px 25px rgba(0,0,0,0.5)", zIndex: 2999, display: "flex", flexDirection: "column", padding: "10px 0", overflowY: "auto", animation: "slideDown 0.2s ease-out" }}>
+                        <div style={{ padding: "4px 0", flex: "1 0 auto", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
                             {currentGame && activeLinks.length > 0 && (
                                 <>
-                                    <div style={{ padding: "0 20px 6px 20px", fontSize: "10px", color: "#9ca3af", fontWeight: 800, letterSpacing: "1px", width: "100%", boxSizing: "border-box" }}>POOL CONTEXT LINKS</div>
+                                    <div style={{ padding: "4px 16px 4px 16px", fontSize: "9px", color: "#9ca3af", fontWeight: 800, letterSpacing: "1px", width: "100%", boxSizing: "border-box" }}>POOL LINKS</div>
                                     {activeLinks.map(({ to, label, emoji }) => {
                                         const isActive = location.pathname === to;
                                         return (
-                                            <Link key={to} to={to} onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 20px", textDecoration: "none", color: isActive ? GOLD : "#f3f4f6", backgroundColor: isActive ? "rgba(255,255,255,0.05)" : "transparent", fontWeight: isActive ? 700 : 500, fontSize: "12px", width: "100%", boxSizing: "border-box" }}>
-                                                <span style={{ width: "18px", textAlign: "center", flexShrink: 0 }}>{emoji}</span> {label}
+                                            <Link key={to} to={to} onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 16px", textDecoration: "none", color: isActive ? GOLD : "#f3f4f6", backgroundColor: isActive ? "rgba(212,175,55,0.1)" : "transparent", fontWeight: isActive ? 700 : 500, fontSize: "12px", width: "100%", boxSizing: "border-box" }}>
+                                                <span style={{ width: "16px", textAlign: "center", flexShrink: 0 }}>{emoji}</span> {label}
                                             </Link>
                                         );
                                     })}
-                                    <div onClick={() => { setMenuOpen(false); setChatOpen(true); }} style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%", padding: "8px 20px", background: "none", border: "none", color: "#f3f4f6", fontWeight: 500, fontSize: "12px", cursor: "pointer", textAlign: "left", boxSizing: "border-box" }}>
-                                        <span style={{ width: "18px", textAlign: "center", flexShrink: 0 }}>💬</span> Open Pool Chat
+                                    <div onClick={() => { setMenuOpen(false); setChatOpen(true); }} style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%", padding: "8px 16px", background: "none", border: "none", color: "#f3f4f6", fontWeight: 500, fontSize: "12px", cursor: "pointer", textAlign: "left", boxSizing: "border-box" }}>
+                                        <span style={{ width: "16px", textAlign: "center", flexShrink: 0 }}>💬</span> Open Pool Chat
                                     </div>
-                                    <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", width: "100%", margin: "8px 0" }} />
+                                    <div style={{ height: "1px", background: "rgba(255,255,255,0.08)", width: "100%", margin: "6px 0" }} />
                                 </>
                             )}
 
-                            <div style={{ padding: "0 20px 6px 20px", fontSize: "10px", color: "#64748b", fontWeight: 800, letterSpacing: "1px", width: "100%", boxSizing: "border-box" }}>ACTIVE POOLS</div>
+                            <div style={{ padding: "4px 16px 4px 16px", fontSize: "9px", color: "#64748b", fontWeight: 800, letterSpacing: "1px", width: "100%", boxSizing: "border-box" }}>MY ACTIVE POOLS</div>
                             {categorizedGames.active.map((game) => {
                                 const isLinkActive = true;
                                 const isSelected = currentGame?.game_key === game.game_key;
                                 return (
-                                    <Link key={game.game_key} to={`${game.prefix}/picks`} onClick={(e) => handleDropdownLinkClick(e, isLinkActive, `${game.prefix}/picks`)} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 20px", textDecoration: "none", fontSize: "12px", fontWeight: isSelected ? 700 : 500, color: isSelected ? GOLD : "#f3f4f6", width: "100%", boxSizing: "border-box" }}>
-                                        <span style={{ width: "18px", textAlign: "center", flexShrink: 0 }}>{game.emoji}</span> {game.game_label.toUpperCase()}
+                                    <Link key={game.game_key} to={`${game.prefix}/picks`} onClick={(e) => handleDropdownLinkClick(e, isLinkActive, `${game.prefix}/picks`)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 16px", textDecoration: "none", fontSize: "12px", fontWeight: isSelected ? 700 : 500, color: isSelected ? GOLD : "#f3f4f6", width: "100%", boxSizing: "border-box" }}>
+                                        <span style={{ width: "16px", textAlign: "center", flexShrink: 0 }}>{game.emoji}</span> {game.game_label.toUpperCase()}
                                     </Link>
                                 );
                             })}
-
-                            {categorizedGames.inactive.length > 0 && (
-                                <>
-                                    <div style={{ padding: "10px 20px 6px 20px", fontSize: "10px", color: "#9ca3af", fontWeight: 800, letterSpacing: "1px", borderTop: "1px solid rgba(255,255,255,0.1)", marginTop: "6px", width: "100%", boxSizing: "border-box" }}>INACTIVE POOLS</div>
-                                    {categorizedGames.inactive.map((game) => {
-                                        const isLinkActive = user?.is_admin === true;
-                                        const isSelected = currentGame?.game_key === game.game_key;
-                                        return (
-                                            <Link key={game.game_key} to={`${game.prefix}/picks`} onClick={(e) => handleDropdownLinkClick(e, isLinkActive, `${game.prefix}/picks`)} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 20px", textDecoration: "none", fontSize: "12px", fontWeight: isSelected ? 700 : 500, color: !isLinkActive ? "#4b5563" : (isSelected ? GOLD : "#d1d5db"), fontStyle: isLinkActive ? "normal" : "italic", width: "100%", boxSizing: "border-box" }}>
-                                                <span style={{ width: "18px", textAlign: "center", flexShrink: 0 }}>{game.emoji}</span> {game.game_label.toUpperCase()} {!isLinkActive && " (🔒)"}
-                                            </Link>
-                                        );
-                                    })}
-                                </>
-                            )}
                         </div>
 
-                        <div style={{ marginTop: "auto", padding: "14px 20px", borderTop: "1px solid rgba(255,255,255,0.1)", backgroundColor: "#1f2937", flexShrink: 0 }}>
+                        <div style={{ marginTop: "6px", padding: "10px 16px", borderTop: "1px solid rgba(255,255,255,0.08)", backgroundColor: "#060a17", borderRadius: "0 0 12px 12px", flexShrink: 0 }}>
                             {user ? (
                                 <>
-                                    <div style={{ fontSize: "12px", color: "#e5e7eb", marginBottom: "8px" }}>Logged in: <strong style={{ color: GOLD }}>{user.name}</strong></div>
-                                    <button onClick={() => { setMenuOpen(false); navigate("/myaccount"); }} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: `1px solid ${GOLD}`, background: "transparent", color: GOLD, fontWeight: 700, fontSize: "12px", cursor: "pointer", marginBottom: "6px" }}>👤 My Account Dashboard</button>
-                                    <button onClick={handleLogout} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #4b5563", background: "#374151", color: "#f87171", fontWeight: 700, fontSize: "12px", cursor: "pointer" }}>Log Out</button>
+                                    <div style={{ fontSize: "11px", color: "#9ca3af", marginBottom: "8px" }}>Logged in: <strong style={{ color: GOLD }}>{user.name}</strong></div>
+                                    <button onClick={() => { setMenuOpen(false); navigate("/myaccount"); }} style={{ width: "100%", padding: "7px", borderRadius: "6px", border: `1px solid ${GOLD}`, background: "transparent", color: GOLD, fontWeight: 700, fontSize: "11px", cursor: "pointer", marginBottom: "6px" }}>👤 My Account Dashboard</button>
+                                    <button onClick={handleLogout} style={{ width: "100%", padding: "7px", borderRadius: "6px", border: "1px solid rgba(239, 68, 68, 0.3)", background: "rgba(239, 68, 68, 0.1)", color: "#f87171", fontWeight: 700, fontSize: "11px", cursor: "pointer" }}>Log Out</button>
                                 </>
                             ) : (
-                                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                                    <button onClick={() => { setMenuOpen(false); setShowLogin(true); }} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "none", background: GOLD, color: "#0a1628", fontWeight: 700, fontSize: "12px" }}>Log In</button>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                                    <button onClick={() => { setMenuOpen(false); setShowLogin(true); }} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "none", background: GOLD, color: "#061a33", fontWeight: 700, fontSize: "12px", cursor: "pointer" }}>Log In</button>
                                 </div>
                             )}
                             <div style={{ paddingTop: "6px" }}>
-                                <button onClick={() => { setMenuOpen(false); navigate("/contact"); }} style={{ width: "100%", padding: "6px", borderRadius: "6px", border: "1px solid #4b5563", background: "transparent", color: "white", fontWeight: 700, fontSize: "12px" }}>📩 Contact Support</button>
+                                <button onClick={() => { setMenuOpen(false); navigate("/contact"); }} style={{ width: "100%", padding: "6px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "#cbd5e1", fontWeight: 600, fontSize: "11px", cursor: "pointer" }}>📩 Contact Support</button>
                             </div>
                         </div>
                     </nav>

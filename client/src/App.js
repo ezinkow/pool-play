@@ -1,7 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import './App.css';
-import { HashRouter as BrowserRouter, Routes, Route, useLocation, Outlet } from "react-router-dom";
+import { HashRouter as BrowserRouter, Routes, Route, Outlet, useLocation } from "react-router-dom";
 import OpenPoolsCard from "./components/OpenPoolsCard"
+import UserLiveStandingsCard from "./components/UserLiveStandingsCard"
 
 // Shared
 import Home from './pages/Home';
@@ -164,30 +165,68 @@ import WorldCupSignUp from './pages/world_cup/SignUp';
 import WorldCupStandings from './pages/world_cup/Standings';
 import WorldCupGroupPicks from './pages/world_cup/GroupPicks';
 
-function MainLayout() {
+function MainLayout({ isDarkMode }) {
+  const { pathname } = useLocation();
+  const isHome = pathname === "/";
+
   return (
-    <div style={{ paddingTop: "50px" }}>
+    <div className={`main-layout-shell${isHome ? " main-layout-shell--home" : " main-layout-shell--pool"}`}>
       <div className="home-layout-grid">
         <div className="home-sidebar-col mobile-open-pools-banner">
-          <OpenPoolsCard />
+          <OpenPoolsCard isDarkMode={isDarkMode} />
         </div>
         <div className="home-main-col">
-          <Outlet />
+          <Outlet context={{ isDarkMode }} />
         </div>
+        {isHome && (
+          <aside className="home-right-col">
+            <UserLiveStandingsCard isDarkMode={isDarkMode} />
+          </aside>
+        )}
       </div>
     </div>
   );
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
+
 export default function App() {
+  // Explicitly default to dark mode unless explicitly set to "light" in localStorage
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem("poolplay_theme");
+    return savedTheme !== "light"; // Defaults to true (dark mode) on first load
+  });
+
+  useEffect(() => {
+    const container = document.getElementById('root-app-container');
+    if (container) {
+      if (isDarkMode) {
+        container.classList.add("dark-mode");
+      } else {
+        container.classList.remove("dark-mode");
+      }
+    }
+    localStorage.setItem("poolplay_theme", isDarkMode ? "dark" : "light");
+  }, [isDarkMode]);
+
+  const toggleTheme = () => setIsDarkMode(prev => !prev);
+
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <div id="root-app-container" className="app-container">
-        <Navbar />
+        <Navbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
         <Routes>
           {/* --- GROUP 1: Pages wrapped inside MainLayout --- */}
-          <Route element={<MainLayout />}>
-            {/* Home Route now shares the layout grid and gets the blue gradient background via .home-content */}
+          <Route element={<MainLayout isDarkMode={isDarkMode} />}>
             <Route path="/" element={<div className="home-content"><Home /></div>} />
 
             <Route path="/signup" element={<SignUp />} />
@@ -337,7 +376,6 @@ export default function App() {
             <Route path="/worldcup/scoreboard" element={<WorldCupScoreboard />} />
             <Route path="/worldcup/mypicks" element={<WorldCupMyPicks />} />
             <Route path="/worldcup/standings" element={<WorldCupStandings />} />
-            <Route path="/worldcup/grouppicks" element={<WorldCupGroupPicks />} />
           </Route>
 
           {/* --- GROUP 2: Standalone / Full-Screen Routes OUTSIDE MainLayout --- */}

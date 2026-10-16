@@ -1,18 +1,21 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import axios from "axios";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 import PoolCountdown from "../../components/CountdownDisplay"; // Make sure this is imported
+import PoolRulesCard from "../../components/PoolRulesCard";
+import usePoolMetadata from "../../hooks/usePoolMetadata";
+import PoolHomeActions from "../../components/PoolHomeActions";
+import { isPoolStarted as getIsPoolStarted } from "../../utils/poolStatus";
 
 const BLUE = "#002366";
-const RED = "#c8102e";
 const GOLD = "#c89d3c";
 
 export default function Home() {
   // 1. Hooks must be inside the component body
   const { user, loading: authLoading } = useAuth();
+  const poolMetadata = usePoolMetadata("world_cup");
   const [poolData, setPoolData] = useState(null);
 
   useEffect(() => {
@@ -25,10 +28,7 @@ export default function Home() {
   }, []);
 
   // 2. Calculate inside the component body
-  const isPoolStarted = useMemo(() => {
-    if (!poolData?.lock_date) return false;
-    return new Date() >= new Date(poolData.lock_date);
-  }, [poolData]);
+  const isPoolStarted = getIsPoolStarted(poolData, { requireActive: false });
 
   if (authLoading) return null;
 
@@ -47,18 +47,7 @@ export default function Home() {
       <div className="container" style={{ textAlign: "center", padding: "20px 16px", boxSizing: "border-box" }}>
         <PoolGatekeeper user={user} isAdmin={user?.is_admin === true} gameKey="worldcup">
 
-          {/* Action Buttons Grid Cluster */}
-          <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", marginBottom: 20 }}>
-            <Link to="/worldcup/picks" style={{ textDecoration: 'none' }}>
-              <button className="btn-wc-main">⚽ Make Picks</button>
-            </Link>
-            <Link to="/worldcup/mypicks" style={{ textDecoration: 'none' }}>
-              <button className="btn-wc-secondary">📋 My Picks</button>
-            </Link>
-            <Link to="/worldcup/standings" style={{ textDecoration: 'none' }}>
-              <button className="btn-wc-secondary">🏆 Standings</button>
-            </Link>
-          </div>
+          <PoolHomeActions gameKey="world_cup" />
 
           <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/scores-fixtures"
             target="_blank"
@@ -84,29 +73,12 @@ export default function Home() {
           </a>
         </PoolGatekeeper>
 
-        {/* Rules card */}
-        <div style={{
-          background: "white",
-          borderRadius: 16,
-          padding: "24px 20px",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
-          marginTop: 24,
-          marginBottom: 80,
-          borderTop: `4px solid ${GOLD}`,
-          textAlign: "left",
-          maxWidth: "850px",
-          margin: "24px auto 80px auto",
-          boxSizing: "border-box"
-        }}>
-          <h3 style={{ color: RED, marginTop: 0, marginBottom: 16, fontSize: "1.2rem" }}>
-            📋 World Cup Pool Rules
-          </h3>
-          <ol style={{ paddingLeft: 20, lineHeight: "1.7", fontSize: "14px" }}>
-            <li>Pick match outcomes during the Group Stage: 1 point for a correct win. 2 points for a correct draw.</li>
-            <li>When it's time for the Knockout Stage: Fill out a knockout round bracket. Points increase every round (2,3,5,7,10)</li>
-            <li>Most points at the end wins.</li>
-          </ol>
-        </div>
+        <PoolRulesCard
+          title={poolMetadata?.pool_title || "World Cup Pool"}
+          rulesHtml={poolMetadata?.rules_html}
+          accentColor={poolMetadata?.accent_color || GOLD}
+          subtitle="Rules"
+        />
       </div>
 
       <style>{`

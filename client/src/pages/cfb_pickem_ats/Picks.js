@@ -4,6 +4,8 @@ import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import useTeamColors from '../../hooks/useNCAATeamColors';
 import PoolGatekeeper from "../../components/PoolGatekeeper";
+import PickSortSelect from "../../components/picks/PickSortSelect";
+import ClearPicksButton from "../../components/picks/ClearPicksButton";
 
 const CFB_BLUE = "#013369";
 const CFB_RED = "#D50A0A";
@@ -380,51 +382,22 @@ export default function CfbPickemAtsPicks() {
                     gap: 8
                 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
-                        <span style={{ fontSize: "12px", fontWeight: 700, color: "#475569", whiteSpace: "nowrap" }}>Sort:</span>
-                        <select
+                        <PickSortSelect
                             value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            style={{
-                                padding: "5px 8px",
-                                borderRadius: 6,
-                                border: "1px solid #cbd5e1",
-                                fontSize: "12px",
-                                fontWeight: 600,
-                                background: "#f8fafc",
-                                cursor: "pointer",
-                                color: "#0f172a",
-                                width: "100%",
-                                textOverflow: "ellipsis"
-                            }}
-                        >
-                            <option value="kickoff">Kickoff Time</option>
-                            <option value="home_team_asc">Home Team (A-Z)</option>
-                            <option value="home_team_desc">Home Team (Z-A)</option>
-                            <option value="away_team_asc">Away Team (A-Z)</option>
-                            <option value="away_team_desc">Away Team (Z-A)</option>
-                            <option value="fav_desc">Favorite Spread (High-Low)</option>
-                            <option value="fav_asc">Favorite Spread (Low-High)</option>
-                        </select>
+                            onChange={setSortBy}
+                            options={[
+                                { value: "kickoff", label: "Kickoff Time" },
+                                { value: "home_team_asc", label: "Home Team (A-Z)" },
+                                { value: "home_team_desc", label: "Home Team (Z-A)" },
+                                { value: "away_team_asc", label: "Away Team (A-Z)" },
+                                { value: "away_team_desc", label: "Away Team (Z-A)" },
+                                { value: "fav_desc", label: "Favorite Spread (High-Low)" },
+                                { value: "fav_asc", label: "Favorite Spread (Low-High)" }
+                            ]}
+                        />
                     </div>
 
-                    {sortedGames.length > 0 && (
-                        <button
-                            onClick={handleClearPicks}
-                            style={{
-                                background: "#fef2f2",
-                                color: "#dc2626",
-                                border: "1px solid #fecaca",
-                                padding: "5px 10px",
-                                borderRadius: 6,
-                                fontSize: "12px",
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                whiteSpace: "nowrap"
-                            }}
-                        >
-                            Clear Picks
-                        </button>
-                    )}
+                    <ClearPicksButton onClick={handleClearPicks} visible={sortedGames.length > 0} />
                 </div>
 
                 {/* All Games Started Banner Notification */}

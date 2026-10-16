@@ -9,7 +9,7 @@ module.exports = function (sequelize, DataTypes) {
             allowNull: false
         }
     }, {
-        tableName: "hrd_rosters",
+        tableName: "mlb_hrd_rosters",
         timestamps: true
     });
 

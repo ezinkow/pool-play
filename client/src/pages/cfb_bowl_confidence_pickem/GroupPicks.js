@@ -3,21 +3,11 @@ import axios from "axios";
 import useAuth from "../../hooks/useAuth";
 import useTeamColors from '../../hooks/useNCAATeamColors';
 import PoolGatekeeper from "../../components/PoolGatekeeper";
+import LivePulseIndicator from "../../components/picks/LivePulseIndicator";
 
 const BOWL_BLUE = "#0369a1";
 const GOLD = "#c89d3c";
 const BOWL_RED = "#D50A0A";
-
-// ✨ Condensation-optimized pulsing live indicator
-const PULSE_STYLE = {
-    width: "6px",
-    height: "6px",
-    backgroundColor: "#22c55e",
-    borderRadius: "50%",
-    display: "inline-block",
-    boxShadow: "0 0 0 rgba(34, 197, 94, 0.4)",
-    animation: "pulse 2s infinite"
-};
 
 export default function CfbBowlConfidenceMatrix() {
     const { user, loading: authLoading } = useAuth();
@@ -256,7 +246,7 @@ export default function CfbBowlConfidenceMatrix() {
                         <span style={{ backgroundColor: "#16a34a", color: "white", padding: "1px 6px", borderRadius: 3 }}>FINAL</span>
                     ) : isLive ? (
                         <>
-                            <span style={PULSE_STYLE} />
+                            <LivePulseIndicator />
                             <span style={{ backgroundColor: BOWL_RED, color: "white", padding: "1px 6px", borderRadius: 3 }}>{liveStatusText}</span>
                         </>
                     ) : (

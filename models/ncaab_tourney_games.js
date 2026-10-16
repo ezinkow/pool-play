@@ -1,5 +1,5 @@
 module.exports = function (sequelize, DataTypes) {
-    const NcaaTourneyGames = sequelize.define("NcaaTourneyGames", {
+    const NcaabTourneyGames = sequelize.define("NcaabTourneyGames", {
         id: {
             type: DataTypes.STRING(255),
             primaryKey: true,
@@ -99,9 +99,9 @@ module.exports = function (sequelize, DataTypes) {
             allowNull: true,
         }
     }, {
-        tableName: "ncaa_tourney_games",
+        tableName: "ncaab_tourney_games",
         timestamps: false
     });
 
-    return NcaaTourneyGames;
+    return NcaabTourneyGames;
 };

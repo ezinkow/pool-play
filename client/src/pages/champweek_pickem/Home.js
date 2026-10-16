@@ -1,8 +1,7 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
 import CountdownDisplay from '../../components/champweek_pickem/CountdownDisplay'
 import CountdownNextGameLock from '../../components/champweek_pickem/CountdownNextGameLock'
-import Button from 'react-bootstrap/esm/Button'
+import PoolHomeActions from '../../components/PoolHomeActions'
 
 export default function Home() {
     return (
@@ -11,47 +10,7 @@ export default function Home() {
                 {/* <CountdownDisplay /> */}
                 <CountdownNextGameLock />
                 <div className='container'>
-                    <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                        {/* <Link to="/signup" style={{ textDecoration: 'none' }}>
-                            <button
-                                type="submit"
-                                style={{
-                                    width: "100%",
-                                    padding: "12px",
-                                    backgroundColor: "var(--primary-navy)",
-                                    color: "white",
-                                    border: "none",
-                                    borderRadius: 8,
-                                    fontSize: 15,
-                                    fontWeight: 700,
-                                    cursor: "pointer",
-                                    textTransform: "uppercase",
-                                    letterSpacing: "0.5px",
-                                }}
-                            >
-                                📋 Sign Up Here 🚀
-                            </button>
-                        </Link> */}
-                        <Link to="/champweekpickem/picks">
-                            <button
-                                type="submit"
-                                style={{
-                                    width: "100%",
-                                    padding: "12px",
-                                    backgroundColor: "var(--primary-navy)",
-                                    color: "white",
-                                    border: "none",
-                                    borderRadius: 8,
-                                    fontSize: 15,
-                                    fontWeight: 700,
-                                    cursor: "pointer",
-                                    textTransform: "uppercase",
-                                    letterSpacing: "0.5px",
-                                }}>
-                                🏀 Make Your Picks 🗑️
-                            </button>
-                        </Link>
-                    </div>
+                    <PoolHomeActions gameKey="ncaab_champ_week_pickem" />
                     <br />
                     <strong>The game:</strong><br />
                     Runs from March 7 - March 15<br />

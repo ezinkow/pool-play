@@ -173,7 +173,7 @@ export default function PoolCountdown({ poolData, mode, isDarkMode = true, compa
         };
     }, [gameKey, lockDate, openDate, endDate, isActive, mode, token]);
 
-    if (!timeLeft) return <span style={{ fontSize: compact ? "10px" : "12px", color: GRAY, fontStyle: "italic" }}>⚡ Check Status</span>;
+    if (!timeLeft) return <span style={{ fontSize: compact ? "10px" : "12px", color: isDarkMode ? GRAY : "#64748b", fontStyle: "italic" }}>⚡ Check Status</span>;
 
     const now = new Date();
     const openTime = openDate ? new Date(openDate) : null;
@@ -198,13 +198,15 @@ export default function PoolCountdown({ poolData, mode, isDarkMode = true, compa
                         <SingleFlipCard key={`${subLabel}-${i}`} value={d} compact={compact} isDarkMode={isDarkMode} />
                     ))}
                 </div>
-                <span style={{ fontSize: compact ? "5px" : "8px", color: GOLD, fontWeight: "800", marginTop: "2px", textTransform: "uppercase" }}>{subLabel}</span>
+                <span style={{ fontSize: compact ? "5px" : "8px", color: unitLabelColor, fontWeight: "800", marginTop: "2px", textTransform: "uppercase" }}>{subLabel}</span>
             </div>
         );
     };
 
-    const containerBg = isDarkMode ? "#0b0f19" : "#1e293b";
-    const containerBorder = isDarkMode ? DARK_BORDER : GOLD;
+    const containerBg = isDarkMode ? "#0b0f19" : "#f8fafc";
+    const containerBorder = isDarkMode ? DARK_BORDER : "#cbd5e1";
+    const containerText = isDarkMode ? "#ffffff" : "#334155";
+    const unitLabelColor = isDarkMode ? GOLD : "#8a6417";
 
     return (
         <>
@@ -239,21 +241,21 @@ export default function PoolCountdown({ poolData, mode, isDarkMode = true, compa
                 .flip-card-unit.compact .back span { top: -10px; height: 20px; line-height: 20px; }
             `}</style>
             <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: containerBg, padding: compact ? "2px 5px" : "5px 8px", borderRadius: "6px", border: `1px solid ${containerBorder}`, maxWidth: "100%", overflow: "hidden" }}>
-                <span style={{ color: "#ffffff", fontSize: compact ? "7px" : "9px", fontWeight: "800", marginRight: "5px", textTransform: "uppercase" }}>{labelText}</span>
+                <span style={{ color: containerText, fontSize: compact ? "7px" : "9px", fontWeight: "800", marginRight: "5px", textTransform: "uppercase" }}>{labelText}</span>
                 <div style={{ display: "flex", alignItems: "center", gap: compact ? "2px" : "3px", flexWrap: "nowrap" }}>
                     {showYears && (
                         <>
                             {renderFlipPair(timeLeft.y, "Yrs", 2)}
-                            <span style={{ color: "#ffffff", fontSize: compact ? "9px" : "14px", fontWeight: "bold", paddingBottom: compact ? "6px" : "10px" }}>:</span>
+                            <span style={{ color: containerText, fontSize: compact ? "9px" : "14px", fontWeight: "bold", paddingBottom: compact ? "6px" : "10px" }}>:</span>
                         </>
                     )}
                     {renderFlipPair(timeLeft.d, "Days", timeLeft.d.length >= 3 ? 3 : timeLeft.d.length)}
-                    <span style={{ color: "#ffffff", fontSize: compact ? "9px" : "14px", fontWeight: "bold", paddingBottom: compact ? "6px" : "10px" }}>:</span>
+                    <span style={{ color: containerText, fontSize: compact ? "9px" : "14px", fontWeight: "bold", paddingBottom: compact ? "6px" : "10px" }}>:</span>
                     {renderFlipPair(timeLeft.h, "Hrs", 2)}
                     
                     {!daysAndHoursOnly && (
                         <>
-                            <span style={{ color: "#ffffff", fontSize: compact ? "9px" : "14px", fontWeight: "bold", paddingBottom: compact ? "6px" : "10px" }}>:</span>
+                            <span style={{ color: containerText, fontSize: compact ? "9px" : "14px", fontWeight: "bold", paddingBottom: compact ? "6px" : "10px" }}>:</span>
                             {renderFlipPair(timeLeft.m, "Min", 2)}
                             <span style={{ color: "#ffffff", fontSize: compact ? "9px" : "14px", fontWeight: "bold", paddingBottom: compact ? "6px" : "10px" }}>:</span>
                             {renderFlipPair(timeLeft.s, "Sec", 2)}

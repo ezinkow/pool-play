@@ -4,177 +4,193 @@ import toast, { Toaster } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../PoolGatekeeper";
 
-const NFL_BLUE = "#013369";
-const NFL_RED = "#D50A0A";
+const NAVY = "#13447a";
 const GOLD = "#c89d3c";
-const WHITE = "#FFFFFF";
 
-export default function NflPickemAtsStandings() {
-  const { user: currentUser } = useAuth();
+function renderRank(rank) {
+  if (rank === 1) return "🥇";
+  if (rank === 2) return "🥈";
+  if (rank === 3) return "🥉";
+  return rank;
+}
+
+export default function WorldCupStandings() {
+  const { user, loading: authLoading } = useAuth();
   const [standings, setStandings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("token");
-
-  // Helper returns only medal if rank 1-3, else returns the rank number
-  const renderRank = (rank) => {
-    if (rank === 1) return "🥇";
-    if (rank === 2) return "🥈";
-    if (rank === 3) return "🥉";
-    return rank;
-  };
-
   useEffect(() => {
-    if (!currentUser) return;
-    const fetchStandings = async () => {
-      try {
-        const { data } = await axios.get("/api/nfl_pickem_ats/standings", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        // Sort by total_points descending, then entry_name alphabetically for ties
-        setStandings([...(data || [])].sort((a, b) => (b.total_points || 0) - (a.total_points || 0) || (a.entry_name || "").localeCompare(b.entry_name || "")));
-      } catch (err) {
-        console.error("Failed to load pick'em standings", err);
-        toast.error("Failed to load leaderboard");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStandings();
-  }, [currentUser, token]);
+    axios.get("/api/worldcup/standings")
+      .then((res) => setStandings(res.data || []))
+      .catch((err) => {
+        console.error("Failed to load World Cup standings", err);
+        toast.error("Failed to load standings");
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
-  // Tied-rank calculation logic matching reference style
   const rankedStandings = useMemo(() => {
+    const sorted = [...standings].sort((a, b) =>
+      (Number(b.points) || 0) - (Number(a.points) || 0)
+      || (a.name || "").localeCompare(b.name || "")
+    );
+
     let currentRank = 1;
-    return standings.map((u, i) => {
-      if (i > 0 && u.total_points === standings[i - 1].total_points) {
-        // Keep same rank for tied scores
-      } else {
-        currentRank = i + 1;
+    let previousPoints;
+    return sorted.map((entry, index) => {
+      const points = Number(entry.points) || 0;
+      if (index === 0 || points !== previousPoints) {
+        currentRank = index + 1;
       }
-      return { ...u, rank: currentRank };
+      previousPoints = points;
+      return { ...entry, rank: currentRank };
     });
   }, [standings]);
 
-  if (loading) return <div style={{ textAlign: "center", padding: 50 }}>Loading leaderboard...</div>;
+  if (authLoading || loading) {
+    return <div style={{ textAlign: "center", padding: 50 }}>Loading World Cup standings...</div>;
+  }
 
   return (
-    <PoolGatekeeper user={currentUser} gameKey="nfl_pickem_ats">
-      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "8px", paddingBottom: '100px' }}>
+    <PoolGatekeeper user={user} gameKey="worldcup">
+      <div className="standings-table" style={{
+        maxWidth: 1000,
+        margin: "0 auto",
+        padding: "20px 12px",
+        paddingBottom: 90
+      }}>
         <Toaster />
         <style>{`
-                    .desktop-only { display: block; }
-                    .mobile-only { display: none; }
-                    @media (max-width: 768px) {
-                        .desktop-only { display: none !important; }
-                        .mobile-only { display: block !important; }
-                    }
-                `}</style>
+          .worldcup-standings-desktop { display: block; }
+          .worldcup-standings-mobile { display: none; }
+          @media (max-width: 700px) {
+            .worldcup-standings-desktop { display: none !important; }
+            .worldcup-standings-mobile { display: block !important; }
+          }
+        `}</style>
 
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <h2 style={{ color: NFL_BLUE, fontWeight: 900, fontSize: "26px", margin: 0 }}>🏆 Pick'em Standings 🏆</h2>
-          <p style={{ color: "#666", marginTop: 6, fontSize: "14px" }}>
-            Leaderboard ranked by total points (Best Bets count for 2 points).
+          <h2 style={{ color: NAVY, margin: 0, fontWeight: 900 }}>World Cup Standings</h2>
+          <p style={{ color: "#64748b", margin: "6px 0 0", fontSize: 14 }}>
+            Group stage and knockout points, plus each participant&apos;s champion pick.
           </p>
         </div>
 
-        {/* DESKTOP TABLE */}
-        <div className="desktop-only" style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.08)", borderRadius: "12px", overflow: "hidden", border: "1px solid #e2e8f0" }}>
-          <table style={{ width: "100%", background: WHITE, fontSize: 13, borderCollapse: "collapse", textAlign: "left" }}>
+        <div className="worldcup-standings-desktop" style={{
+          overflowX: "auto",
+          border: "1px solid #e2e8f0",
+          borderRadius: 10,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.06)"
+        }}>
+          <table className="standings-table" style={{
+            minWidth: 650,
+            background: "white",
+            borderCollapse: "collapse",
+            width: "100%"
+          }}>
             <thead>
-              <tr style={{ background: NFL_BLUE, color: WHITE }}>
-                <th style={{ ...thStyle, width: "60px", textAlign: "center" }}>Rank</th>
-                <th style={thStyle}>Entry Name</th>
-                <th style={{ ...thStyle, textAlign: "center" }}>ATS Record (W-L-P)</th>
-                <th style={{ ...thStyle, textAlign: "center" }}>O/U Record (W-L-P)</th>
-                <th style={{ ...thStyle, textAlign: "center" }}>Best Bets</th>
-                <th style={{ ...thStyle, textAlign: "center" }}>Points</th>
+              <tr style={{ background: NAVY, color: "white" }}>
+                <th style={headerStyle}>Rank</th>
+                <th style={{ ...headerStyle, textAlign: "left" }}>Participant</th>
+                <th style={headerStyle}>Group Pts</th>
+                <th style={headerStyle}>Knockout Pts</th>
+                <th style={{ ...headerStyle, textAlign: "left" }}>Champion Pick</th>
+                <th style={{ ...headerStyle, textAlign: "right" }}>Total</th>
               </tr>
             </thead>
             <tbody>
-              {rankedStandings.map((u) => {
-                const isMe = u.user_id === currentUser?.id;
+              {rankedStandings.length === 0 ? (
+                <tr>
+                  <td colSpan="6" style={{ ...cellStyle, textAlign: "center" }}>No standings available yet.</td>
+                </tr>
+              ) : rankedStandings.map((entry, index) => {
+                const isCurrentUser = Number(entry.id) === Number(user?.id);
                 return (
-                  <tr key={u.user_id} style={{
-                    borderBottom: "1px solid #edf2f7",
-                    backgroundColor: isMe ? "#fffbeb" : "transparent"
+                  <tr key={entry.id || entry.name || index} style={{
+                    backgroundColor: isCurrentUser ? "#fffbeb" : (index % 2 === 0 ? "white" : "#f8fafc")
                   }}>
-                    <td style={{ ...tdStyle, textAlign: "center", fontWeight: 800, fontSize: u.rank <= 3 ? "18px" : "14px", color: "#475569" }}>
-                      {renderRank(u.rank)}
+                    <td style={{ ...cellStyle, textAlign: "center", fontWeight: 800 }}>{renderRank(entry.rank)}</td>
+                    <td style={{ ...cellStyle, fontWeight: isCurrentUser ? 800 : 600, textAlign: "left" }}>
+                      {entry.name} {isCurrentUser && <strong style={{ color: NAVY }}>(You)</strong>}
                     </td>
-                    <td style={{ ...tdStyle, fontWeight: isMe ? "bold" : 700, color: "#0f172a" }}>
-                      {u.entry_name}
-                      {isMe && <span style={{ marginLeft: 8, fontSize: "11px", background: NFL_BLUE, color: WHITE, padding: "2px 6px", borderRadius: 4 }}>You</span>}
+                    <td style={{ ...cellStyle, textAlign: "center" }}>{entry.group_points || 0}</td>
+                    <td style={{ ...cellStyle, textAlign: "center" }}>{entry.bracket_points || 0}</td>
+                    <td style={{ ...cellStyle, textAlign: "left" }}>
+                      {entry.champion_logo && (
+                        <img
+                          src={entry.champion_logo}
+                          alt=""
+                          style={{ width: 22, height: 16, objectFit: "contain", marginRight: 6, verticalAlign: "middle" }}
+                        />
+                      )}
+                      {entry.champion_pick || "TBD"}
                     </td>
-                    <td style={{ ...tdStyle, textAlign: "center", color: "#334155" }}>
-                      {u.wins || 0} - {u.losses || 0} - {u.pushes || 0}
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: "center", color: "#334155" }}>
-                      {u.ou_wins || 0} - {u.ou_losses || 0} - {u.ou_pushes || 0}
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: "center", color: "#334155" }}>
-                      <span style={{ color: "#047857", fontWeight: 700 }}>{u.best_bet_wins || 0}</span> - <span style={{ color: NFL_RED, fontWeight: 700 }}>{u.best_bet_losses || 0}</span>
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: "center", fontWeight: 900, color: NFL_BLUE, fontSize: "15px" }}>
-                      {u.total_points || 0} pts
+                    <td style={{ ...cellStyle, textAlign: "right", fontWeight: 900, color: NAVY }}>
+                      {entry.points || 0}
                     </td>
                   </tr>
                 );
               })}
-              {rankedStandings.length === 0 && (
-                <tr>
-                  <td colSpan="6" style={{ padding: "30px", textAlign: "center", color: "#64748b" }}>
-                    No entries found in the leaderboard yet.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
 
-        {/* MOBILE CARDS */}
-        <div className="mobile-only">
-          {rankedStandings.map((u) => {
-            const isMe = u.user_id === currentUser?.id;
+        <div className="worldcup-standings-mobile">
+          {rankedStandings.length === 0 ? (
+            <div style={{ ...cardStyle, textAlign: "center", color: "#64748b" }}>No standings available yet.</div>
+          ) : rankedStandings.map((entry) => {
+            const isCurrentUser = Number(entry.id) === Number(user?.id);
             return (
-              <div key={u.user_id} style={{
-                background: WHITE,
-                padding: "14px",
-                borderRadius: "10px",
-                border: "1px solid #e2e8f0",
-                marginBottom: "10px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                backgroundColor: isMe ? "#fffbeb" : WHITE
+              <article key={entry.id || entry.name} style={{
+                ...cardStyle,
+                backgroundColor: isCurrentUser ? "#fffbeb" : "white"
               }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                  <span style={{ fontWeight: 800, fontSize: "15px", color: "#0f172a" }}>
-                    <span style={{ marginRight: 6 }}>{renderRank(u.rank)}</span> {u.entry_name}
-                    {isMe && <span style={{ marginLeft: 6, fontSize: "10px", background: NFL_BLUE, color: WHITE, padding: "2px 5px", borderRadius: 4 }}>You</span>}
-                  </span>
-                  <span style={{ fontWeight: 900, color: NFL_BLUE, fontSize: "18px" }}>{u.total_points || 0} pts</span>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                  <strong style={{ color: NAVY }}>
+                    {renderRank(entry.rank)} {entry.name} {isCurrentUser && "(You)"}
+                  </strong>
+                  <strong style={{ color: NAVY, whiteSpace: "nowrap" }}>{entry.points || 0} pts</strong>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #f1f5f9", paddingTop: "8px", fontSize: "12px", color: "#6b7280" }}>
-                  <div>
-                    ATS: <strong style={{ color: "#334155" }}>{u.wins || 0}-{u.losses || 0}-{u.pushes || 0}</strong> | O/U: <strong style={{ color: "#334155" }}>{u.ou_wins || 0}-{u.ou_losses || 0}-{u.ou_pushes || 0}</strong>
-                  </div>
-                  <div>
-                    BB: <span style={{ color: "#047857", fontWeight: 700 }}>{u.best_bet_wins || 0}</span>-<span style={{ color: NFL_RED, fontWeight: 700 }}>{u.best_bet_losses || 0}</span>
-                  </div>
+                <div style={{ marginTop: 10, fontSize: 13, color: "#475569" }}>
+                  Group: {entry.group_points || 0} pts <span aria-hidden="true">·</span> Knockout: {entry.bracket_points || 0} pts
                 </div>
-              </div>
+                <div style={{ marginTop: 8, fontSize: 13, color: "#475569" }}>
+                  Champion pick: {entry.champion_logo && (
+                    <img
+                      src={entry.champion_logo}
+                      alt=""
+                      style={{ width: 22, height: 16, objectFit: "contain", margin: "0 4px", verticalAlign: "middle" }}
+                    />
+                  )}
+                  {entry.champion_pick || "TBD"}
+                </div>
+              </article>
             );
           })}
-          {rankedStandings.length === 0 && (
-            <div style={{ background: WHITE, padding: "30px", textAlign: "center", color: "#64748b", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-              No entries found in the leaderboard yet.
-            </div>
-          )}
         </div>
-
       </div>
     </PoolGatekeeper>
   );
 }
 
-const thStyle = { padding: "14px 16px", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", borderBottom: `2px solid ${GOLD}` };
-const tdStyle = { padding: "14px 16px", fontSize: "14px" };
+const headerStyle = {
+  padding: "12px 10px",
+  textAlign: "center",
+  whiteSpace: "nowrap",
+  borderBottom: `2px solid ${GOLD}`,
+  fontSize: 12
+};
+
+const cellStyle = {
+  padding: "12px 10px",
+  borderBottom: "1px solid #e2e8f0"
+};
+
+const cardStyle = {
+  background: "white",
+  border: "1px solid #e2e8f0",
+  borderRadius: 10,
+  boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+  padding: 14,
+  marginBottom: 10
+};

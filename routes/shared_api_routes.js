@@ -1,4 +1,4 @@
-const { Users, Tokens, SyncStatus, GameSettings, CfbRegularSeasonGames } = require("../models");
+const { Users, Tokens, SyncStatus, PoolSettings, CfbRegularSeasonGames } = require("../models");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const { Op } = require("sequelize");
@@ -253,7 +253,7 @@ module.exports = function (app) {
         }
 
         try {
-            const SettingsModel = db.GameSettings || db.gameSettings || db.GameSetting || db.game_settings;
+            const SettingsModel = db.PoolSettings || db.gameSettings || db.GameSetting || db.game_settings;
             const allGames = await SettingsModel.findAll();
 
             const activePoolsSummary = [];
@@ -311,36 +311,81 @@ module.exports = function (app) {
         }
     });
 
+    /////////////////////////
+    ///////Game Settings/////
+    /////////////////////////
+
     app.get("/api/settings/active-states", async (req, res) => {
         try {
-            const SettingsModel = db.GameSettings || db.gameSettings || db.GameSetting || db.game_settings;
+            const SettingsModel = db.PoolSettings || db.gameSettings || db.GameSetting || db.game_settings;
 
             if (!SettingsModel) {
                 console.error("❌ Available Models inside your Sequelize index instance:", Object.keys(db));
-                return res.status(500).json({ error: "GameSettings model was not registered correctly by the database engine." });
+                return res.status(500).json({ error: "PoolSettings model was not registered correctly by the database engine." });
             }
 
             const records = await SettingsModel.findAll({
                 order: [['createdAt', 'ASC']]
             });
 
-            return res.json(records);
+            const recordsWithUserIds = await Promise.all(records.map(async (record) => {
+                const gameData = record.toJSON();
+                gameData.user_ids = [];
+
+                // 1. Get the pattern/name from database and build the proper model name key
+                const rawPattern = gameData.model_pattern || gameData.game_key;
+
+                // Convert snake_case or standard string to PascalCase + Entries (e.g., cfb_bowl_pickem -> CfbBowlPickemEntries)
+                const normalizedPascal = rawPattern
+                    .split('_')
+                    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+                    .join('');
+
+                const possibleModelNames = [
+                    `${normalizedPascal}Entries`,
+                    `${normalizedPascal}Entry`,
+                    `${rawPattern}_entries`,
+                    `${rawPattern}entries`
+                ];
+
+                let TargetModel = null;
+                for (const name of possibleModelNames) {
+                    if (db[name]) {
+                        TargetModel = db[name];
+                        break;
+                    }
+                }
+
+                // console.log(`🧩 Resolved model for ${gameData.game_key}:`, TargetModel ? "FOUND" : "NOT FOUND");
+
+                if (TargetModel && typeof TargetModel.findAll === 'function') {
+                    try {
+                        const entries = await TargetModel.findAll({ attributes: ['user_id'] });
+                        gameData.user_ids = entries.map(e => e.user_id);
+                    } catch (e) {
+                        console.error(`❌ Error querying entries for ${gameData.game_key}:`, e.message);
+                    }
+                } else {
+                    console.warn(`⚠️ No matching entries model found in db registry for game: ${gameData.game_key} (Tried patterns like ${possibleModelNames.join(', ')})`);
+                }
+
+                return gameData;
+            }));
+
+            return res.json(recordsWithUserIds);
         } catch (err) {
             console.error("❌ Error retrieving game dashboard data rows:", err);
             return res.status(500).json({ error: "Failed to resolve system activation properties." });
         }
     });
 
-    /////////////////////////
-    ///////Game Settings/////
-    /////////////////////////
     app.get("/api/settings/pool-started", async (req, res) => {
         try {
             const { game_key } = req.query;
             let started = false;
             const now = new Date();
 
-            const SettingsModel = db.GameSettings || db.gameSettings || db.GameSetting || db.game_settings;
+            const SettingsModel = db.PoolSettings || db.gameSettings || db.GameSetting || db.game_settings;
             if (SettingsModel) {
                 const setting = await SettingsModel.findOne({ where: { game_key } });
 
@@ -359,7 +404,7 @@ module.exports = function (app) {
                     }
                 }
 
-                // Fallback check via global GameSettings lock_date if dynamic schedule lookup isn't matched
+                // Fallback check via global PoolSettings lock_date if dynamic schedule lookup isn't matched
                 if (!started && setting && setting.lock_date) {
                     let lockStr = setting.lock_date;
                     if (typeof lockStr === 'string' && !lockStr.endsWith('Z') && !lockStr.includes('+')) {
@@ -377,6 +422,25 @@ module.exports = function (app) {
     });
 
 
+
+    ////////////////////////
+    /////Pool Metadata /////
+    ////////////////////////
+
+    app.get("/api/pools/metadata/:gameKey", async (req, res) => {
+        try {
+            const MetadataModel = db.PoolMetadata || db.pool_metadata;
+            const metadata = await MetadataModel.findOne({ where: { game_key: req.params.gameKey } });
+            if (!metadata) {
+                return res.status(404).json({ error: "Metadata not found" });
+            }
+            res.json(metadata);
+        } catch (err) {
+            console.error("Error fetching pool metadata:", err);
+            res.status(500).json({ error: "Failed to fetch metadata" });
+        }
+    });
+
     ////////////////////////
     //Countdown Component///
     ////////////////////////
@@ -385,9 +449,9 @@ module.exports = function (app) {
             const { game_key } = req.query;
             const now = new Date();
 
-            const SettingsModel = db.GameSettings || db.gameSettings || db.GameSetting || db.game_settings;
+            const SettingsModel = db.PoolSettings || db.gameSettings || db.GameSetting || db.game_settings;
             if (!SettingsModel) {
-                return res.status(500).json({ error: "GameSettings model not found" });
+                return res.status(500).json({ error: "PoolSettings model not found" });
             }
 
             // 1. Fetch settings for this pool

@@ -1,5 +1,5 @@
 import React from 'react'
-import ChangePassword from '../components/ChangePassword'
+import ChangePassword from '../components/PasswordReset'
 
 export default function ChangePasswordPage() {
 

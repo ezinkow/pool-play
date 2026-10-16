@@ -2,20 +2,11 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
+import AtsGroupGameHeader from "../../components/picks/AtsGroupGameHeader";
 
 const NFL_BLUE = "#0a1628";
 const GOLD = "#c89d3c";
 const NFL_RED = "#D50A0A";
-
-const PULSE_STYLE = {
-    width: "6px",
-    height: "6px",
-    backgroundColor: "#22c55e",
-    borderRadius: "50%",
-    display: "inline-block",
-    boxShadow: "0 0 0 rgba(34, 197, 94, 0.4)",
-    animation: "pulse 2s infinite"
-};
 
 export default function NflPickemAtsMatrix() {
     const { user, loading: authLoading } = useAuth();
@@ -264,120 +255,6 @@ export default function NflPickemAtsMatrix() {
         return { backgroundColor: "transparent" };
     };
 
-    const GameHeader = ({ game }) => {
-        const rawStatus = (game.status || "").toUpperCase();
-        const isFinal = rawStatus === "STATUS_FINAL" || rawStatus === "FINAL" || rawStatus === "COMPLETED" || (game.live_status && game.live_status.toLowerCase() === "final");
-        const isLive = !isFinal && (rawStatus === "STATUS_IN_PROGRESS" || rawStatus === "IN_PROGRESS" || rawStatus === "HALFTIME" || rawStatus === "STATUS_HALFTIME" || rawStatus === "LIVE" || rawStatus.includes("HALF") || rawStatus.includes("PROGRESS") || (game.live_status && game.live_status !== "Final" && !game.live_status.includes("AM") && !game.live_status.includes("PM")));
-        const hasScores = game.home_score !== null && game.home_score !== undefined && game.away_score !== null && game.away_score !== undefined;
-
-        const coveredTeam = game.ats_winner || game.winner;
-        const coveredLogo = coveredTeam === game.away_team ? game.away_logo : (coveredTeam === game.home_team ? game.home_logo : null);
-        const isFavCovered = coveredTeam === game.favorite;
-        const rawSpread = game.adjusted_spread !== null && game.adjusted_spread !== undefined ? parseFloat(game.adjusted_spread) : null;
-
-        const spreadLabel = rawSpread !== null ? (isFavCovered ? (rawSpread < 0 ? rawSpread : -Math.abs(rawSpread)) : (rawSpread > 0 ? `+${rawSpread}` : `+${Math.abs(rawSpread)}`)) : "";
-
-        const awayTeamMeta = teamColors[game.away_team] || {};
-        const homeTeamMeta = teamColors[game.home_team] || {};
-
-        const awayPrimary = game.away_color || awayTeamMeta.color || "#000000";
-        const awaySecondary = game.away_secondary_color || awayTeamMeta.secondaryColor || "#cbd5e1";
-
-        const homePrimary = game.home_color || homeTeamMeta.color || "#000000";
-        const homeSecondary = game.home_secondary_color || homeTeamMeta.secondaryColor || "#cbd5e1";
-
-        const favTeam = game.favorite;
-        const favTeamMeta = teamColors[favTeam] || {};
-        const favLogo = favTeam === game.away_team ? game.away_logo : (favTeam === game.home_team ? game.home_logo : favTeamMeta.logo);
-        const favPrimary = favTeam === game.away_team ? awayPrimary : (favTeam === game.home_team ? homePrimary : (favTeamMeta.color || "#000000"));
-        const favSecondary = favTeam === game.away_team ? awaySecondary : (favTeam === game.home_team ? homeSecondary : (favTeamMeta.secondaryColor || "#cbd5e1"));
-
-        const coveredMeta = teamColors[coveredTeam] || {};
-        const coveredPrimary = coveredTeam === game.away_team ? awayPrimary : (coveredTeam === game.home_team ? homePrimary : (coveredMeta.color || "#000000"));
-        const coveredSecondary = coveredTeam === game.away_team ? awaySecondary : (coveredTeam === game.home_team ? homeSecondary : (coveredMeta.secondaryColor || "#cbd5e1"));
-
-        const getBadgeStyle = (primaryColor, secondaryColor) => ({
-            background: secondaryColor,
-            borderRadius: 4,
-            padding: "2px 4px",
-            display: "inline-flex",
-            alignItems: "center",
-            boxShadow: `0 0 4px 1px ${primaryColor}, 0 1px 2px rgba(0,0,0,0.2)`,
-            border: `2px solid ${primaryColor}`,
-            margin: "2px"
-        });
-
-        const awayBadgeStyle = getBadgeStyle(awayPrimary, awaySecondary);
-        const homeBadgeStyle = getBadgeStyle(homePrimary, homeSecondary);
-        const favBadgeStyle = getBadgeStyle(favPrimary, favSecondary);
-        const coveredBadgeStyle = getBadgeStyle(coveredPrimary, coveredSecondary);
-
-        const liveStatusText = game.live_status || "LIVE";
-
-        return (
-            <div style={{ textAlign: "center", width: "100%", overflow: "visible" }}>
-                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 4, padding: "3px 2px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                        <span style={awayBadgeStyle}>
-                            {game.away_logo && <img src={game.away_logo} alt="" height={16} style={{ flexShrink: 0, objectFit: "contain" }} />}
-                        </span>
-                        <span style={{ fontSize: 11, fontWeight: 900, color: hasScores ? "#fef08a" : "#ffffff" }}>
-                            {hasScores ? game.away_score : "-"}
-                        </span>
-                    </div>
-                    <span style={{ fontSize: 10, color: "#cbd5e1" }}>@</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                        <span style={{ fontSize: 11, fontWeight: 900, color: hasScores ? "#fef08a" : "#ffffff" }}>
-                            {hasScores ? game.home_score : "-"}
-                        </span>
-                        <span style={homeBadgeStyle}>
-                            {game.home_logo && <img src={game.home_logo} alt="" height={16} style={{ flexShrink: 0, objectFit: "contain" }} />}
-                        </span>
-                    </div>
-                </div>
-
-                <div style={{ fontSize: 9, fontWeight: 700, margin: "3px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 3 }}>
-                    {isFinal ? (
-                        <span style={{ backgroundColor: "#16a34a", color: "white", padding: "1px 6px", borderRadius: 3 }}>FINAL</span>
-                    ) : isLive ? (
-                        <>
-                            <span style={PULSE_STYLE} />
-                            <span style={{ backgroundColor: NFL_RED, color: "white", padding: "1px 6px", borderRadius: 3 }}>{liveStatusText}</span>
-                        </>
-                    ) : (
-                        <span style={{ color: "#cbd5e1" }}>
-                            {game.game_date ? new Date(game.game_date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : "TBD"}
-                        </span>
-                    )}
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 3, height: 18 }}>
-                    {isFinal && coveredLogo && coveredTeam !== "PUSH" ? (
-                        <>
-                            <span style={coveredBadgeStyle}>
-                                <img src={coveredLogo} alt="" height={13} style={{ flexShrink: 0, objectFit: "contain" }} />
-                            </span>
-                            <span style={{ fontSize: 9, color: isFavCovered ? "#86efac" : "#fca5a5", fontWeight: 700 }}>
-                                {spreadLabel}
-                            </span>
-                        </>
-                    ) : (
-                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                            {favLogo && (
-                                <span style={favBadgeStyle}>
-                                    <img src={favLogo} alt={favTeam} height={12} style={{ flexShrink: 0, objectFit: "contain" }} />
-                                </span>
-                            )}
-                            <span style={{ fontSize: 9, color: GOLD, fontWeight: 600 }}>
-                                {rawSpread !== null ? (rawSpread < 0 ? rawSpread : `-${rawSpread}`) : "Pick'em"}
-                            </span>
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
-    };
-
     if (authLoading || currentWeek === null) return <div style={{ textAlign: "center", padding: 50 }}>Loading matrix...</div>;
 
     return (
@@ -530,7 +407,7 @@ export default function NflPickemAtsMatrix() {
                                             backgroundColor: game.must_pick ? "#b45309" : NFL_BLUE,
                                             overflow: "visible"
                                         }}>
-                                            <GameHeader game={game} />
+                                            <AtsGroupGameHeader game={game} teamColors={teamColors} liveColor={NFL_RED} teamColorField="color" />
                                         </th>
                                     ))}
                                 </tr>

@@ -1,5 +1,5 @@
 module.exports = function (sequelize, DataTypes) {
-    const NcaaTourneyPickemEntries = sequelize.define("NcaaTourneyPickemEntries", {
+    const NcaabTourneyPickemEntries = sequelize.define("NcaabTourneyPickemEntries", {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
@@ -17,17 +17,17 @@ module.exports = function (sequelize, DataTypes) {
             unique: true,
         },
     }, {
-        tableName: "ncaa_tourney_pickem_entries",
+        tableName: "ncaab_tourney_pickem_entries",
         timestamps: true,
         createdAt: "createdAt",
         updatedAt: false,
     });
 
     // 🧠 Standard association mapping block
-    NcaaTourneyPickemEntries.associate = function (models) {
-        // Lets you easily do NcaaTourneyPickemEntries.findAll({ include: [models.Users] }) later
-        NcaaTourneyPickemEntries.belongsTo(models.Users, { foreignKey: "user_id" });
+    NcaabTourneyPickemEntries.associate = function (models) {
+        // Lets you easily do NcaabTourneyPickemEntries.findAll({ include: [models.Users] }) later
+        NcaabTourneyPickemEntries.belongsTo(models.Users, { foreignKey: "user_id" });
     };
 
-    return NcaaTourneyPickemEntries;
+    return NcaabTourneyPickemEntries;
 };

@@ -1,10 +1,15 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Toaster, toast } from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import axios from "axios";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 import PoolCountdown from "../../components/CountdownDisplay";
+import PoolRulesCard from "../../components/PoolRulesCard";
+import PoolLoginPrompt from "../../components/PoolLoginPrompt";
+import usePoolMetadata from "../../hooks/usePoolMetadata";
+import PoolHomeActions from "../../components/PoolHomeActions";
+import { isPoolStarted as getIsPoolStarted } from "../../utils/poolStatus";
 
 const NFL_BLUE = "#013369";
 const NFL_RED = "#D50A0A";
@@ -12,6 +17,7 @@ const WHITE = "#FFFFFF";
 
 export default function NflBtsHome() {
   const { user, loading: authLoading, token } = useAuth();
+  const poolMetadata = usePoolMetadata("nfl_bts");
   const navigate = useNavigate();
   const [poolData, setPoolData] = useState(null);
   const [userEntries, setUserEntries] = useState([]);
@@ -84,19 +90,7 @@ export default function NflBtsHome() {
     loadData();
   }, [activeToken]);
 
-  const isPoolStarted = useMemo(() => {
-    if (!poolData) return false;
-    const dbActive = !!poolData.is_active;
-    let isPastLockTime = false;
-    if (poolData.lock_date) {
-      let lockDateStr = poolData.lock_date;
-      if (typeof lockDateStr === 'string' && !lockDateStr.endsWith('Z') && !lockDateStr.includes('+')) {
-        lockDateStr = lockDateStr.replace(' ', 'T') + 'Z';
-      }
-      isPastLockTime = new Date() >= new Date(lockDateStr);
-    }
-    return !dbActive || isPastLockTime;
-  }, [poolData]);
+  const isPoolStarted = getIsPoolStarted(poolData);
 
   const handleJoinPool = async (creditAmount) => {
     if (isPoolStarted) {
@@ -174,36 +168,7 @@ export default function NflBtsHome() {
       <div className="container" style={{ textAlign: "center", padding: "20px 16px", boxSizing: "border-box" }}>
 
         {!activeToken && !isPoolStarted && (
-          <div style={{
-            background: "#fffbeb",
-            border: "1px solid #fde68a",
-            borderRadius: 16,
-            padding: "20px 24px",
-            marginBottom: 24,
-            maxWidth: "950px",
-            margin: "0 auto 24px auto",
-            textAlign: "center",
-            boxShadow: "0 2px 12px rgba(0,0,0,0.05)"
-          }}>
-            <h4 style={{ color: "#92400e", margin: "0 0 8px 0", fontSize: "1.1rem" }}>
-              🔒 Account Required to Join Pool
-            </h4>
-            <p style={{ margin: "0 0 16px 0", color: "#78350f", fontSize: "14px", lineHeight: "1.5" }}>
-              You must be logged in or create an account before you can select a display name and join the pool.
-            </p>
-            <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap" }}>
-              <Link to="/login" style={{ textDecoration: "none" }}>
-                <button style={{ backgroundColor: NFL_BLUE, color: WHITE, border: "none", padding: "10px 20px", borderRadius: 8, fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}>
-                  Log In
-                </button>
-              </Link>
-              <Link to="/signup" style={{ textDecoration: "none" }}>
-                <button style={{ backgroundColor: WHITE, color: NFL_BLUE, border: `2px solid ${NFL_BLUE}`, padding: "10px 20px", borderRadius: 8, fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}>
-                  Create Account
-                </button>
-              </Link>
-            </div>
-          </div>
+          <PoolLoginPrompt accentColor={NFL_BLUE} maxWidth={950} />
         )}
 
         {/* Pool Join & Leave Section */}
@@ -292,17 +257,7 @@ export default function NflBtsHome() {
 
         {hasAnyEntry && (
           <PoolGatekeeper user={user} isAdmin={user?.is_admin === true} gameKey="nfl_bts">
-            <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", marginBottom: 20 }}>
-              <Link to="/nflbts/picks" style={{ textDecoration: 'none' }}>
-                <button className="btn-fb-secondary">🎯 Make Weekly Picks</button>
-              </Link>
-              <Link to="/nflbts/grouppicks" style={{ textDecoration: 'none' }}>
-                <button className="btn-fb-secondary">📊 Weekly Matrix</button>
-              </Link>
-              <Link to="/nflbts/standings" style={{ textDecoration: 'none' }}>
-                <button className="btn-fb-secondary">🏆 Division Standings</button>
-              </Link>
-            </div>
+            <PoolHomeActions gameKey="nfl_bts" />
 
             <a href="https://www.nfl.com/scores"
               target="_blank"
@@ -327,29 +282,11 @@ export default function NflBtsHome() {
           </PoolGatekeeper>
         )}
 
-        <div style={{
-          background: "white",
-          borderRadius: 16,
-          padding: "24px 20px",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
-          marginTop: 24,
-          marginBottom: 80,
-          borderTop: `4px solid ${NFL_RED}`,
-          textAlign: "left",
-          maxWidth: "850px",
-          margin: "24px auto 80px auto"
-        }}>
-          <h3 style={{ color: NFL_BLUE, marginTop: 0, marginBottom: 16, fontSize: "1.2rem", textAlign: 'center' }}>
-            📋 Beat The Spread: <br />Assigned Teams
-          </h3>
-          <ol style={{ paddingLeft: 20, lineHeight: "1.7", fontSize: "14px" }}>
-            <li><strong>Assigned Teams:</strong> You are randomly assigned <strong>two NFL teams</strong> for the entire season once the 16-player pool fills up.</li>
-            <li><strong>Weekly Commitment:</strong> Every week, you must pick both of your assigned teams' games Against The Spread (ATS) and make Over/Under guesses (used for tiebreakers).</li>
-            <li><strong>The Hook Rule:</strong> Whole number spreads are adjusted up or down based on their juice. -110 and lower moves down (ex. -3 to -2.5), while anything above -110 moves up (ex. -3 to -3.5)</li>
-            <li><strong>Divisions:</strong> Compete directly within your assigned NFL division based on ATS record (W-L).</li>
-            <li><strong>Privacy:</strong> Group picks on the matrix remain hidden until that specific team's game kicks off.</li>
-          </ol>
-        </div>
+        <PoolRulesCard
+          title={poolMetadata?.pool_title || "Beat The Spread: Assigned Teams"}
+          rulesHtml={poolMetadata?.rules_html}
+          accentColor={poolMetadata?.accent_color || NFL_RED}
+        />
       </div>
 
       <style>{`

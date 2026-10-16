@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import PoolHomeActions from "../../components/PoolHomeActions";
 
 export default function Home() {
   return (
@@ -13,9 +14,7 @@ export default function Home() {
           </p>
 
           <div className="hero-actions">
-            <Link to="/nfl/standings" className="primary-btn">
-              View Leaderboard
-            </Link>
+            <PoolHomeActions gameKey="nfl_playoffs" />
 
             <a
               href="https://www.nfl.com/scores"

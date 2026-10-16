@@ -99,7 +99,7 @@ export default function HrdDraft() {
     if (authLoading || loading) return <div style={{ textAlign: "center", padding: 50 }}>Loading Derby draft pool...</div>;
 
     return (
-        <PoolGatekeeper user={user} gameKey="home_run_derby" >
+        <PoolGatekeeper user={user} gameKey="mlb_hrd" >
             <div style={{ maxWidth: 1000, margin: "0 auto", padding: "20px 16px", paddingBottom: 90, paddingTop: 90 }}>
                 <Toaster />
 

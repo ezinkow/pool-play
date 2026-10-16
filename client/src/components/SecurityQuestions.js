@@ -17,15 +17,6 @@ export default function SecuritySettings() {
     const [currentPassword, setCurrentPassword] = useState("");
     const [loading, setLoading] = useState(true);
 
-    const inputStyle = {
-        padding: "10px 12px",
-        borderRadius: 8,
-        border: "1px solid #d1d5db",
-        fontSize: 14,
-        width: "100%",
-        boxSizing: "border-box",
-    };
-
     useEffect(() => {
         const token = localStorage.getItem("token");
         axios.get("/api/auth/security-question", {
@@ -69,22 +60,22 @@ export default function SecuritySettings() {
     if (loading) return null;
 
     return (
-        <div style={{ maxWidth: 500, margin: "40px auto", background: "white", borderRadius: 16, padding: "32px 28px", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
+        <section className="security-panel">
             <Toaster />
-            <h3 style={{ color: "#0a1628", marginTop: 0, marginBottom: 8, textAlign: "center" }}>🛡️ Security Question Settings</h3>
-            <p style={{ color: "#6b7280", fontSize: 13, textAlign: "center", marginBottom: 24 }}>
+            <h2 className="security-panel-title">🛡️ Security Question Settings</h2>
+            <p className="security-panel-description">
                 Configure or update your recovery question used for password resets.
             </p>
 
-            <form onSubmit={handleUpdate} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <form onSubmit={handleUpdate} className="security-panel-form">
                 <div>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 4, display: "block" }}>
+                    <label className="security-panel-label">
                         Select Security Question
                     </label>
                     <select
                         value={securityQuestion}
                         onChange={(e) => setSecurityQuestion(e.target.value)}
-                        style={inputStyle}
+                        className="security-panel-input"
                     >
                         {SECURITY_QUESTIONS.map((q, idx) => (
                             <option key={idx} value={q}>{q}</option>
@@ -93,7 +84,7 @@ export default function SecuritySettings() {
                 </div>
 
                 <div>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 4, display: "block" }}>
+                    <label className="security-panel-label">
                         Security Answer
                     </label>
                     <input
@@ -101,13 +92,13 @@ export default function SecuritySettings() {
                         value={securityAnswer}
                         onChange={(e) => setSecurityAnswer(e.target.value)}
                         placeholder="Enter new answer"
-                        style={inputStyle}
+                        className="security-panel-input"
                         required
                     />
                 </div>
 
                 <div>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 4, display: "block" }}>
+                    <label className="security-panel-label">
                         Current Password (Required for confirmation)
                     </label>
                     <input
@@ -115,22 +106,22 @@ export default function SecuritySettings() {
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
                         placeholder="Enter current password"
-                        style={inputStyle}
+                        className="security-panel-input"
                         required
                     />
                 </div>
 
-                <button
-                    type="submit"
-                    style={{
-                        marginTop: 8, padding: "12px 20px", backgroundColor: "#0a1628",
-                        color: "white", border: "none", borderRadius: 8, fontWeight: 700,
-                        cursor: "pointer", fontSize: "14px"
-                    }}
-                >
+                <button type="submit" className="security-panel-submit">
                     Save Security Question
                 </button>
             </form>
-        </div>
+            <br></br>
+            <p className="security-panel-note">
+                *Note: If you did not set a security question when you signed up, use: <br />
+                "What is your mother's maiden name?" <br />
+                and your answer is "Smith" (without quotes).<br />
+                This is the default for all accounts created before this enhancement.
+            </p>
+        </section>
     );
 }
