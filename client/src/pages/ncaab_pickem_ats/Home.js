@@ -157,6 +157,7 @@ export default function NcaabPickemAtsHome() {
         {!activeToken && <PoolLoginPrompt accentColor={NCAA_BLUE} />}
 
         <PoolJoinCard
+          gameKey="ncaab_pickem_ats"
           poolTitle={poolMetadata?.pool_title || "NCAAB ATS Pick'em Pool"}
           userEntry={userEntry}
           isPoolStarted={isPoolStarted}

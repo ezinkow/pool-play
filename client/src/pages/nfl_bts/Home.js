@@ -283,6 +283,7 @@ export default function NflBtsHome() {
         )}
 
         <PoolRulesCard
+          gameKey="nfl_bts"
           title={poolMetadata?.pool_title || "Beat The Spread: Assigned Teams"}
           rulesHtml={poolMetadata?.rules_html}
           accentColor={poolMetadata?.accent_color || NFL_RED}

@@ -124,6 +124,7 @@ export default function NbaSurvivorHome() {
         {!activeToken && <PoolLoginPrompt accentColor={NBA_BLUE} />}
 
         <PoolJoinCard
+          gameKey="nba_survivor"
           poolTitle={poolMetadata?.pool_title || "NBA Survivor Pool"}
           userEntry={userEntry}
           isPoolStarted={isPoolStarted}

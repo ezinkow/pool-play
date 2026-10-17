@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import CountdownDisplay from '../../components/CountdownDisplay'
 import PoolRulesCard from '../../components/PoolRulesCard'
+import PoolCreditsSubtitle from '../../components/PoolCreditsSubtitle'
 
 const GOLD = "#c89d3c";
 const BLUE = "#0369a1";
@@ -26,7 +27,8 @@ export default function SquaresHome() {
                         <span aria-hidden="true">💰</span><span>Results</span>
                     </Link>
                 </nav>
-                <PoolRulesCard title="Game Rules" accentColor={GOLD} subtitle="" className="compact-card">
+                <PoolCreditsSubtitle gameKey="tourney_squares" />
+                <PoolRulesCard gameKey="tourney_squares" title="Game Rules" accentColor={GOLD} subtitle="" className="compact-card">
                     <div style={{ fontSize: 14, lineHeight: 1.8 }}>
                         <p><strong>For Fun!</strong> — 100 squares total.</p>
                         <p>After all squares are claimed, numbers (0–9) are randomly assigned to each row and column.</p>

@@ -1,6 +1,8 @@
 import React from "react";
+import PoolCreditsSubtitle from "./PoolCreditsSubtitle";
 
 export default function PoolJoinCard({
+    gameKey,
     poolTitle,
     poolEmoji,
     userEntry,
@@ -30,6 +32,7 @@ export default function PoolJoinCard({
                 {displayIcon ? " " : ""}
                 {displayIcon && <span className="pool-reversed-icon">{displayIcon}</span>}
             </h3>
+            {gameKey && <PoolCreditsSubtitle gameKey={gameKey} />}
 
             {userEntry ? (
                 <div className="pool-join-status">

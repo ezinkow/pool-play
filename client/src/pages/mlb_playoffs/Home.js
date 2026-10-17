@@ -130,6 +130,7 @@ export default function MlbHome() {
         {!activeToken && <PoolLoginPrompt accentColor={NAVY} />}
 
         <PoolJoinCard
+          gameKey="mlb_playoffs"
           poolTitle={poolMetadata?.pool_title || "MLB Playoff Pool Entry"}
           userEntry={userEntry}
           isPoolStarted={isPoolStarted}

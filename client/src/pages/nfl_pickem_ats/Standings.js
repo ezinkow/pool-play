@@ -5,12 +5,14 @@ import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
 import PickemStandingsBoard from "../../components/picks/PickemStandingsBoard";
 import rankPickemStandings from "../../utils/rankPickemStandings";
+import usePoolTitle from "../../hooks/usePoolTitle";
 
 const NFL_BLUE = "#013369";
 const NFL_RED = "#D50A0A";
 
 export default function NflPickemAtsStandings() {
     const { user: currentUser } = useAuth();
+    const poolTitle = usePoolTitle("nfl_pickem_ats", "Pick'em");
     const [standings, setStandings] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -43,7 +45,7 @@ export default function NflPickemAtsStandings() {
             <div style={{ maxWidth: "900px", margin: "0 auto", padding: "8px", paddingBottom: '100px' }}>
                 <Toaster />
                 <div style={{ textAlign: "center", marginBottom: 20 }}>
-                    <h2 style={{ color: NFL_BLUE, fontWeight: 900, fontSize: "26px", margin: 0 }}>Pick'em Standings</h2>
+                    <h2 style={{ color: NFL_BLUE, fontWeight: 900, fontSize: "26px", margin: 0 }}>{poolTitle} Standings</h2>
                     <p style={{ color: "#666", marginTop: 6, fontSize: "14px" }}>
                         Leaderboard ranked by total points (Best Bets count for 2 points).
                     </p>

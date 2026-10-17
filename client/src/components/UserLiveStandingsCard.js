@@ -31,17 +31,21 @@ function getStandingsList(data) {
     return Array.isArray(list) ? list : [];
 }
 
-function getUserSpot(data, user, { userIdField, nameField } = {}) {
-    const standings = getStandingsList(data);
-    const userIndex = standings.findIndex(entry =>
+function findUserEntry(data, user, { userIdField, nameField } = {}) {
+    return getStandingsList(data).find(entry =>
         String(entry.user_id ?? entry.userId ?? "") === String(user.id)
         || (userIdField && entry[userIdField] != null && String(entry[userIdField]) === String(user.id))
         || (nameField && entry[nameField] && entry[nameField] === user.name)
     );
+}
+
+function getUserSpot(data, user, config) {
+    const standings = getStandingsList(data);
+    const entry = findUserEntry(data, user, config);
+    const userIndex = standings.indexOf(entry);
 
     if (userIndex < 0) return null;
 
-    const entry = standings[userIndex];
     const rank = Number(entry.rank ?? entry.position ?? entry.place);
     return Number.isFinite(rank) && rank > 0 ? rank : userIndex + 1;
 }
@@ -79,13 +83,10 @@ function getBtsRecords(data, userId) {
 
             const atsWins = Number(userRecord[`ats_wins_${teamNumber}`]) || 0;
             const atsLosses = Number(userRecord[`ats_losses_${teamNumber}`]) || 0;
-            const ouWins = Number(userRecord[`ou_wins_${teamNumber}`]) || 0;
-            const ouLosses = Number(userRecord[`ou_losses_${teamNumber}`]) || 0;
-            const ouPushes = Number(userRecord[`ou_pushes_${teamNumber}`]) || 0;
 
             return {
                 label: team,
-                value: `ATS ${atsWins}-${atsLosses} · O/U ${ouWins}-${ouLosses}${ouPushes ? `-${ouPushes}` : ""}`,
+                value: `${atsWins}-${atsLosses}`,
             };
         })
         .filter(Boolean);
@@ -125,7 +126,6 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                     const gameKey = pool.game_key;
                     const endpointConfig = STANDINGS_ENDPOINTS[gameKey];
                     const survivorEndpoint = SURVIVOR_ENTRY_ENDPOINTS[gameKey];
-
                     if (survivorEndpoint) {
                         try {
                             const response = await axios.get(survivorEndpoint, {
@@ -136,7 +136,7 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                                 gameKey,
                                 label: pool.game_label || gameKey,
                                 route: pool.prefix,
-                                linkTo: pool.prefix,
+                                 linkTo: `${pool.prefix}/grouppicks`,
                                 status: getSurvivorStatus(entry),
                             };
                         } catch (error) {
@@ -166,12 +166,13 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                         const response = await axios.get(config.url, {
                             headers: token ? { Authorization: `Bearer ${token}` } : {},
                         });
+                        const linkTo = `${pool.prefix}/standings`;
                         if (gameKey === "nfl_bts") {
                             return {
                                 gameKey,
                                 label: pool.game_label || gameKey,
                                 route: pool.prefix,
-                                linkTo: pool.prefix,
+                                linkTo,
                                 records: getBtsRecords(response.data, user.id),
                             };
                         }
@@ -179,7 +180,7 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                             gameKey,
                             label: pool.game_label || gameKey,
                             route: pool.prefix,
-                            linkTo: `${pool.prefix}/standings`,
+                            linkTo,
                             rank: getUserSpot(response.data, user, config),
                         };
                     } catch (error) {
@@ -263,7 +264,7 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                         ))}
                     </div>
                 )}
-                </div>
+            </div>
         </section>
     );
 }

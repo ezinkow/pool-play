@@ -178,8 +178,8 @@ function MainLayout({ isDarkMode }) {
         <div className="home-main-col">
           <Outlet context={{ isDarkMode }} />
         </div>
-        <aside className={`home-right-col${isHome ? "" : " home-right-col--empty"}`}>
-          {isHome && <UserLiveStandingsCard isDarkMode={isDarkMode} />}
+        <aside className={`home-right-col${isHome ? "" : " home-right-col--mobile-hidden"}`}>
+          <UserLiveStandingsCard isDarkMode={isDarkMode} />
         </aside>
       </div>
     </div>

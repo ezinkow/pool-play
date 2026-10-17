@@ -2,6 +2,7 @@ import React from 'react'
 import CountdownDisplay from '../../components/champweek_pickem/CountdownDisplay'
 import CountdownNextGameLock from '../../components/champweek_pickem/CountdownNextGameLock'
 import PoolHomeActions from '../../components/PoolHomeActions'
+import PoolCreditsSubtitle from '../../components/PoolCreditsSubtitle'
 
 export default function Home() {
     return (
@@ -10,6 +11,7 @@ export default function Home() {
                 {/* <CountdownDisplay /> */}
                 <CountdownNextGameLock />
                 <div className='container'>
+                    <PoolCreditsSubtitle gameKey="ncaab_champ_week_pickem" />
                     <PoolHomeActions gameKey="ncaab_champ_week_pickem" />
                     <br />
                     <strong>The game:</strong><br />

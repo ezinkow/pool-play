@@ -145,6 +145,7 @@ export default function CfbBowlConfidenceHome() {
         )}
 
         <PoolJoinCard
+          gameKey="cfb_bowl_pickem"
           poolTitle={poolMetadata?.pool_title || "College Bowl Confidence Pick'em"}
           userEntry={userEntry}
           isPoolStarted={isPoolStarted}

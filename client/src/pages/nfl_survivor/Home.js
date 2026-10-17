@@ -140,6 +140,7 @@ export default function NflSurvivorHome() {
         {!activeToken && <PoolLoginPrompt accentColor={NFL_BLUE} />}
 
         <PoolJoinCard
+          gameKey="nfl_survivor"
           poolTitle={poolMetadata?.pool_title || "NFL Survivor Pool"}
           userEntry={userEntry}
           isPoolStarted={isPoolStarted}

@@ -361,13 +361,13 @@ export default function Navbar({ isDarkMode, toggleTheme }) {
                     onClick={() => setChatOpen(true)}
                     style={{
                         position: "fixed",
-                        top: "54px",
-                        right: "24px",
+                        top: "40px",
+                        right: "-8px",
                         zIndex: 2050,
                         backgroundColor: "transparent",
                         border: "none",
                         padding: "4px",
-                        fontSize: "30px",
+                        fontSize: "33px",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",

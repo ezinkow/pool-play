@@ -48,7 +48,7 @@ export default function Standings() {
 
     return (
         <PoolGatekeeper user={user} gameKey="mlb_playoffs" >
-            <div style={{ maxWidth: 950, margin: "0 auto", padding: "16px 8px", paddingBottom: 100, fontFamily: "system-ui, -apple-system, sans-serif" }}>
+            <div className="mlb-playoffs-standings-page" style={{ maxWidth: 950, margin: "0 auto", padding: "16px 8px", paddingBottom: 100, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 
                 {/* Header Banner */}
                 <div style={{ textAlign: "center", marginBottom: 16 }}>
@@ -61,7 +61,7 @@ export default function Standings() {
                 </div>
 
 {/* Standings Table Container */}
-                <div style={{
+                <div className="mlb-playoffs-standings-table" style={{
                     background: "white",
                     borderRadius: 8,
                     boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
@@ -69,7 +69,7 @@ export default function Standings() {
                     width: "100%",
                     overflow: "hidden"
                 }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", tableLayout: "fixed" }}>
+                    <table className="mlb-playoffs-standings-grid" style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", tableLayout: "fixed" }}>
                         <thead>
                             <tr style={{ backgroundColor: NAVY, color: "white", borderBottom: `2px solid ${GOLD}` }}>
                                 <th style={{ padding: "8px 6px", fontSize: "11px" }}>Participant</th>
@@ -98,13 +98,14 @@ export default function Standings() {
                                     return (
                                         <tr
                                             key={standing.id || entryName || idx}
+                                            className={`mlb-playoffs-standings-row${isCurrentUser ? " mlb-playoffs-standings-row--current-user" : ""}`}
                                             style={{
                                                 borderBottom: "1px solid #f1f5f9",
                                                 backgroundColor: isCurrentUser ? "#eff6ff" : (idx % 2 === 0 ? "#fafafa" : "white"),
                                                 transition: "background-color 0.15s ease"
                                             }}
                                         >
-                                            <td style={{ 
+                                            <td className="mlb-playoffs-standings-name" style={{
                                                 padding: "8px 6px", 
                                                 fontWeight: isCurrentUser ? 800 : 600, 
                                                 fontSize: "12px", 
@@ -113,20 +114,20 @@ export default function Standings() {
                                                 overflow: "hidden", 
                                                 textOverflow: "ellipsis" 
                                             }}>
-                                                {entryName} {isCurrentUser && <span style={{ color: NAVY, fontWeight: 700, fontSize: "10px", marginLeft: 2 }}>(You)</span>}
+                                                {entryName} {isCurrentUser && <span className="mlb-playoffs-standings-you" style={{ color: NAVY, fontWeight: 700, fontSize: "10px", marginLeft: 2 }}>(You)</span>}
                                             </td>
-                                            <td style={{ padding: "8px 4px", textAlign: "center", fontSize: "11px", color: "#334155", fontWeight: 600 }}>
+                                            <td className="mlb-playoffs-standings-record" style={{ padding: "8px 4px", textAlign: "center", fontSize: "11px", color: "#334155", fontWeight: 600 }}>
                                                 {correctSeries}–{incorrectSeries}
                                             </td>
-                                            <td style={{ padding: "8px 4px", textAlign: "center", fontSize: "11px", color: "#d97706", fontWeight: 700 }}>
+                                            <td className="mlb-playoffs-standings-bonus" style={{ padding: "8px 4px", textAlign: "center", fontSize: "11px", color: "#d97706", fontWeight: 700 }}>
                                                 {standing.correct_lengths ?? 0}
                                             </td>
                                             {isFinalsStartedOrLocked && (
-                                                <td style={{ padding: "8px 4px", textAlign: "center", fontSize: "11px", color: "#64748b", fontWeight: 600 }}>
+                                                <td className="mlb-playoffs-standings-tiebreak" style={{ padding: "8px 4px", textAlign: "center", fontSize: "11px", color: "#64748b", fontWeight: 600 }}>
                                                     {standing.tiebreaker !== null && standing.tiebreaker !== undefined ? `${standing.tiebreaker}` : "—"}
                                                 </td>
                                             )}
-                                            <td style={{ padding: "8px 8px", textAlign: "right", fontWeight: 900, fontSize: "12px", color: NAVY }}>
+                                            <td className="mlb-playoffs-standings-points" style={{ padding: "8px 8px", textAlign: "right", fontWeight: 900, fontSize: "12px", color: NAVY }}>
                                                 {standing.points ?? 0}
                                             </td>
                                         </tr>

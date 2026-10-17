@@ -140,6 +140,7 @@ export default function NflPickemAtsHome() {
         {!activeToken && <PoolLoginPrompt accentColor={NFL_BLUE} />}
 
         <PoolJoinCard
+          gameKey="nfl_pickem_ats"
           poolTitle={poolMetadata?.pool_title || "Standard ATS Pick'em Pool"}
           poolEmoji={poolMetadata?.emoji}
           userEntry={userEntry}

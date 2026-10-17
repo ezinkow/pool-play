@@ -74,6 +74,7 @@ export default function Home() {
         </PoolGatekeeper>
 
         <PoolRulesCard
+          gameKey="worldcup"
           title={poolMetadata?.pool_title || "World Cup Pool"}
           rulesHtml={poolMetadata?.rules_html}
           accentColor={poolMetadata?.accent_color || GOLD}

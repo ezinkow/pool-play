@@ -60,6 +60,7 @@ export default function Home() {
                 </PoolGatekeeper>
 
                 <PoolRulesCard
+                    gameKey="nba_playoffs"
                     title={poolMetadata?.pool_title || "NBA Playoff Pool"}
                     rulesHtml={poolMetadata?.rules_html}
                     accentColor={poolMetadata?.accent_color || GOLD}

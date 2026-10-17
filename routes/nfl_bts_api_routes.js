@@ -528,11 +528,13 @@ module.exports = function (app) {
                     ats_losses_1: team1Stats.ats_losses,
                     ou_wins_1: team1Stats.ou_wins,
                     ou_losses_1: team1Stats.ou_losses,
+                    ou_pushes_1: team1Stats.ou_pushes,
 
                     ats_wins_2: team2Stats.ats_wins,
                     ats_losses_2: team2Stats.ats_losses,
                     ou_wins_2: team2Stats.ou_wins,
                     ou_losses_2: team2Stats.ou_losses,
+                    ou_pushes_2: team2Stats.ou_pushes,
 
                     ats_wins: team1Stats.ats_wins + team2Stats.ats_wins,
                     ats_losses: team1Stats.ats_losses + team2Stats.ats_losses,

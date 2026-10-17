@@ -34,7 +34,7 @@ export default function PickemStandingsBoard({
         overflow: "hidden",
         border: "1px solid #e2e8f0"
       }}>
-        <table style={{
+        <table className="pickem-standings-table" style={{
           width: "100%",
           background: WHITE,
           fontSize: 13,
@@ -56,11 +56,11 @@ export default function PickemStandingsBoard({
             {standings.map((entry) => {
               const isCurrentUser = entry.user_id === currentUser?.id;
               return (
-                <tr key={entry.user_id} className={isCurrentUser ? "pickem-standings-current-user" : undefined} style={{
+                <tr key={entry.user_id} className={`pickem-standings-row${isCurrentUser ? " pickem-standings-current-user" : ""}`} style={{
                   borderBottom: "1px solid #edf2f7",
                   backgroundColor: isCurrentUser ? "#fffbeb" : "transparent"
                 }}>
-                  <td style={{
+                  <td className="pickem-standings-rank" style={{
                     ...bodyCellStyle,
                     textAlign: "center",
                     fontWeight: 800,
@@ -84,14 +84,14 @@ export default function PickemStandingsBoard({
                       </span>
                     )}
                   </td>
-                  <td style={{ ...bodyCellStyle, textAlign: "center", color: "#334155" }}>
+                  <td className="pickem-standings-record" style={{ ...bodyCellStyle, textAlign: "center", color: "#334155" }}>
                     {entry.wins || 0} - {entry.losses || 0}
                   </td>
                   {showBestBets && (
-                    <td style={{ ...bodyCellStyle, textAlign: "center", color: "#334155" }}>
-                      <span style={{ color: "#047857", fontWeight: 700 }}>{entry.best_bet_wins || 0}</span>
+                    <td className="pickem-standings-record" style={{ ...bodyCellStyle, textAlign: "center", color: "#334155" }}>
+                      <span className="pickem-standings-win" style={{ color: "#047857", fontWeight: 700 }}>{entry.best_bet_wins || 0}</span>
                       {" - "}
-                      <span style={{ color: lossColor, fontWeight: 700 }}>{entry.best_bet_losses || 0}</span>
+                      <span className="pickem-standings-loss" style={{ color: lossColor, fontWeight: 700 }}>{entry.best_bet_losses || 0}</span>
                     </td>
                   )}
                   <td className="pickem-standings-points" style={{
@@ -136,7 +136,7 @@ export default function PickemStandingsBoard({
                 alignItems: "center",
                 marginBottom: 8
               }}>
-                <span style={{ fontWeight: 800, fontSize: 15, color: "#0f172a" }}>
+                <span className="pickem-standings-mobile-name" style={{ fontWeight: 800, fontSize: 15, color: "#0f172a" }}>
                   <span style={{ marginRight: 6 }}>{renderRank(entry.rank)}</span> {entry.entry_name}
                   {isCurrentUser && (
                     <span style={{
@@ -164,13 +164,13 @@ export default function PickemStandingsBoard({
                 fontSize: 12,
                 color: "#6b7280"
               }}>
-                <div>
-                  Record: <strong style={{ color: "#334155" }}>{entry.wins || 0}-{entry.losses || 0}</strong>
+                <div className="pickem-standings-mobile-record">
+                  Record: <strong>{entry.wins || 0}-{entry.losses || 0}</strong>
                 </div>
                 {showBestBets && (
-                  <div>
-                    Best Bets: <span style={{ color: "#047857", fontWeight: 700 }}>{entry.best_bet_wins || 0}</span>
-                    -<span style={{ color: lossColor, fontWeight: 700 }}>{entry.best_bet_losses || 0}</span>
+                  <div className="pickem-standings-mobile-record">
+                    Best Bets: <span className="pickem-standings-win" style={{ color: "#047857", fontWeight: 700 }}>{entry.best_bet_wins || 0}</span>
+                    -<span className="pickem-standings-loss" style={{ color: lossColor, fontWeight: 700 }}>{entry.best_bet_losses || 0}</span>
                   </div>
                 )}
               </div>

@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import PoolHomeActions from "../../components/PoolHomeActions";
 import PoolEmoji from "../../components/PoolEmoji";
+import PoolCreditsSubtitle from "../../components/PoolCreditsSubtitle";
 
 export default function Home() {
   return (
@@ -9,6 +10,7 @@ export default function Home() {
       <div className="home-hero">
         <div className="hero-content">
           <h1><PoolEmoji gameKey="nfl_playoffs" /> NFL Playoff Pool</h1>
+          <PoolCreditsSubtitle gameKey="nfl_playoffs" />
           <p>
             Build your roster. Start your guys.
             Most points wins.

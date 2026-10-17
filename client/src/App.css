@@ -759,11 +759,194 @@ button {
 }
 
 .dark-mode .pickem-standings-board .pickem-standings-points {
-  color: var(--pickem-accent) !important;
+  color: #fcd34d !important;
 }
 
 .dark-mode .pickem-standings-board .pickem-standings-current-user {
-  background-color: rgba(200, 157, 60, 0.18) !important;
+  background-color: #354359 !important;
+  box-shadow: inset 4px 0 #f3c969;
+}
+
+.dark-mode .pickem-standings-board tbody tr:nth-child(even):not(.pickem-standings-current-user) {
+  background-color: #22334b !important;
+}
+
+.dark-mode .pickem-standings-board .pickem-standings-desktop {
+  border-color: #53647b !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark-mode .pickem-standings-board .pickem-standings-table {
+  background: #142136 !important;
+}
+
+.dark-mode .pickem-standings-board .pickem-standings-row {
+  background-color: #142136 !important;
+  border-bottom-color: #53647b !important;
+}
+
+.dark-mode .pickem-standings-board .pickem-standings-row:nth-child(even):not(.pickem-standings-current-user) {
+  background-color: #22334b !important;
+}
+
+.dark-mode .pickem-standings-board .pickem-standings-rank,
+.dark-mode .pickem-standings-board .pickem-standings-record,
+.dark-mode .pickem-standings-board .pickem-standings-entry-name,
+.dark-mode .pickem-standings-board .pickem-standings-mobile-name,
+.dark-mode .pickem-standings-board .pickem-standings-mobile-record {
+  color: #f8fafc !important;
+}
+
+.dark-mode .pickem-standings-board .pickem-standings-win {
+  color: #6ee7b7 !important;
+}
+
+.dark-mode .pickem-standings-board .pickem-standings-loss {
+  color: #fca5a5 !important;
+}
+
+.nfl-bts-division-card {
+  color: #172033;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+}
+
+.nfl-bts-division-row {
+  color: #172033;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.nfl-bts-division-row:nth-child(even) {
+  background: #f1f5f9;
+}
+
+.nfl-bts-division-row--current-user {
+  background: #fffbeb !important;
+}
+
+.nfl-bts-team-name {
+  color: #475569;
+}
+
+.nfl-bts-record {
+  color: #172033;
+}
+
+.nfl-bts-record--ou {
+  color: #475569;
+}
+
+.dark-mode .nfl-bts-division-card {
+  color: #f8fafc;
+  background: #101b2c;
+  border-color: #53647b;
+}
+
+.dark-mode .nfl-bts-division-row {
+  color: #f8fafc;
+  background: #142136;
+  border-bottom-color: #53647b;
+}
+
+.dark-mode .nfl-bts-division-row:nth-child(even) {
+  background: #22334b;
+}
+
+.dark-mode .nfl-bts-division-row--current-user {
+  background: #354359 !important;
+  box-shadow: inset 4px 0 #f3c969;
+}
+
+.dark-mode .nfl-bts-team-name,
+.dark-mode .nfl-bts-record--ou {
+  color: #e2e8f0;
+}
+
+.dark-mode .nfl-bts-record {
+  color: #ffffff;
+}
+
+.dark-mode .mlb-playoffs-standings-page .mlb-playoffs-standings-table {
+  background: #101b2c !important;
+  border-color: #53647b !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark-mode .mlb-playoffs-standings-page .mlb-playoffs-standings-grid {
+  background: #142136 !important;
+}
+
+.dark-mode .mlb-playoffs-standings-page .mlb-playoffs-standings-row {
+  background-color: #142136 !important;
+  border-bottom-color: #53647b !important;
+}
+
+.dark-mode .mlb-playoffs-standings-page .mlb-playoffs-standings-row:nth-child(even) {
+  background-color: #22334b !important;
+}
+
+.dark-mode .mlb-playoffs-standings-page .mlb-playoffs-standings-row--current-user {
+  background-color: #354359 !important;
+  box-shadow: inset 4px 0 #f3c969;
+}
+
+.dark-mode .mlb-playoffs-standings-page .mlb-playoffs-standings-name,
+.dark-mode .mlb-playoffs-standings-page .mlb-playoffs-standings-record,
+.dark-mode .mlb-playoffs-standings-page .mlb-playoffs-standings-tiebreak {
+  color: #f8fafc !important;
+}
+
+.dark-mode .mlb-playoffs-standings-page .mlb-playoffs-standings-you {
+  color: #fcd34d !important;
+}
+
+.dark-mode .mlb-playoffs-standings-page .mlb-playoffs-standings-bonus {
+  color: #fbbf24 !important;
+}
+
+.dark-mode .mlb-playoffs-standings-page .mlb-playoffs-standings-points {
+  color: #fcd34d !important;
+}
+
+.dark-mode .survivor-group-matrix.survivor-group-matrix-surface {
+  background: #101b2c !important;
+  border-color: #53647b !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark-mode .survivor-group-matrix .survivor-group-matrix-table {
+  background: #142136 !important;
+}
+
+.dark-mode .survivor-group-matrix .survivor-group-matrix-row {
+  background-color: #142136 !important;
+  border-bottom-color: #53647b !important;
+}
+
+.dark-mode .survivor-group-matrix .survivor-group-matrix-row:nth-child(even) {
+  background-color: #22334b !important;
+}
+
+.dark-mode .survivor-group-matrix .survivor-group-matrix-row--current-user {
+  background-color: #354359 !important;
+  box-shadow: inset 4px 0 #f3c969;
+}
+
+.dark-mode .survivor-group-matrix .survivor-group-matrix-name {
+  color: #f8fafc !important;
+}
+
+.dark-mode .survivor-group-matrix .survivor-group-matrix-no-pick {
+  color: #dbeafe !important;
+}
+
+.dark-mode .survivor-group-matrix .survivor-group-matrix-alive {
+  color: #4ade80 !important;
+}
+
+.dark-mode .survivor-group-matrix .survivor-group-matrix-eliminated {
+  color: #f87171 !important;
 }
 
 /* Bring legacy inline light surfaces into the current theme. */
@@ -984,6 +1167,14 @@ button {
   border-radius: 16px;
   box-shadow: var(--surface-shadow);
   text-align: left;
+}
+
+.pool-credits-subtitle {
+  margin: 4px 0 16px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
 }
 
 .pool-login-prompt {
@@ -2846,7 +3037,7 @@ button {
 @media (min-width: 1024px) {
   .home-layout-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 850px) minmax(0, 1fr);
+    grid-template-columns: minmax(150px, 240px) minmax(0, 850px) minmax(150px, 240px);
     justify-content: center;
     gap: 24px;
     align-items: start;
@@ -2863,7 +3054,7 @@ button {
   .home-sidebar-col,
   .home-right-col {
     display: block !important;
-    visibility: hidden;
+    visibility: visible;
     min-width: 0;
   }
 
@@ -2919,9 +3110,13 @@ button {
 }
 
 @media (min-width: 1024px) and (max-width: 1279px) {
-  .home-sidebar-col,
-  .home-right-col {
-    display: block !important;
-    visibility: hidden;
+  .home-layout-grid {
+    grid-template-columns: minmax(150px, 200px) minmax(0, 1fr) minmax(150px, 200px);
+  }
+}
+
+@media (max-width: 992px) {
+  .home-right-col--mobile-hidden {
+    display: none !important;
   }
 }

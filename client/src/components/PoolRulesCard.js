@@ -1,6 +1,8 @@
 import React from "react";
+import PoolCreditsSubtitle from "./PoolCreditsSubtitle";
 
 export default function PoolRulesCard({
+    gameKey,
     title,
     rulesHtml,
     children,
@@ -15,6 +17,7 @@ export default function PoolRulesCard({
             <h3>
                 📋 {title}{subtitle && <><br />{subtitle}</>}
             </h3>
+            {gameKey && <PoolCreditsSubtitle gameKey={gameKey} />}
             <div className="pool-rules-content">
                 {rulesHtml
                     ? <div dangerouslySetInnerHTML={{ __html: rulesHtml }} />

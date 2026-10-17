@@ -9,14 +9,14 @@ export default function SurvivorGroupMatrixTable({
   eliminatedColor
 }) {
   return (
-    <div style={{
+    <div className="survivor-group-matrix survivor-group-matrix-surface" style={{
       background: "white",
       borderRadius: 12,
       boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
       border: "1px solid #e2e8f0",
       overflowX: "auto"
     }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", whiteSpace: "nowrap" }}>
+      <table className="survivor-group-matrix-table" style={{ width: "100%", borderCollapse: "collapse", whiteSpace: "nowrap" }}>
         <thead>
           <tr style={{ backgroundColor: accentColor, color: "white" }}>
             <th style={{ padding: "14px 16px", textAlign: "left", fontSize: "14px" }}>Participant</th>
@@ -45,12 +45,13 @@ export default function SurvivorGroupMatrixTable({
               return (
                 <tr
                   key={row.user_id || idx}
+                  className={`survivor-group-matrix-row${isCurrentUser ? " survivor-group-matrix-row--current-user" : ""}`}
                   style={{
                     borderBottom: "1px solid #f1f5f9",
                     backgroundColor: isCurrentUser ? "#eff6ff" : (idx % 2 === 0 ? "#fafafa" : "white")
                   }}
                 >
-                  <td style={{
+                  <td className="survivor-group-matrix-name" style={{
                     padding: "12px 16px",
                     fontWeight: isCurrentUser ? 800 : 600,
                     fontSize: "14px",
@@ -84,16 +85,16 @@ export default function SurvivorGroupMatrixTable({
                         <span style={{ fontWeight: 700, fontSize: "13px" }}>{pickedTeam}</span>
                       </div>
                     ) : (
-                      <span style={{ color: "#94a3b8", fontStyle: "italic", fontSize: "13px" }}>
+                      <span className="survivor-group-matrix-no-pick" style={{ color: "#94a3b8", fontStyle: "italic", fontSize: "13px" }}>
                         No Pick Made
                       </span>
                     )}
                   </td>
-                  <td style={{ padding: "12px 16px", textAlign: "center", fontWeight: 700, fontSize: "13px" }}>
+                  <td className="survivor-group-matrix-status" style={{ padding: "12px 16px", textAlign: "center", fontWeight: 700, fontSize: "13px" }}>
                     {row.is_eliminated ? (
-                      <span style={{ color: eliminatedColor }}>✕ Eliminated (W{row.eliminated_week})</span>
+                      <span className="survivor-group-matrix-eliminated" style={{ color: eliminatedColor }}>✕ Eliminated (W{row.eliminated_week})</span>
                     ) : (
-                      <span style={{ color: "#16a34a" }}>✓ Alive</span>
+                      <span className="survivor-group-matrix-alive" style={{ color: "#16a34a" }}>✓ Alive</span>
                     )}
                   </td>
                 </tr>

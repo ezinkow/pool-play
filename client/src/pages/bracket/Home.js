@@ -20,6 +20,7 @@ export default function Home() {
                     <PoolHomeActions gameKey="ncaab_tourney_bracket" />
                     <br />
                     <PoolRulesCard
+                        gameKey="ncaab_tourney_bracket"
                         title={poolMetadata?.pool_title || "NCAA Tournament Bracket"}
                         rulesHtml={poolMetadata?.rules_html}
                         accentColor={poolMetadata?.accent_color || GOLD}

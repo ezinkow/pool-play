@@ -125,6 +125,7 @@ export default function HrdHome() {
         {!activeToken && <PoolLoginPrompt accentColor={NAVY} />}
 
         <PoolJoinCard
+          gameKey="mlb_hrd"
           poolTitle={poolMetadata?.pool_title || "Home Run Derby Pool"}
           userEntry={userEntry}
           isPoolStarted={isPoolStarted}

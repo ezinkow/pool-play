@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import useAuth from "../../hooks/useAuth";
 import PoolGatekeeper from "../../components/PoolGatekeeper";
+import usePoolTitle from "../../hooks/usePoolTitle";
 
 const NFL_BLUE = "#013369";
 const NFL_RED = "#D50A0A";
@@ -14,6 +15,7 @@ const DIVISIONS = [
 
 export default function NflBtsStandings() {
     const { user, loading: authLoading } = useAuth();
+    const poolTitle = usePoolTitle("nfl_bts", "Division");
     const [userEntries, setUserEntries] = useState([]);
     const [selectedRoomId, setSelectedRoomId] = useState(1);
     const [standings, setStandings] = useState({});
@@ -141,7 +143,7 @@ export default function NflBtsStandings() {
             <div style={{ maxWidth: 1400, margin: "0 auto", padding: "20px 12px", paddingBottom: 80 }}>
 
                 <div style={{ textAlign: "center", marginBottom: 20 }}>
-                    <h2 style={{ color: NFL_BLUE, fontSize: "28px", margin: 0 }}>Division Standings</h2>
+                    <h2 style={{ color: NFL_BLUE, fontSize: "28px", margin: 0 }}>{poolTitle} Standings</h2>
                     <p style={{ color: "#666", marginTop: 8 }}>Ranked by ATS Record (W-L). Tiebreaker: Over/Under Record.</p>
                 </div>
 
@@ -194,12 +196,10 @@ export default function NflBtsStandings() {
                         const divisionPlayers = standings[division] || [];
 
                         return (
-                            <div key={division} style={{
-                                background: "white",
+                            <div key={division} className="nfl-bts-division-card" style={{
                                 borderRadius: "10px",
                                 boxShadow: "0 4px 10px rgba(0,0,0,0.06)",
                                 overflow: "hidden",
-                                border: `1px solid #e5e7eb`
                             }}>
 
                                 <div style={{
@@ -231,10 +231,6 @@ export default function NflBtsStandings() {
                                             const teamSec = tMeta.secondaryColor || "#cbd5e1";
                                             const finalLogo = teamLogo || tMeta.logo;
 
-                                            const rowBackground = isCurrentUser
-                                                ? `linear-gradient(135deg, ${teamColor}18 0%, ${teamSec}18 100%)`
-                                                : (idx % 2 === 0 ? "#fafafa" : "white");
-
                                             const isTeam1 = teamName === player.team_name_1;
                                             const atsWins = isTeam1 ? (player.ats_wins_1 ?? 0) : (player.ats_wins_2 ?? 0);
                                             const atsLosses = isTeam1 ? (player.ats_losses_1 ?? 0) : (player.ats_losses_2 ?? 0);
@@ -242,13 +238,11 @@ export default function NflBtsStandings() {
                                             const ouLosses = isTeam1 ? (player.ou_losses_1 ?? 0) : (player.ou_losses_2 ?? 0);
 
                                             return (
-                                                <div key={`${player.user_id}-${division}-${teamName}-${idx}`} style={{
+                                                <div key={`${player.user_id}-${division}-${teamName}-${idx}`} className={`nfl-bts-division-row${isCurrentUser ? " nfl-bts-division-row--current-user" : ""}`} style={{
                                                     display: "grid",
                                                     gridTemplateColumns: "1fr 32px 1fr 50px 50px",
                                                     alignItems: "center",
                                                     padding: "10px 16px",
-                                                    borderBottom: idx < divisionPlayers.length - 1 ? "1px solid #f3f4f6" : "none",
-                                                    background: rowBackground,
                                                     gap: "8px"
                                                 }}>
                                                     <span style={{ fontWeight: 600, fontSize: "14px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -275,14 +269,14 @@ export default function NflBtsStandings() {
                                                         ) : null}
                                                     </div>
 
-                                                    <span style={{ fontSize: "12px", color: "#6b7280", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                                    <span className="nfl-bts-team-name" style={{ fontSize: "12px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                                         {teamName}
                                                     </span>
 
-                                                    <span style={{ textAlign: "center", fontSize: "14px", fontWeight: 600 }}>
+                                                    <span className="nfl-bts-record" style={{ textAlign: "center", fontSize: "14px", fontWeight: 600 }}>
                                                         {atsWins}-{atsLosses}
                                                     </span>
-                                                    <span style={{ textAlign: "center", fontSize: "14px", fontWeight: 600, color: "#4b5563" }}>
+                                                    <span className="nfl-bts-record nfl-bts-record--ou" style={{ textAlign: "center", fontSize: "14px", fontWeight: 600 }}>
                                                         {ouWins}-{ouLosses}
                                                     </span>
                                                 </div>
