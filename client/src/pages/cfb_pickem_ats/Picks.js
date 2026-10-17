@@ -522,7 +522,7 @@ export default function CfbPickemAtsPicks() {
                                     )}
 
                                     {/* Game Card Container */}
-                                    <div style={{
+                                    <div className="pick-game-card" style={{
                                         background: "#ffffff",
                                         borderRadius: 10,
                                         boxShadow: isBestBet ? "0 4px 12px rgba(200, 157, 60, 0.25)" : "0 2px 5px rgba(0, 0, 0, 0.06)",
@@ -538,12 +538,12 @@ export default function CfbPickemAtsPicks() {
                                                         MUST
                                                     </span>
                                                 )}
-                                                <span style={{ fontSize: "10px", color: hasStarted ? CFB_RED : "#000000", fontWeight: 700, textTransform: "uppercase", flexShrink: 0 }}>
+                                                <span className={`pick-game-card-date${hasStarted ? " is-live" : ""}`} style={{ fontSize: "10px", color: hasStarted ? CFB_RED : "#000000", fontWeight: 700, textTransform: "uppercase", flexShrink: 0 }}>
                                                     {gameHeaderLabel}
                                                 </span>
 
-                                                <span style={{ fontSize: "10px", color: "#000000", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3, minWidth: 0 }}>
-                                                    <span style={{ color: "#64748b" }}>Spread:</span>
+                                                <span className="pick-game-card-meta" style={{ fontSize: "10px", color: "#000000", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3, minWidth: 0 }}>
+                                                    <span className="pick-game-card-muted" style={{ color: "#64748b" }}>Spread:</span>
                                                     {favoriteLogo && (
                                                         <span style={{
                                                             background: favTeamMeta.secondaryColor || homeSecondary,
@@ -566,7 +566,7 @@ export default function CfbPickemAtsPicks() {
                                                     )}
                                                     <strong>{rawSpread}</strong>
                                                     {game.over_under !== null && game.over_under !== undefined && (
-                                                        <span style={{ marginLeft: 6, color: "#475569" }}>
+                                                        <span className="pick-game-card-muted" style={{ marginLeft: 6, color: "#475569" }}>
                                                             | O/U: <strong>{game.over_under}</strong>
                                                         </span>
                                                     )}
@@ -599,11 +599,12 @@ export default function CfbPickemAtsPicks() {
                                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                                             {/* Away Team Option Box */}
                                             <div
+                                                className={`pick-team-option${isAwayPicked ? " is-picked" : ""}`}
                                                 onClick={() => !isLocked && handleTeamPick(game.id, game.away_team, game.game_date)}
                                                 style={{
                                                     backgroundImage: isAwayPicked
                                                         ? `linear-gradient(to right, ${awayColor} 100%, ${awayColor} 100%)`
-                                                        : `linear-gradient(to right, ${awayColor} 0%, ${awayColor} 0%, transparent 0%), linear-gradient(135deg, ${awayColor}26 0%, ${awaySecondary}26 50%, #f8fafc 100%)`,
+                                                        : `linear-gradient(to right, ${awayColor} 0%, ${awayColor} 0%, transparent 0%), linear-gradient(135deg, ${awayColor}26 0%, ${awaySecondary}26 50%, var(--pick-option-neutral, #f8fafc) 100%)`,
                                                     backgroundColor: isAwayPicked ? awayColor : "transparent",
                                                     borderRadius: 6,
                                                     border: isAwayPicked ? `2px solid #0284c7` : `1px solid ${awayColor}55`,
@@ -651,11 +652,11 @@ export default function CfbPickemAtsPicks() {
                                                         <img src={awayLogo} alt={game.away_team} style={{ width: 25, height: 25, objectFit: "contain", display: "block" }} />
                                                     </div>
                                                 )}
-                                                <div style={{ fontWeight: isAwayPicked ? 800 : 600, fontSize: "12px", color: isAwayPicked ? "#ffffff" : "#0f172a", marginBottom: 2, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                <div className="pick-team-name" style={{ fontWeight: isAwayPicked ? 800 : 600, fontSize: "12px", color: isAwayPicked ? "#ffffff" : "#0f172a", marginBottom: 2, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                                     {game.away_team_rank ? <span style={{ color: isAwayPicked ? "#fef08a" : "#b45309", marginRight: 2 }}>({game.away_team_rank})</span> : null}
                                                     {game.away_team}
                                                 </div>
-                                                <div style={{ fontSize: "11px", fontWeight: 700, color: isAwayPicked ? "#e2e8f0" : "#475569", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                                                <div className="pick-team-line" style={{ fontSize: "11px", fontWeight: 700, color: isAwayPicked ? "#e2e8f0" : "#475569", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                                                     <span>{hasLine ? awaySpreadStr : "No Line"}</span>
                                                     {hasStarted && game.status && !game.status.toUpperCase().includes("STATUS_SCHEDULED") && !game.status.toUpperCase().includes("PRE") && game.away_score !== null && game.away_score !== undefined && (
                                                         <span style={{
@@ -674,11 +675,12 @@ export default function CfbPickemAtsPicks() {
 
                                             {/* Home Team Option Box */}
                                             <div
+                                                className={`pick-team-option${isHomePicked ? " is-picked" : ""}`}
                                                 onClick={() => !isLocked && handleTeamPick(game.id, game.home_team, game.game_date)}
                                                 style={{
                                                     backgroundImage: isHomePicked
                                                         ? `linear-gradient(to right, ${homeColor} 100%, ${homeColor} 100%)`
-                                                        : `linear-gradient(to right, ${homeColor} 0%, ${homeColor} 0%, transparent 0%), linear-gradient(135deg, ${homeColor}26 0%, ${homeSecondary}26 50%, #f8fafc 100%)`,
+                                                        : `linear-gradient(to right, ${homeColor} 0%, ${homeColor} 0%, transparent 0%), linear-gradient(135deg, ${homeColor}26 0%, ${homeSecondary}26 50%, var(--pick-option-neutral, #f8fafc) 100%)`,
                                                     backgroundColor: isHomePicked ? homeColor : "transparent",
                                                     borderRadius: 6,
                                                     border: isHomePicked ? `2px solid #0284c7` : `1px solid ${homeColor}55`,
@@ -726,11 +728,11 @@ export default function CfbPickemAtsPicks() {
                                                         <img src={homeLogo} alt={game.home_team} style={{ width: 25, height: 25, objectFit: "contain", display: "block" }} />
                                                     </div>
                                                 )}
-                                                <div style={{ fontWeight: isHomePicked ? 800 : 600, fontSize: "12px", color: isHomePicked ? "#ffffff" : "#0f172a", marginBottom: 2, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                <div className="pick-team-name" style={{ fontWeight: isHomePicked ? 800 : 600, fontSize: "12px", color: isHomePicked ? "#ffffff" : "#0f172a", marginBottom: 2, lineHeight: 1.1, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                                     {game.home_team_rank ? <span style={{ color: isHomePicked ? "#fef08a" : "#b45309", marginRight: 2 }}>({game.home_team_rank})</span> : null}
                                                     {game.home_team}
                                                 </div>
-                                                <div style={{ fontSize: "11px", fontWeight: 700, color: isHomePicked ? "#e2e8f0" : "#475569", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                                                <div className="pick-team-line" style={{ fontSize: "11px", fontWeight: 700, color: isHomePicked ? "#e2e8f0" : "#475569", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                                                     <span>{hasLine ? homeSpreadStr : "No Line"}</span>
                                                     {hasStarted && game.status && !game.status.toUpperCase().includes("STATUS_SCHEDULED") && !game.status.toUpperCase().includes("PRE") && game.home_score !== null && game.home_score !== undefined && (
                                                         <span style={{

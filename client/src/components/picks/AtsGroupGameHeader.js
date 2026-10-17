@@ -84,34 +84,34 @@ export default function AtsGroupGameHeader({
   const liveStatusText = game.live_status || "LIVE";
 
   return (
-    <div style={{ textAlign: "center", width: "100%", overflow: "visible" }}>
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 4, padding: "3px 2px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
-          <span style={getBadgeStyle(awayPrimary, awaySecondary)}>
-            {game.away_logo && <img src={game.away_logo} alt="" height={16} style={{ flexShrink: 0, objectFit: "contain" }} />}
+    <div className="ats-group-game-header" style={{ textAlign: "center", width: "100%", overflow: "visible" }}>
+      <div className="ats-group-game-header-teams" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 4, padding: "3px 2px" }}>
+        <div className="ats-group-game-header-team" style={{ display: "flex", alignItems: "center", gap: 3 }}>
+          <span className="ats-group-game-header-badge" style={getBadgeStyle(awayPrimary, awaySecondary)}>
+            {game.away_logo && <img className="ats-group-game-header-logo" src={game.away_logo} alt="" height={16} style={{ flexShrink: 0, objectFit: "contain" }} />}
           </span>
-          <span style={{ fontSize: 11, fontWeight: 900, color: hasScores ? "#fef08a" : "#ffffff" }}>
+          <span className="ats-group-game-header-score" style={{ fontSize: 11, fontWeight: 900, color: hasScores ? "#fef08a" : "#ffffff" }}>
             {hasScores ? game.away_score : "-"}
           </span>
         </div>
-        <span style={{ fontSize: 10, color: "#cbd5e1" }}>@</span>
-        <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
-          <span style={{ fontSize: 11, fontWeight: 900, color: hasScores ? "#fef08a" : "#ffffff" }}>
+        <span className="ats-group-game-header-at" style={{ fontSize: 10, color: "#cbd5e1" }}>@</span>
+        <div className="ats-group-game-header-team" style={{ display: "flex", alignItems: "center", gap: 3 }}>
+          <span className="ats-group-game-header-score" style={{ fontSize: 11, fontWeight: 900, color: hasScores ? "#fef08a" : "#ffffff" }}>
             {hasScores ? game.home_score : "-"}
           </span>
-          <span style={getBadgeStyle(homePrimary, homeSecondary)}>
-            {game.home_logo && <img src={game.home_logo} alt="" height={16} style={{ flexShrink: 0, objectFit: "contain" }} />}
+          <span className="ats-group-game-header-badge" style={getBadgeStyle(homePrimary, homeSecondary)}>
+            {game.home_logo && <img className="ats-group-game-header-logo" src={game.home_logo} alt="" height={16} style={{ flexShrink: 0, objectFit: "contain" }} />}
           </span>
         </div>
       </div>
 
-      <div style={{ fontSize: 9, fontWeight: 700, margin: "3px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 3 }}>
+      <div className="ats-group-game-header-status" style={{ fontSize: 9, fontWeight: 700, margin: "3px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 3 }}>
         {isFinal ? (
-          <span style={{ backgroundColor: "#16a34a", color: "white", padding: "1px 6px", borderRadius: 3 }}>FINAL</span>
+          <span className="ats-group-game-header-status-label" style={{ backgroundColor: "#16a34a", color: "white", padding: "1px 6px", borderRadius: 3 }}>FINAL</span>
         ) : isLive ? (
           <>
             <LivePulseIndicator />
-            <span style={{ backgroundColor: liveColor, color: "white", padding: "1px 6px", borderRadius: 3 }}>
+            <span className="ats-group-game-header-status-label" style={{ backgroundColor: liveColor, color: "white", padding: "1px 6px", borderRadius: 3 }}>
               {liveStatusText}
             </span>
           </>
@@ -122,24 +122,24 @@ export default function AtsGroupGameHeader({
         )}
       </div>
 
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 3, height: 18 }}>
+      <div className="ats-group-game-header-spread" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 3, height: 18 }}>
         {isFinal && coveredLogo && coveredTeam !== "PUSH" ? (
           <>
-            <span style={getBadgeStyle(coveredPrimary, coveredSecondary)}>
-              <img src={coveredLogo} alt="" height={13} style={{ flexShrink: 0, objectFit: "contain" }} />
+            <span className="ats-group-game-header-spread-badge" style={getBadgeStyle(coveredPrimary, coveredSecondary)}>
+              <img className="ats-group-game-header-spread-logo" src={coveredLogo} alt="" height={13} style={{ flexShrink: 0, objectFit: "contain" }} />
             </span>
-            <span style={{ fontSize: 9, color: isFavCovered ? "#86efac" : "#fca5a5", fontWeight: 700 }}>
+            <span className="ats-group-game-header-spread-line" style={{ fontSize: 9, color: isFavCovered ? "#86efac" : "#fca5a5", fontWeight: 700 }}>
               {spreadLabel}
             </span>
           </>
         ) : (
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             {favLogo && (
-              <span style={getBadgeStyle(favPrimary, favSecondary)}>
-                <img src={favLogo} alt={favTeam} height={12} style={{ flexShrink: 0, objectFit: "contain" }} />
+              <span className="ats-group-game-header-spread-badge" style={getBadgeStyle(favPrimary, favSecondary)}>
+                <img className="ats-group-game-header-spread-logo" src={favLogo} alt={favTeam} height={12} style={{ flexShrink: 0, objectFit: "contain" }} />
               </span>
             )}
-            <span style={{ fontSize: 9, color: GOLD, fontWeight: 600 }}>
+            <span className="ats-group-game-header-spread-line" style={{ fontSize: 9, color: GOLD, fontWeight: 600 }}>
               {rawSpread !== null ? (rawSpread < 0 ? rawSpread : `-${rawSpread}`) : "Pick'em"}
             </span>
           </div>

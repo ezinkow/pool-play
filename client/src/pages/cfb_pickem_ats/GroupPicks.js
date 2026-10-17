@@ -319,7 +319,7 @@ export default function CfbPickemAtsMatrix() {
                     ) : gamesList.length === 0 || sortedPlayers.length === 0 ? (
                         <div style={{ padding: 30, textAlign: "center", color: "#666" }}>No live or completed games found for Week {currentWeek}.</div>
                     ) : (
-                        <table style={{ width: "max-content", minWidth: "100%", borderCollapse: "separate", borderSpacing: 0, whiteSpace: "nowrap", tableLayout: "fixed" }}>
+                        <table className="ats-group-picks-matrix-table" style={{ width: "max-content", minWidth: "100%", borderCollapse: "separate", borderSpacing: 0, whiteSpace: "nowrap", tableLayout: "fixed" }}>
                             <thead>
                                 <tr style={{ backgroundColor: CFB_BLUE, color: "white" }}>
                                     <th style={{
@@ -494,12 +494,12 @@ export default function CfbPickemAtsMatrix() {
                                                                     {pickObj.is_best_bet && (
                                                                         <span style={{
                                                                             position: "absolute",
-                                                                            top: "-6px",
-                                                                            right: "20px",
-                                                                            fontSize: "10px",
+                                                                            top: "-4px",
+                                                                            right: "4px",
+                                                                            fontSize: "8px",
                                                                             background: GOLD,
                                                                             color: "white",
-                                                                            padding: "1px 4px",
+                                                                            padding: "0 2px",
                                                                             borderRadius: 4,
                                                                             fontWeight: 900,
                                                                             boxShadow: "0 2px 6px rgba(200, 157, 60, 0.9)",

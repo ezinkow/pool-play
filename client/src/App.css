@@ -704,6 +704,7 @@ button {
   --bg-primary: #111c2d;
   --bg-secondary: #172438;
   --bg-tertiary: #1d2c42;
+  --pick-option-neutral: #111c2d;
   --text-primary: #f1f5f9;
   --text-secondary: #a9b8cb;
   --border-color: #2a3a50;
@@ -726,6 +727,58 @@ button {
   color: var(--text-primary) !important;
   border: 1px solid var(--border-color) !important;
   box-shadow: var(--surface-shadow) !important;
+}
+
+.app-container.dark-mode .pick-game-card {
+  background-color: #172438 !important;
+  background-image: none !important;
+  color: #f1f5f9 !important;
+  border-color: var(--border-color) !important;
+  box-shadow: var(--surface-shadow) !important;
+}
+
+.app-container.dark-mode .pick-game-card-meta {
+  color: var(--text-primary) !important;
+}
+
+.app-container.dark-mode .pick-game-card-muted {
+  color: var(--text-secondary) !important;
+}
+
+.app-container.dark-mode .pick-game-card-date:not(.is-live) {
+  color: var(--text-primary) !important;
+}
+
+.app-container.dark-mode .pick-team-option {
+  isolation: isolate;
+  border-color: #53647b !important;
+}
+
+.app-container.dark-mode .pick-team-option::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: rgba(4, 10, 20, 0.28);
+  pointer-events: none;
+}
+
+.app-container.dark-mode .pick-team-option > * {
+  position: relative;
+  z-index: 1;
+}
+
+.app-container.dark-mode .pick-team-option:not(.is-picked) {
+  background-color: #111c2d !important;
+}
+
+.app-container.dark-mode .pick-team-option:not(.is-picked) .pick-team-name {
+  color: var(--text-primary) !important;
+}
+
+.app-container.dark-mode .pick-team-option:not(.is-picked) .pick-team-line {
+  color: var(--text-secondary) !important;
 }
 
 /* Global Table Text & Borders in Dark Mode */
@@ -2920,6 +2973,94 @@ button {
 
   .picks-matrix-table {
     font-size: 11px;
+  }
+
+  .ats-group-picks-matrix-table th:first-child,
+  .ats-group-picks-matrix-table td:first-child {
+    width: 125px !important;
+    min-width: 125px !important;
+    max-width: 125px !important;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  .ats-group-picks-matrix-table th:not(:first-child),
+  .ats-group-picks-matrix-table td:not(:first-child) {
+    width: 86px !important;
+    min-width: 86px !important;
+    max-width: 86px !important;
+    padding-left: 3px !important;
+    padding-right: 3px !important;
+  }
+
+  .ats-group-picks-matrix-table th:not(:first-child) {
+    overflow: hidden !important;
+  }
+
+  .ats-group-game-header-teams {
+    gap: 1px !important;
+    padding: 2px 0 !important;
+  }
+
+  .ats-group-game-header-team {
+    gap: 1px !important;
+  }
+
+  .ats-group-game-header-badge {
+    padding: 1px !important;
+    border-width: 1px !important;
+    border-radius: 3px !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .ats-group-game-header-logo {
+    height: 11px !important;
+    width: 11px !important;
+  }
+
+  .ats-group-game-header-score {
+    font-size: 9px !important;
+  }
+
+  .ats-group-game-header-at {
+    font-size: 8px !important;
+  }
+
+  .ats-group-game-header-status {
+    font-size: 7px !important;
+    margin: 2px 0 !important;
+    gap: 2px !important;
+  }
+
+  .ats-group-game-header-status-label {
+    max-width: 100%;
+    overflow: hidden;
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+    text-overflow: ellipsis;
+  }
+
+  .ats-group-game-header-spread {
+    gap: 2px !important;
+    height: 14px !important;
+  }
+
+  .ats-group-game-header-spread-badge {
+    padding: 1px !important;
+    border-width: 1px !important;
+    border-radius: 3px !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .ats-group-game-header-spread-logo {
+    height: 9px !important;
+    width: 9px !important;
+  }
+
+  .ats-group-game-header-spread-line {
+    font-size: 7px !important;
   }
 
   .table-wrapper table,
