@@ -115,7 +115,7 @@ export default function MyPicks() {
                             No picks yet for this round.
                         </p>
                         <button
-                            onClick={() => { window.location.hash = "#/nba/picks"; }}
+                            onClick={() => { window.location.hash = "#/nbaplayoffs/picks"; }}
                             style={{
                                 padding: "10px 20px", backgroundColor: NAVY,
                                 color: "white", border: "none", borderRadius: 8,

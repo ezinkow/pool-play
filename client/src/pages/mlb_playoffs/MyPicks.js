@@ -169,7 +169,7 @@ export default function MyPicks() {
                             No picks submitted for this round yet.
                         </p>
                         <button
-                            onClick={() => { window.location.hash = "#/mlb_playoffs/picks"; }}
+                            onClick={() => { window.location.hash = "#/mlbplayoffs/picks"; }}
                             style={{
                                 marginTop: 12,
                                 padding: "8px 16px", backgroundColor: NAVY,
