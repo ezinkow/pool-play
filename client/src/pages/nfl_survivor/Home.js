@@ -52,7 +52,7 @@ export default function NflSurvivorHome() {
       .catch(err => console.error("Failed to load pool data", err));
 
     if (activeToken) {
-      axios.get("/api/nflsurvivor/entries/me", {
+      axios.get("/api/nfl_survivor/entries/me", {
         headers: { Authorization: `Bearer ${activeToken}` }
       })
         .then(res => {
@@ -85,7 +85,7 @@ export default function NflSurvivorHome() {
 
     try {
       const entryNameInput = customEntryName.trim() || user?.name;
-      const res = await axios.post("/api/nflsurvivor/entries/create", {
+      const res = await axios.post("/api/nfl_survivor/entries/create", {
         entry_name: entryNameInput
       }, {
         headers: { Authorization: `Bearer ${activeToken}` }
@@ -110,7 +110,7 @@ export default function NflSurvivorHome() {
     }
 
     try {
-      await axios.post("/api/nflsurvivor/entries/leave", {}, {
+      await axios.post("/api/nfl_survivor/entries/leave", {}, {
         headers: { Authorization: `Bearer ${activeToken}` }
       });
       setUserEntry(null);

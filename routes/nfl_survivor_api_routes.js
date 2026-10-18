@@ -8,7 +8,7 @@ module.exports = function (app) {
     // ------------------------------------------------------------------
     // 1. GET Current User's Entry Status
     // ------------------------------------------------------------------
-    app.get("/api/nflsurvivor/entries/me", requireAuth, async (req, res) => {
+    app.get("/api/nfl_survivor/entries/me", requireAuth, async (req, res) => {
         try {
             const entry = await NflSurvivorEntries.findOne({
                 where: { user_id: req.user.id }
@@ -23,7 +23,7 @@ module.exports = function (app) {
     // ------------------------------------------------------------------
     // 2. POST Create / Join Survivor Pool
     // ------------------------------------------------------------------
-    app.post("/api/nflsurvivor/entries/create", requireAuth, async (req, res) => {
+    app.post("/api/nfl_survivor/entries/create", requireAuth, async (req, res) => {
         try {
             const entry_name = (req.body.entry_name || req.user.name).trim();
 
@@ -66,7 +66,7 @@ module.exports = function (app) {
     // ------------------------------------------------------------------
     // 3. POST Leave Survivor Pool
     // ------------------------------------------------------------------
-    app.post("/api/nflsurvivor/entries/leave", requireAuth, async (req, res) => {
+    app.post("/api/nfl_survivor/entries/leave", requireAuth, async (req, res) => {
         try {
             if (Settings && typeof Settings.findOne === "function") {
                 const poolSetting = await Settings.findOne({ where: { game_key: "nfl_survivor" } });
@@ -98,7 +98,7 @@ module.exports = function (app) {
     // ------------------------------------------------------------------
     // 4. GET All Entries (Public)
     // ------------------------------------------------------------------
-    app.get("/api/nflsurvivor/entries", async (req, res) => {
+    app.get("/api/nfl_survivor/entries", async (req, res) => {
         try {
             const entries = await NflSurvivorEntries.findAll({
                 attributes: ["id", "user_id", "entry_name", "is_eliminated", "eliminated_week", "createdAt"],
@@ -111,9 +111,9 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
-    // 5. GET /api/nflsurvivor/picks (Get weekly games & user picks)
+    // 5. GET /api/nfl_survivor/picks (Get weekly games & user picks)
     // --------------------------------------------------------
-    app.get("/api/nflsurvivor/picks", requireAuth, async (req, res) => {
+    app.get("/api/nfl_survivor/picks", requireAuth, async (req, res) => {
         try {
             const week = parseInt(req.query.week) || 1;
 
@@ -152,7 +152,7 @@ module.exports = function (app) {
     // ------------------------------------------------------------------
     // 6. GET All Past Picks for User (to validate team reuse on frontend)
     // ------------------------------------------------------------------
-    app.get("/api/nflsurvivor/picks/all", requireAuth, async (req, res) => {
+    app.get("/api/nfl_survivor/picks/all", requireAuth, async (req, res) => {
         try {
             const picks = await NflSurvivorPicks.findAll({
                 where: { user_id: req.user.id },
@@ -166,9 +166,9 @@ module.exports = function (app) {
     });
 
     // ------------------------------------------------------------------
-    // POST /api/nflsurvivor/picks (Make or Clear a Survivor Pick)
+    // POST /api/nfl_survivor/picks (Make or Clear a Survivor Pick)
     // ------------------------------------------------------------------
-    app.post("/api/nflsurvivor/picks", requireAuth, async (req, res) => {
+    app.post("/api/nfl_survivor/picks", requireAuth, async (req, res) => {
         try {
             const { week, game_id, picked_team } = req.body;
             const userId = req.user.id;
@@ -237,7 +237,7 @@ module.exports = function (app) {
     // ------------------------------------------------------------------
     // 8. GET Master Roster Dashboard Data (Who's In, Who's Out, History)
     // ------------------------------------------------------------------
-    app.get("/api/nflsurvivor/roster", requireAuth, async (req, res) => {
+    app.get("/api/nfl_survivor/roster", requireAuth, async (req, res) => {
         try {
             const currentUserId = req.user.id;
             const now = new Date();

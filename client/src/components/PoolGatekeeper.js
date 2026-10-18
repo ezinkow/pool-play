@@ -20,7 +20,6 @@ export default function PoolGatekeeper({
 
     const [isPoolOpen, setIsPoolOpen] = useState(true);
     const [otherActivePools, setOtherActivePools] = useState([]);
-
     const [poolName, setPoolName] = useState("");
 
     const isUserAdmin = user?.is_admin === 1 || user?.is_admin === true;
@@ -38,12 +37,12 @@ export default function PoolGatekeeper({
         }
 
         Promise.all([
-            axios.get("/api/settings/active-states"),
+            axios.get("/api/settings/active-states").catch(() => ({ data: [] })),
             axios.get(`/api/settings/pool-started?game_key=${gameKey}`).catch(() => ({ data: { started: false } }))
         ])
             .then(([statesRes, startedRes]) => {
                 const states = statesRes.data || [];
-                const currentPool = states.find(s => s.game_key === gameKey);
+                const currentPool = states.find(s => s.game_key === gameKey || s.route === `/${gameKey}` || s.route === gameKey || (s.route && s.route.includes(gameKey)));
                 const leagueStarted = startedRes.data?.started || false;
 
                 if (currentPool) {
@@ -65,45 +64,76 @@ export default function PoolGatekeeper({
                     setPoolName(currentPool.title || currentPool.game_label || gameKey.toUpperCase());
                 } else {
                     setPoolName(gameKey.toUpperCase());
+                    setIsPoolOpen(true);
                 }
 
-                const livePools = states.filter(s => s.is_active && s.game_key !== gameKey);
-                const unexpiredPools = livePools.filter(s => {
-                    if (!s.lock_date) return true;
-                    let dStr = s.lock_date;
-                    if (typeof dStr === 'string' && !dStr.endsWith('Z') && !dStr.includes('+')) dStr = dStr.replace(' ', 'T') + 'Z';
-                    return new Date() < new Date(dStr);
-                });
-                setOtherActivePools(unexpiredPools);
+                const livePools = states.filter(s => s.is_active && s.game_key !== gameKey && s.route !== gameKey);
+                setOtherActivePools(livePools);
 
                 if (!user?.id) {
                     setChecking(false);
                     return;
                 }
 
-                const entriesUrl = `/api/${currentPool.route}/entries/me`;
-                const token = localStorage.getItem("token");
+                // Clean up route slashes to build correct endpoint paths safely
+                const rawRoute = currentPool?.route || gameKey;
+                const cleanSlug = rawRoute.startsWith('/') ? rawRoute.substring(1) : rawRoute;
+                
+                const candidateSlugs = [
+                    cleanSlug,
+                    cleanSlug.replace(/_/g, ''),
+                    cleanSlug.replace(/_/g, '-'),
+                    gameKey,
+                    gameKey.replace(/_/g, ''),
+                    'nflsurvivor_secondchance',
+                    'nfl_survivor_second_chance'
+                ];
+                const uniqueSlugs = [...new Set(candidateSlugs)];
 
-                axios.get(entriesUrl, {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
-                    .then(res => {
+                const token = localStorage.getItem("token");
+                const headers = { Authorization: `Bearer ${token}` };
+
+                const tryFetchEntry = async (slugIndex) => {
+                    if (slugIndex >= uniqueSlugs.length) {
+                        setHasAnyEntry(false);
+                        setChecking(false);
+                        return;
+                    }
+
+                    const slug = uniqueSlugs[slugIndex];
+                    const url = `/api/${slug}/entries/me`;
+
+                    try {
+                        const res = await axios.get(url, { headers });
                         let userHasEntry = false;
                         if (Array.isArray(res.data)) {
                             userHasEntry = res.data.some(entry => Number(entry.user_id) === Number(user.id));
                         } else {
-                            userHasEntry = !!res.data?.entry || (res.data?.entries && res.data.entries.length > 0);
+                            userHasEntry = !!res.data?.entry || (res.data?.entries && res.data.entries.length > 0) || res.data?.registered === true || res.data?.success === true;
                         }
-                        setHasAnyEntry(userHasEntry);
-                        setChecking(false);
-                    })
-                    .catch(err => {
-                        console.error(`Error checking entry status for user_id ${user.id}:`, err);
-                        setChecking(false);
-                    });
+
+                        if (userHasEntry) {
+                            setHasAnyEntry(true);
+                            setChecking(false);
+                        } else if (slugIndex === uniqueSlugs.length - 1) {
+                            setHasAnyEntry(false);
+                            setChecking(false);
+                        } else {
+                            tryFetchEntry(slugIndex + 1);
+                        }
+                    } catch (err) {
+                        if (slugIndex === uniqueSlugs.length - 1) {
+                            setHasAnyEntry(false);
+                            setChecking(false);
+                        } else {
+                            tryFetchEntry(slugIndex + 1);
+                        }
+                    }
+                };
+
+                tryFetchEntry(0);
             })
-            .catch(err => {
-                console.error("Error pulling system active configs:", err);
+            .catch(() => {
                 setChecking(false);
             });
     }, [user, gameKey, isUserAdmin]);
@@ -126,7 +156,7 @@ export default function PoolGatekeeper({
         return <div style={{ color: "white", padding: 20, textAlign: "center" }}>Verifying registration status...</div>;
     }
     
-    // If the user does NOT have an entry AND the pool is closed, show registration closed.
+    // SAFETY: If the user has an entry, never block them regardless of pool open/closed states.
     if (!hasAnyEntry && !isPoolOpen) {
         return (
             <div style={{ maxWidth: 600, margin: "40px auto", padding: "16px", fontFamily: "system-ui, -apple-system, sans-serif" }}>

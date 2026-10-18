@@ -21,7 +21,7 @@ const STANDINGS_ENDPOINTS = {
 
 const SURVIVOR_ENTRY_ENDPOINTS = {
     nba_survivor: "/api/nba_survivor/entries/me",
-    nfl_survivor: "/api/nflsurvivor/entries/me",
+    nfl_survivor: "/api/nfl_survivor/entries/me",
     nfl_survivor_secondchance: "/api/nfl_survivor_secondchance/entries/me",
 };
 
