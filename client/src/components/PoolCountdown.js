@@ -30,9 +30,9 @@ function SingleFlipCard({ value, compact = false, isDarkMode = true }) {
     const currentToShow = isFlipping ? displayVal : String(value);
     const prevToShow = isFlipping ? prevVal : String(value);
 
-    const unitWidth = compact ? '14px' : '20px';
-    const unitHeight = compact ? '20px' : '34px';
-    const fontSize = compact ? '11px' : '17px';
+    const unitWidth = compact ? '15px' : '20px';
+    const unitHeight = compact ? '22px' : '34px';
+    const fontSize = compact ? '12px' : '17px';
 
     return (
         <div className={`flip-card-unit ${compact ? 'compact' : ''} ${isFlipping ? 'flipping' : ''}`} style={{ width: unitWidth, height: unitHeight, fontSize }}>
@@ -198,7 +198,7 @@ export default function PoolCountdown({ poolData, mode, isDarkMode = true, compa
                         <SingleFlipCard key={`${subLabel}-${i}`} value={d} compact={compact} isDarkMode={isDarkMode} />
                     ))}
                 </div>
-                <span style={{ fontSize: compact ? "5px" : "8px", color: unitLabelColor, fontWeight: "800", marginTop: "2px", textTransform: "uppercase" }}>{subLabel}</span>
+                <span style={{ fontSize: compact ? "6px" : "8px", color: unitLabelColor, fontWeight: "800", marginTop: "2px", textTransform: "uppercase" }}>{subLabel}</span>
             </div>
         );
     };
@@ -221,11 +221,11 @@ export default function PoolCountdown({ poolData, mode, isDarkMode = true, compa
                 
                 .flip-card-unit .top-static { top: 0; background: #181818; border-bottom: 1px solid #000; border-radius: 3px 3px 0 0; }
                 .flip-card-unit .top-static span { position: absolute; top: 0; left: 0; width: 100%; height: 34px; line-height: 34px; text-align: center; color: #ffffff !important; }
-                .flip-card-unit.compact .top-static span { height: 20px; line-height: 20px; }
+                .flip-card-unit.compact .top-static span { height: 22px; line-height: 22px; }
 
                 .flip-card-unit .bottom-static { bottom: 0; background: #2c2c2c; border-top: 1px solid #111; border-radius: 0 0 3px 3px; }
                 .flip-card-unit .bottom-static span { position: absolute; top: -17px; left: 0; width: 100%; height: 34px; line-height: 34px; text-align: center; color: #ffffff !important; }
-                .flip-card-unit.compact .bottom-static span { top: -10px; height: 20px; line-height: 20px; }
+                .flip-card-unit.compact .bottom-static span { top: -11px; height: 22px; line-height: 22px; }
 
                 .flip-card-unit .bottom-shade { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.45) 100%); pointer-events: none; }
                 .flip-card-unit .flipper { position: absolute; width: 100%; height: 50%; top: 0; transform-origin: bottom; transform-style: preserve-3d; z-index: 3; }
@@ -234,14 +234,14 @@ export default function PoolCountdown({ poolData, mode, isDarkMode = true, compa
                 
                 .flip-card-unit .front { top: 0; background: #181818; border-bottom: 1px solid #000; border-radius: 3px 3px 0 0; }
                 .flip-card-unit .front span { position: absolute; top: 0; left: 0; width: 100%; height: 34px; line-height: 34px; text-align: center; color: #ffffff !important; }
-                .flip-card-unit.compact .front span { height: 20px; line-height: 20px; }
+                .flip-card-unit.compact .front span { height: 22px; line-height: 22px; }
 
                 .flip-card-unit .back { bottom: 0; background: #2c2c2c; transform: rotateX(180deg); border-radius: 0 0 3px 3px; }
                 .flip-card-unit .back span { position: absolute; top: -17px; left: 0; width: 100%; height: 34px; line-height: 34px; text-align: center; color: #ffffff !important; }
-                .flip-card-unit.compact .back span { top: -10px; height: 20px; line-height: 20px; }
+                .flip-card-unit.compact .back span { top: -11px; height: 22px; line-height: 22px; }
             `}</style>
-            <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: containerBg, padding: compact ? "2px 5px" : "5px 8px", borderRadius: "6px", border: `1px solid ${containerBorder}`, maxWidth: "100%", overflow: "hidden" }}>
-                <span style={{ color: containerText, fontSize: compact ? "7px" : "9px", fontWeight: "800", marginRight: "5px", textTransform: "uppercase" }}>{labelText}</span>
+            <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: containerBg, padding: compact ? "3px 5px" : "5px 8px", borderRadius: "6px", border: `1px solid ${containerBorder}`, maxWidth: "100%", overflow: "hidden" }}>
+                <span style={{ color: containerText, fontSize: compact ? "8px" : "9px", fontWeight: "800", marginRight: "5px", textTransform: "uppercase" }}>{labelText}</span>
                 <div style={{ display: "flex", alignItems: "center", gap: compact ? "2px" : "3px", flexWrap: "nowrap" }}>
                     {showYears && (
                         <>

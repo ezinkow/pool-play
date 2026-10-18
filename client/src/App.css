@@ -1462,7 +1462,8 @@ button {
 
 .survivor-week-selector {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
+  width: max-content;
   gap: 6px;
   max-width: 100%;
   margin: 4px auto 14px;
