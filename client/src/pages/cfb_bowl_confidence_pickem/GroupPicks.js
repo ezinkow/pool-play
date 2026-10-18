@@ -175,11 +175,11 @@ export default function CfbBowlConfidenceMatrix() {
         const st = pickObj.status;
         const winner = game.winner;
         if (st === "win" || st === "correct" || (winner && winner === pickObj.picked_team)) {
-            return { backgroundColor: "#dcfce7", color: "#166534" }; // Soft Green
+            return { backgroundColor: "var(--pick-correct-bg)", color: "var(--pick-correct-text)" };
         } else if (st === "push" || st === "tie" || winner === "PUSH") {
             return { backgroundColor: "#fef3c2", color: "#b45309" }; // Soft Yellow
         } else if (winner && winner !== pickObj.picked_team) {
-            return { backgroundColor: "#fee2e2", color: "#991b1b" }; // Soft Red
+            return { backgroundColor: "var(--pick-incorrect-bg)", color: "var(--pick-incorrect-text)" };
         }
 
         return { backgroundColor: "transparent" };
@@ -270,7 +270,7 @@ export default function CfbBowlConfidenceMatrix() {
                         70% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0); } 
                         100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } 
                     }
-                    .matrix-container::-webkit-scrollbar { height: 5px; }
+                    .matrix-container::-webkit-scrollbar { height: 12px; }
                     .matrix-container::-webkit-scrollbar-track { background: #f1f5f9; }
                     .matrix-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
                 `}</style>

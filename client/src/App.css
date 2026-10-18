@@ -19,6 +19,15 @@
   --text-primary: #172033;
   --text-secondary: #64748b;
   --border-color: #dbe3ec;
+  --pick-correct-bg: #86efac;
+  --pick-correct-text: #14532d;
+  --pick-perfect-bg: #4ade80;
+  --pick-perfect-text: #052e16;
+  --pick-correct-border: #16a34a;
+  --pick-perfect-border: #15803d;
+  --pick-incorrect-bg: #fca5a5;
+  --pick-incorrect-text: #7f1d1d;
+  --pick-incorrect-border: #dc2626;
   --navbar-height: 50px;
   --subnav-height: 36px;
   --surface-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
@@ -387,11 +396,13 @@ button {
 }
 
 .pick-win {
-  background-color: #f0fdf4 !important;
+  background-color: var(--pick-correct-bg) !important;
+  color: var(--pick-correct-text) !important;
 }
 
 .pick-loss {
-  background-color: #fef2f2 !important;
+  background-color: var(--pick-incorrect-bg) !important;
+  color: var(--pick-incorrect-text) !important;
 }
 
 .pick-missed {
@@ -445,6 +456,124 @@ button {
   margin-top: 12px;
   font-size: 0.85rem;
   color: #9ca3af;
+}
+
+.flip-card-unit {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #fff !important;
+  background: #111;
+  border-radius: 3px;
+  font-family: "Courier New", Courier, monospace;
+  font-weight: 900;
+  perspective: 300px;
+}
+
+.flip-card-unit .top-static,
+.flip-card-unit .bottom-static {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  overflow: hidden;
+}
+
+.flip-card-unit .top-static,
+.flip-card-unit .front {
+  top: 0;
+  background: #181818;
+  border-bottom: 1px solid #000;
+  border-radius: 3px 3px 0 0;
+}
+
+.flip-card-unit .top-static span,
+.flip-card-unit .front span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 34px;
+  color: #fff !important;
+  line-height: 34px;
+  text-align: center;
+}
+
+.flip-card-unit.compact .top-static span,
+.flip-card-unit.compact .front span {
+  height: 24px;
+  line-height: 24px;
+}
+
+.flip-card-unit .bottom-static,
+.flip-card-unit .back {
+  bottom: 0;
+  background: #2c2c2c;
+  border-radius: 0 0 3px 3px;
+}
+
+.flip-card-unit .bottom-static {
+  border-top: 1px solid #111;
+}
+
+.flip-card-unit .bottom-static span,
+.flip-card-unit .back span {
+  position: absolute;
+  top: -17px;
+  left: 0;
+  width: 100%;
+  height: 34px;
+  color: #fff !important;
+  line-height: 34px;
+  text-align: center;
+}
+
+.flip-card-unit.compact .bottom-static span,
+.flip-card-unit.compact .back span {
+  top: -12px;
+  height: 24px;
+  line-height: 24px;
+}
+
+.flip-card-unit .bottom-shade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.45));
+  pointer-events: none;
+}
+
+.flip-card-unit .flipper {
+  position: absolute;
+  top: 0;
+  z-index: 3;
+  width: 100%;
+  height: 50%;
+  transform: none;
+  transform-origin: bottom;
+  transform-style: preserve-3d;
+}
+
+.flip-card-unit.flipping .flipper {
+  transform: rotateX(-180deg);
+  transition: transform 0.4s ease-in-out;
+}
+
+.flip-card-unit .front,
+.flip-card-unit .back {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  backface-visibility: hidden;
+}
+
+.flip-card-unit .back {
+  transform: rotateX(180deg);
 }
 
 .home-hero {
@@ -708,6 +837,15 @@ button {
   --text-primary: #f1f5f9;
   --text-secondary: #a9b8cb;
   --border-color: #2a3a50;
+  --pick-correct-bg: #14532d;
+  --pick-correct-text: #dcfce7;
+  --pick-perfect-bg: #166534;
+  --pick-perfect-text: #ecfdf5;
+  --pick-correct-border: #4ade80;
+  --pick-perfect-border: #86efac;
+  --pick-incorrect-bg: #7f1d1d;
+  --pick-incorrect-text: #fee2e2;
+  --pick-incorrect-border: #f87171;
   --accent-gold: #e0b653;
   --surface-shadow: 0 14px 32px rgba(0, 0, 0, 0.24);
   color-scheme: dark;
@@ -753,6 +891,26 @@ button {
   background-color: #15382f !important;
   color: #d1fae5 !important;
   border-color: #276749 !important;
+}
+
+.app-container.dark-mode .survivor-game-date {
+  border-bottom-color: #3b4e68 !important;
+  color: #cbd5e1 !important;
+}
+
+.app-container.dark-mode [style*="border-bottom"][style*="#f1f5f9"],
+.app-container.dark-mode [style*="border-bottom"][style*="#f3f4f6"],
+.app-container.dark-mode [style*="border-bottom"][style*="#f0f0f0"],
+.app-container.dark-mode [style*="border-bottom"][style*="#e5e7eb"],
+.app-container.dark-mode [style*="border-top"][style*="#f1f5f9"],
+.app-container.dark-mode [style*="border-top"][style*="#f3f4f6"],
+.app-container.dark-mode [style*="border-top"][style*="#f0f0f0"],
+.app-container.dark-mode [style*="border-top"][style*="#e5e7eb"],
+.app-container.dark-mode [style*="border-right"][style*="#f1f5f9"],
+.app-container.dark-mode [style*="border-right"][style*="#f3f4f6"],
+.app-container.dark-mode [style*="border-right"][style*="#f0f0f0"],
+.app-container.dark-mode [style*="border-right"][style*="#e5e7eb"] {
+  border-color: #3b4e68 !important;
 }
 
 .app-container.dark-mode :not(button)[style*="color: #64748b"],
@@ -1496,6 +1654,45 @@ button {
   background: var(--bg-primary);
   color: var(--text-secondary);
   cursor: not-allowed;
+}
+
+.olympics-country-picks-grid,
+.hrd-draft-grid {
+  display: grid;
+  min-width: 0;
+  align-items: start;
+}
+
+.olympics-country-picks-grid {
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 16px;
+}
+
+.hrd-draft-grid {
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+}
+
+.hrd-player-pool-header {
+  gap: 10px;
+}
+
+.hrd-player-pool-header h3 {
+  min-width: 0;
+}
+
+.hrd-player-card {
+  min-width: 0;
+  gap: 12px;
+}
+
+.hrd-player-info {
+  min-width: 0;
+  flex: 1 1 180px;
+}
+
+.hrd-player-actions {
+  flex: 0 0 auto;
 }
 
 .survivor-selection-banner {
@@ -3532,5 +3729,36 @@ button {
 @media (max-width: 992px) {
   .home-right-col--mobile-hidden {
     display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .olympics-country-picks-grid,
+  .hrd-draft-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .hrd-player-pool-header {
+    align-items: stretch !important;
+    flex-direction: column;
+  }
+
+  .hrd-player-pool-header input {
+    box-sizing: border-box;
+    width: 100% !important;
+  }
+
+  .hrd-player-card {
+    align-items: flex-start !important;
+    flex-wrap: wrap;
+  }
+
+  .hrd-player-info {
+    flex-basis: 100%;
+  }
+
+  .hrd-player-actions {
+    margin-left: auto;
   }
 }

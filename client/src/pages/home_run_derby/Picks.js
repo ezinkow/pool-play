@@ -139,11 +139,11 @@ export default function HrdDraft() {
                     </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 24, alignItems: "start" }}>
+                <div className="hrd-draft-grid">
 
                     {/* Left Column: Available Player Pool */}
                     <div style={{ background: "white", borderRadius: 12, padding: 20, border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                        <div className="hrd-player-pool-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                             <h3 style={{ margin: 0, fontSize: "16px", color: NAVY }}>Available Hitters (Eligible 12+ HR, 350+ AB)</h3>
                             <input
                                 type="text"
@@ -158,12 +158,12 @@ export default function HrdDraft() {
                             {filteredPlayers.map(player => {
                                 const isSelected = selectedPlayerIds.includes(player.id);
                                 return (
-                                    <div key={player.id} style={{
+                                    <div key={player.id} className="hrd-player-card" style={{
                                         display: "flex", justifyContent: "space-between", alignItems: "center",
                                         padding: "10px 14px", borderRadius: 8, border: isSelected ? `2px solid ${GOLD}` : "1px solid #e2e8f0",
                                         background: isSelected ? "#fffbeb" : "#f8fafc", transition: "all 0.15s ease"
                                     }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                        <div className="hrd-player-info" style={{ display: "flex", alignItems: "center", gap: 12 }}>
                                             {player.headshot && (
                                                 <img src={player.headshot} alt={player.name} style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", background: "#cbd5e1" }} />
                                             )}
@@ -173,7 +173,7 @@ export default function HrdDraft() {
                                             </div>
                                         </div>
 
-                                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                        <div className="hrd-player-actions" style={{ display: "flex", alignItems: "center", gap: 12 }}>
                                             <span style={{ fontSize: "13px", fontWeight: 700, background: "#e2e8f0", padding: "4px 8px", borderRadius: 4, color: "#334155" }}>
                                                 ${player.salary}
                                             </span>
@@ -221,7 +221,7 @@ export default function HrdDraft() {
                         )}
 
                         <div style={{ marginTop: 16, borderTop: "1px solid #e2e8f0", paddingTop: 12, fontSize: "13px", color: "#475569" }}>
-                            <div style={{ display: "flex", justifyContent: "between", marginBottom: 4 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                                 <span>Total Salary Used:</span>
                                 <strong>{totalSalary} / {MAX_CAP}</strong>
                             </div>

@@ -320,7 +320,7 @@ export default function NflSurvivorPicks() {
                                             gap: 6
                                         }}>
                                             {formattedDate && (
-                                                <div style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textAlign: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: 4, display: "flex", justifyContent: "center", alignItems: "center", gap: 6 }}>
+                                                <div className="survivor-game-date" style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textAlign: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: 4, display: "flex", justifyContent: "center", alignItems: "center", gap: 6 }}>
                                                     <span>{formattedDate}</span>
                                                     {locked && <span style={{ backgroundColor: NFL_RED, color: "white", padding: "1px 6px", borderRadius: 3, fontSize: "9px" }}>LOCKED</span>}
                                                 </div>

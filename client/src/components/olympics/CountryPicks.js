@@ -29,32 +29,10 @@ export default function CountryPicks({ authInfo }) {
     return () => clearInterval(interval);
   }, []);
 
-  if (isLocked) {
-    return (
-      <div
-        style={{
-          padding: "48px 16px",
-          maxWidth: "600px",
-          margin: "0 auto",
-          textAlign: "center",
-        }}
-      >
-        <Toaster />
-        <h2 style={{ marginBottom: "12px" }}>⏰ Submitting Rosters Closed</h2>
-        <p style={{ fontSize: "16px", color: "#374151" }}>
-          The deadline to submit country picks has passed.
-        </p>
-        <p style={{ marginTop: "8px", color: "#6b7280" }}>
-          You can still view the medal table, standings, and scoreboard.
-        </p>
-      </div>
-    );
-  }
-
-
-
   /* -------------------- DATA FETCH -------------------- */
   useEffect(() => {
+    if (isLocked) return;
+
     async function fetchCountries() {
       try {
         const res = await axios.get("/api/olympics/countrypools");
@@ -64,9 +42,11 @@ export default function CountryPicks({ authInfo }) {
       }
     }
     fetchCountries();
-  }, []);
+  }, [isLocked]);
 
   useEffect(() => {
+    if (isLocked) return;
+
     async function fetchNames() {
       try {
         const res = await axios.get("/api/olympics/users");
@@ -76,7 +56,7 @@ export default function CountryPicks({ authInfo }) {
       }
     }
     fetchNames();
-  }, []);
+  }, [isLocked]);
 
   /* -------------------- DERIVED -------------------- */
   const totalSpend = useMemo(() => {
@@ -109,6 +89,29 @@ export default function CountryPicks({ authInfo }) {
         return list.sort((a, b) => a.country_name.localeCompare(b.country_name));
     }
   }, [countries, sortBy]);
+
+  if (isLocked) {
+    return (
+      <div
+        style={{
+          padding: "48px 16px",
+          maxWidth: "600px",
+          margin: "0 auto",
+          textAlign: "center",
+        }}
+      >
+        <Toaster />
+        <h2 style={{ marginBottom: "12px" }}>⏰ Submitting Rosters Closed</h2>
+        <p style={{ fontSize: "16px", color: "#374151" }}>
+          The deadline to submit country picks has passed.
+        </p>
+        <p style={{ marginTop: "8px", color: "#6b7280" }}>
+          You can still view the medal table, standings, and scoreboard.
+        </p>
+      </div>
+    );
+  }
+
 
   /* -------------------- HANDLERS -------------------- */
   const handleNameSelect = (event) => {
@@ -341,14 +344,7 @@ export default function CountryPicks({ authInfo }) {
 
       {/* TWO COLUMN LAYOUT */}
       {authenticated && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 300px",
-            gap: "16px",
-            alignItems: "start",
-          }}
-        >
+        <div className="olympics-country-picks-grid">
           {/* COUNTRY LIST */}
           <div style={{ border: "1px solid #ddd", borderRadius: "8px" }}>
             {/* COUNTRY ROWS */}

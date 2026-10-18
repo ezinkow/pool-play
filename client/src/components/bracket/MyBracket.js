@@ -143,7 +143,7 @@ function PickCard({ game, games, picks, onPick, isLocked }) {
                     border: selected
                         ? `2px solid ${userPickedRight ? "#16a34a" : userPickedWrong ? "#dc2626" : BLUE}`
                         : "1px solid #e5e7eb",
-                    backgroundColor: userPickedRight ? "#f0fdf4" : userPickedWrong ? "#fef2f2" : selected ? "#eff6ff" : "white",
+                    backgroundColor: userPickedRight ? "var(--pick-correct-bg)" : userPickedWrong ? "var(--pick-incorrect-bg)" : selected ? "#eff6ff" : "white",
                     cursor: disabled ? "default" : "pointer",
                     fontWeight: selected ? 700 : 400,
                     color: isTBD ? "#9ca3af" : userPickedRight ? "#16a34a" : userPickedWrong ? "#dc2626" : selected ? BLUE : "#374151",
@@ -163,13 +163,13 @@ function PickCard({ game, games, picks, onPick, isLocked }) {
                 {showScore && (
                     <span style={{
                         marginLeft: "auto", fontSize: 12, fontWeight: 700,
-                        color: isWinner ? "#16a34a" : "#6b7280", flexShrink: 0,
+                        color: isWinner ? "var(--pick-correct-text)" : "#6b7280", flexShrink: 0,
                     }}>
                         {side === "home" ? game.home_score : game.away_score}
                     </span>
                 )}
                 {isWinner && (
-                    <span style={{ fontSize: 11, color: "#16a34a", flexShrink: 0, marginLeft: showScore ? 4 : "auto" }}>✓</span>
+                    <span style={{ fontSize: 11, color: "var(--pick-correct-text)", flexShrink: 0, marginLeft: showScore ? 4 : "auto" }}>✓</span>
                 )}
             </button>
         );
@@ -195,17 +195,17 @@ function PickCard({ game, games, picks, onPick, isLocked }) {
                 {/* Points display */}
                 {pointsEarned !== null ? (
                     <span style={{
-                        fontSize: 11, fontWeight: 800, color: "#16a34a",
-                        backgroundColor: "#f0fdf4", borderRadius: 5,
-                        padding: "2px 7px", border: "1px solid #bbf7d0",
+                        fontSize: 11, fontWeight: 800, color: "var(--pick-correct-text)",
+                        backgroundColor: "var(--pick-correct-bg)", borderRadius: 5,
+                        padding: "2px 7px", border: "1px solid var(--pick-correct-border)",
                     }}>
                         +{pointsEarned} pts ✓
                     </span>
                 ) : isFinal && userPick && userPick !== game.winner ? (
                     <span style={{
-                        fontSize: 11, fontWeight: 700, color: "#dc2626",
-                        backgroundColor: "#fef2f2", borderRadius: 5,
-                        padding: "2px 7px", border: "1px solid #fecaca",
+                        fontSize: 11, fontWeight: 700, color: "var(--pick-incorrect-text)",
+                        backgroundColor: "var(--pick-incorrect-bg)", borderRadius: 5,
+                        padding: "2px 7px", border: "1px solid var(--pick-incorrect-border)",
                     }}>
                         0 pts ✗
                     </span>
@@ -268,7 +268,10 @@ export default function MyBracket() {
                 setTiebreakerWin(res.data.win_score ?? "");
                 setTiebreakerLoss(res.data.loss_score ?? "");
             }
-        } catch { }
+        } catch (err) {
+            console.error("Failed to load bracket tiebreaker", err);
+            toast.error("Unable to load your tiebreaker.");
+        }
     };
 
     useEffect(() => {

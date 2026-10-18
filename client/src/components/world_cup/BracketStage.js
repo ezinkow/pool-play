@@ -32,8 +32,8 @@ export default function BracketStage({
                 style={{
                     display: "flex", alignItems: "center", gap: 6, padding: "6px 8px", borderRadius: 6,
                     cursor: canPick ? "pointer" : "default",
-                    backgroundColor: correct ? "#f0fdf4" : eliminated ? "#fef2f2" : isPick ? "#eff6ff" : "white",
-                    border: isPick ? `2px solid ${correct ? "#16a34a" : eliminated ? "#dc2626" : WORLDCUPGREEN}` : "2px solid transparent",
+                    backgroundColor: correct ? "var(--pick-correct-bg)" : eliminated ? "var(--pick-incorrect-bg)" : isPick ? "#eff6ff" : "white",
+                    border: isPick ? `2px solid ${correct ? "var(--pick-correct-border)" : eliminated ? "var(--pick-incorrect-border)" : WORLDCUPGREEN}` : "2px solid transparent",
                     opacity: eliminated ? 0.5 : 1, transition: "all 0.15s"
                 }}
             >
@@ -47,7 +47,7 @@ export default function BracketStage({
                 {/* Name */}
                 <span style={{
                     fontSize: 11, fontWeight: isPick ? 700 : 500,
-                    color: tbd ? "#9ca3af" : correct ? "#16a34a" : eliminated ? "#dc2626" : "#1f2937",
+                    color: tbd ? "#9ca3af" : correct ? "var(--pick-correct-text)" : eliminated ? "var(--pick-incorrect-text)" : "#1f2937",
                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1,
                     textDecoration: eliminated ? "line-through" : "none",
                 }}>

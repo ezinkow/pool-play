@@ -75,7 +75,10 @@ export default function Picks() {
         setTiebreakerWin(res.data.win_score ?? "");
         setTiebreakerLoss(res.data.loss_score ?? "");
       }
-    } catch { }
+    } catch (err) {
+      console.error("Failed to load tournament tiebreaker", err);
+      toast.error("Unable to load your tiebreaker.");
+    }
   };
 
   useEffect(() => {

@@ -88,9 +88,9 @@ export default function PlayerPicksMatrix() {
     }
 
     if (isCorrect) {
-      return { backgroundColor: "#28bd5566" }; // Consistent green for correct
+      return { backgroundColor: "var(--pick-correct-bg)", color: "var(--pick-correct-text)" };
     }
-    return { backgroundColor: "#d646462b" }; // Red for incorrect
+    return { backgroundColor: "var(--pick-incorrect-bg)", color: "var(--pick-incorrect-text)" };
   };
 
   const PickLogo = ({ game, pickObj }) => {
@@ -169,7 +169,7 @@ export default function PlayerPicksMatrix() {
           70% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0); } 
           100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } 
         }
-        .matrix-container::-webkit-scrollbar { height: 5px; }
+        .matrix-container::-webkit-scrollbar { height: 12px; }
         .matrix-container::-webkit-scrollbar-track { background: #f1f5f9; }
         .matrix-container::-webkit-scrollbar-thumb { background: #cbd5e1; borderRadius: 4px; }
       `}</style>

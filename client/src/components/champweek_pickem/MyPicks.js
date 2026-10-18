@@ -124,8 +124,8 @@ export default function MyPicks() {
 
     const rowBg = (p) => {
         const c = getRowClass(p);
-        if (c === "pick-win") return "#f0fdf4";
-        if (c === "pick-loss") return "#fef2f2";
+        if (c === "pick-win") return "var(--pick-correct-bg)";
+        if (c === "pick-loss") return "var(--pick-incorrect-bg)";
         if (c === "pick-missed") return "#fffbeb";
         return "white";
     };
@@ -135,12 +135,12 @@ export default function MyPicks() {
         const isFinal = game?.status === "STATUS_FINAL";
         const isLive = game?.status === "STATUS_IN_PROGRESS" || game?.status === "STATUS_HALFTIME";
         const rowClass = getRowClass(p);
-        const borderColor = rowClass === "pick-win" ? "#86efac"
-            : rowClass === "pick-loss" ? "#fca5a5"
+        const borderColor = rowClass === "pick-win" ? "var(--pick-correct-border)"
+            : rowClass === "pick-loss" ? "var(--pick-incorrect-border)"
                 : rowClass === "pick-missed" ? "#fde68a"
                     : "#e5e7eb";
         return (
-            <div style={{
+            <div className={rowClass} style={{
                 background: "white", borderRadius: 12, padding: "12px 14px",
                 borderLeft: `4px solid ${borderColor}`,
                 boxShadow: "0 2px 8px rgba(0,0,0,0.07)",

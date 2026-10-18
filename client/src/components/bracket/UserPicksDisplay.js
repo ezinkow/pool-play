@@ -36,8 +36,8 @@ export default function PlayerPicksMatrix() {
     if (!pickObj) return {};
     if (!game.winner) return {};
     return pickObj.pick === game.winner
-      ? { backgroundColor: "#41ac618e" }
-      : { backgroundColor: "#d646464b" };
+      ? { backgroundColor: "var(--pick-correct-bg)", color: "var(--pick-correct-text)" }
+      : { backgroundColor: "var(--pick-incorrect-bg)", color: "var(--pick-incorrect-text)" };
   };
 
   const PickLogo = ({ game, pickObj }) => {
@@ -108,10 +108,10 @@ export default function PlayerPicksMatrix() {
         <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
           <h3 style={{ color: "var(--primary-navy)", fontSize: 14, fontWeight: 700, margin: 0 }}>Group Picks</h3>
           <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b7280" }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#41ac618e", display: "inline-block" }} />Correct
+            <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "var(--pick-correct-bg)", display: "inline-block" }} />Correct
           </span>
           <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b7280" }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#d646464b", display: "inline-block" }} />Wrong
+            <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "var(--pick-incorrect-bg)", display: "inline-block" }} />Wrong
           </span>
         </div>
       </div>

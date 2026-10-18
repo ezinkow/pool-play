@@ -25,6 +25,7 @@ export default function SurvivorWeekSelector({
             type="button"
             aria-current={isCurrent ? "page" : undefined}
             aria-disabled={isLocked}
+            disabled={isLocked}
             onClick={() => onWeekChange(week)}
             style={{ "--survivor-accent": accentColor }}
           >

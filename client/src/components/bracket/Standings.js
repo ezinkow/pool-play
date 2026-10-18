@@ -57,10 +57,10 @@ function PickCard({ pickRow }) {
                 display: "flex", alignItems: "center", gap: 7,
                 padding: "5px 8px", borderRadius: 6,
                 backgroundColor: isPick
-                    ? (isWinner ? "#f0fdf4" : isLoser ? "#fef2f2" : "#eff6ff")
+                    ? (isWinner ? "var(--pick-correct-bg)" : isLoser ? "var(--pick-incorrect-bg)" : "#eff6ff")
                     : "transparent",
                 border: isPick
-                    ? `1.5px solid ${isWinner ? "#16a34a" : isLoser ? "#dc2626" : BLUE}`
+                    ? `1.5px solid ${isWinner ? "var(--pick-correct-border)" : isLoser ? "var(--pick-incorrect-border)" : BLUE}`
                     : "1.5px solid transparent",
                 opacity: (!isPick && isLoser) ? 0.35 : 1,
             }}>
@@ -70,7 +70,7 @@ function PickCard({ pickRow }) {
                 }
                 <span style={{
                     fontSize: 12, fontWeight: isPick ? 700 : 400,
-                    color: isPick ? (isWinner ? "#16a34a" : isLoser ? "#dc2626" : BLUE) : "#374151",
+                    color: isPick ? (isWinner ? "var(--pick-correct-text)" : isLoser ? "var(--pick-incorrect-text)" : BLUE) : "#374151",
                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                 }}>
                     {seed && <sup style={{ fontSize: 8, color: "#9ca3af", marginRight: 2 }}>{seed}</sup>}
@@ -79,13 +79,13 @@ function PickCard({ pickRow }) {
                 {showScore && (
                     <span style={{
                         marginLeft: "auto", fontSize: 12, fontWeight: 700, flexShrink: 0,
-                        color: isWinner ? "#16a34a" : "#6b7280",
+                        color: isWinner ? "var(--pick-correct-text)" : "#6b7280",
                     }}>
                         {score}
                     </span>
                 )}
                 {isWinner && isPick && (
-                    <span style={{ fontSize: 11, color: "#16a34a", flexShrink: 0 }}>✓</span>
+                    <span style={{ fontSize: 11, color: "var(--pick-correct-text)", flexShrink: 0 }}>✓</span>
                 )}
             </div>
         );
@@ -110,17 +110,17 @@ function PickCard({ pickRow }) {
                 )}
                 {pointsEarned !== null ? (
                     <span style={{
-                        fontSize: 10, fontWeight: 800, color: "#16a34a",
-                        backgroundColor: "#f0fdf4", borderRadius: 4,
-                        padding: "1px 6px", border: "1px solid #bbf7d0",
+                        fontSize: 10, fontWeight: 800, color: "var(--pick-correct-text)",
+                        backgroundColor: "var(--pick-correct-bg)", borderRadius: 4,
+                        padding: "1px 6px", border: "1px solid var(--pick-correct-border)",
                     }}>
                         +{pointsEarned} pts ✓
                     </span>
                 ) : isFinal && userPick && userPick !== game.winner ? (
                     <span style={{
-                        fontSize: 10, fontWeight: 700, color: "#dc2626",
-                        backgroundColor: "#fef2f2", borderRadius: 4,
-                        padding: "1px 6px", border: "1px solid #fecaca",
+                        fontSize: 10, fontWeight: 700, color: "var(--pick-incorrect-text)",
+                        backgroundColor: "var(--pick-incorrect-bg)", borderRadius: 4,
+                        padding: "1px 6px", border: "1px solid var(--pick-incorrect-border)",
                     }}>
                         0 pts ✗
                     </span>

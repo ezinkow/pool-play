@@ -31,12 +31,12 @@ export default function BracketGame({
                     padding: "6px 8px",
                     borderRadius: 6,
                     cursor: canPick ? "pointer" : "default",
-                    backgroundColor: correct ? "#f0fdf4"
-                        : eliminated ? "#fef2f2"
+                    backgroundColor: correct ? "var(--pick-correct-bg)"
+                        : eliminated ? "var(--pick-incorrect-bg)"
                         : isPick ? "#eff6ff"
                         : "white",
                     border: isPick
-                        ? `2px solid ${correct ? "#16a34a" : eliminated ? "#dc2626" : BLUE}`
+                        ? `2px solid ${correct ? "var(--pick-correct-border)" : eliminated ? "var(--pick-incorrect-border)" : BLUE}`
                         : "2px solid transparent",
                     opacity: eliminated ? 0.5 : 1,
                     transition: "all 0.15s",
@@ -65,8 +65,8 @@ export default function BracketGame({
                     fontSize: 11,
                     fontWeight: isPick ? 700 : 500,
                     color: tbd ? "#9ca3af"
-                        : correct ? "#16a34a"
-                        : eliminated ? "#dc2626"
+                        : correct ? "var(--pick-correct-text)"
+                        : eliminated ? "var(--pick-incorrect-text)"
                         : "#1f2937",
                     overflow: "hidden",
                     textOverflow: "ellipsis",

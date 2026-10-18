@@ -30,9 +30,9 @@ function SingleFlipCard({ value, compact = false, isDarkMode = true }) {
     const currentToShow = isFlipping ? displayVal : String(value);
     const prevToShow = isFlipping ? prevVal : String(value);
 
-    const unitWidth = compact ? '15px' : '20px';
-    const unitHeight = compact ? '22px' : '34px';
-    const fontSize = compact ? '12px' : '17px';
+    const unitWidth = compact ? '16px' : '20px';
+    const unitHeight = compact ? '24px' : '34px';
+    const fontSize = compact ? '14px' : '17px';
 
     return (
         <div className={`flip-card-unit ${compact ? 'compact' : ''} ${isFlipping ? 'flipping' : ''}`} style={{ width: unitWidth, height: unitHeight, fontSize }}>
@@ -198,7 +198,7 @@ export default function PoolCountdown({ poolData, mode, isDarkMode = true, compa
                         <SingleFlipCard key={`${subLabel}-${i}`} value={d} compact={compact} isDarkMode={isDarkMode} />
                     ))}
                 </div>
-                <span style={{ fontSize: compact ? "6px" : "8px", color: unitLabelColor, fontWeight: "800", marginTop: "2px", textTransform: "uppercase" }}>{subLabel}</span>
+                <span style={{ fontSize: compact ? "7px" : "8px", color: unitLabelColor, fontWeight: "800", marginTop: "2px", textTransform: "uppercase" }}>{subLabel}</span>
             </div>
         );
     };
@@ -209,60 +209,28 @@ export default function PoolCountdown({ poolData, mode, isDarkMode = true, compa
     const unitLabelColor = isDarkMode ? GOLD : "#8a6417";
 
     return (
-        <>
-            <style>{`
-                .flip-card-unit {
-                    position: relative; display: flex; flex-direction: column; 
-                    font-weight: 900; color: #ffffff !important; perspective: 300px;
-                    font-family: 'Courier New', Courier, monospace; background: #111; border-radius: 3px;
-                    overflow: hidden;
-                }
-                .flip-card-unit .top-static, .flip-card-unit .bottom-static { position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; }
-                
-                .flip-card-unit .top-static { top: 0; background: #181818; border-bottom: 1px solid #000; border-radius: 3px 3px 0 0; }
-                .flip-card-unit .top-static span { position: absolute; top: 0; left: 0; width: 100%; height: 34px; line-height: 34px; text-align: center; color: #ffffff !important; }
-                .flip-card-unit.compact .top-static span { height: 22px; line-height: 22px; }
+        <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: containerBg, padding: compact ? "3px 5px" : "5px 8px", borderRadius: "6px", border: `1px solid ${containerBorder}`, maxWidth: "100%", overflow: "hidden" }}>
+            <span style={{ color: containerText, fontSize: compact ? "8px" : "9px", fontWeight: "800", marginRight: "5px", textTransform: "uppercase" }}>{labelText}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: compact ? "2px" : "3px", flexWrap: "nowrap" }}>
+                {showYears && (
+                    <>
+                        {renderFlipPair(timeLeft.y, "Yrs", 2)}
+                        <span style={{ color: containerText, fontSize: compact ? "9px" : "14px", fontWeight: "bold", paddingBottom: compact ? "6px" : "10px" }}>:</span>
+                    </>
+                )}
+                {renderFlipPair(timeLeft.d, "Days", timeLeft.d.length >= 3 ? 3 : timeLeft.d.length)}
+                <span style={{ color: containerText, fontSize: compact ? "9px" : "14px", fontWeight: "bold", paddingBottom: compact ? "6px" : "10px" }}>:</span>
+                {renderFlipPair(timeLeft.h, "Hrs", 2)}
 
-                .flip-card-unit .bottom-static { bottom: 0; background: #2c2c2c; border-top: 1px solid #111; border-radius: 0 0 3px 3px; }
-                .flip-card-unit .bottom-static span { position: absolute; top: -17px; left: 0; width: 100%; height: 34px; line-height: 34px; text-align: center; color: #ffffff !important; }
-                .flip-card-unit.compact .bottom-static span { top: -11px; height: 22px; line-height: 22px; }
-
-                .flip-card-unit .bottom-shade { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.45) 100%); pointer-events: none; }
-                .flip-card-unit .flipper { position: absolute; width: 100%; height: 50%; top: 0; transform-origin: bottom; transform-style: preserve-3d; z-index: 3; }
-                .flip-card-unit.flipping .flipper { transition: transform 0.4s ease-in-out; transform: rotateX(-180deg); }
-                .flip-card-unit .front, .flip-card-unit .back { position: absolute; left: 0; width: 100%; height: 100%; overflow: hidden; backface-visibility: hidden; }
-                
-                .flip-card-unit .front { top: 0; background: #181818; border-bottom: 1px solid #000; border-radius: 3px 3px 0 0; }
-                .flip-card-unit .front span { position: absolute; top: 0; left: 0; width: 100%; height: 34px; line-height: 34px; text-align: center; color: #ffffff !important; }
-                .flip-card-unit.compact .front span { height: 22px; line-height: 22px; }
-
-                .flip-card-unit .back { bottom: 0; background: #2c2c2c; transform: rotateX(180deg); border-radius: 0 0 3px 3px; }
-                .flip-card-unit .back span { position: absolute; top: -17px; left: 0; width: 100%; height: 34px; line-height: 34px; text-align: center; color: #ffffff !important; }
-                .flip-card-unit.compact .back span { top: -11px; height: 22px; line-height: 22px; }
-            `}</style>
-            <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: containerBg, padding: compact ? "3px 5px" : "5px 8px", borderRadius: "6px", border: `1px solid ${containerBorder}`, maxWidth: "100%", overflow: "hidden" }}>
-                <span style={{ color: containerText, fontSize: compact ? "8px" : "9px", fontWeight: "800", marginRight: "5px", textTransform: "uppercase" }}>{labelText}</span>
-                <div style={{ display: "flex", alignItems: "center", gap: compact ? "2px" : "3px", flexWrap: "nowrap" }}>
-                    {showYears && (
-                        <>
-                            {renderFlipPair(timeLeft.y, "Yrs", 2)}
-                            <span style={{ color: containerText, fontSize: compact ? "9px" : "14px", fontWeight: "bold", paddingBottom: compact ? "6px" : "10px" }}>:</span>
-                        </>
-                    )}
-                    {renderFlipPair(timeLeft.d, "Days", timeLeft.d.length >= 3 ? 3 : timeLeft.d.length)}
-                    <span style={{ color: containerText, fontSize: compact ? "9px" : "14px", fontWeight: "bold", paddingBottom: compact ? "6px" : "10px" }}>:</span>
-                    {renderFlipPair(timeLeft.h, "Hrs", 2)}
-                    
-                    {!daysAndHoursOnly && (
-                        <>
-                            <span style={{ color: containerText, fontSize: compact ? "9px" : "14px", fontWeight: "bold", paddingBottom: compact ? "6px" : "10px" }}>:</span>
-                            {renderFlipPair(timeLeft.m, "Min", 2)}
-                            <span style={{ color: "#ffffff", fontSize: compact ? "9px" : "14px", fontWeight: "bold", paddingBottom: compact ? "6px" : "10px" }}>:</span>
-                            {renderFlipPair(timeLeft.s, "Sec", 2)}
-                        </>
-                    )}
-                </div>
+                {!daysAndHoursOnly && (
+                    <>
+                        <span style={{ color: containerText, fontSize: compact ? "9px" : "14px", fontWeight: "bold", paddingBottom: compact ? "6px" : "10px" }}>:</span>
+                        {renderFlipPair(timeLeft.m, "Min", 2)}
+                        <span style={{ color: "#ffffff", fontSize: compact ? "9px" : "14px", fontWeight: "bold", paddingBottom: compact ? "6px" : "10px" }}>:</span>
+                        {renderFlipPair(timeLeft.s, "Sec", 2)}
+                    </>
+                )}
             </div>
-        </>
+        </div>
     );
 }

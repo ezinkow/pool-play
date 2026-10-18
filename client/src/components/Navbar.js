@@ -427,9 +427,9 @@ export default function Navbar({ isDarkMode, toggleTheme }) {
                                             </Link>
                                         );
                                     })}
-                                    <div onClick={() => { setMenuOpen(false); setChatOpen(true); }} style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%", padding: "8px 16px", background: "none", border: "none", color: "#f3f4f6", fontWeight: 500, fontSize: "12px", cursor: "pointer", textAlign: "left", boxSizing: "border-box" }}>
+                                    <button type="button" onClick={() => { setMenuOpen(false); setChatOpen(true); }} style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%", minHeight: 40, padding: "8px 16px", background: "none", border: "none", color: "#f3f4f6", fontWeight: 500, fontSize: "12px", cursor: "pointer", textAlign: "left", boxSizing: "border-box" }}>
                                         <span style={{ width: "16px", textAlign: "center", flexShrink: 0 }}>💬</span> Open Pool Chat
-                                    </div>
+                                    </button>
                                     <div style={{ height: "1px", background: "rgba(255,255,255,0.08)", width: "100%", margin: "6px 0" }} />
                                 </>
                             )}

@@ -7,7 +7,9 @@ import PoolEmoji from "../../components/PoolEmoji";
 
 const NAVY = "#1c61ac";
 const GOLD = "#c89d3c";
-const LIVE_RED = "#D50A0A";
+const DARK_BG = "#101b2c";
+const DARK_ROW_ALT = "#142136";
+const CURRENT_USER_BG = "#0f2d59";
 
 export default function GroupPicks() {
   const [series, setSeries] = useState([]);
@@ -98,29 +100,18 @@ export default function GroupPicks() {
     const correctWinner = pick.pick === s.winner;
     if (correctWinner) {
       return pick.series_length_guess === s.series_length
-        ? { backgroundColor: "#80fda5", color: "#065f46" } // Perfect match highlight
-        : { backgroundColor: "#cff8dc", color: "#166534" }; // Correct winner highlight
+        ? { backgroundColor: "var(--pick-perfect-bg)", color: "var(--pick-perfect-text)" }
+        : { backgroundColor: "var(--pick-correct-bg)", color: "var(--pick-correct-text)" };
     }
-    return { backgroundColor: "#ff6b6b", color: "#991b1b" }; // Incorrect pick highlight
+    return { backgroundColor: "var(--pick-incorrect-bg)", color: "var(--pick-incorrect-text)" };
   };
 
-  if (authLoading) return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, sans-serif" }}>Verifying session...</div>;
+  if (authLoading) return <div style={{ textAlign: "center", padding: 50, color: "var(--text-primary)", fontFamily: "system-ui, sans-serif" }}>Verifying session...</div>;
 
   const PLAYER_COL_W = 180;
   const SERIES_COL_W = 135;
 
-  const getBadgeStyle = (primaryColor, secondaryColor) => ({
-    background: secondaryColor,
-    borderRadius: 4,
-    padding: "2px 5px",
-    display: "inline-flex",
-    alignItems: "center",
-    boxShadow: `0 0 4px 1px ${primaryColor}, 0 1px 2px rgba(0,0,0,0.2)`,
-    border: `2px solid ${primaryColor}`,
-    margin: "2px"
-  });
-
-const GameHeader = ({ s }) => {
+  const GameHeader = ({ s }) => {
     const isFinal = s.status === "STATUS_FINAL";
     const isLive = s.status === "STATUS_IN_PROGRESS";
     const homeIsWinner = isFinal && s.winner === s.home_team;
@@ -150,7 +141,7 @@ const GameHeader = ({ s }) => {
     return (
       <div style={{ textAlign: "center", width: "100%", overflow: "visible", padding: "2px 0" }}>
         {/* Round Badge */}
-        <div style={{ color: NAVY, fontSize: 9, marginBottom: 4, fontWeight: 800, textTransform: "uppercase", backgroundColor: "white", borderRadius: 3, padding: "1px 5px", display: "inline-block", boxShadow: "0 1px 2px rgba(0,0,0,0.1)" }}>
+        <div style={{ fontSize: 9, marginBottom: 4, fontWeight: 800, textTransform: "uppercase", backgroundColor: "#1e293b", color: "#f8fafc", borderRadius: 3, padding: "1px 5px", display: "inline-block", boxShadow: "0 1px 2px rgba(0,0,0,0.1)" }}>
           {s.round_label}
         </div>
 
@@ -202,8 +193,8 @@ const GameHeader = ({ s }) => {
 
         {/* Series Score / Winner Callout - Shrink-wrapped to text width */}
         {isFinal ? (
-          <div style={{ display: "inline-block", backgroundColor: "rgba(255,255,255,0.95)", border: `1px solid ${GOLD}`, borderRadius: 3, padding: "1px 6px", marginTop: 3 }}>
-            <div style={{ fontSize: 8, color: "#166534", fontWeight: 800 }}>
+          <div style={{ display: "inline-block", backgroundColor: "rgba(15,23,42,0.95)", border: `1px solid ${GOLD}`, borderRadius: 3, padding: "1px 6px", marginTop: 3 }}>
+            <div style={{ fontSize: 8, color: "#4ade80", fontWeight: 800 }}>
               🏆 Winner: <strong>{s.winner}</strong> ({s.series_length}G)
             </div>
           </div>
@@ -217,41 +208,41 @@ const GameHeader = ({ s }) => {
   };
 
   return (
-    <PoolGatekeeper user={user} gameKey="mlb_playoffs" >
-      <div style={{ width: "100%", margin: "0 auto", padding: "12px 4px", paddingBottom: 80, fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <PoolGatekeeper user={user} gameKey="mlb_playoffs">
+      <div className="cfb-pickem-matrix-page mlb-playoffs-standings-page" style={{ width: "100%", margin: "0 auto", padding: "12px 4px", paddingBottom: 80, fontFamily: "system-ui, -apple-system, sans-serif" }}>
         <style>{`
           @keyframes pulse { 
             0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 
             70% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0); } 
             100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } 
           }
-          .matrix-container::-webkit-scrollbar { height: 6px; }
-          .matrix-container::-webkit-scrollbar-track { background: #f1f5f9; }
-          .matrix-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+          .matrix-container::-webkit-scrollbar { height: 12px; }
+          .matrix-container::-webkit-scrollbar-track { background: var(--bg-tertiary, #f1f5f9); }
+          .matrix-container::-webkit-scrollbar-thumb { background: var(--border-color, #cbd5e1); border-radius: 4px; }
         `}</style>
 
         <div style={{ textAlign: "center", marginBottom: 12, padding: "0 8px" }}>
-          <h2 style={{ color: NAVY, fontSize: "20px", margin: 0, fontWeight: 800 }}>
+          <h2 className="cfb-matrix-title" style={{ color: NAVY, fontSize: "20px", margin: 0, fontWeight: 800 }}>
             <PoolEmoji gameKey="mlb_playoffs" /> Group Picks Matrix <PoolEmoji gameKey="mlb_playoffs" />
           </h2>
-          <p style={{ color: "#64748b", marginTop: 4, fontSize: "12px" }}>Track participant selections, confidence points, and series length outcomes for active/started series.</p>
+          <p className="text-subtitle" style={{ color: "#64748b", marginTop: 4, fontSize: "12px" }}>Track participant selections, confidence points, and series length outcomes for active/started series.</p>
         </div>
 
-        <div className="matrix-container" style={{
-          background: "white",
+        <div className="matrix-container cfb-pickem-matrix-container" style={{
+          backgroundColor: "var(--bg-secondary, white)",
           borderRadius: 8,
           boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-          border: "1px solid #e2e8f0",
+          border: "1px solid var(--border-color, #e2e8f0)",
           maxWidth: "100%",
           overflowX: "auto",
           position: "relative"
         }}>
           {series.length === 0 ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "#64748b", fontSize: "14px" }}>
+            <div style={{ padding: "40px", textAlign: "center", color: "var(--text-secondary, #94a3b8)", fontSize: "14px" }}>
               No series have started yet. Picks will appear here once Game 1 of a series gets underway!
             </div>
           ) : (
-            <table style={{ width: "max-content", minWidth: "100%", borderCollapse: "separate", borderSpacing: 0, whiteSpace: "nowrap", tableLayout: "fixed" }}>
+            <table className="ats-group-picks-matrix-table" style={{ width: "max-content", minWidth: "100%", borderCollapse: "separate", borderSpacing: 0, whiteSpace: "nowrap", tableLayout: "fixed" }}>
               <thead>
                 <tr style={{ backgroundColor: NAVY, color: "white" }}>
                   <th style={{
@@ -272,6 +263,7 @@ const GameHeader = ({ s }) => {
                       <span>Player (Rnd / Ovr)</span>
                       <div style={{ display: "flex", gap: "6px", width: "100%" }}>
                         <button
+                          className={`cfb-matrix-sort-button ${sortBy === "overall" ? "is-selected" : ""}`}
                           onClick={() => setSortBy("overall")}
                           style={{
                             width: "52px",
@@ -291,6 +283,7 @@ const GameHeader = ({ s }) => {
                           Ovr
                         </button>
                         <button
+                          className={`cfb-matrix-sort-button ${sortBy === "round" ? "is-selected" : ""}`}
                           onClick={() => setSortBy("round")}
                           style={{
                             width: "52px",
@@ -337,34 +330,37 @@ const GameHeader = ({ s }) => {
                   const isCurrentUser = Number(player.user_id) === Number(user?.id) || player.entry_name === user?.name;
 
                   return (
-                    <tr key={player.entry_name || player.user_id} style={{
-                      borderBottom: "1px solid #f1f5f9",
+                    <tr key={player.entry_name || player.user_id} className={`cfb-matrix-row${isCurrentUser ? " is-current-user" : ""}`} style={{
+                      borderBottom: "1px solid var(--border-color, #f1f5f9)",
                       backgroundColor: isCurrentUser ? "#eff6ff" : (idx % 2 === 0 ? "#fafafa" : "white")
                     }}>
-                      <td style={{
-                        position: "sticky",
-                        left: 0,
-                        zIndex: 5,
-                        backgroundColor: isCurrentUser ? "#dbeafe" : (idx % 2 === 0 ? "#fafafa" : "white"),
-                        padding: "8px 12px",
-                        width: PLAYER_COL_W,
-                        minWidth: PLAYER_COL_W,
-                        maxWidth: PLAYER_COL_W,
-                        boxShadow: "2px 0 5px rgba(0,0,0,0.05)",
-                        verticalAlign: "middle"
-                      }}>
+                      <td
+                        className="cfb-matrix-player-cell"
+                        style={{
+                          position: "sticky",
+                          left: 0,
+                          zIndex: 5,
+                          backgroundColor: isCurrentUser ? "#dbeafe" : (idx % 2 === 0 ? "#fafafa" : "white"),
+                          padding: "8px 12px",
+                          width: PLAYER_COL_W,
+                          minWidth: PLAYER_COL_W,
+                          maxWidth: PLAYER_COL_W,
+                          boxShadow: "2px 0 5px rgba(0,0,0,0.05)",
+                          verticalAlign: "middle"
+                        }}
+                      >
                         <div style={{ display: "flex", flexDirection: "column", gap: "2px", overflow: "hidden" }}>
-                          <div style={{
+                          <div className="cfb-matrix-player-name" style={{
                             fontWeight: isCurrentUser ? 800 : 700,
                             fontSize: 12,
-                            color: "#0f172a",
+                            color: "var(--text-primary, #0f172a)",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
                             whiteSpace: "nowrap"
                           }}>
                             {rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`} {player.entry_name} {isCurrentUser && "(You)"}
                           </div>
-                          <div style={{
+                          <div className="cfb-matrix-player-points" style={{
                             fontSize: 10,
                             fontWeight: 800,
                             color: NAVY,
@@ -382,10 +378,10 @@ const GameHeader = ({ s }) => {
 
                         const pickTeamMeta = p ? (p.pick === s.home_team ? {
                           primary: s.home_color || NAVY,
-                          secondary: s.home_secondary_color || "#cbd5e1"
+                          secondary: s.home_secondary_color || "#0f478b"
                         } : {
                           primary: s.away_color || NAVY,
-                          secondary: s.away_secondary_color || "#cbd5e1"
+                          secondary: s.away_secondary_color || "#003779"
                         }) : {};
 
                         return (
@@ -394,8 +390,8 @@ const GameHeader = ({ s }) => {
                             textAlign: "center",
                             fontSize: 12,
                             fontWeight: 700,
-                            borderLeft: "1px solid #e2e8f0",
-                            borderBottom: "1px solid #f3f4f6",
+                            borderLeft: "1px solid var(--border-color, #e2e8f0)",
+                            borderBottom: "1px solid var(--border-color, #f3f4f6)",
                             width: SERIES_COL_W,
                             minWidth: SERIES_COL_W,
                             verticalAlign: "middle",
@@ -416,16 +412,16 @@ const GameHeader = ({ s }) => {
                                   {pickLogo ? (
                                     <img src={pickLogo} alt={p.pick} style={{ width: 20, height: 20, objectFit: "contain", display: "block" }} />
                                   ) : (
-                                    <span style={{ fontSize: 10 }}>{p.pick}</span>
+                                    <span style={{ fontSize: 10, color: "#fff" }}>{p.pick}</span>
                                   )}
                                 </span>
                                 <div style={{ marginLeft: 6, textAlign: "left" }}>
-                                  <div style={{ fontSize: 11, fontWeight: 900, color: "#0f172a", lineHeight: 1.1 }}>{p.confidence} pts</div>
-                                  <div style={{ fontSize: 9, color: "#475569", fontWeight: 600 }}>in {p.series_length_guess}g</div>
+                                  <div style={{ fontSize: 11, fontWeight: 900, color: "var(--text-primary, #f8fafc)", lineHeight: 1.1 }}>{p.confidence} pts</div>
+                                  <div style={{ fontSize: 9, color: "var(--text-secondary, #94a3b8)", fontWeight: 600 }}>in {p.series_length_guess}g</div>
                                 </div>
                               </div>
                             ) : (
-                              <span style={{ color: "#cbd5e1", fontSize: 11, fontWeight: 600 }}>{s.locked ? "NP" : "—"}</span>
+                              <span style={{ color: "var(--text-secondary, #475569)", fontSize: 11, fontWeight: 600 }}>{s.locked ? "-" : "—"}</span>
                             )}
                           </td>
                         );
