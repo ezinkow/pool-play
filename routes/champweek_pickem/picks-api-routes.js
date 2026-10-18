@@ -4,7 +4,7 @@ const { ChampWeekPickemPicks, ChampWeekPickemGames, ChampWeekPickemTiebreaker } 
 module.exports = function (app) {
 
     // Get everything in ChampWeekPickemPicks table
-    app.get("/api/champweek/picks", async (req, res) => {
+    app.get("/api/ncaab_champweek_pickem/picks", async (req, res) => {
         try {
             const where = req.query.name ? { name: req.query.name } : {};
             const picks = await ChampWeekPickemPicks.findAll({ where });
@@ -15,7 +15,7 @@ module.exports = function (app) {
     });
 
     // Create OR Overwrite pick
-    app.post("/api/champweek/picks", async function (req, res) {
+    app.post("/api/ncaab_champweek_pickem/picks", async function (req, res) {
         try {
             const { name, game_id, pick, game_date } = req.body;
 
@@ -59,7 +59,7 @@ module.exports = function (app) {
         }
     });
 
-    app.post("/api/champweek/picks/bulk", async (req, res) => {
+    app.post("/api/ncaab_champweek_pickem/picks/bulk", async (req, res) => {
         const { name, picks } = req.body;
 
         if (!name || !picks || !Array.isArray(picks)) {
@@ -95,7 +95,7 @@ module.exports = function (app) {
     });
 
     //my picks
-    app.get("/api/champweek/mypicks", async (req, res) => {
+    app.get("/api/ncaab_champweek_pickem/mypicks", async (req, res) => {
         try {
             const picks = await ChampWeekPickemPicks.findAll({
                 where: { name: req.query.name },

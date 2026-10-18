@@ -3,7 +3,7 @@ const syncGames = require("../../syncs/ncaa_champweek/sync");
 const lockLines = require("../../jobs/champweek_pickem/lockLines");
 
 module.exports = function (app) {
-  app.post("/api/champweek/admin/refresh-games", async (req, res) => {
+  app.post("/api/ncaab_champweek_pickem/admin/refresh-games", async (req, res) => {
     try {
       await syncGames();
       await lockLines();

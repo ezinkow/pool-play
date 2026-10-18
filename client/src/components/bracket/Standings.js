@@ -152,7 +152,7 @@ function UserPicksDrawer({ name, onClose }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        axios.get("/api/bracket/picks", { params: { name } })
+        axios.get("/api/ncaab_bracket/picks", { params: { name } })
             .then(res => {
                 setPicks(res.data);
             })
@@ -277,7 +277,7 @@ export default function BracketStandings() {
     const isLocked = new Date() >= LOCK_TIME;
 
     useEffect(() => {
-        axios.get("/api/bracket/standings")
+        axios.get("/api/ncaab_bracket/standings")
             .then(res => setStandings(res.data))
             .finally(() => setLoading(false));
     }, []);

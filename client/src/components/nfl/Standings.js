@@ -51,7 +51,7 @@ export default function Standings() {
   const [rows, setRows] = useState([]);
 
   useEffect(() => {
-    axios.get("/api/nfl/startingrosters").then((res) => {
+    axios.get("/api/nfl_playoffs/startingrosters").then((res) => {
       setRows(res.data);
     });
   }, []);

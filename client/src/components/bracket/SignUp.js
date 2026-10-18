@@ -12,7 +12,7 @@ export default function UserSubmit() {
 
     const handleNameSubmit = event => {
         event.preventDefault()
-        axios.post('api/bracket/users/signup', { real_name, name, password, email, phone })
+        axios.post('api/ncaab_bracket/users/signup', { real_name, name, password, email, phone })
         toast.success(`THANKS, ${real_name}, YOU'RE SIGNED UP!`, {
             duration: 10001,
             position: 'top-center',

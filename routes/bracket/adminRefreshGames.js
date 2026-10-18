@@ -1,7 +1,7 @@
 const syncBracket = require("../../syncs/ncaa_bracket/sync.js");
 
 module.exports = function (app) {
-    app.post("/api/bracket/admin/refresh-games", async (req, res) => {
+    app.post("/api/ncaab_bracket/admin/refresh-games", async (req, res) => {
         try {
             await syncBracket();
             res.json({ message: "Bracket sync complete" });

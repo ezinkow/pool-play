@@ -3,8 +3,8 @@ const requireAuth = require("../../middleware/Requireauth");
 
 module.exports = function (app) {
 
-    // GET /api/bracket/entries/check/:name
-    app.get("/api/bracket/entries/check/:name", async (req, res) => {
+    // GET /api/ncaab_bracket/entries/check/:name
+    app.get("/api/ncaab_bracket/entries/check/:name", async (req, res) => {
         try {
             const user = await Users.findOne({ where: { name: req.params.name } });
             if (!user) return res.json({ exists: false });
@@ -16,8 +16,8 @@ module.exports = function (app) {
         }
     });
 
-    // POST /api/bracket/entries/create
-    app.post("/api/bracket/entries/create", requireAuth, async (req, res) => {
+    // POST /api/ncaab_bracket/entries/create
+    app.post("/api/ncaab_bracket/entries/create", requireAuth, async (req, res) => {
         try {
             const entry_name = (req.body.entry_name || req.user.name).trim();
 
@@ -43,8 +43,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/bracket/entries
-    app.get("/api/bracket/entries", async (req, res) => {
+    // GET /api/ncaab_bracket/entries
+    app.get("/api/ncaab_bracket/entries", async (req, res) => {
         try {
             const entries = await NbaEntries.findAll({
                 attributes: ["id", "user_id", "entry_name", "createdAt"],

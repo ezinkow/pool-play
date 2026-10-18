@@ -1,7 +1,7 @@
 const { ChampWeekPickemGames } = require("../../models");
 
 module.exports = function (app) {
-  app.get("/api/champweek_games/history", async (req, res) => {
+  app.get("/api/ncaab_champweek_games/history", async (req, res) => {
     try {
       const games = await ChampWeekPickemGames.findAll({
         order: [["game_date", "DESC"]],

@@ -3,8 +3,8 @@ const requireAuth = require("../../middleware/Requireauth");
 
 module.exports = function (app) {
 
-    // GET /api/tourneypickem/entries/check/:name
-    app.get("/api/tourneypickem/entries/check/:name", async (req, res) => {
+    // GET /api/ncaab_tourney_pickem/entries/check/:name
+    app.get("/api/ncaab_tourney_pickem/entries/check/:name", async (req, res) => {
         try {
             const user = await Users.findOne({ where: { name: req.params.name } });
             if (!user) return res.json({ exists: false });
@@ -16,8 +16,8 @@ module.exports = function (app) {
         }
     });
 
-    // POST /api/tourneypickem/entries/create
-    app.post("/api/tourneypickem/entries/create", requireAuth, async (req, res) => {
+    // POST /api/ncaab_tourney_pickem/entries/create
+    app.post("/api/ncaab_tourney_pickem/entries/create", requireAuth, async (req, res) => {
         try {
             const entry_name = (req.body.entry_name || req.user.name).trim();
 
@@ -43,8 +43,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/tourneypickem/entries
-    app.get("/api/tourneypickem/entries", async (req, res) => {
+    // GET /api/ncaab_tourney_pickem/entries
+    app.get("/api/ncaab_tourney_pickem/entries", async (req, res) => {
         try {
             const entries = await TourneyPickemEntries.findAll({
                 attributes: ["id", "user_id", "entry_name", "createdAt"],

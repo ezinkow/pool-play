@@ -20,9 +20,9 @@ export default function PlayerPicksMatrix() {
         const champ = r.data.find(g => String(g.id) === String(CHAMP_GAME_ID));
         setChampStarted(!!champ);
       });
-      axios.get("/api/tourneypickem/picks/all").then(r => setPicks(r.data));
-      axios.get("/api/tourneypickem/standings").then(r => setStandings(r.data));
-      axios.get("/api/tourneypickem/tiebreaker/all").then(r => setTiebreakers(r.data));
+      axios.get("/api/ncaab_tourney_pickem/picks/all").then(r => setPicks(r.data));
+      axios.get("/api/ncaab_tourney_pickem/standings").then(r => setStandings(r.data));
+      axios.get("/api/ncaab_tourney_pickem/tiebreaker/all").then(r => setTiebreakers(r.data));
     };
     fetchAll();
     const interval = setInterval(fetchAll, 5 * 60 * 1000);

@@ -36,7 +36,7 @@ export default function HrdHome() {
       .catch(err => console.error("Failed to load pool data", err));
 
     if (activeToken) {
-      axios.get("/api/hrd/entry/me", {
+      axios.get("/api/mlb_hrd/entry/me", {
         headers: { Authorization: `Bearer ${activeToken}` }
       })
         .then(res => {
@@ -69,7 +69,7 @@ export default function HrdHome() {
 
     try {
       const entryNameInput = customEntryName.trim() || user?.name;
-      const res = await axios.post("/api/hrd/entry/create", {
+      const res = await axios.post("/api/mlb_hrd/entry/create", {
         entry_name: entryNameInput
       }, {
         headers: { Authorization: `Bearer ${activeToken}` }
@@ -95,7 +95,7 @@ export default function HrdHome() {
     }
 
     try {
-      await axios.post("/api/hrd/entry/leave", {}, {
+      await axios.post("/api/mlb_hrd/entry/leave", {}, {
         headers: { Authorization: `Bearer ${activeToken}` }
       });
       setUserEntry(null);

@@ -26,8 +26,8 @@ export default function HrdDraft() {
         setLoading(true);
 
         Promise.all([
-            axios.get("/api/hrd/players", { headers: { Authorization: `Bearer ${token}` } }),
-            axios.get("/api/hrd/roster/me", { headers: { Authorization: `Bearer ${token}` } })
+            axios.get("/api/mlb_hrd/players", { headers: { Authorization: `Bearer ${token}` } }),
+            axios.get("/api/mlb_hrd/roster/me", { headers: { Authorization: `Bearer ${token}` } })
         ])
             .then(([playersRes, rosterRes]) => {
                 setPlayers(playersRes.data || []);
@@ -77,7 +77,7 @@ export default function HrdDraft() {
 
         setSaving(true);
         try {
-            await axios.post("/api/hrd/roster/save", {
+            await axios.post("/api/mlb_hrd/roster/save", {
                 playerIds: selectedPlayerIds
             }, {
                 headers: { Authorization: `Bearer ${token}` }

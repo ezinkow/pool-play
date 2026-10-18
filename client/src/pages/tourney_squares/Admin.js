@@ -33,7 +33,7 @@ export default function SquaresAdmin() {
         if (!preview) return;
         setSaving(gridId);
         try {
-            await axios.post("/api/tourneysquares/admin/assign-numbers", {
+            await axios.post("/api/ncaab_tourney_squares/admin/assign-numbers", {
                 grid_id: gridId,
                 col_numbers: preview.cols,
                 row_numbers: preview.rows,

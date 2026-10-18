@@ -1,7 +1,7 @@
 const { NflGameStates } = require("../../models");
 
 module.exports = function (app) {
-  app.get("/api/nfl/gamestates", async (req, res) => {
+  app.get("/api/nfl_playoffs/gamestates", async (req, res) => {
     try {
       const state = await NflGameStates.findOne({
         order: [["id", "DESC"]],

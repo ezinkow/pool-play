@@ -16,7 +16,7 @@ export default function SquaresSignUp() {
     const handleSubmit = async () => {
         if (!name.trim()) return toast.error("Name is required");
         try {
-            await axios.post("/api/tourneysquares/users/signup", { name, email, password, phone });
+            await axios.post("/api/ncaab_tourney_squares/users/signup", { name, email, password, phone });
             setSubmitted(true);
             toast.success("You're signed up!");
         } catch (err) {

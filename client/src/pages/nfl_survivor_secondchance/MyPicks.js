@@ -39,7 +39,7 @@ export default function NflSurvivorSecondChanceMyPicks() {
 
         const weekRequests = Array.from({ length: 18 }, (_, index) => {
             const week = index + 1;
-            return axios.get("/api/nflsurvivor_secondchance/picks", {
+            return axios.get("/api/nfl_survivor_secondchance/picks", {
                 params: { week },
                 headers: { Authorization: `Bearer ${token}` }
             })

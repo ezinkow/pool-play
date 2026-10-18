@@ -3,8 +3,8 @@ const requireAuth = require("../../middleware/Requireauth");
 
 module.exports = function (app) {
 
-    // GET /api/nfl/entries/check/:name
-    app.get("/api/nfl/entries/check/:name", async (req, res) => {
+    // GET /api/nfl_playoffs/entries/check/:name
+    app.get("/api/nfl_playoffs/entries/check/:name", async (req, res) => {
         try {
             const user = await Users.findOne({ where: { name: req.params.name } });
             if (!user) return res.json({ exists: false });
@@ -16,8 +16,8 @@ module.exports = function (app) {
         }
     });
 
-    // POST /api/nfl/entries/create
-    app.post("/api/nfl/entries/create", requireAuth, async (req, res) => {
+    // POST /api/nfl_playoffs/entries/create
+    app.post("/api/nfl_playoffs/entries/create", requireAuth, async (req, res) => {
         try {
             const entry_name = (req.body.entry_name || req.user.name).trim();
 
@@ -43,8 +43,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/nfl/entries
-    app.get("/api/nfl/entries", async (req, res) => {
+    // GET /api/nfl_playoffs/entries
+    app.get("/api/nfl_playoffs/entries", async (req, res) => {
         try {
             const entries = await NflEntries.findAll({
                 attributes: ["id", "user_id", "entry_name", "createdAt"],

@@ -2,7 +2,7 @@ const { TourneyPickemPicks, TourneyPickemGames, TourneyPickemUsers } = require("
 
 module.exports = function (app) {
 
-    app.get("/api/tourneypickem/standings", async (req, res) => {
+    app.get("/api/ncaab_tourney_pickem/standings", async (req, res) => {
         try {
             const users = await TourneyPickemUsers.findAll({ attributes: ["id", "name"] });
             const games = await TourneyPickemGames.findAll();

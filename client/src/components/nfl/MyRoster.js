@@ -42,7 +42,7 @@ export default function MyRoster() {
 
     /* ---------------- FETCH NAMES ---------------- */
     useEffect(() => {
-        axios.get("/api/nfl/entries").then((res) => {
+        axios.get("/api/nfl_playoffs/entries").then((res) => {
             setNames(res.data.sort((a, b) => a.name.localeCompare(b.name)));
         });
     }, []);
@@ -55,7 +55,7 @@ export default function MyRoster() {
         setAuthError(false);
 
         try {
-            const res = await axios.post("/api/nfl/entries/verify", {
+            const res = await axios.post("/api/nfl_playoffs/entries/verify", {
                 name: selectedName,
                 password,
             });
@@ -103,7 +103,7 @@ export default function MyRoster() {
 
         async function loadStartingRoster() {
             try {
-                const res = await axios.get("/api/nfl/startingrosters/my", {
+                const res = await axios.get("/api/nfl_playoffs/startingrosters/my", {
                     params: { name: selectedName, round: selectedRound },
                 });
 
@@ -180,7 +180,7 @@ export default function MyRoster() {
         );
 
         try {
-            await axios.put("/api/nfl/startingrosters", payload);
+            await axios.put("/api/nfl_playoffs/startingrosters", payload);
             toast.success("Roster saved!");
         } catch {
             toast.error("Save failed");

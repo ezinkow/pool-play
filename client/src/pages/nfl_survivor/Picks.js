@@ -48,7 +48,7 @@ export default function NflSurvivorPicks() {
     // Check user's entry status to see if they are eliminated
     useEffect(() => {
         if (!token) return;
-        axios.get("/api/nfl_survivor/entries/me", {
+        axios.get("/api/nflsurvivor/entries/me", {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => {
@@ -83,7 +83,7 @@ export default function NflSurvivorPicks() {
     const loadSurvivorData = (weekToFetch) => {
         if (!user || !weekToFetch) return; // Don't fetch if week isn't set yet
         setLoading(true);
-        axios.get("/api/nfl_survivor/picks", {
+        axios.get("/api/nflsurvivor/picks", {
             params: { week: weekToFetch },
             headers: { Authorization: `Bearer ${token}` }
         })
@@ -127,7 +127,7 @@ export default function NflSurvivorPicks() {
         }
         if (isLocked || (isUsed && !isAlreadyPicked)) return;
         try {
-            const res = await axios.post("/api/nfl_survivor/picks", {
+            const res = await axios.post("/api/nflsurvivor/picks", {
                 week: currentWeek,
                 game_id: gameId,
                 picked_team: teamName

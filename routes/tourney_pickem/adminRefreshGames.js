@@ -2,7 +2,7 @@ const syncPickem = require("../../syncs/ncaa_tourney/sync.js");
 const lockLines = require("../../jobs/tourney_pickem/lockLines.js");
 
 module.exports = function (app) {
-    app.post("/api/tourneypickem/admin/refresh-games", async (req, res) => {
+    app.post("/api/ncaab_tourney_pickem/admin/refresh-games", async (req, res) => {
         try {
             await syncPickem();
             await lockLines();

@@ -1,7 +1,7 @@
 const { ChampWeekPickemTiebreaker } = require("../../models");
 
 module.exports = function (app) {
-    app.get("/api/champweek/tiebreaker", async (req, res) => {
+    app.get("/api/ncaab_champweek_pickem/tiebreaker", async (req, res) => {
         try {
             const { name } = req.query;
             const record = await ChampWeekPickemTiebreaker.findOne({ where: { name } });
@@ -11,7 +11,7 @@ module.exports = function (app) {
         }
     });
 
-    app.post("/api/champweek/tiebreaker", async (req, res) => {
+    app.post("/api/ncaab_champweek_pickem/tiebreaker", async (req, res) => {
         try {
             const { name, win_score, loss_score } = req.body;
             await ChampWeekPickemTiebreaker.upsert({ name, win_score, loss_score });

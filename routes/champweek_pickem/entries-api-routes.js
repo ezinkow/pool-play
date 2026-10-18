@@ -5,7 +5,7 @@ const { Users, Tokens } = require("../../models/");
 module.exports = function (app) {
 
     // Get everything in Users table
-    app.get("/api/champweek/users", function (req, res) {
+    app.get("/api/ncaab_champweek_pickem/users", function (req, res) {
         Users.findAll({})
             .then(function (dbusers) {
                 res.json(dbusers)
@@ -13,7 +13,7 @@ module.exports = function (app) {
     });
 
     // Find users where id = __
-    app.get('/api/champweek/users/:id', function (req, res) {
+    app.get('/api/ncaab_champweek_pickem/users/:id', function (req, res) {
         Users.findAll({
             where: {
                 name: req.params.name
@@ -25,7 +25,7 @@ module.exports = function (app) {
     });
 
     // Find users where name = __
-    app.get('/api/champweek/users/:name', function (req, res) {
+    app.get('/api/ncaab_champweek_pickem/users/:name', function (req, res) {
         Users.findAll({
             where: {
                 name: req.params.name
@@ -37,7 +37,7 @@ module.exports = function (app) {
     });
 
     //Submit name
-    app.post("/api/champweek/users", function (req, res) {
+    app.post("/api/ncaab_champweek_pickem/users", function (req, res) {
         Users.create({
             real_name: req.body.real_name,
             name: req.body.name,
@@ -50,7 +50,7 @@ module.exports = function (app) {
             })
     });
 
-    app.post("/api/champweek/users/change-password", async (req, res) => {
+    app.post("/api/ncaab_champweek_pickem/users/change-password", async (req, res) => {
         try {
             const { email, newPassword } = req.body;
             if (!email || !newPassword) return res.status(400).json({ error: "Email and new password required" });
@@ -69,7 +69,7 @@ module.exports = function (app) {
     const crypto = require("crypto");
 
     // Verify with password — returns token on success
-    app.post("/api/champweek/users/verify", async (req, res) => {
+    app.post("/api/ncaab_champweek_pickem/users/verify", async (req, res) => {
         const { name, password } = req.body;
         const user = await Users.findOne({ where: { name, password } });
         if (!user) return res.json({ success: false });
@@ -82,7 +82,7 @@ module.exports = function (app) {
     });
 
     // Verify with saved token
-    app.post("/api/champweek/users/verify-token", async (req, res) => {
+    app.post("/api/ncaab_champweek_pickem/users/verify-token", async (req, res) => {
         try {
             const { name, token } = req.body;
             if (!name || !token) return res.json({ success: false });
@@ -105,7 +105,7 @@ module.exports = function (app) {
     });
 
     // Call this on logout if you add a logout button
-    app.post("/api/champweek/users/logout", async (req, res) => {
+    app.post("/api/ncaab_champweek_pickem/users/logout", async (req, res) => {
         const { token } = req.body;
         if (token) await Tokens.destroy({ where: { token } });
         res.json({ success: true });

@@ -26,8 +26,8 @@ export default function Bracket() {
     useEffect(() => {
         Promise.all([
             axios.get("/api/ncaa_tourney_games"),
-            axios.get("/api/bracket/users"),
-            axios.get("/api/bracket/standings"),
+            axios.get("/api/ncaab_bracket/users"),
+            axios.get("/api/ncaab_bracket/standings"),
         ]).then(([gamesRes, usersRes, standingsRes]) => {
             setGames(gamesRes.data);
             setUsers(usersRes.data);
@@ -38,7 +38,7 @@ export default function Bracket() {
 
     useEffect(() => {
         if (!selectedUser) { setUserPicks({}); return; }
-        axios.get("/api/bracket/picks", { params: { name: selectedUser } })
+        axios.get("/api/ncaab_bracket/picks", { params: { name: selectedUser } })
             .then(res => {
                 const map = {};
                 for (const p of res.data) map[p.game_id] = p.pick;

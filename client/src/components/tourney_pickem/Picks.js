@@ -70,7 +70,7 @@ export default function Picks() {
 
   const loadTiebreaker = async (name) => {
     try {
-      const res = await axios.get("/api/tourneypickem/tiebreaker", { params: { name } });
+      const res = await axios.get("/api/ncaab_tourney_pickem/tiebreaker", { params: { name } });
       if (res.data) {
         setTiebreakerWin(res.data.win_score ?? "");
         setTiebreakerLoss(res.data.loss_score ?? "");
@@ -83,7 +83,7 @@ export default function Picks() {
 
   useEffect(() => {
     axios.get("/api/ncaa_tourney_games").then(res => setGames(res.data));
-    axios.get("/api/tourneypickem/users").then(res =>
+    axios.get("/api/ncaab_tourney_pickem/users").then(res =>
       setUsers(res.data.sort((a, b) => a.name.localeCompare(b.name)))
     );
   }, []);
@@ -93,12 +93,12 @@ export default function Picks() {
     if (saved) {
       const { name } = JSON.parse(saved);
       setUser(name);
-      axios.post("/api/tourneypickem/users/verify-token", JSON.parse(saved))
+      axios.post("/api/ncaab_tourney_pickem/users/verify-token", JSON.parse(saved))
         .then(res => {
           if (res.data.success) {
             setAuthenticated(true);
             setUser(name);
-            axios.get("/api/tourneypickem/picks", { params: { name } }).then(picksRes => {
+            axios.get("/api/ncaab_tourney_pickem/picks", { params: { name } }).then(picksRes => {
               const existingPicks = picksRes.data
                 .filter(p => {
                   const game = games.find(g => g.id === p.game_id);
@@ -123,14 +123,14 @@ export default function Picks() {
 
   const verify = async () => {
     try {
-      const res = await axios.post("/api/tourneypickem/users/verify", { name: user, password });
+      const res = await axios.post("/api/ncaab_tourney_pickem/users/verify", { name: user, password });
       if (!res.data.success) return toast.error("Wrong password");
       setAuthenticated(true);
       toast.success("Identity verified!");
       if (rememberMe) {
         localStorage.setItem("rememberedUser", JSON.stringify({ name: user, token: res.data.token }));
       }
-      const picksRes = await axios.get("/api/tourneypickem/picks", { params: { name: user } });
+      const picksRes = await axios.get("/api/ncaab_tourney_pickem/picks", { params: { name: user } });
       const existingPicks = picksRes.data
         .filter(p => {
           const game = games.find(g => g.id === p.game_id);
@@ -153,7 +153,7 @@ export default function Picks() {
     const saved = localStorage.getItem("rememberedUser");
     if (saved) {
       const { token } = JSON.parse(saved);
-      await axios.post("/api/tourneypickem/users/logout", { token });
+      await axios.post("/api/ncaab_tourney_pickem/users/logout", { token });
       localStorage.removeItem("rememberedUser");
     }
     setAuthenticated(false);
@@ -166,7 +166,7 @@ export default function Picks() {
   const handleSaveTiebreaker = async () => {
     if (!tiebreakerWin || !tiebreakerLoss) return toast.error("Enter both scores");
     try {
-      await axios.post("/api/tourneypickem/tiebreaker", {
+      await axios.post("/api/ncaab_tourney_pickem/tiebreaker", {
         name: user,
         win_score: parseInt(tiebreakerWin),
         loss_score: parseInt(tiebreakerLoss),
@@ -215,7 +215,7 @@ export default function Picks() {
         name: user,
         picks: picks.map(p => ({ game_id: p.game, pick: p.pick, game_date: p.game_date }))
       };
-      await axios.post("/api/tourneypickem/picks/bulk", payload);
+      await axios.post("/api/ncaab_tourney_pickem/picks/bulk", payload);
       toast.success(`Thanks ${user}, ${picks.length} picks submitted!`);
       setPicks([]);
       sessionStorage.setItem("authedUser", user);

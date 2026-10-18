@@ -81,7 +81,7 @@ export default function PoolGatekeeper({
                     return;
                 }
 
-                const entriesUrl = currentPool?.entries_endpoint || `/api/${gameKey}/entries/me`;
+                const entriesUrl = `/api/${currentPool.route}/entries/me`;
                 const token = localStorage.getItem("token");
 
                 axios.get(entriesUrl, {

@@ -3,7 +3,7 @@ const { TourneyPickemPicks, TourneyPickemGames, TourneyPickemEntries } = require
 
 module.exports = function (app) {
 
-    app.get("/api/tourneypickem/picks/display", async (req, res) => {
+    app.get("/api/ncaab_tourney_pickem/picks/display", async (req, res) => {
         try {
             const { name } = req.query;
             const user = await TourneyPickemEntries.findOne({ where: { name } });
@@ -30,7 +30,7 @@ module.exports = function (app) {
     });
 
     // Get all users' picks for all games (group view)
-    app.get("/api/tourneypickem/picks/all", async (req, res) => {
+    app.get("/api/ncaab_tourney_pickem/picks/all", async (req, res) => {
         try {
             const picks = await TourneyPickemPicks.findAll({
                 include: [

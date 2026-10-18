@@ -2,7 +2,7 @@ const { PicksBracket, GamesBracket, UsersBracket } = require("../../models");
 
 module.exports = function (app) {
 
-    app.get("/api/bracket/picks/display", async (req, res) => {
+    app.get("/api/ncaab_bracket/picks/display", async (req, res) => {
         try {
             const { name } = req.query;
             const user = await UsersBracket.findOne({ where: { name } });
@@ -28,7 +28,7 @@ module.exports = function (app) {
         }
     });
 
-    app.get("/api/bracket/picks/all", async (req, res) => {
+    app.get("/api/ncaab_bracket/picks/all", async (req, res) => {
         try {
             const picks = await PicksBracket.findAll({
                 include: [{

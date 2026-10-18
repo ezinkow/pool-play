@@ -65,7 +65,7 @@ export default function NflSurvivorGroupPicks() {
             })
             .finally(() => {
                 // Fetch roster data from your existing route
-                axios.get("/api/nfl_survivor/roster", {
+                axios.get("/api/nflsurvivor/roster", {
                     headers: { Authorization: `Bearer ${token}` }
                 })
                     .then(res => {

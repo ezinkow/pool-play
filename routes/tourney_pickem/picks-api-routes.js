@@ -3,7 +3,7 @@ const { TourneyPickemPicks, TourneyPickemGames, TourneyPickemEntries, TourneyPic
 module.exports = function (app) {
 
     // Get picks for a user
-    app.get("/api/tourneypickem/picks", async (req, res) => {
+    app.get("/api/ncaab_tourney_pickem/picks", async (req, res) => {
         try {
             const { name } = req.query;
             const user = await TourneyPickemEntries.findOne({ where: { name } });
@@ -28,7 +28,7 @@ module.exports = function (app) {
         }
     });
 
-    app.get("/api/tourneypickem/mypicks", async (req, res) => {
+    app.get("/api/ncaab_tourney_pickem/mypicks", async (req, res) => {
         try {
             const { name } = req.query;
             const user = await TourneyPickemEntries.findOne({ where: { name } });
@@ -67,7 +67,7 @@ module.exports = function (app) {
     });
 
     // Bulk upsert picks
-    app.post("/api/tourneypickem/picks/bulk", async (req, res) => {
+    app.post("/api/ncaab_tourney_pickem/picks/bulk", async (req, res) => {
         try {
             const { name, picks } = req.body;
             const user = await TourneyPickemEntries.findOne({ where: { name } });
@@ -88,7 +88,7 @@ module.exports = function (app) {
         }
     });
 
-    app.get("/api/tourneypickem/tiebreaker", async (req, res) => {
+    app.get("/api/ncaab_tourney_pickem/tiebreaker", async (req, res) => {
         try {
             const { name } = req.query;
             const user = await TourneyPickemEntries.findOne({ where: { name } });
@@ -100,7 +100,7 @@ module.exports = function (app) {
         }
     });
 
-    app.post("/api/tourneypickem/tiebreaker", async (req, res) => {
+    app.post("/api/ncaab_tourney_pickem/tiebreaker", async (req, res) => {
         try {
             const champGame = await TourneyPickemGames.findOne({ where: { id: "401856600" } });
             if (champGame && champGame.status !== "STATUS_SCHEDULED") {
@@ -117,7 +117,7 @@ module.exports = function (app) {
     });
 
     // Get all users' tiebreakers (for group display)
-    app.get("/api/tourneypickem/tiebreaker/all", async (req, res) => {
+    app.get("/api/ncaab_tourney_pickem/tiebreaker/all", async (req, res) => {
         try {
             const users = await TourneyPickemEntries.findAll({ attributes: ["id", "name"] });
             const tiebreakers = await TourneyPickemTiebreaker.findAll();

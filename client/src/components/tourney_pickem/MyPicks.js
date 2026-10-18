@@ -16,7 +16,7 @@ export default function MyPicks() {
         const name = nameOverride || user;
         setLoading(true);
         try {
-            const res = await axios.get("/api/tourneypickem/mypicks", { params: { name } });
+            const res = await axios.get("/api/ncaab_tourney_pickem/mypicks", { params: { name } });
             setPicks(res.data || []);
         } catch {
             toast.error("Failed loading picks");
@@ -26,8 +26,8 @@ export default function MyPicks() {
     };
 
     useEffect(() => {
-        axios.get("/api/tourneypickem/users").then(r => setUsers(r.data.sort((a, b) => a.name.localeCompare(b.name))));
-        axios.get("/api/tourneypickem/standings").then(r => setStandings(r.data));
+        axios.get("/api/ncaab_tourney_pickem/users").then(r => setUsers(r.data.sort((a, b) => a.name.localeCompare(b.name))));
+        axios.get("/api/ncaab_tourney_pickem/standings").then(r => setStandings(r.data));
 
         const authedUser = sessionStorage.getItem("authedUser");
         if (authedUser) {
@@ -41,7 +41,7 @@ export default function MyPicks() {
         const saved = localStorage.getItem("rememberedUser");
         if (saved) {
             const { name, token } = JSON.parse(saved);
-            axios.post("/api/tourneypickem/users/verify-token", { name, token })
+            axios.post("/api/ncaab_tourney_pickem/users/verify-token", { name, token })
                 .then(res => {
                     if (res.data.success) {
                         setUser(name);
@@ -57,7 +57,7 @@ export default function MyPicks() {
 
     const verify = async () => {
         try {
-            const res = await axios.post("/api/tourneypickem/users/verify", { name: user, password });
+            const res = await axios.post("/api/ncaab_tourney_pickem/users/verify", { name: user, password });
             if (!res.data.success) return toast.error("Wrong password");
             setAuthenticated(true);
             toast.success("Identity verified!");
@@ -71,7 +71,7 @@ export default function MyPicks() {
         const saved = localStorage.getItem("rememberedUser");
         if (saved) {
             const { token } = JSON.parse(saved);
-            await axios.post("/api/tourneypickem/users/logout", { token });
+            await axios.post("/api/ncaab_tourney_pickem/users/logout", { token });
             localStorage.removeItem("rememberedUser");
         }
         setAuthenticated(false);

@@ -3,8 +3,8 @@ const requireAuth = require("../../middleware/Requireauth");
 
 module.exports = function (app) {
 
-    // GET /api/superbowlsquares/entries/check/:name
-    app.get("/api/superbowlsquares/entries/check/:name", async (req, res) => {
+    // GET /api/nfl_superbowl_squares/entries/check/:name
+    app.get("/api/nfl_superbowl_squares/entries/check/:name", async (req, res) => {
         try {
             const user = await Users.findOne({ where: { name: req.params.name } });
             if (!user) return res.json({ exists: false });
@@ -16,8 +16,8 @@ module.exports = function (app) {
         }
     });
 
-    // POST /api/superbowlsquares/entries/create
-    app.post("/api/superbowlsquares/entries/create", requireAuth, async (req, res) => {
+    // POST /api/nfl_superbowl_squares/entries/create
+    app.post("/api/nfl_superbowl_squares/entries/create", requireAuth, async (req, res) => {
         try {
             const entry_name = (req.body.entry_name || req.user.name).trim();
 
@@ -43,8 +43,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/superbowlsquares/entries
-    app.get("/api/superbowlsquares/entries", async (req, res) => {
+    // GET /api/nfl_superbowl_squares/entries
+    app.get("/api/nfl_superbowl_squares/entries", async (req, res) => {
         try {
             const entries = await SuperBowlSquaresEntries.findAll({
                 attributes: ["id", "user_id", "entry_name", "createdAt"],

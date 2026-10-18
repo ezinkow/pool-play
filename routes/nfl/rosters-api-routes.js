@@ -5,7 +5,7 @@ module.exports = function (app) {
     // ----------------------------------
     // GET all rosters (admin/debug)
     // ----------------------------------
-    app.get("/api/nfl/rosters", async (req, res) => {
+    app.get("/api/nfl_playoffs/rosters", async (req, res) => {
         try {
             const rows = await NflRosters.findAll();
             res.json(rows);
@@ -17,7 +17,7 @@ module.exports = function (app) {
     // ----------------------------------
     // GET roster by name (used for overwrite warning)
     // ----------------------------------
-    app.get("/api/nfl/rosters/by-name/:name", async (req, res) => {
+    app.get("/api/nfl_playoffs/rosters/by-name/:name", async (req, res) => {
         try {
             const rows = await NflRosters.findAll({
                 where: { name: req.params.name },
@@ -29,7 +29,7 @@ module.exports = function (app) {
         }
     });
 
-    app.get("/api/nfl/rosters/getmyroster", async (req, res) => {
+    app.get("/api/nfl_playoffs/rosters/getmyroster", async (req, res) => {
         try {
             const { name } = req.query;
             if (!name) return res.status(400).json({ error: "Missing name parameter" });
@@ -51,7 +51,7 @@ module.exports = function (app) {
     // ----------------------------------
     // POST roster (OVERWRITE SAFE)
     // ----------------------------------
-    app.post("/api/nfl/rosters", async (req, res) => {
+    app.post("/api/nfl_playoffs/rosters", async (req, res) => {
         try {
             const data = Array.isArray(req.body) ? req.body : [req.body];
             const name = data[0]?.name;

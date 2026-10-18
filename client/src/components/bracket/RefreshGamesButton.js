@@ -8,7 +8,7 @@ const RefreshGamesButton = ({ onRefresh }) => {
     try {
       setLoading(true);
 
-      await axios.post("/api/bracket/admin/refresh-games");
+      await axios.post("/api/ncaab_bracket/admin/refresh-games");
 
       // Re-fetch games instead of alert/modal
       if (onRefresh) {

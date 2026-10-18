@@ -14,7 +14,7 @@ export default function HrdAllTeams() {
 
     useEffect(() => {
         if (!user || !token) return;
-        axios.get("/api/hrd/all-teams", { headers: { Authorization: `Bearer ${token}` } })
+        axios.get("/api/mlb_hrd/all-teams", { headers: { Authorization: `Bearer ${token}` } })
             .then(res => setTeams(res.data || []))
             .catch(err => {
                 console.error("Failed to load all teams", err);

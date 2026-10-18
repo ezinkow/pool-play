@@ -19,7 +19,7 @@ export default function HrdStandings() {
         if (!user || !token) return;
         setLoading(true);
 
-        const endpoint = tab === "season" ? "/api/hrd/standings" : `/api/hrd/standings/monthly?month=${month}`;
+        const endpoint = tab === "season" ? "/api/mlb_hrd/standings" : `/api/mlb_hrd/standings/monthly?month=${month}`;
 
         axios.get(endpoint, { headers: { Authorization: `Bearer ${token}` } })
             .then(res => setStandings(res.data || []))

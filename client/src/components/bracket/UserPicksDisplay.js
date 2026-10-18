@@ -10,8 +10,8 @@ export default function PlayerPicksMatrix() {
     axios.get("/api/ncaa_tourney_games/finishedAndInProgress").then(r =>
       setGames(r.data.sort((a, b) => a.round - b.round || a.bracket_slot - b.bracket_slot))
     );
-    axios.get("/api/bracket/picks/all").then(r => setPicks(r.data));
-    axios.get("/api/bracket/standings").then(r => setStandings(r.data));
+    axios.get("/api/ncaab_bracket/picks/all").then(r => setPicks(r.data));
+    axios.get("/api/ncaab_bracket/standings").then(r => setStandings(r.data));
   }, []);
 
   useEffect(() => {

@@ -5,8 +5,8 @@ const db = require("../models");
 
 module.exports = function (app) {
 
-    // GET /api/hrd/players (Fetch eligible player pool)
-    app.get("/api/hrd/players", requireAuth, async (req, res) => {
+    // GET /api/mlb_hrd/players (Fetch eligible player pool)
+    app.get("/api/mlb_hrd/players", requireAuth, async (req, res) => {
         try {
             const players = await HrdPlayers.findAll({
                 order: [["salary", "DESC"]]
@@ -18,8 +18,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/hrd/roster/me (Fetch user's current 12-player roster)
-    app.get("/api/hrd/roster/me", requireAuth, async (req, res) => {
+    // GET /api/mlb_hrd/roster/me (Fetch user's current 12-player roster)
+    app.get("/api/mlb_hrd/roster/me", requireAuth, async (req, res) => {
         try {
             const roster = await HrdRosters.findAll({
                 where: { user_id: req.user.id },
@@ -32,8 +32,8 @@ module.exports = function (app) {
         }
     });
 
-    // POST /api/hrd/roster/save (Save 12 players within 300 salary cap)
-    app.post("/api/hrd/roster/save", requireAuth, async (req, res) => {
+    // POST /api/mlb_hrd/roster/save (Save 12 players within 300 salary cap)
+    app.post("/api/mlb_hrd/roster/save", requireAuth, async (req, res) => {
         try {
             const { playerIds } = req.body; // Array of 12 player IDs
 
@@ -72,8 +72,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/hrd/standings (Full season & bench logic calculation)
-    app.get("/api/hrd/standings", requireAuth, async (req, res) => {
+    // GET /api/mlb_hrd/standings (Full season & bench logic calculation)
+    app.get("/api/mlb_hrd/standings", requireAuth, async (req, res) => {
         try {
             const query = `
                 SELECT 
@@ -107,8 +107,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/hrd/all-teams (Fetch all user rosters for viewing)
-    app.get("/api/hrd/all-teams", requireAuth, async (req, res) => {
+    // GET /api/mlb_hrd/all-teams (Fetch all user rosters for viewing)
+    app.get("/api/mlb_hrd/all-teams", requireAuth, async (req, res) => {
         try {
             const rosters = await HrdRosters.findAll({
                 include: [
@@ -142,8 +142,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/hrd/standings/monthly?month=4
-    app.get("/api/hrd/standings/monthly", requireAuth, async (req, res) => {
+    // GET /api/mlb_hrd/standings/monthly?month=4
+    app.get("/api/mlb_hrd/standings/monthly", requireAuth, async (req, res) => {
         try {
             const monthParam = req.query.month || "4";
 
@@ -180,8 +180,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/hrd/entry/me — Check if user has joined the HRD pool
-    app.get("/api/hrd/entry/me", requireAuth, async (req, res) => {
+    // GET /api/mlb_hrd/entry/me — Check if user has joined the HRD pool
+    app.get("/api/mlb_hrd/entry/me", requireAuth, async (req, res) => {
         try {
             // If you store pool entry registration in a separate table or check rosters:
             // For example, checking if they have any roster or an explicit entry table.
@@ -198,8 +198,8 @@ module.exports = function (app) {
         }
     });
 
-    // POST /api/hrd/entry/create — Join the pool
-    app.post("/api/hrd/entry/create", requireAuth, async (req, res) => {
+    // POST /api/mlb_hrd/entry/create — Join the pool
+    app.post("/api/mlb_hrd/entry/create", requireAuth, async (req, res) => {
         try {
             const { entry_name } = req.body;
             // Simply acknowledge entry creation (or save to an entries table if you have one)
@@ -210,8 +210,8 @@ module.exports = function (app) {
         }
     });
 
-    // POST /api/hrd/entry/leave — Leave the pool
-    app.post("/api/hrd/entry/leave", requireAuth, async (req, res) => {
+    // POST /api/mlb_hrd/entry/leave — Leave the pool
+    app.post("/api/mlb_hrd/entry/leave", requireAuth, async (req, res) => {
         try {
             // Optional: clear their roster when leaving
             await HrdRosters.destroy({ where: { user_id: req.user.id } });

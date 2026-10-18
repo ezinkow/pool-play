@@ -3,8 +3,8 @@ const requireAuth = require("../../middleware/Requireauth");
 
 module.exports = function (app) {
 
-    // GET /api/tourneysquares/entries/check/:name
-    app.get("/api/tourneysquares/entries/check/:name", async (req, res) => {
+    // GET /api/ncaab_tourney_squares/entries/check/:name
+    app.get("/api/ncaab_tourney_squares/entries/check/:name", async (req, res) => {
         try {
             const user = await Users.findOne({ where: { name: req.params.name } });
             if (!user) return res.json({ exists: false });
@@ -16,8 +16,8 @@ module.exports = function (app) {
         }
     });
 
-    // POST /api/tourneysquares/entries/create
-    app.post("/api/tourneysquares/entries/create", requireAuth, async (req, res) => {
+    // POST /api/ncaab_tourney_squares/entries/create
+    app.post("/api/ncaab_tourney_squares/entries/create", requireAuth, async (req, res) => {
         try {
             const entry_name = (req.body.entry_name || req.user.name).trim();
 
@@ -43,8 +43,8 @@ module.exports = function (app) {
         }
     });
 
-    // GET /api/tourneysquares/entries
-    app.get("/api/tourneysquares/entries", async (req, res) => {
+    // GET /api/ncaab_tourney_squares/entries
+    app.get("/api/ncaab_tourney_squares/entries", async (req, res) => {
         try {
             const entries = await TourneySquaresEntries.findAll({
                 attributes: ["id", "user_id", "entry_name", "createdAt"],

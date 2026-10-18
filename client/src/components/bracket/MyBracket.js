@@ -263,7 +263,7 @@ export default function MyBracket() {
 
     const loadTiebreaker = async (name) => {
         try {
-            const res = await axios.get("/api/bracket/tiebreaker", { params: { name } });
+            const res = await axios.get("/api/ncaab_bracket/tiebreaker", { params: { name } });
             if (res.data) {
                 setTiebreakerWin(res.data.win_score ?? "");
                 setTiebreakerLoss(res.data.loss_score ?? "");
@@ -276,13 +276,13 @@ export default function MyBracket() {
 
     useEffect(() => {
         axios.get("/api/ncaa_tourney_games").then(res => setGames(res.data));
-        axios.get("/api/bracket/users").then(res =>
+        axios.get("/api/ncaab_bracket/users").then(res =>
             setUsers(res.data.sort((a, b) => a.name.localeCompare(b.name)))
         );
         const saved = localStorage.getItem("rememberedUserBracket");
         if (saved) {
             const { name, token } = JSON.parse(saved);
-            axios.post("/api/bracket/users/verify-token", { name, token })
+            axios.post("/api/ncaab_bracket/users/verify-token", { name, token })
                 .then(res => {
                     if (res.data.success) {
                         setUser(name);
@@ -297,7 +297,7 @@ export default function MyBracket() {
     useEffect(() => {
         if (!authenticated || user === "SELECT YOUR NAME" || games.length === 0) return;
         setLoading(true);
-        axios.get("/api/bracket/picks", { params: { name: user } })
+        axios.get("/api/ncaab_bracket/picks", { params: { name: user } })
             .then(res => {
                 const map = {};
                 for (const p of res.data) map[p.game_id] = p.pick;
@@ -308,7 +308,7 @@ export default function MyBracket() {
 
     const verify = async () => {
         try {
-            const res = await axios.post("/api/bracket/users/verify", { name: user, password });
+            const res = await axios.post("/api/ncaab_bracket/users/verify", { name: user, password });
             if (!res.data.success) return toast.error("Wrong password");
             setAuthenticated(true);
             toast.success("Identity verified!");
@@ -323,7 +323,7 @@ export default function MyBracket() {
         const saved = localStorage.getItem("rememberedUserBracket");
         if (saved) {
             const { token } = JSON.parse(saved);
-            await axios.post("/api/bracket/users/logout", { token });
+            await axios.post("/api/ncaab_bracket/users/logout", { token });
             localStorage.removeItem("rememberedUserBracket");
         }
         setAuthenticated(false);
@@ -348,7 +348,7 @@ export default function MyBracket() {
         if (isLocked) return toast.error("Bracket is locked");
         setSaving(true);
         try {
-            await axios.post("/api/bracket/picks/bulk", {
+            await axios.post("/api/ncaab_bracket/picks/bulk", {
                 name: user,
                 picks: Object.entries(picks).map(([game_id, pick]) => ({ game_id, pick }))
             });
@@ -360,7 +360,7 @@ export default function MyBracket() {
     const handleSaveTiebreaker = async () => {
         if (!tiebreakerWin || !tiebreakerLoss) return toast.error("Enter both scores");
         try {
-            await axios.post("/api/bracket/tiebreaker", {
+            await axios.post("/api/ncaab_bracket/tiebreaker", {
                 name: user,
                 win_score: parseInt(tiebreakerWin),
                 loss_score: parseInt(tiebreakerLoss),

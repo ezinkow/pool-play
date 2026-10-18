@@ -5,7 +5,7 @@ module.exports = function (app) {
   // ----------------------------------
   // GET all NflPlayerPools
   // ----------------------------------
-  app.get("/api/nfl/playerpools", async (req, res) => {
+  app.get("/api/nfl_playoffs/playerpools", async (req, res) => {
     try {
       const rows = await NflPlayerPools.findAll({ raw: true });
 

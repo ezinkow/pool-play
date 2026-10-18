@@ -32,12 +32,12 @@ export default function SquaresResults() {
 
     useEffect(() => {
         Promise.all([
-            axios.get("/api/tourneysquares/results?grid_id=1"),
-            axios.get("/api/tourneysquares/results?grid_id=2"),
-            axios.get("/api/tourneysquares/my-numbers?grid_id=1"),
-            axios.get("/api/tourneysquares/my-numbers?grid_id=2"),
-            axios.get("/api/tourneysquares/grid?grid_id=1"),
-            axios.get("/api/tourneysquares/grid?grid_id=2"),
+            axios.get("/api/ncaab_tourney_squares/results?grid_id=1"),
+            axios.get("/api/ncaab_tourney_squares/results?grid_id=2"),
+            axios.get("/api/ncaab_tourney_squares/my-numbers?grid_id=1"),
+            axios.get("/api/ncaab_tourney_squares/my-numbers?grid_id=2"),
+            axios.get("/api/ncaab_tourney_squares/grid?grid_id=1"),
+            axios.get("/api/ncaab_tourney_squares/grid?grid_id=2"),
         ]).then(([r1, r2, n1, n2, g1, g2]) => {
             setResultsMap({ 1: r1.data, 2: r2.data });
             setNumbersMap({ 1: n1.data, 2: n2.data });

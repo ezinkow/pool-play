@@ -8,7 +8,7 @@ const ROUND_PAYOUTS = { 1: 12.5, 2: 25, 3: 50, 4: 100, 5: 200, 6: 500 };
 module.exports = function (app) {
 
     // Get full grid — filter by grid_id
-    app.get("/api/superbowlsquares/grid", async (req, res) => {
+    app.get("/api/nfl_superbowl_squares/grid", async (req, res) => {
         try {
             const grid_id = parseInt(req.query.grid_id) || 1;
             const squares = await SuperBowlSquaresGrid.findAll({
@@ -23,7 +23,7 @@ module.exports = function (app) {
     });
 
     // Claim a square
-    app.post("/api/superbowlsquares/claim", async (req, res) => {
+    app.post("/api/nfl_superbowl_squares/claim", async (req, res) => {
         try {
             if (new Date() >= LOCK_TIME) {
                 return res.status(403).json({ error: "Squares are locked" });
@@ -44,7 +44,7 @@ module.exports = function (app) {
     });
 
     // Unclaim a square
-    app.post("/api/superbowlsquares/unclaim", async (req, res) => {
+    app.post("/api/nfl_superbowl_squares/unclaim", async (req, res) => {
         try {
             if (new Date() >= LOCK_TIME) {
                 return res.status(403).json({ error: "Squares are locked" });
@@ -64,7 +64,7 @@ module.exports = function (app) {
     });
 
     // Results — accepts grid_id param
-    app.get("/api/superbowlsquares/results", async (req, res) => {
+    app.get("/api/nfl_superbowl_squares/results", async (req, res) => {
         try {
             const grid_id = parseInt(req.query.grid_id) || 1;
             const games = await SuperBowlGamesBracket.findAll({
@@ -113,7 +113,7 @@ module.exports = function (app) {
     });
 
     // My numbers — filter by grid_id
-    app.get("/api/superbowlsquares/my-numbers", async (req, res) => {
+    app.get("/api/nfl_superbowl_squares/my-numbers", async (req, res) => {
         try {
             const grid_id = parseInt(req.query.grid_id) || 1;
             const squares = await SuperBowlSquaresGrid.findAll({
@@ -138,7 +138,7 @@ module.exports = function (app) {
     });
 
     //admin
-    app.post("/api/superbowlsquares/admin/assign-numbers", async (req, res) => {
+    app.post("/api/nfl_superbowl_squares/admin/assign-numbers", async (req, res) => {
         try {
             const { grid_id, col_numbers, row_numbers } = req.body;
             // col_numbers: array of 10 numbers in order [col0, col1, ... col9]

@@ -19,7 +19,7 @@ export default function UsersDisplay() {
     useEffect(() => {
         async function fetchUsers() {
             try {
-                const response = await axios("api/bracket/users/")
+                const response = await axios("api/ncaab_bracket/users/")
                 setUsers(response.data.sort((a, b) => (a.name > b.name) ? 1 : -1));
             } catch (e) {
                 console.log(e)

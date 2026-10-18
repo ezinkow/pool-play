@@ -6,23 +6,23 @@ import PoolEmoji from "./PoolEmoji";
 const STANDINGS_ENDPOINTS = {
     cfb_pickem_ats: "/api/cfb_pickem_ats/standings",
     cfb_bowl_pickem: "/api/cfb_bowl_pickem/standings",
-    mlb_hrd: "/api/hrd/standings",
+    mlb_hrd: "/api/mlb_hrd/standings",
     mlb_playoffs: "/api/mlb_playoffs/standings",
     nba_playoffs: "/api/nba_playoffs/standings",
-    ncaab_champ_week_pickem: "/api/champweek/standings",
+    ncaab_champ_week_pickem: "/api/ncaab_champweek_pickem/standings",
     ncaab_pickem_ats: "/api/ncaab_pickem_ats/standings",
     nfl_bts: "/api/nfl_bts/standings",
     nfl_pickem_ats: "/api/nfl_pickem_ats/standings",
     olympics: { url: "/api/olympics/standings", nameField: "name" },
     world_cup: { url: "/api/worldcup/standings", userIdField: "id" },
-    ncaab_tourney_bracket: { url: "/api/bracket/standings", nameField: "name" },
-    ncaab_tourney_pickem: { url: "/api/tourneypickem/standings", nameField: "name" },
+    ncaab_tourney_bracket: { url: "/api/ncaab_bracket/standings", nameField: "name" },
+    ncaab_tourney_pickem: { url: "/api/ncaab_tourney_pickem/standings", nameField: "name" },
 };
 
 const SURVIVOR_ENTRY_ENDPOINTS = {
     nba_survivor: "/api/nba_survivor/entries/me",
-    nfl_survivor: "/api/nfl_survivor/entries/me",
-    nfl_survivor_secondchance: "/api/nflsurvivor_secondchance/entries/me",
+    nfl_survivor: "/api/nflsurvivor/entries/me",
+    nfl_survivor_secondchance: "/api/nfl_survivor_secondchance/entries/me",
 };
 
 function getStandingsList(data) {

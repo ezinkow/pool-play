@@ -13,7 +13,7 @@ const CACHE_TTL = 60 * 1000; // 1 minute
 
 module.exports = function (app) {
   // GET all rosters (with caching)
-  app.get("/api/nfl/startingrosters", async (req, res) => {
+  app.get("/api/nfl_playoffs/startingrosters", async (req, res) => {
     try {
       if (cachedData && Date.now() - lastFetch < CACHE_TTL) {
         return res.json(cachedData);
@@ -57,7 +57,7 @@ module.exports = function (app) {
   });
 
   // GET my roster for a round
-  app.get("/api/nfl/startingrosters/my", async (req, res) => {
+  app.get("/api/nfl_playoffs/startingrosters/my", async (req, res) => {
     try {
       const { name, round } = req.query;
       const r = Number(round);
@@ -79,7 +79,7 @@ module.exports = function (app) {
   });
 
   // POST new roster (first-time submission)
-  app.post("/api/nfl/startingrosters", async (req, res) => {
+  app.post("/api/nfl_playoffs/startingrosters", async (req, res) => {
     try {
       const entries = req.body;
       const { name, round } = entries[0];
@@ -103,7 +103,7 @@ module.exports = function (app) {
   });
 
   // PUT to update roster (edit before deadline)
-  app.put("/api/nfl/startingrosters", async (req, res) => {
+  app.put("/api/nfl_playoffs/startingrosters", async (req, res) => {
     try {
       const entries = req.body;
       const { name, round } = entries[0];

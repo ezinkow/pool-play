@@ -6,7 +6,7 @@ export default function Standings() {
   const [standings, setStandings] = useState([]);
 
   useEffect(() => {
-    axios.get("/api/tourneypickem/standings")
+    axios.get("/api/ncaab_tourney_pickem/standings")
       .then((res) => setStandings(res.data || []))
       .catch((err) => console.error("Failed to load tournament pick'em standings", err));
   }, []);

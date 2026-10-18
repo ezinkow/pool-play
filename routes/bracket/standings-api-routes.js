@@ -2,7 +2,7 @@ const { PicksBracket, GamesBracket, UsersBracket } = require("../../models");
 
 module.exports = function (app) {
 
-    app.get("/api/bracket/standings", async (req, res) => {
+    app.get("/api/ncaab_bracket/standings", async (req, res) => {
         try {
             const users = await UsersBracket.findAll({ attributes: ["id", "name"] });
             const games = await GamesBracket.findAll();

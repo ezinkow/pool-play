@@ -85,7 +85,7 @@ export default function Scoreboard() {
   const topScrollRef = useRef(null);
 
   useEffect(() => {
-    axios.get("/api/nfl/startingrosters").then((res) => {
+    axios.get("/api/nfl_playoffs/startingrosters").then((res) => {
       setRows(res.data);
     });
   }, []);

@@ -51,7 +51,7 @@ export default function RosterPicks({ authInfo }) {
   useEffect(() => {
     async function fetchNames() {
       try {
-        const res = await axios.get("/api/nfl/entries");
+        const res = await axios.get("/api/nfl_playoffs/entries");
         setNames(res.data.sort((a, b) => a.name.localeCompare(b.name)));
       } catch (err) {
         console.error(err);
@@ -101,7 +101,7 @@ export default function RosterPicks({ authInfo }) {
     if (!password) return toast.error("Please enter password");
 
     try {
-      const res = await axios.post("/api/nfl/entries/verify", { name, password });
+      const res = await axios.post("/api/nfl_playoffs/entries/verify", { name, password });
       if (res.data.success) {
         setAuthenticated(true);
         toast.success("Password verified!");

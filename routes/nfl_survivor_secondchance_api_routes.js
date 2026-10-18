@@ -8,7 +8,7 @@ module.exports = function (app) {
     // ------------------------------------------------------------------
     // 1. GET Current User's Entry Status
     // ------------------------------------------------------------------
-    app.get("/api/nflsurvivor_secondchance/entries/me", requireAuth, async (req, res) => {
+    app.get("/api/nfl_survivor_secondchance/entries/me", requireAuth, async (req, res) => {
         try {
             const entry = await NflSurvivorSecondChanceEntries.findOne({
                 where: { user_id: req.user.id }
@@ -23,7 +23,7 @@ module.exports = function (app) {
     // ------------------------------------------------------------------
     // 2. POST Create / Join 2nd Chance Survivor Pool
     // ------------------------------------------------------------------
-    app.post("/api/nflsurvivor_secondchance/entries/create", requireAuth, async (req, res) => {
+    app.post("/api/nfl_survivor_secondchance/entries/create", requireAuth, async (req, res) => {
         try {
             const entry_name = (req.body.entry_name || req.user.name).trim();
 
@@ -66,7 +66,7 @@ module.exports = function (app) {
     // ------------------------------------------------------------------
     // 3. POST Leave 2nd Chance Survivor Pool
     // ------------------------------------------------------------------
-    app.post("/api/nflsurvivor_secondchance/entries/leave", requireAuth, async (req, res) => {
+    app.post("/api/nfl_survivor_secondchance/entries/leave", requireAuth, async (req, res) => {
         try {
             if (Settings && typeof Settings.findOne === "function") {
                 const poolSetting = await Settings.findOne({ where: { game_key: "nfl_survivor_secondchance" } });
@@ -98,7 +98,7 @@ module.exports = function (app) {
     // ------------------------------------------------------------------
     // 4. GET All Entries (Public)
     // ------------------------------------------------------------------
-    app.get("/api/nflsurvivor_secondchance/entries", async (req, res) => {
+    app.get("/api/nfl_survivor_secondchance/entries", async (req, res) => {
         try {
             const entries = await NflSurvivorSecondChanceEntries.findAll({
                 attributes: ["id", "user_id", "entry_name", "is_eliminated", "eliminated_week", "createdAt"],
@@ -111,9 +111,9 @@ module.exports = function (app) {
     });
 
     // --------------------------------------------------------
-    // 5. GET /api/nflsurvivor_secondchance/picks (Get weekly games & user picks)
+    // 5. GET /api/nfl_survivor_secondchance/picks (Get weekly games & user picks)
     // --------------------------------------------------------
-    app.get("/api/nflsurvivor_secondchance/picks", requireAuth, async (req, res) => {
+    app.get("/api/nfl_survivor_secondchance/picks", requireAuth, async (req, res) => {
         try {
             const week = parseInt(req.query.week) || 1;
 
@@ -152,7 +152,7 @@ module.exports = function (app) {
     // ------------------------------------------------------------------
     // 6. GET All Past Picks for User (to validate team reuse on frontend)
     // ------------------------------------------------------------------
-    app.get("/api/nflsurvivor_secondchance/picks/all", requireAuth, async (req, res) => {
+    app.get("/api/nfl_survivor_secondchance/picks/all", requireAuth, async (req, res) => {
         try {
             const picks = await NflSurvivorSecondChancePicks.findAll({
                 where: { user_id: req.user.id },
@@ -166,9 +166,9 @@ module.exports = function (app) {
     });
 
     // ------------------------------------------------------------------
-    // POST /api/nflsurvivor_secondchance/picks (Make or Clear a 2nd Chance Survivor Pick)
+    // POST /api/nfl_survivor_secondchance/picks (Make or Clear a 2nd Chance Survivor Pick)
     // ------------------------------------------------------------------
-    app.post("/api/nflsurvivor_secondchance/picks", requireAuth, async (req, res) => {
+    app.post("/api/nfl_survivor_secondchance/picks", requireAuth, async (req, res) => {
         try {
             const { week, game_id, picked_team } = req.body;
             const userId = req.user.id;
@@ -237,7 +237,7 @@ module.exports = function (app) {
     // ------------------------------------------------------------------
     // 8. GET Master Roster Dashboard Data (Who's In, Who's Out, History)
     // ------------------------------------------------------------------
-    app.get("/api/nflsurvivor_secondchance/roster", requireAuth, async (req, res) => {
+    app.get("/api/nfl_survivor_secondchance/roster", requireAuth, async (req, res) => {
         try {
             const currentUserId = req.user.id;
             const now = new Date();

@@ -26,9 +26,9 @@ export default function SquaresGrid() {
 
     useEffect(() => {
         Promise.all([
-            axios.get("/api/tourneysquares/grid?grid_id=1"),
-            axios.get("/api/tourneysquares/grid?grid_id=2"),
-            axios.get("/api/tourneysquares/users"),
+            axios.get("/api/ncaab_tourney_squares/grid?grid_id=1"),
+            axios.get("/api/ncaab_tourney_squares/grid?grid_id=2"),
+            axios.get("/api/ncaab_tourney_squares/users"),
         ]).then(([grid1Res, grid2Res, usersRes]) => {
             setGrid1(grid1Res.data);
             setGrid2(grid2Res.data);
@@ -39,7 +39,7 @@ export default function SquaresGrid() {
         const saved = localStorage.getItem("rememberedUserSquares");
         if (saved) {
             const { name, token } = JSON.parse(saved);
-            axios.post("/api/tourneysquares/users/verify-token", { name, token })
+            axios.post("/api/ncaab_tourney_squares/users/verify-token", { name, token })
                 .then(res => {
                     if (res.data.success) {
                         setSelectedUser(name);
@@ -54,7 +54,7 @@ export default function SquaresGrid() {
 
     const verify = async () => {
         try {
-            const res = await axios.post("/api/tourneysquares/users/verify", { name: selectedUser, password });
+            const res = await axios.post("/api/ncaab_tourney_squares/users/verify", { name: selectedUser, password });
             if (!res.data.success) return toast.error("Wrong password");
             setAuthenticated(true);
             toast.success("Identity verified!");
@@ -72,7 +72,7 @@ export default function SquaresGrid() {
         const saved = localStorage.getItem("rememberedUserSquares");
         if (saved) {
             const { token } = JSON.parse(saved);
-            await axios.post("/api/tourneysquares/users/logout", { token });
+            await axios.post("/api/ncaab_tourney_squares/users/logout", { token });
             localStorage.removeItem("rememberedUserSquares");
         }
         setAuthenticated(false);
@@ -85,11 +85,11 @@ export default function SquaresGrid() {
         if (!authenticated) return toast.error("Verify your identity first");
         try {
             if (square.owner_name === selectedUser) {
-                await axios.post("/api/tourneysquares/unclaim", { square_id: square.square_id, owner_name: selectedUser });
+                await axios.post("/api/ncaab_tourney_squares/unclaim", { square_id: square.square_id, owner_name: selectedUser });
                 setGrid(prev => prev.map(s => s.square_id === square.square_id ? { ...s, owner_name: null } : s));
                 toast.success("Square unclaimed");
             } else if (!square.owner_name) {
-                await axios.post("/api/tourneysquares/claim", { square_id: square.square_id, owner_name: selectedUser });
+                await axios.post("/api/ncaab_tourney_squares/claim", { square_id: square.square_id, owner_name: selectedUser });
                 setGrid(prev => prev.map(s => s.square_id === square.square_id ? { ...s, owner_name: selectedUser } : s));
                 toast.success("Square claimed!");
             } else {

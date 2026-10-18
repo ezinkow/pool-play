@@ -1,7 +1,7 @@
 const { TiebreakerBracket, UsersBracket } = require("../../models");
 
 module.exports = function (app) {
-    app.get("/api/bracket/tiebreaker", async (req, res) => {
+    app.get("/api/ncaab_bracket/tiebreaker", async (req, res) => {
         try {
             const { name } = req.query;
             const user = await UsersBracket.findOne({ where: { name } });
@@ -11,7 +11,7 @@ module.exports = function (app) {
         } catch { res.status(500).json({ error: "Failed" }); }
     });
 
-    app.post("/api/bracket/tiebreaker", async (req, res) => {
+    app.post("/api/ncaab_bracket/tiebreaker", async (req, res) => {
         try {
             const { name, win_score, loss_score } = req.body;
             const user = await UsersBracket.findOne({ where: { name } });

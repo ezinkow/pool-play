@@ -2,7 +2,7 @@
 const { ChampWeekPickemUsers, ChampWeekPickemPicks, ChampWeekPickemGames } = require("../../models");
 
 module.exports = function (app) {
-    app.get("/api/champweek/standings", async (req, res) => {
+    app.get("/api/ncaab_champweek_pickem/standings", async (req, res) => {
         try {
             const users = await ChampWeekPickemUsers.findAll({
                 include: [

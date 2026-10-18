@@ -12,8 +12,8 @@ export default function SquaresNumbers() {
 
     useEffect(() => {
         Promise.all([
-            axios.get("/api/tourneysquares/my-numbers?grid_id=1"),
-            axios.get("/api/tourneysquares/my-numbers?grid_id=2"),
+            axios.get("/api/ncaab_tourney_squares/my-numbers?grid_id=1"),
+            axios.get("/api/ncaab_tourney_squares/my-numbers?grid_id=2"),
         ]).then(([res1, res2]) => {
             setData1(res1.data);
             setData2(res2.data);
