@@ -2,6 +2,7 @@ const { NcaabRegularSeasonGames, NcaabPickemAtsPicks, NcaabPickemAtsEntries, Nca
 const requireAuth = require("../middleware/Requireauth");
 const { Op } = require("sequelize");
 const db = require("../models");
+const saveAtsWeekPicks = require("../utils/saveAtsWeekPicks");
 
 // 🧠 Centralized Season Weeks Definition (Defined once)
 const NCAAB_WEEKS = [
@@ -110,12 +111,13 @@ module.exports = function (app) {
             });
 
             const userPicks = await NcaabPickemAtsPicks.findAll({
-                where: { user_id: req.user.id, week }
+                where: { user_id: req.user.id, week },
+                order: [["updatedAt", "DESC"], ["id", "DESC"]]
             });
 
             const pickMap = {};
             userPicks.forEach(p => {
-                pickMap[p.game_id] = {
+                if (pickMap[p.game_id] === undefined) pickMap[p.game_id] = {
                     picked_team: p.picked_team,
                     is_best_bet: p.is_best_bet
                 };
@@ -166,99 +168,22 @@ module.exports = function (app) {
         const t = await db.sequelize.transaction();
         try {
             const { week, picks } = req.body;
-            const targetWeek = parseInt(week);
-
-            if (!Array.isArray(picks)) {
-                await t.rollback();
-                return res.status(400).json({ error: "Invalid picks payload." });
-            }
-
-            const weekGames = await NcaabRegularSeasonGames.findAll({
-                where: { week: targetWeek },
+            const targetWeek = Number.parseInt(week, 10);
+            await saveAtsWeekPicks({
+                pickModel: NcaabPickemAtsPicks,
+                gameModel: NcaabRegularSeasonGames,
+                userId: req.user.id,
+                week: targetWeek,
+                picks,
                 transaction: t
             });
-            const gameMap = {};
-            weekGames.forEach(g => { gameMap[g.id] = g; });
-
-            const existingPicks = await NcaabPickemAtsPicks.findAll({
-                where: { user_id: req.user.id, week: targetWeek },
-                transaction: t
-            });
-            const existingPickMap = {};
-            existingPicks.forEach(p => { existingPickMap[p.game_id] = p; });
-
-            const incomingGameIds = picks.map(p => Number(p.game_id));
-
-            const finalPicksMap = {};
-
-            for (const ep of existingPicks) {
-                const game = gameMap[ep.game_id];
-                const isLocked = game && game.game_date && new Date() >= new Date(game.game_date);
-                if (isLocked) {
-                    finalPicksMap[ep.game_id] = {
-                        picked_team: ep.picked_team,
-                        is_best_bet: Boolean(ep.is_best_bet)
-                    };
-                }
-            }
-
-            for (const p of picks) {
-                const game = gameMap[p.game_id];
-                const isLocked = game && game.game_date && new Date() >= new Date(game.game_date);
-                if (!isLocked) {
-                    finalPicksMap[p.game_id] = {
-                        picked_team: p.picked_team,
-                        is_best_bet: Boolean(p.is_best_bet)
-                    };
-                }
-            }
-
-            const simulatedBestBetsCount = Object.values(finalPicksMap).filter(p => p.is_best_bet).length;
-
-            if (simulatedBestBetsCount > 3) {
-                await t.rollback();
-                return res.status(400).json({ error: "You can only select a maximum of 3 Best Bets per week." });
-            }
-
-            for (const ep of existingPicks) {
-                const game = gameMap[ep.game_id];
-                const isLocked = game && game.game_date && new Date() >= new Date(game.game_date);
-
-                if (!isLocked && !incomingGameIds.includes(ep.game_id)) {
-                    await ep.destroy({ transaction: t });
-                }
-            }
-
-            for (const p of picks) {
-                const game = gameMap[p.game_id];
-                if (!game) continue;
-
-                const isLocked = game.game_date && new Date() >= new Date(game.game_date);
-                if (isLocked) continue;
-
-                let existingPick = existingPickMap[p.game_id];
-                if (existingPick) {
-                    await existingPick.update({
-                        picked_team: p.picked_team,
-                        is_best_bet: Boolean(p.is_best_bet)
-                    }, { transaction: t });
-                } else {
-                    await NcaabPickemAtsPicks.create({
-                        user_id: req.user.id,
-                        week: targetWeek,
-                        game_id: p.game_id,
-                        picked_team: p.picked_team,
-                        is_best_bet: Boolean(p.is_best_bet)
-                    }, { transaction: t });
-                }
-            }
 
             await t.commit();
             res.json({ success: true, message: "Weekly picks saved successfully!" });
         } catch (err) {
             await t.rollback();
             console.error("CRITICAL Error saving pick'em picks:", err);
-            res.status(500).json({ error: err.message || "Failed to save picks" });
+            res.status(err.statusCode || 500).json({ error: err.message || "Failed to save picks" });
         }
     });
 
@@ -329,12 +254,13 @@ module.exports = function (app) {
             });
 
             const userPicks = await NcaabPickemAtsPicks.findAll({
-                where: { user_id: req.user.id, week }
+                where: { user_id: req.user.id, week },
+                order: [["updatedAt", "DESC"], ["id", "DESC"]]
             });
 
             const pickMap = {};
             userPicks.forEach(p => {
-                pickMap[p.game_id] = {
+                if (pickMap[p.game_id] === undefined) pickMap[p.game_id] = {
                     picked_team: p.picked_team,
                     is_best_bet: p.is_best_bet,
                     status: p.status

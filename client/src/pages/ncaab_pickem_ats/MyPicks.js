@@ -85,7 +85,7 @@ export default function NcaabPickemAtsMyPicks() {
 
     return (
         <PoolGatekeeper user={user} gameKey="ncaab_pickem_ats" >
-            <div style={{ maxWidth: 850, margin: "0 auto", padding: "20px 12px", paddingBottom: 90, fontFamily: "system-ui, -apple-system, sans-serif" }}>
+            <div className="pickem-my-picks-page" style={{ maxWidth: 850, margin: "0 auto", padding: "20px 12px", paddingBottom: 90, fontFamily: "system-ui, -apple-system, sans-serif" }}>
                 <Toaster />
 
                 <AtsPicksSummary
@@ -110,7 +110,7 @@ export default function NcaabPickemAtsMyPicks() {
 
                 {/* Compact Picks List */}
                 {pickedGames.length === 0 ? (
-                    <div style={{
+                    <div className="pickem-my-picks-empty" style={{
                         background: "white",
                         borderRadius: 12,
                         padding: "40px 20px",
@@ -184,7 +184,7 @@ export default function NcaabPickemAtsMyPicks() {
                                 );
                             } else {
                                 const formattedTipoff = game.game_date ? new Date(game.game_date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : "TBD";
-                                statusBadge = <span style={{ color: "#64748b", fontWeight: 700, fontSize: "11px" }}>🕒 {formattedTipoff}</span>;
+                                statusBadge = <span className="pickem-my-picks-kickoff" style={{ color: "#64748b", fontWeight: 700, fontSize: "11px" }}>🕒 {formattedTipoff}</span>;
                             }
 
                             // O/U Result Badge
@@ -217,7 +217,7 @@ export default function NcaabPickemAtsMyPicks() {
                             const pickedLogo = isAwayPicked ? awayLogo : (isHomePicked ? homeLogo : null);
 
                             return (
-                                <div key={game.id} className="pickem-my-picks-card" style={{
+                                <div key={game.id} className={`pickem-my-picks-card${isBestBet ? " is-best-bet" : ""}${isMustPick ? " is-must-pick" : ""}`} style={{
                                     background: isBestBet ? "linear-gradient(135deg, #fffdf4 0%, #ffffff 100%)" : (isMustPick ? "#fffbeb" : "white"),
                                     borderRadius: 12,
                                     boxShadow: isBestBet ? "0 4px 12px rgba(200, 157, 60, 0.15)" : "0 2px 6px rgba(0,0,0,0.04)",
@@ -244,7 +244,7 @@ export default function NcaabPickemAtsMyPicks() {
                                         <div className="matchup-header-row" style={{ fontSize: "14px", color: "#1e293b", fontWeight: 600, display: "flex", gap: 8, alignItems: "center", flexWrap: "nowrap", whiteSpace: "nowrap", overflow: "visible" }}>
 
                                             {/* Away Team Section */}
-                                            <span className="team-display" style={{
+                                            <span className={`team-display${isAwayPicked ? " is-picked" : ""}`} style={{
                                                 display: "inline-flex",
                                                 alignItems: "center",
                                                 gap: 5,
@@ -259,7 +259,7 @@ export default function NcaabPickemAtsMyPicks() {
                                                 overflow: "visible"
                                             }}>
                                                 {awayLogo && (
-                                                    <span style={{
+                                                    <span className="pickem-my-picks-team-logo" style={{
                                                         background: awaySecondary,
                                                         borderRadius: 6,
                                                         padding: "3px",
@@ -279,13 +279,13 @@ export default function NcaabPickemAtsMyPicks() {
                                                 <span className="team-text" style={{ fontWeight: isAwayPicked ? 800 : 600, color: isAwayPicked ? "#ffffff" : "#0f172a" }}>
                                                     {game.away_team}
                                                 </span>
-                                                <span style={{ fontSize: "12px", color: isAwayPicked ? "#e2e8f0" : "#475569", fontWeight: 700 }}>({awaySpreadStr})</span>
+                                                <span className="team-spread" style={{ fontSize: "12px", color: isAwayPicked ? "#e2e8f0" : "#475569", fontWeight: 700 }}>({awaySpreadStr})</span>
                                             </span>
 
                                             <span style={{ color: "#94a3b8", fontWeight: 700, fontSize: "12px" }}>@</span>
 
                                             {/* Home Team Section */}
-                                            <span className="team-display" style={{
+                                            <span className={`team-display${isHomePicked ? " is-picked" : ""}`} style={{
                                                 display: "inline-flex",
                                                 alignItems: "center",
                                                 gap: 5,
@@ -300,7 +300,7 @@ export default function NcaabPickemAtsMyPicks() {
                                                 overflow: "visible"
                                             }}>
                                                 {homeLogo && (
-                                                    <span style={{
+                                                    <span className="pickem-my-picks-team-logo" style={{
                                                         background: homeSecondary,
                                                         borderRadius: 6,
                                                         padding: "3px",
@@ -320,7 +320,7 @@ export default function NcaabPickemAtsMyPicks() {
                                                 <span className="team-text" style={{ fontWeight: isHomePicked ? 800 : 600, color: isHomePicked ? "#ffffff" : "#0f172a" }}>
                                                     {game.home_team}
                                                 </span>
-                                                <span style={{ fontSize: "12px", color: isHomePicked ? "#e2e8f0" : "#475569", fontWeight: 700 }}>({homeSpreadStr})</span>
+                                                <span className="team-spread" style={{ fontSize: "12px", color: isHomePicked ? "#e2e8f0" : "#475569", fontWeight: 700 }}>({homeSpreadStr})</span>
                                             </span>
 
                                         </div>
@@ -333,7 +333,7 @@ export default function NcaabPickemAtsMyPicks() {
                                             {statusBadge}
                                         </div>
 
-                                        <div style={{
+                                        <div className="pickem-my-picks-picked-logo" style={{
                                             display: "flex",
                                             alignItems: "center",
                                             justifyContent: "center",

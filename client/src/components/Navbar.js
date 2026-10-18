@@ -199,6 +199,17 @@ export default function Navbar({ isDarkMode, toggleTheme }) {
         );
     };
 
+    const renderQuickJumpMenu = () => (
+        <div className="navbar-quick-jump" style={{ backgroundColor: isDarkMode ? "#172438" : "white", border: `1px solid ${isDarkMode ? "#2a3a50" : "#e2e8f0"}` }}>
+            <div style={{ padding: "6px 16px 4px", fontSize: "10px", fontWeight: 800, color: isDarkMode ? "#a9b8cb" : "#64748b", textTransform: "uppercase" }}>My Active Pools (Quick Picks)</div>
+            {categorizedGames.active.length > 0 ? (
+                categorizedGames.active.map(game => renderGameLink(game))
+            ) : (
+                <div style={{ padding: "10px 16px", fontSize: "12px", color: isDarkMode ? "#a9b8cb" : "#64748b" }}>No active joined pools found.</div>
+            )}
+        </div>
+    );
+
     return (
         <>
             <header className="navbar-header" style={{ backgroundColor: navBg, position: "fixed", top: 0, left: 0, right: 0, zIndex: 2100, transition: "background-color 0.2s" }}>
@@ -231,51 +242,37 @@ export default function Navbar({ isDarkMode, toggleTheme }) {
                     </div>
 
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-                        <div ref={dropdownRef} style={{ position: "relative" }}>
-                            {dropdownOpen && (
-                                <div style={{ position: "absolute", top: "110%", right: 0, backgroundColor: isDarkMode ? "#172438" : "white", minWidth: "240px", borderRadius: "8px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", border: `1px solid ${isDarkMode ? "#2a3a50" : "#e2e8f0"}`, padding: "6px 0", zIndex: 2500, maxHeight: "70vh", overflowY: "auto" }}>
-                                    <div style={{ padding: "6px 16px 4px", fontSize: "10px", fontWeight: 800, color: isDarkMode ? "#a9b8cb" : "#64748b", textTransform: "uppercase" }}>My Active Pools (Quick Picks)</div>
-                                    {categorizedGames.active.length > 0 ? (
-                                        categorizedGames.active.map(game => renderGameLink(game))
-                                    ) : (
-                                        <div style={{ padding: "10px 16px", fontSize: "12px", color: isDarkMode ? "#a9b8cb" : "#64748b" }}>No active joined pools found.</div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
                         {!isMobile && !loading && (
                             user ? (
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                    <button
-                                        onClick={() => setDropdownOpen(!dropdownOpen)}
-                                        style={{
+                                    <div ref={dropdownRef} className="navbar-control-menu">
+                                        <button
+                                            className="navbar-control"
+                                            onClick={() => setDropdownOpen(!dropdownOpen)}
+                                            style={{
                                             backgroundColor: "rgba(200, 157, 60, 0.25)", color: GOLD,
                                             border: `1px solid ${GOLD}`, borderRadius: "6px",
                                             padding: "4px 8px", fontSize: "11px", fontWeight: 700,
                                             cursor: "pointer", display: "flex", alignItems: "center", gap: "3px",
                                             whiteSpace: "nowrap"
-                                        }}
-                                    >
-                                        ⚡ Quick Jump {dropdownOpen ? "▲" : "▼"}
-                                    </button>
-                                    <button onClick={() => navigate("/contact")} style={{ fontSize: "12px", fontWeight: 700, padding: "5px 12px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.4)", backgroundColor: "rgba(255,255,255,0.1)", color: "white", cursor: "pointer" }}>📩 Contact Us</button>
-                                    <button onClick={() => navigate("/myaccount")} style={{ fontSize: "12px", fontWeight: 700, padding: "5px 12px", borderRadius: 12, border: `1px solid ${GOLD}`, backgroundColor: "transparent", color: GOLD, cursor: "pointer" }}>👤 My Pools</button>
+                                            }}
+                                        >
+                                            ⚡ Quick Jump {dropdownOpen ? "▲" : "▼"}
+                                        </button>
+                                        {dropdownOpen && renderQuickJumpMenu()}
+                                    </div>
+                                    <button className="navbar-control" onClick={() => navigate("/contact")} style={{ border: "1px solid rgba(255,255,255,0.4)", backgroundColor: "rgba(255,255,255,0.1)", color: "white" }}>📩 Contact Us</button>
+                                    <button className="navbar-control" onClick={() => navigate("/myaccount")} style={{ border: `1px solid ${GOLD}`, backgroundColor: "transparent", color: GOLD }}>👤 My Pools</button>
                                     <span style={{ color: GOLD, fontSize: 12, fontWeight: 700 }}>{user.name}</span>
-                                    <button onClick={handleLogout} style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.3)", background: "transparent", color: "white", cursor: "pointer" }}>Log out</button>
-                                    <button onClick={() => setChatOpen(true)} style={{ background: "rgba(255, 255, 255, 0.15)", color: "white", border: "1px solid rgba(255, 255, 255, 0.25)", borderRadius: "4px", padding: "4px 12px", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>💬 Open Chat</button>
+                                    <button className="navbar-control" onClick={handleLogout} style={{ border: "1px solid rgba(255,255,255,0.3)", background: "transparent", color: "white" }}>Log out</button>
+                                    <button className="navbar-control" onClick={() => setChatOpen(true)} style={{ background: "rgba(255, 255, 255, 0.15)", color: "white", border: "1px solid rgba(255, 255, 255, 0.25)" }}>💬 Open Chat</button>
                                     <button
+                                        className="navbar-control"
                                         onClick={toggleTheme}
                                         style={{
                                             background: isDarkMode ? "rgba(255,255,255,0.15)" : "#0f172a",
                                             color: isDarkMode ? "white" : "#ffffff",
                                             border: isDarkMode ? "1px solid rgba(255,255,255,0.3)" : "none",
-                                            borderRadius: "16px",
-                                            padding: "6px 12px",
-                                            fontSize: "11px",
-                                            fontWeight: "700",
-                                            cursor: "pointer",
-                                            boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
                                         }}
                                     >
                                         {isDarkMode ? "☀️ Light" : "🌙 Dark"}
@@ -283,20 +280,15 @@ export default function Navbar({ isDarkMode, toggleTheme }) {
                                 </div>
                             ) : (
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                    <button onClick={() => navigate("/contact")} style={{ fontSize: "12px", fontWeight: 700, padding: "5px 12px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "transparent", color: "white", cursor: "pointer" }}>📩 Contact Us</button>
-                                    <button onClick={() => setShowLogin(true)} style={{ fontSize: "12px", fontWeight: 700, padding: "5px 12px", borderRadius: 12, border: "none", background: GOLD, color: "#0a1628", cursor: "pointer" }}>Log in</button>
+                                    <button className="navbar-control" onClick={() => navigate("/contact")} style={{ border: "1px solid rgba(255,255,255,0.3)", backgroundColor: "transparent", color: "white" }}>📩 Contact Us</button>
+                                    <button className="navbar-control" onClick={() => setShowLogin(true)} style={{ border: "none", background: GOLD, color: "#0a1628" }}>Log in</button>
                                     <button
+                                        className="navbar-control"
                                         onClick={toggleTheme}
                                         style={{
                                             background: isDarkMode ? "rgba(255,255,255,0.15)" : "#0f172a",
                                             color: isDarkMode ? "white" : "#ffffff",
                                             border: isDarkMode ? "1px solid rgba(255,255,255,0.3)" : "none",
-                                            borderRadius: "16px",
-                                            padding: "6px 12px",
-                                            fontSize: "11px",
-                                            fontWeight: "700",
-                                            cursor: "pointer",
-                                            boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
                                         }}
                                     >
                                         {isDarkMode ? "☀️ Light" : "🌙 Dark"}
@@ -307,37 +299,36 @@ export default function Navbar({ isDarkMode, toggleTheme }) {
 
                         {isMobile && (
                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <button
-                                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                                    style={{
+                                <div ref={dropdownRef} className="navbar-control-menu">
+                                    <button
+                                        className="navbar-control navbar-control-icon"
+                                        aria-label="Quick jump to a pool"
+                                        onClick={() => setDropdownOpen(!dropdownOpen)}
+                                        style={{
                                         backgroundColor: "rgba(200, 157, 60, 0.25)", color: GOLD,
                                         border: `1px solid ${GOLD}`, borderRadius: "6px",
                                         padding: "4px 8px", fontSize: "11px", fontWeight: 700,
                                         cursor: "pointer", display: "flex", alignItems: "center", gap: "3px",
                                         whiteSpace: "nowrap"
-                                    }}
-                                >
-                                    ⚡{dropdownOpen ? "▲" : "▼"}
-                                </button>
+                                        }}
+                                    >
+                                        ⚡{dropdownOpen ? "▲" : "▼"}
+                                    </button>
+                                    {dropdownOpen && renderQuickJumpMenu()}
+                                </div>
                                 <button
+                                    className="navbar-control navbar-control-icon"
                                     onClick={toggleTheme}
                                     style={{
                                         background: isDarkMode ? "rgba(255,255,255,0.15)" : "#0f172a",
                                         color: isDarkMode ? "white" : "#ffffff",
                                         border: isDarkMode ? "1px solid rgba(255,255,255,0.3)" : "none",
-                                        borderRadius: "16px",
-                                        padding: "5px 10px",
-                                        fontSize: "11px",
-                                        fontWeight: "700",
-                                        cursor: "pointer",
-                                        boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-                                        whiteSpace: "nowrap"
                                     }}
                                 >
                                     {isDarkMode ? "☀️" : "🌙"}
                                 </button>
                                 <button
-                                    className="menu-toggle"
+                                    className="menu-toggle navbar-control navbar-control-icon"
                                     onClick={() => setMenuOpen(!menuOpen)}
                                     aria-label="Toggle menu"
                                     style={{ background: "none", border: "none", color: "white", fontSize: "22px", cursor: "pointer", padding: "4px", display: "block" }}
@@ -358,16 +349,17 @@ export default function Navbar({ isDarkMode, toggleTheme }) {
 
             {isMobile && user && currentGame && (
                 <button
+                    className="navbar-control navbar-control-icon navbar-chat-control"
                     onClick={() => setChatOpen(true)}
                     style={{
                         position: "fixed",
-                        top: "40px",
-                        right: "-8px",
+                        top: "42px",
+                        right: "-3px",
                         zIndex: 2050,
                         backgroundColor: "transparent",
                         border: "none",
                         padding: "4px",
-                        fontSize: "33px",
+                        fontSize: "25px",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
@@ -458,16 +450,16 @@ export default function Navbar({ isDarkMode, toggleTheme }) {
                             {user ? (
                                 <>
                                     <div style={{ fontSize: "11px", color: "#9ca3af", marginBottom: "8px" }}>Logged in: <strong style={{ color: GOLD }}>{user.name}</strong></div>
-                                    <button onClick={() => { setMenuOpen(false); navigate("/myaccount"); }} style={{ width: "100%", padding: "7px", borderRadius: "6px", border: `1px solid ${GOLD}`, background: "transparent", color: GOLD, fontWeight: 700, fontSize: "11px", cursor: "pointer", marginBottom: "6px" }}>👤 My Account Dashboard</button>
-                                    <button onClick={handleLogout} style={{ width: "100%", padding: "7px", borderRadius: "6px", border: "1px solid rgba(239, 68, 68, 0.3)", background: "rgba(239, 68, 68, 0.1)", color: "#f87171", fontWeight: 700, fontSize: "11px", cursor: "pointer" }}>Log Out</button>
+                                    <button className="navbar-menu-control" onClick={() => { setMenuOpen(false); navigate("/myaccount"); }} style={{ width: "100%", border: `1px solid ${GOLD}`, background: "transparent", color: GOLD, marginBottom: "6px" }}>👤 My Account Dashboard</button>
+                                    <button className="navbar-menu-control" onClick={handleLogout} style={{ width: "100%", border: "1px solid rgba(239, 68, 68, 0.3)", background: "rgba(239, 68, 68, 0.1)", color: "#f87171" }}>Log Out</button>
                                 </>
                             ) : (
                                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                                    <button onClick={() => { setMenuOpen(false); setShowLogin(true); }} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "none", background: GOLD, color: "#061a33", fontWeight: 700, fontSize: "12px", cursor: "pointer" }}>Log In</button>
+                                    <button className="navbar-menu-control" onClick={() => { setMenuOpen(false); setShowLogin(true); }} style={{ width: "100%", border: "none", background: GOLD, color: "#061a33" }}>Log In</button>
                                 </div>
                             )}
                             <div style={{ paddingTop: "6px" }}>
-                                <button onClick={() => { setMenuOpen(false); navigate("/contact"); }} style={{ width: "100%", padding: "6px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "#cbd5e1", fontWeight: 600, fontSize: "11px", cursor: "pointer" }}>📩 Contact Support</button>
+                                <button className="navbar-menu-control" onClick={() => { setMenuOpen(false); navigate("/contact"); }} style={{ width: "100%", border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "#cbd5e1" }}>📩 Contact Support</button>
                             </div>
                         </div>
                     </nav>

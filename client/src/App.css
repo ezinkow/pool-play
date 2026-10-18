@@ -718,6 +718,84 @@ button {
   color: var(--text-primary);
 }
 
+/* Normalize light inline card surfaces and muted text across all pool pages. */
+.app-container.dark-mode div[style*="background: white"],
+.app-container.dark-mode div[style*="background: #ffffff"],
+.app-container.dark-mode div[style*="background: #fff"],
+.app-container.dark-mode div[style*="background-color: white"],
+.app-container.dark-mode div[style*="background-color: #ffffff"],
+.app-container.dark-mode div[style*="background-color: #fff"],
+.app-container.dark-mode div[style*="background: rgb(255, 255, 255)"],
+.app-container.dark-mode div[style*="background-color: rgb(255, 255, 255)"] {
+  background-color: #172438 !important;
+  color: #f1f5f9 !important;
+  border-color: #33465f !important;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28) !important;
+}
+
+.app-container.dark-mode div[style*="background: #f8fafc"],
+.app-container.dark-mode div[style*="background: #f1f5f9"],
+.app-container.dark-mode div[style*="background-color: #f8fafc"],
+.app-container.dark-mode div[style*="background-color: #f1f5f9"],
+.app-container.dark-mode div[style*="background: rgb(248, 250, 252)"],
+.app-container.dark-mode div[style*="background: rgb(241, 245, 249)"],
+.app-container.dark-mode div[style*="background-color: rgb(248, 250, 252)"],
+.app-container.dark-mode div[style*="background-color: rgb(241, 245, 249)"] {
+  background-color: #1d2c42 !important;
+  color: #e2e8f0 !important;
+  border-color: #3b4e68 !important;
+}
+
+.app-container.dark-mode div[style*="background: #ecfdf5"],
+.app-container.dark-mode div[style*="background-color: #ecfdf5"],
+.app-container.dark-mode div[style*="background: rgb(236, 253, 245)"],
+.app-container.dark-mode div[style*="background-color: rgb(236, 253, 245)"] {
+  background-color: #15382f !important;
+  color: #d1fae5 !important;
+  border-color: #276749 !important;
+}
+
+.app-container.dark-mode :not(button)[style*="color: #64748b"],
+.app-container.dark-mode :not(button)[style*="color: #666"],
+.app-container.dark-mode :not(button)[style*="color: #777"],
+.app-container.dark-mode :not(button)[style*="color: #555"],
+.app-container.dark-mode :not(button)[style*="color: #6b7280"],
+.app-container.dark-mode :not(button)[style*="color: #94a3b8"],
+.app-container.dark-mode :not(button)[style*="color: #9ca3af"],
+.app-container.dark-mode :not(button)[style*="color: #475569"],
+.app-container.dark-mode :not(button)[style*="color: #334155"],
+.app-container.dark-mode :not(button)[style*="color: #374151"],
+.app-container.dark-mode :not(button)[style*="color: #1e293b"],
+.app-container.dark-mode :not(button)[style*="color: #0f172a"],
+.app-container.dark-mode :not(button)[style*="color: #13447a"],
+.app-container.dark-mode :not(button)[style*="color: rgb(100, 116, 139)"],
+.app-container.dark-mode :not(button)[style*="color: rgb(102, 102, 102)"],
+.app-container.dark-mode :not(button)[style*="color: rgb(119, 119, 119)"],
+.app-container.dark-mode :not(button)[style*="color: rgb(85, 85, 85)"],
+.app-container.dark-mode :not(button)[style*="color: rgb(107, 114, 128)"],
+.app-container.dark-mode :not(button)[style*="color: rgb(148, 163, 184)"],
+.app-container.dark-mode :not(button)[style*="color: rgb(156, 163, 175)"],
+.app-container.dark-mode :not(button)[style*="color: rgb(71, 85, 105)"],
+.app-container.dark-mode :not(button)[style*="color: rgb(51, 65, 85)"],
+.app-container.dark-mode :not(button)[style*="color: rgb(55, 65, 81)"],
+.app-container.dark-mode :not(button)[style*="color: rgb(30, 41, 59)"],
+.app-container.dark-mode :not(button)[style*="color: rgb(15, 23, 42)"],
+.app-container.dark-mode :not(button)[style*="color: rgb(19, 68, 122)"] {
+  color: #cbd5e1 !important;
+}
+
+.app-container.dark-mode :not(button)[style*="color: #991b1b"],
+.app-container.dark-mode :not(button)[style*="color: #7f1d1d"],
+.app-container.dark-mode :not(button)[style*="color: rgb(153, 27, 27)"],
+.app-container.dark-mode :not(button)[style*="color: rgb(127, 29, 29)"] {
+  color: #fca5a5 !important;
+}
+
+.app-container.dark-mode :not(button)[style*="color: #047857"],
+.app-container.dark-mode :not(button)[style*="color: rgb(4, 120, 87)"] {
+  color: #6ee7b7 !important;
+}
+
 /* Global Card Readability in Dark Mode */
 .dark-mode .card,
 .dark-mode .news-feed,
@@ -856,6 +934,108 @@ button {
 
 .dark-mode .pickem-standings-board .pickem-standings-loss {
   color: #fca5a5 !important;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .pickem-my-picks-card {
+  background: #172438 !important;
+  background-image: none !important;
+  background-color: #172438 !important;
+  color: #f1f5f9 !important;
+  border-top-color: #33465f !important;
+  border-right-color: #33465f !important;
+  border-bottom-color: #33465f !important;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.3) !important;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .pickem-my-picks-card.is-best-bet {
+  background: #172438 !important;
+  background-image: none !important;
+  border-top-color: rgba(224, 182, 83, 0.55) !important;
+  border-right-color: rgba(224, 182, 83, 0.55) !important;
+  border-bottom-color: rgba(224, 182, 83, 0.55) !important;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .pickem-my-picks-card.is-must-pick:not(.is-best-bet) {
+  background: #172438 !important;
+  background-image: none !important;
+  border-top-color: rgba(245, 158, 11, 0.5) !important;
+  border-right-color: rgba(245, 158, 11, 0.5) !important;
+  border-bottom-color: rgba(245, 158, 11, 0.5) !important;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .pickem-my-picks-empty {
+  background: #172438 !important;
+  background-image: none !important;
+  color: #f1f5f9 !important;
+  border-color: #33465f !important;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .pickem-my-picks-empty p:first-child {
+  color: #f1f5f9 !important;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .pickem-my-picks-empty p + p {
+  color: #a9b8cb !important;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .pickem-my-picks-card .matchup-header-row {
+  color: #e2e8f0 !important;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .pickem-my-picks-card .team-display {
+  position: relative;
+  isolation: isolate;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .pickem-my-picks-card .team-display::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: rgba(5, 11, 21, 0.48);
+  pointer-events: none;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .pickem-my-picks-card .team-display > * {
+  position: relative;
+  z-index: 1;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .pickem-my-picks-card .team-display:not(.is-picked) .team-text,
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .pickem-my-picks-card .team-display:not(.is-picked) .team-spread {
+  color: #e2e8f0 !important;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .pickem-my-picks-card .pickem-my-picks-team-logo,
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .pickem-my-picks-card .pickem-my-picks-picked-logo {
+  background-image: linear-gradient(rgba(7, 14, 26, 0.38), rgba(7, 14, 26, 0.38)) !important;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .pickem-my-picks-card .pickem-my-picks-picked-logo {
+  border-color: #73849b !important;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .pickem-my-picks-card .pickem-my-picks-kickoff {
+  color: #a9b8cb !important;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .picks-summary-header h2 {
+  color: #f1f5f9;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .picks-summary-stat.overall {
+  background: #12332e;
+  border-color: #1c5b4a;
+  color: #a7f3d0;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .picks-summary-stat.overall span {
+  color: #86efac;
+}
+
+#root-app-container.app-container.dark-mode .pickem-my-picks-page .picks-summary-stat.points strong {
+  color: #38bdf8;
 }
 
 .nfl-bts-division-card {
@@ -1535,6 +1715,98 @@ button {
   border-color: var(--pick-period-accent, var(--primary-navy));
   background: var(--pick-period-accent, var(--primary-navy));
   color: #fff;
+}
+
+.navbar-header .navbar-control {
+  box-sizing: border-box;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 12px !important;
+  border-radius: 8px !important;
+  font: 700 12px/1 system-ui, -apple-system, sans-serif !important;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
+}
+
+.navbar-header .navbar-control-menu {
+  position: relative;
+}
+
+.navbar-header .navbar-quick-jump {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 2500;
+  width: max-content;
+  min-width: 240px;
+  max-width: min(320px, calc(100vw - 24px));
+  max-height: 70vh;
+  overflow-y: auto;
+  border-radius: 10px;
+  padding: 6px 0;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.navbar-header .navbar-control-menu .navbar-quick-jump {
+  right: 0;
+}
+
+.navbar-header .menu-toggle.navbar-control {
+  width: 36px;
+  min-width: 36px;
+  padding: 0 !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+@media (max-width: 768px) {
+  .navbar-header .navbar-control-icon {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    font-size: 16px !important;
+  }
+
+  .navbar-header .menu-toggle.navbar-control-icon {
+    width: 40px;
+    min-width: 40px;
+  }
+
+  .navbar-header .navbar-quick-jump {
+    max-height: 65vh;
+  }
+}
+
+.navbar-chat-control {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+}
+
+.nav-links.open .navbar-menu-control {
+  box-sizing: border-box;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 12px !important;
+  border-radius: 8px !important;
+  font: 700 12px/1 system-ui, -apple-system, sans-serif !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 .picks-summary-header {
