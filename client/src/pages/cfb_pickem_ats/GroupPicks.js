@@ -6,7 +6,7 @@ import PoolGatekeeper from "../../components/PoolGatekeeper";
 import AtsGroupGameHeader from "../../components/picks/AtsGroupGameHeader";
 import PoolEmoji from "../../components/PoolEmoji";
 
-const CFB_BLUE = "#101b2a";
+const BLUE = "#101b2a";
 const GOLD = "#c89d3c";
 const CFB_RED = "#D50A0A";
 
@@ -254,7 +254,7 @@ export default function CfbPickemAtsMatrix() {
                 `}</style>
 
                 <div style={{ textAlign: "center", marginBottom: 12, padding: "0 8px" }}>
-                    <h2 className="pickem-matrix-title" style={{ color: CFB_BLUE, fontSize: "20px", margin: 0 }}><PoolEmoji gameKey="cfb_pickem_ats" /> Weekly Group Matrix</h2>
+                    <h2 className="pickem-matrix-title" style={{ color: BLUE, fontSize: "20px", margin: 0 }}><PoolEmoji gameKey="cfb_pickem_ats" /> Weekly Group Matrix</h2>
                     <p style={{ color: "#64748b", marginTop: 4, fontSize: "12px" }}>Showing live & completed games (newest first).</p>
                 </div>
 
@@ -289,7 +289,7 @@ export default function CfbPickemAtsMatrix() {
                                     padding: "6px 12px",
                                     borderRadius: 6,
                                     border: "1px solid #cbd5e1",
-                                    backgroundColor: currentWeek === i + 1 ? CFB_BLUE : "white",
+                                    backgroundColor: currentWeek === i + 1 ? BLUE : "white",
                                     color: currentWeek === i + 1 ? "white" : "#0f172a",
                                     cursor: "pointer",
                                     fontWeight: 700,
@@ -321,12 +321,12 @@ export default function CfbPickemAtsMatrix() {
                     ) : (
                         <table className="ats-group-picks-matrix-table" style={{ width: "max-content", minWidth: "100%", borderCollapse: "separate", borderSpacing: 0, whiteSpace: "nowrap", tableLayout: "fixed" }}>
                             <thead>
-                                <tr style={{ backgroundColor: CFB_BLUE, color: "white" }}>
+                                <tr style={{ backgroundColor: BLUE, color: "white" }}>
                                     <th style={{
                                         position: "sticky",
                                         left: 0,
                                         zIndex: 10,
-                                        backgroundColor: CFB_BLUE,
+                                        backgroundColor: BLUE,
                                         color: "white",
                                         padding: "8px 12px",
                                         textAlign: "left",
@@ -334,7 +334,8 @@ export default function CfbPickemAtsMatrix() {
                                         width: "175px",
                                         minWidth: "175px",
                                         boxShadow: "2px 0 5px rgba(0,0,0,0.1)",
-                                        verticalAlign: "middle"
+                                        verticalAlign: "middle",
+                                        borderLeft: "1px solid var(--border-color)"
                                     }}>
                                         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                                             <span>Player (Wk / Ovr)</span>
@@ -347,8 +348,8 @@ export default function CfbPickemAtsMatrix() {
                                                         padding: "1px 2px",
                                                         borderRadius: 3,
                                                         border: `1px solid ${GOLD}`,
-                                                        backgroundColor: sortBy === "overall" ? CFB_BLUE : "white",
-                                                        color: sortBy === "overall" ? GOLD : CFB_BLUE,
+                                                        backgroundColor: sortBy === "overall" ? BLUE : "white",
+                                                        color: sortBy === "overall" ? GOLD : BLUE,
                                                         cursor: "pointer",
                                                         fontWeight: 800,
                                                         fontSize: "10px",
@@ -367,8 +368,8 @@ export default function CfbPickemAtsMatrix() {
                                                         padding: "1px 2px",
                                                         borderRadius: 3,
                                                         border: `1px solid ${GOLD}`,
-                                                        backgroundColor: sortBy === "week" ? CFB_BLUE : "white",
-                                                        color: sortBy === "week" ? GOLD : CFB_BLUE,
+                                                        backgroundColor: sortBy === "week" ? BLUE : "white",
+                                                        color: sortBy === "week" ? GOLD : BLUE,
                                                         cursor: "pointer",
                                                         fontWeight: 800,
                                                         fontSize: "10px",
@@ -389,7 +390,7 @@ export default function CfbPickemAtsMatrix() {
                                             fontSize: "11px",
                                             width: "120px",
                                             minWidth: "120px",
-                                            backgroundColor: game.must_pick ? "#b45309" : CFB_BLUE,
+                                            backgroundColor: game.must_pick ? "#b45309" : BLUE,
                                             overflow: "visible",
                                             borderLeft: "1px solid rgba(255,255,255,0.15)"
                                         }}>
@@ -439,7 +440,7 @@ export default function CfbPickemAtsMatrix() {
                                                     <div className="pickem-matrix-player-points" style={{
                                                         fontSize: 10,
                                                         fontWeight: 800,
-                                                        color: CFB_BLUE,
+                                                        color: BLUE,
                                                         letterSpacing: "-0.2px"
                                                     }}>
                                                         Wk: {player.weekPoints} | Ovr: {player.totalPoints}
