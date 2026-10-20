@@ -72,7 +72,7 @@ button {
   background-image:
     radial-gradient(circle at 70% 20%, rgba(212, 175, 55, 0.18) 0%, transparent 40%),
     radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.2) 0%, transparent 50%),
-    linear-gradient(135deg, #061a33 0%, #0b192c 50%, #020617 100%) !important;
+    linear-gradient(135deg, #061a33 0%, #2c0b0b 50%, #020617 100%) !important;
   background-attachment: fixed !important;
 }
 
@@ -1443,76 +1443,123 @@ button {
   color: var(--text-secondary) !important;
 }
 
-/* Keep the CFB pick'em matrix readable where legacy inline colors bypass theme tokens. */
-.dark-mode .cfb-pickem-matrix-page .cfb-matrix-title {
-  color: #e0b653 !important;
+/* ==========================================================================
+   SHARED PICK'EM MATRIX STYLING (CFB & NFL)
+   ========================================================================== */
+.pickem-matrix-page .pickem-matrix-title {
+    color: var(--primary-navy);
+    font-size: 20px;
+    margin: 0;
 }
 
-.dark-mode .cfb-pickem-matrix-container {
-  background: var(--bg-primary) !important;
-  border-color: #3b4d65 !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.32) !important;
+.pickem-matrix-container {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    border: 1px solid var(--border-color);
+    max-width: 100%;
+    overflow-x: auto;
+    position: relative;
 }
 
-.dark-mode .cfb-pickem-matrix-page .cfb-matrix-week-button:not(.is-selected) {
-  background-color: var(--bg-tertiary) !important;
-  color: var(--text-primary) !important;
-  border-color: #52657f !important;
+.pickem-matrix-week-button:not(.is-selected) {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
 }
 
-.dark-mode .cfb-pickem-matrix-page .cfb-matrix-week-button.is-selected {
-  background-color: #164b7d !important;
-  color: #fff !important;
-  border-color: #e0b653 !important;
+.pickem-matrix-week-button.is-selected {
+    background-color: var(--primary-navy);
+    color: #fff;
+    border-color: var(--accent-gold);
 }
 
-.dark-mode .cfb-pickem-matrix-page .cfb-matrix-sort-button:not(.is-selected) {
-  background-color: var(--bg-tertiary) !important;
-  color: var(--text-primary) !important;
+.pickem-matrix-sort-button:not(.is-selected) {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--accent-gold);
 }
 
-.dark-mode .cfb-pickem-matrix-page .cfb-matrix-sort-button.is-selected {
-  background-color: #164b7d !important;
-  color: #f5cf72 !important;
+.pickem-matrix-sort-button.is-selected {
+    background-color: var(--primary-navy);
+    color: var(--accent-gold);
+    border: 1px solid var(--accent-gold);
 }
 
-.dark-mode .cfb-pickem-matrix-page .cfb-matrix-row {
-  background-color: #172438 !important;
+.pickem-matrix-row {
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
 }
 
-.dark-mode .cfb-pickem-matrix-page .cfb-matrix-row:nth-child(even) {
-  background-color: #1d2c42 !important;
+.pickem-matrix-row:nth-child(even) {
+    background-color: var(--bg-primary);
 }
 
-.dark-mode .cfb-pickem-matrix-page .cfb-matrix-row.is-current-user {
-  background-color: #203c5b !important;
+.pickem-matrix-row.is-current-user {
+    background-color: #eff6ff !important;
 }
 
-.dark-mode .cfb-pickem-matrix-page .cfb-matrix-player-cell {
-  background-color: #172438 !important;
-  border-right: 1px solid #52657f !important;
-  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.35) !important;
+.pickem-matrix-player-cell {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background-color: var(--bg-secondary);
+    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+    vertical-align: middle;
 }
 
-.dark-mode .cfb-pickem-matrix-page .cfb-matrix-row:nth-child(even) .cfb-matrix-player-cell {
-  background-color: #1d2c42 !important;
+.pickem-matrix-row.is-current-user .pickem-matrix-player-cell {
+    background-color: #dbeafe !important;
 }
 
-.dark-mode .cfb-pickem-matrix-page .cfb-matrix-row.is-current-user .cfb-matrix-player-cell {
-  background-color: #294e75 !important;
+.pickem-matrix-player-name {
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--text-primary);
 }
 
-.dark-mode .cfb-pickem-matrix-page .cfb-matrix-player-name {
-  color: #f1f5f9 !important;
+.pickem-matrix-player-points {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--accent-gold);
 }
 
-.dark-mode .cfb-pickem-matrix-page .cfb-matrix-player-points {
-  color: #f5cf72 !important;
+/* Dark Mode Overrides for Unified Matrix */
+.dark-mode .pickem-matrix-container {
+    background: var(--bg-primary) !important;
+    border-color: var(--border-color) !important;
 }
 
-.dark-mode .cfb-pickem-matrix-page td {
-  border-left-color: #3b4d65 !important;
-  border-bottom-color: #3b4d65 !important;
+.dark-mode .pickem-matrix-row {
+    background-color: #172438 !important;
+}
+
+.dark-mode .pickem-matrix-row:nth-child(even) {
+    background-color: #1d2c42 !important;
+}
+
+.dark-mode .pickem-matrix-row.is-current-user {
+    background-color: #203c5b !important;
+}
+
+.dark-mode .pickem-matrix-player-cell {
+    background-color: #172438 !important;
+}
+
+.dark-mode .pickem-matrix-row:nth-child(even) .pickem-matrix-player-cell {
+    background-color: #1d2c42 !important;
+}
+
+.dark-mode .pickem-matrix-row.is-current-user .pickem-matrix-player-cell {
+    background-color: #294e75 !important;
+}
+
+.dark-mode .pickem-matrix-player-name {
+    color: #f1f5f9 !important;
+}
+
+.dark-mode .pickem-matrix-player-points {
+    color: var(--accent-gold) !important;
 }
 
 .dark-mode input,
