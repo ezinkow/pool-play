@@ -483,7 +483,7 @@ export default function NflPickemAtsMatrix() {
                                                         fontSize: 12,
                                                         fontWeight: 700,
                                                         borderBottom: "1px solid #f3f4f6",
-                                                        borderLeft: "1px solid #f1f5f9",
+                                                        borderLeft: "1px solid var(--border-color)",
                                                         width: "120px",
                                                         minWidth: "120px",
                                                         overflow: "visible",

@@ -387,11 +387,11 @@ export default function CfbPickemAtsMatrix() {
                                             padding: "8px 6px",
                                             textAlign: "center",
                                             fontSize: "11px",
-                                            borderLeft: "1px solid rgba(255,255,255,0.15)",
                                             width: "120px",
                                             minWidth: "120px",
                                             backgroundColor: game.must_pick ? "#b45309" : CFB_BLUE,
-                                            overflow: "visible"
+                                            overflow: "visible",
+                                            borderLeft: "1px solid rgba(255,255,255,0.15)"
                                         }}>
                                             <AtsGroupGameHeader game={game} teamColors={teamColors} liveColor={CFB_RED} teamColorField="primaryColor" includeEndPeriodLive />
                                         </th>
@@ -467,7 +467,7 @@ export default function CfbPickemAtsMatrix() {
                                                         fontSize: 12,
                                                         fontWeight: 700,
                                                         borderBottom: "1px solid #f3f4f6",
-                                                        borderLeft: "1px solid #f3f4f6",
+                                                        borderLeft: "1px solid var(--border-color)",
                                                         width: "120px",
                                                         minWidth: "120px",
                                                         overflow: "visible",
