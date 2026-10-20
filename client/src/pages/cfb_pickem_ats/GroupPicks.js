@@ -6,7 +6,7 @@ import PoolGatekeeper from "../../components/PoolGatekeeper";
 import AtsGroupGameHeader from "../../components/picks/AtsGroupGameHeader";
 import PoolEmoji from "../../components/PoolEmoji";
 
-const CFB_BLUE = "#013369";
+const CFB_BLUE = "#101b2a";
 const GOLD = "#c89d3c";
 const CFB_RED = "#D50A0A";
 
@@ -254,7 +254,7 @@ export default function CfbPickemAtsMatrix() {
                 `}</style>
 
                 <div style={{ textAlign: "center", marginBottom: 12, padding: "0 8px" }}>
-                    <h2 className="cfb-matrix-title" style={{ color: CFB_BLUE, fontSize: "20px", margin: 0 }}><PoolEmoji gameKey="cfb_pickem_ats" /> Weekly Group Matrix</h2>
+                    <h2 className="pickem-matrix-title" style={{ color: CFB_BLUE, fontSize: "20px", margin: 0 }}><PoolEmoji gameKey="cfb_pickem_ats" /> Weekly Group Matrix</h2>
                     <p style={{ color: "#64748b", marginTop: 4, fontSize: "12px" }}>Showing live & completed games (newest first).</p>
                 </div>
 
@@ -284,7 +284,7 @@ export default function CfbPickemAtsMatrix() {
                             <button
                                 key={i + 1}
                                 onClick={() => setCurrentWeek(i + 1)}
-                                className={`cfb-matrix-week-button${currentWeek === i + 1 ? " is-selected" : ""}`}
+                                className={`pickem-matrix-week-button${currentWeek === i + 1 ? " is-selected" : ""}`}
                                 style={{
                                     padding: "6px 12px",
                                     borderRadius: 6,
@@ -327,6 +327,7 @@ export default function CfbPickemAtsMatrix() {
                                         left: 0,
                                         zIndex: 10,
                                         backgroundColor: CFB_BLUE,
+                                        color: "white",
                                         padding: "8px 12px",
                                         textAlign: "left",
                                         fontSize: 12,
@@ -339,7 +340,7 @@ export default function CfbPickemAtsMatrix() {
                                             <span>Player (Wk / Ovr)</span>
                                             <div style={{ display: "flex", gap: "6px", width: "100%" }}>
                                                 <button
-                                                    className={`cfb-matrix-sort-button ${sortBy === "overall" ? "is-selected" : ""}`}
+                                                    className={`pickem-matrix-sort-button ${sortBy === "overall" ? "is-selected" : ""}`}
                                                     onClick={() => setSortBy("overall")}
                                                     style={{
                                                         width: "52px",
@@ -359,7 +360,7 @@ export default function CfbPickemAtsMatrix() {
                                                     Ovr
                                                 </button>
                                                 <button
-                                                    className={`cfb-matrix-sort-button ${sortBy === "week" ? "is-selected" : ""}`}
+                                                    className={`pickem-matrix-sort-button ${sortBy === "week" ? "is-selected" : ""}`}
                                                     onClick={() => setSortBy("week")}
                                                     style={{
                                                         width: "52px",
@@ -403,12 +404,12 @@ export default function CfbPickemAtsMatrix() {
                                     const isCurrentUser = Number(player.user_id) === Number(user.id);
 
                                     return (
-                                        <tr key={player.user_id} className={`cfb-matrix-row${isCurrentUser ? " is-current-user" : ""}`} style={{
+                                        <tr key={player.user_id} className={`pickem-matrix-row${isCurrentUser ? " is-current-user" : ""}`} style={{
                                             borderBottom: "1px solid #f1f5f9",
                                             backgroundColor: isCurrentUser ? "#eff6ff" : (idx % 2 === 0 ? "#fafafa" : "white")
                                         }}>
                                             <td
-                                                className="cfb-matrix-player-cell"
+                                                className="pickem-matrix-player-cell"
                                                 style={{
                                                     position: "sticky",
                                                     left: 0,
@@ -419,12 +420,13 @@ export default function CfbPickemAtsMatrix() {
                                                     minWidth: "175px",
                                                     maxWidth: "175px",
                                                     boxShadow: "2px 0 5px rgba(0,0,0,0.05)",
-                                                    verticalAlign: "middle"
+                                                    verticalAlign: "middle",
+                                                    borderBottom: "1px solid #f1f5f9",
                                                 }}
                                             >
                                                 {/* ✨ Two-line stacked layout to prevent any name clipping */}
                                                 <div style={{ display: "flex", flexDirection: "column", gap: "2px", overflow: "hidden" }}>
-                                                    <div className="cfb-matrix-player-name" style={{
+                                                    <div className="pickem-matrix-player-name" style={{
                                                         fontWeight: isCurrentUser ? 800 : 700,
                                                         fontSize: 12,
                                                         color: "#0f172a",
@@ -434,7 +436,7 @@ export default function CfbPickemAtsMatrix() {
                                                     }}>
                                                         {rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`} {player.user_name} {isCurrentUser && "(You)"}
                                                     </div>
-                                                    <div className="cfb-matrix-player-points" style={{
+                                                    <div className="pickem-matrix-player-points" style={{
                                                         fontSize: 10,
                                                         fontWeight: 800,
                                                         color: CFB_BLUE,
@@ -464,8 +466,8 @@ export default function CfbPickemAtsMatrix() {
                                                         textAlign: "center",
                                                         fontSize: 12,
                                                         fontWeight: 700,
-                                                        borderLeft: "1px solid #e2e8f0",
                                                         borderBottom: "1px solid #f3f4f6",
+                                                        borderLeft: "1px solid #f3f4f6",
                                                         width: "120px",
                                                         minWidth: "120px",
                                                         overflow: "visible",

@@ -5,7 +5,7 @@ import PoolGatekeeper from "../../components/PoolGatekeeper";
 import AtsGroupGameHeader from "../../components/picks/AtsGroupGameHeader";
 import PoolEmoji from "../../components/PoolEmoji";
 
-const NFL_BLUE = "#0a1628";
+const NFL_BLUE = "#101b2a";
 const GOLD = "#c89d3c";
 const NFL_RED = "#D50A0A";
 
@@ -260,7 +260,7 @@ export default function NflPickemAtsMatrix() {
 
     return (
         <PoolGatekeeper user={user} gameKey="nfl_pickem_ats" >
-            <div style={{ width: "100%", margin: "0 auto", padding: "12px 4px", paddingBottom: 80 }}>
+            <div className="pickem-matrix-page" style={{ width: "100%", margin: "0 auto", padding: "12px 4px", paddingBottom: 80 }}>
                 <style>{`
                     @keyframes pulse { 
                         0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 
@@ -273,7 +273,7 @@ export default function NflPickemAtsMatrix() {
                 `}</style>
 
                 <div style={{ textAlign: "center", marginBottom: 12, padding: "0 8px" }}>
-                    <h2 style={{ color: NFL_BLUE, fontSize: "20px", margin: 0 }}><PoolEmoji gameKey="nfl_pickem_ats" /> Weekly Group Matrix</h2>
+                    <h2 className="pickem-matrix-title" style={{ color: NFL_BLUE, fontSize: "20px", margin: 0 }}><PoolEmoji gameKey="nfl_pickem_ats" /> Weekly Group Matrix</h2>
                     <p style={{ color: "#64748b", marginTop: 4, fontSize: "12px" }}>Showing live & completed games (newest first).</p>
                 </div>
 
@@ -303,6 +303,7 @@ export default function NflPickemAtsMatrix() {
                             <button
                                 key={i + 1}
                                 onClick={() => setCurrentWeek(i + 1)}
+                                className={`pickem-matrix-week-button${currentWeek === i + 1 ? " is-selected" : ""}`}
                                 style={{
                                     padding: "6px 12px",
                                     borderRadius: 6,
@@ -323,7 +324,7 @@ export default function NflPickemAtsMatrix() {
                     </div>
                 </div>
 
-                <div className="matrix-container" style={{
+                <div className="matrix-container pickem-matrix-container" style={{
                     background: "white",
                     borderRadius: 8,
                     boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
@@ -357,6 +358,7 @@ export default function NflPickemAtsMatrix() {
                                             <span>Player (Wk / Ovr)</span>
                                             <div style={{ display: "flex", gap: "6px", width: "100%" }}>
                                                 <button
+                                                    className={`pickem-matrix-sort-button ${sortBy === "overall" ? "is-selected" : ""}`}
                                                     onClick={() => setSortBy("overall")}
                                                     style={{
                                                         width: "52px",
@@ -376,6 +378,7 @@ export default function NflPickemAtsMatrix() {
                                                     Ovr
                                                 </button>
                                                 <button
+                                                    className={`pickem-matrix-sort-button ${sortBy === "week" ? "is-selected" : ""}`}
                                                     onClick={() => setSortBy("week")}
                                                     style={{
                                                         width: "52px",
@@ -402,7 +405,6 @@ export default function NflPickemAtsMatrix() {
                                             padding: "8px 6px",
                                             textAlign: "center",
                                             fontSize: "11px",
-                                            borderLeft: "1px solid rgba(255,255,255,0.15)",
                                             width: "120px",
                                             minWidth: "120px",
                                             backgroundColor: game.must_pick ? "#b45309" : NFL_BLUE,
@@ -419,11 +421,12 @@ export default function NflPickemAtsMatrix() {
                                     const isCurrentUser = Number(player.user_id) === Number(user?.id);
 
                                     return (
-                                        <tr key={player.user_id} style={{
+                                        <tr key={player.user_id} className={`pickem-matrix-row${isCurrentUser ? " is-current-user" : ""}`} style={{
                                             borderBottom: "1px solid #f1f5f9",
                                             backgroundColor: isCurrentUser ? "#eff6ff" : (idx % 2 === 0 ? "#fafafa" : "white")
                                         }}>
                                             <td
+                                                className="pickem-matrix-player-cell"
                                                 style={{
                                                     position: "sticky",
                                                     left: 0,
@@ -434,24 +437,25 @@ export default function NflPickemAtsMatrix() {
                                                     minWidth: "175px",
                                                     maxWidth: "175px",
                                                     boxShadow: "2px 0 5px rgba(0,0,0,0.05)",
-                                                    verticalAlign: "middle"
+                                                    verticalAlign: "middle",
+                                                    borderBottom: "1px solid #f1f5f9",
                                                 }}
                                             >
                                                 <div style={{ display: "flex", flexDirection: "column", gap: "2px", overflow: "hidden" }}>
-                                                    <div style={{
+                                                    <div className="pickem-matrix-player-name" style={{
                                                         fontWeight: isCurrentUser ? 800 : 700,
                                                         fontSize: 12,
                                                         color: "#0f172a",
                                                         overflow: "hidden",
                                                         textOverflow: "ellipsis",
-                                                        whiteSpace: "nowrap"
+                                                        whiteSpace: "nowrap",
                                                     }}>
                                                         {rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`} {player.user_name} {isCurrentUser && "(You)"}
                                                     </div>
-                                                    <div style={{
+                                                    <div className="pickem-matrix-player-points" style={{
                                                         fontSize: 10,
                                                         fontWeight: 800,
-                                                        color: NFL_BLUE,
+                                                        color: GOLD,
                                                         letterSpacing: "-0.2px"
                                                     }}>
                                                         Wk: {player.weekPoints} | Ovr: {player.totalPoints}
@@ -478,8 +482,8 @@ export default function NflPickemAtsMatrix() {
                                                         textAlign: "center",
                                                         fontSize: 12,
                                                         fontWeight: 700,
-                                                        borderLeft: "1px solid #e2e8f0",
                                                         borderBottom: "1px solid #f3f4f6",
+                                                        borderLeft: "1px solid #f1f5f9",
                                                         width: "120px",
                                                         minWidth: "120px",
                                                         overflow: "visible",
