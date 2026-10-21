@@ -14,6 +14,11 @@ export default function Home() {
     const [cards, setCards] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedCards, setExpandedCards] = useState({});
+    const [collapsedSections, setCollapsedSections] = useState({
+        live: false,
+        upcoming: false,
+        inactive: false,
+    });
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -102,60 +107,70 @@ export default function Home() {
         return buckets;
     }, [filteredCards]);
 
-    const renderCard = (card, group) => {
+    const toggleSection = (sectionKey) => {
+        setCollapsedSections(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }));
+    };
+
+ const renderCard = (card, group) => {
         const isExpanded = !!expandedCards[card.key];
         return (
             <div key={card.key} className="card homepage-pool-card" style={{
-                borderRadius: 12,
-                borderLeft: `6px solid ${card.isActive ? (card.accent || GOLD) : GRAY}`,
-                marginBottom: 14,
+                borderRadius: 8,
+                borderLeft: `5px solid ${card.isActive ? (card.accent || GOLD) : GRAY}`,
+                marginBottom: 8,
                 overflow: "hidden",
                 transition: "transform 0.2s ease"
             }}>
-                <div className="homepage-pool-card-heading" onClick={() => setExpandedCards(p => ({ ...p, [card.key]: !p[card.key] }))}>
-                    <div className="homepage-pool-card-row">
-                        {/* Left: Emoji & Game Title */}
-                        <div className="homepage-pool-card-name">
-                            {card.emoji && <span className="homepage-pool-card-emoji">{card.emoji}</span>}
-                            <h3 className="homepage-pool-card-title">
+                <div className="homepage-pool-card-heading" onClick={() => setExpandedCards(p => ({ ...p, [card.key]: !p[card.key] }))} style={{ padding: "14px 16px", cursor: "pointer" }}>
+                    
+                    {/* Uses the CSS class that adapts automatically between desktop row and mobile stack */}
+                    <div className="homepage-pool-row">
+                        
+                        {/* Left: Emoji & Title */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+                            {card.emoji && <span style={{ fontSize: "22px", lineHeight: 1, flexShrink: 0 }}>{card.emoji}</span>}
+                            <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                 {card.title}
                             </h3>
                         </div>
 
-                        {/* Middle: Full-Size Inline Countdown */}
-                        <div className="homepage-pool-card-countdown">
+                        {/* Center: Countdown Timer */}
+                        <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
                             {group === 'upcoming' && <PoolCountdown poolData={card} mode="upcoming" isDarkMode={isDarkMode} compact={false} />}
                             {group === 'live' && <PoolCountdown poolData={card} mode="active" isDarkMode={isDarkMode} compact={false} />}
                             {group === 'inactive' && card.open_date > new Date() && <PoolCountdown poolData={card} mode="inactive" isDarkMode={isDarkMode} compact={false} />}
                         </div>
 
-                        {/* Right: Play Button & Expand Arrow */}
-                        <div className="homepage-pool-card-actions">
+                        {/* Right / Bottom Action Row */}
+                        <div className="homepage-pool-actions-row" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                             {card.isActive && (
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); navigate(card.prefix); }}
+                                    onClick={(e) => { e.stopPropagation(); navigate(card.url_path); }}
                                     className="homepage-pool-card-play"
+                                    style={{ flex: 1, padding: "8px 16px", fontSize: "13px", fontWeight: "bold", textAlign: "center", cursor: "pointer" }}
                                 >
                                     Play →
                                 </button>
                             )}
-                            <span className={`homepage-pool-card-chevron${isExpanded ? " homepage-pool-card-chevron--expanded" : ""}`}>▼</span>
+                            
+                            <span className={`homepage-pool-card-chevron${isExpanded ? " homepage-pool-card-chevron--expanded" : ""}`} style={{ fontSize: "12px", opacity: 0.7, padding: "4px" }}>▼</span>
                         </div>
+
                     </div>
                 </div>
 
                 <div style={{ maxHeight: isExpanded ? "600px" : "0px", opacity: isExpanded ? 1 : 0, transition: "all 0.25s ease-in-out", overflow: "hidden" }}>
-                    <div style={{ padding: "0 20px 20px 62px", borderTop: "1px solid rgba(100, 116, 139, 0.2)" }}>
+                    <div style={{ padding: "0 16px 14px 48px", borderTop: "1px solid rgba(100, 116, 139, 0.2)" }}>
                         {card.description && (
-                            <p style={{ margin: "12px 0 0", fontSize: "13px", lineHeight: 1.5 }}>
+                            <p style={{ margin: "10px 0 0", fontSize: "13px", lineHeight: 1.4 }}>
                                 {card.description}
                             </p>
                         )}
                         {card.rules_html && (
-                            <div className="pool-rules-content homepage-pool-rules" dangerouslySetInnerHTML={{ __html: card.rules_html }} />
+                            <div className="pool-rules-content homepage-pool-rules" style={{ fontSize: "13px" }} dangerouslySetInnerHTML={{ __html: card.rules_html }} />
                         )}
                         {!card.description && !card.rules_html && (
-                            <p style={{ margin: "12px 0 0", fontSize: "13px", lineHeight: 1.5 }}>
+                            <p style={{ margin: "10px 0 0", fontSize: "13px", lineHeight: 1.4 }}>
                                 Join this pool to compete with friends, track live standings, and test your predictive skills!
                             </p>
                         )}
@@ -167,34 +182,34 @@ export default function Home() {
 
     return (
         <div style={{ minHeight: "100vh", transition: "background 0.3s ease", fontFamily: "system-ui, -apple-system, sans-serif", scrollBehavior: "smooth" }}>
-            <div className="card" style={{ maxWidth: 850, margin: "0 auto 16px", borderRadius: "14px", padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", position: "relative", gap: "14px" }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", marginTop: "2px" }}>
-                    <img src={logo} alt="POOL PLAY" style={{ width: "120px", height: "120px", borderRadius: "50%", border: `3px solid ${GOLD}`, boxShadow: "0 4px 16px rgba(0,0,0,0.3)" }} />
+            <div className="card" style={{ maxWidth: 950, margin: "0 auto 16px", borderRadius: "12px", padding: "18px 16px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", position: "relative", gap: "10px" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", marginTop: "2px" }}>
+                    <img src={logo} alt="POOL PLAY" style={{ width: "90px", height: "90px", borderRadius: "50%", border: `2px solid ${GOLD}`, boxShadow: "0 3px 12px rgba(0,0,0,0.3)" }} />
                     <div>
-                        <h1 style={{ margin: 0, fontSize: "30px", fontWeight: 800, letterSpacing: "-0.5px" }}>🏆 POOL PLAY 🏊</h1>
-                        <p style={{ color: GOLD, margin: "6px 0 0", fontSize: "13px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>Jump on in, the water's fine!</p>
+                        <h1 style={{ margin: 0, fontSize: "24px", fontWeight: 800, letterSpacing: "-0.5px" }}>🏆 POOL PLAY 🏊</h1>
+                        <p style={{ color: GOLD, margin: "4px 0 0", fontSize: "12px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase" }}>Jump on in, the water's fine!</p>
                     </div>
                 </div>
-                <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap", width: "100%", borderTop: "1px solid rgba(100, 116, 139, 0.2)", paddingTop: "14px" }}>
+                <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap", width: "100%", borderTop: "1px solid rgba(100, 116, 139, 0.2)", paddingTop: "10px" }}>
                     <a href="#pools-section" onClick={(e) => { e.preventDefault(); document.getElementById('pools-section')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ textDecoration: "none" }}>
-                        <span style={{ padding: "5px 10px", borderRadius: "8px", fontSize: "11px", fontWeight: 700, display: "inline-block", cursor: "pointer", border: "1px solid rgba(100, 116, 139, 0.2)" }}>
+                        <span style={{ padding: "4px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 700, display: "inline-block", cursor: "pointer", border: "1px solid rgba(100, 116, 139, 0.2)" }}>
                             🔥 {live.length} {live.length === 1 ? "Game Live" : "Games Live"}
                         </span>
                     </a>
                     <a href="#open-entries-section" onClick={(e) => { e.preventDefault(); document.getElementById('open-entries-section')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ textDecoration: "none" }}>
-                        <span style={{ padding: "5px 10px", borderRadius: "8px", fontSize: "11px", fontWeight: 700, display: "inline-block", cursor: "pointer", border: "1px solid rgba(100, 116, 139, 0.2)" }}>
+                        <span style={{ padding: "4px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 700, display: "inline-block", cursor: "pointer", border: "1px solid rgba(100, 116, 139, 0.2)" }}>
                             ⏰ {upcoming.length} {upcoming.length === 1 ? "Open Entry" : "Open Entries"}
                         </span>
                     </a>
                 </div>
             </div>
 
-            <div id="pools-section" style={{ maxWidth: 850, margin: "0 auto", scrollMarginTop: "20px" }}>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "center", marginBottom: 20, alignItems: "center" }}>
-                    <input type="text" placeholder="🔍 Search pools..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ padding: "8px 16px", borderRadius: "20px", border: `1px solid ${GOLD}`, fontSize: "13px", outline: "none", width: "200px", boxShadow: "0 2px 6px rgba(0,0,0,0.1)" }} />
+            <div id="pools-section" style={{ maxWidth: 950, margin: "0 auto", scrollMarginTop: "20px" }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center", marginBottom: 14, alignItems: "center" }}>
+                    <input type="text" placeholder="🔍 Search pools..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ padding: "6px 14px", borderRadius: "16px", border: `1px solid ${GOLD}`, fontSize: "12px", outline: "none", width: "180px", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }} />
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", justifyContent: "center" }}>
                         {categories.map(cat => (
-                            <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} style={{ background: selectedCategory === cat.id ? GOLD : undefined, border: selectedCategory === cat.id ? `1px solid ${GOLD}` : "1px solid #cbd5e1", borderRadius: "20px", padding: "6px 12px", fontSize: "12px", fontWeight: "700", cursor: "pointer", boxShadow: selectedCategory === cat.id ? "0 2px 4px rgba(0,0,0,0.2)" : "none" }}>
+                            <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} style={{ background: selectedCategory === cat.id ? GOLD : undefined, border: selectedCategory === cat.id ? `1px solid ${GOLD}` : "1px solid #cbd5e1", borderRadius: "16px", padding: "4px 10px", fontSize: "11px", fontWeight: "700", cursor: "pointer", boxShadow: selectedCategory === cat.id ? "0 2px 4px rgba(0,0,0,0.2)" : "none" }}>
                                 {cat.label}
                             </button>
                         ))}
@@ -202,15 +217,50 @@ export default function Home() {
                 </div>
 
                 {loading ? (
-                    <div style={{ textAlign: "center", padding: "40px", color: GRAY, fontSize: "14px" }}>Loading your pools...</div>
+                    <div style={{ textAlign: "center", padding: "30px", color: GRAY, fontSize: "13px" }}>Loading your pools...</div>
                 ) : (
                     <>
-                        {live.length > 0 && <><h3 style={{ color: GOLD, fontSize: "15px", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>🔥 Live & In-Play</h3>{live.map(c => renderCard(c, 'live'))}</>}
-                        {upcoming.length > 0 && <><h3 id="open-entries-section" style={{ color: GOLD, fontSize: "15px", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px", scrollMarginTop: "20px" }}>⏰ Open / Accepting Entries</h3>{upcoming.map(c => renderCard(c, 'upcoming'))}</>}
-                        {inactive.length > 0 && <><h3 style={{ color: GRAY, fontSize: "15px", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>💤 Inactive / Upcoming Season</h3>{inactive.map(c => renderCard(c, 'inactive'))}</>}
+                        {live.length > 0 && (
+                            <div style={{ marginBottom: 16 }}>
+                                <div 
+                                    onClick={() => toggleSection('live')} 
+                                    style={{ color: GOLD, fontSize: "13px", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.5px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", userSelect: "none", fontWeight: 700 }}
+                                >
+                                    <span>🔥 Live & In-Play ({live.length})</span>
+                                    <span style={{ fontSize: "14px", transform: collapsedSections.live ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.2s ease", marginLeft: "6px" }}>▼</span>
+                                </div>
+                                {!collapsedSections.live && live.map(c => renderCard(c, 'live'))}
+                            </div>
+                        )}
+
+                        {upcoming.length > 0 && (
+                            <div style={{ marginBottom: 16 }} id="open-entries-section">
+                                <div 
+                                    onClick={() => toggleSection('upcoming')} 
+                                    style={{ color: GOLD, fontSize: "13px", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", userSelect: "none", fontWeight: 700, scrollMarginTop: "20px" }}
+                                >
+                                    <span>⏰ Open / Accepting Entries ({upcoming.length})</span>
+                                    <span style={{ fontSize: "14px", transform: collapsedSections.upcoming ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.2s ease", marginLeft: "6px" }}>▼</span>
+                                </div>
+                                {!collapsedSections.upcoming && upcoming.map(c => renderCard(c, 'upcoming'))}
+                            </div>
+                        )}
+
+                        {inactive.length > 0 && (
+                            <div style={{ marginBottom: 16 }}>
+                                <div 
+                                    onClick={() => toggleSection('inactive')} 
+                                    style={{ color: GRAY, fontSize: "13px", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", userSelect: "none", fontWeight: 700 }}
+                                >
+                                    <span>💤 Inactive / Upcoming Season ({inactive.length})</span>
+                                    <span style={{ fontSize: "14px", transform: collapsedSections.inactive ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.2s ease", marginLeft: "6px" }}>▼</span>
+                                </div>
+                                {!collapsedSections.inactive && inactive.map(c => renderCard(c, 'inactive'))}
+                            </div>
+                        )}
 
                         {filteredCards.length === 0 && (
-                            <div className="card" style={{ textAlign: "center", padding: "40px", borderRadius: "12px" }}>
+                            <div className="card" style={{ textAlign: "center", padding: "30px", borderRadius: "8px", fontSize: "13px" }}>
                                 No pools match your search criteria.
                             </div>
                         )}
