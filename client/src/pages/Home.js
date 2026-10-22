@@ -145,7 +145,8 @@ export default function Home() {
                         <div className="homepage-pool-actions-row" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                             {card.isActive && (
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); navigate(card.url_path); }}
+                                    // onClick={(e) => { e.stopPropagation(); navigate(card.url_path); }}
+                                    onClick={(e) => { e.stopPropagation(); navigate(card.prefix); }}
                                     className="homepage-pool-card-play"
                                     style={{ flex: 1, padding: "8px 16px", fontSize: "13px", fontWeight: "bold", textAlign: "center", cursor: "pointer" }}
                                 >
