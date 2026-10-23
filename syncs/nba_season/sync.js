@@ -255,7 +255,7 @@ async function syncTeamRecords() {
             if (!team.team_id) continue;
             try {
                 // Target the overall team record endpoint (using type 2 regular season or general records list)
-                const recordUrl = `http://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons/2027/types/2/groups/7/teams/${team.team_id}/records/34?lang=en&region=us`;
+                const recordUrl = `http://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons/2027/types/2/teams/${team.team_id}/record?lang=en&region=us`;
                 const { data } = await axios.get(recordUrl, { timeout: 10000 });
 
                 // Look for the overall record entry (usually type 'total' or 'overall', or fallback to the first item's summary)
