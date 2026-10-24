@@ -65,11 +65,11 @@ function formatDateToYYYYMMDD(date) {
 }
 
 const CONFERENCE_MAP = {
-    "1": "ACC",
-    "2": "Big 12",
+    "2": "ACC",
+    "8": "Big 12",
     "4": "Big East",
     "7": "Big Ten",
-    "8": "SEC"
+    "23": "SEC"
 };
 
 function getConferenceName(confId) {
