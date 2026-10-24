@@ -6,8 +6,8 @@ import PoolGatekeeper from "../../components/PoolGatekeeper";
 import SurvivorWeekSelector from "../../components/picks/SurvivorWeekSelector";
 import SurvivorGroupMatrixTable from "../../components/picks/SurvivorGroupMatrixTable";
 
-const NBA_BLUE = "#013369";
-const NBA_RED = "#D50A0A";
+const BLUE = "#013369";
+const RED = "#D50A0A";
 
 export default function NbaSurvivorGroupPicks() {
     const { user, loading: authLoading } = useAuth();
@@ -29,7 +29,7 @@ export default function NbaSurvivorGroupPicks() {
                 const map = {};
                 (res.data || []).forEach(t => {
                     map[t.name] = {
-                        primaryColor: t.color || t.primary_color || NBA_BLUE,
+                        primaryColor: t.color || t.primary_color || BLUE,
                         secondaryColor: t.secondary_color || t.alt_color || "#64748b",
                         logo: t.logo
                     };
@@ -64,7 +64,6 @@ export default function NbaSurvivorGroupPicks() {
                 setMaxAvailableWeek(2);
             })
             .finally(() => {
-                // Fetch roster data from your existing route
                 axios.get("/api/nba_survivor/roster", {
                     headers: { Authorization: `Bearer ${token}` }
                 })
@@ -78,7 +77,7 @@ export default function NbaSurvivorGroupPicks() {
                     .finally(() => setLoading(false));
             });
     }, [user, token]);
-
+    console.log(rosterData)
     const handleWeekChange = (targetWeek) => {
         if (targetWeek > maxAvailableWeek) {
             toast.error("You cannot view future weeks matrix!");
@@ -95,7 +94,7 @@ export default function NbaSurvivorGroupPicks() {
                 <Toaster />
 
                 <div style={{ textAlign: "center", marginBottom: 20 }}>
-                    <h2 style={{ color: NBA_BLUE, fontSize: "26px", margin: 0 }}>Survivor Group Matrix</h2>
+                    <h2 style={{ color: BLUE, fontSize: "26px", margin: 0 }}>Survivor Group Matrix</h2>
                     <p style={{ color: "#666", marginTop: 6, fontSize: "14px" }}>
                         See what team every participant selected for Week {currentWeek}.
                     </p>
@@ -105,15 +104,16 @@ export default function NbaSurvivorGroupPicks() {
                     currentWeek={currentWeek}
                     maxAvailableWeek={maxAvailableWeek}
                     onWeekChange={handleWeekChange}
-                    accentColor={NBA_BLUE}
+                    accentColor={BLUE}
                 />
                 <SurvivorGroupMatrixTable
                     currentWeek={currentWeek}
                     rosterData={rosterData}
                     teamColors={teamColors}
                     user={user}
-                    accentColor={NBA_BLUE}
-                    eliminatedColor={NBA_RED}
+                    accentColor={BLUE}
+                    eliminatedColor={RED}
+                    showWeekendRecord={true}
                 />
 
             </div>
