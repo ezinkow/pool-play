@@ -6,7 +6,8 @@ export default function SurvivorGroupMatrixTable({
   teamColors,
   user,
   accentColor,
-  eliminatedColor
+  eliminatedColor,
+  showWeekendRecord = false // 👈 Defaults to false so NFL survivor ignores it automatically
 }) {
   return (
     <div className="survivor-group-matrix survivor-group-matrix-surface" style={{
@@ -21,7 +22,7 @@ export default function SurvivorGroupMatrixTable({
           <tr style={{ backgroundColor: accentColor, color: "white" }}>
             <th style={{ padding: "14px 16px", textAlign: "left", fontSize: "14px" }}>Participant</th>
             <th style={{ padding: "14px 16px", textAlign: "center", fontSize: "14px" }}>
-              Week {currentWeek} Selection
+              Week {currentWeek} Selection {showWeekendRecord && "(Wknd record)"}
             </th>
             <th style={{ padding: "14px 16px", textAlign: "center", fontSize: "14px" }}>Status</th>
           </tr>
@@ -38,6 +39,11 @@ export default function SurvivorGroupMatrixTable({
               const isCurrentUser = Number(row.user_id) === Number(user?.id);
               const weekPick = row.picks?.[currentWeek] || null;
               const pickedTeam = weekPick?.team_name || null;
+              const teamRecord = weekPick?.team_record || "0-0"; 
+              
+              const teamWon = teamRecord.startsWith("1-") || teamRecord.startsWith("2-");
+              const hasNotPlayedYet = teamRecord === "0-0" || !teamRecord;
+
               const isHidden = pickedTeam === "🔒 Hidden";
               const teamMeta = teamColors[pickedTeam] || {};
               const pickLogo = weekPick?.logo || teamMeta.logo;
@@ -88,6 +94,19 @@ export default function SurvivorGroupMatrixTable({
                       <span className="survivor-group-matrix-no-pick" style={{ color: "#94a3b8", fontStyle: "italic", fontSize: "13px" }}>
                         No Pick Made
                       </span>
+                    )}
+
+                    {/* Only render weekend records if showWeekendRecord is true (NBA Survivor) */}
+                    {showWeekendRecord && (
+                      <React.Fragment>
+                        {hasNotPlayedYet ? (
+                          <span style={{ fontWeight: 600, fontSize: "13px", marginLeft: "8px", color: "#ca8a04" }}>{teamRecord}</span>
+                        ) : teamWon ? (
+                          <span style={{ fontWeight: 700, fontSize: "13px", marginLeft: "8px", color: "#16a34a" }}>{teamRecord}</span>
+                        ) : (
+                          <span style={{ fontWeight: 700, fontSize: "13px", marginLeft: "8px", color: "#dc2626" }}>{teamRecord}</span>
+                        )}
+                      </React.Fragment>
                     )}
                   </td>
                   <td className="survivor-group-matrix-status" style={{ padding: "12px 16px", textAlign: "center", fontWeight: 700, fontSize: "13px" }}>
