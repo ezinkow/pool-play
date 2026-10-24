@@ -256,6 +256,18 @@ module.exports = function (app) {
             const gamesMap = {};
             allGames.forEach(g => { gamesMap[g.id] = g; });
 
+            // Group all games by week and team to easily compute weekend records
+            const teamGamesByWeek = {};
+            allGames.forEach(g => {
+                if (!g.week) return;
+                [g.home_team, g.away_team].forEach(team => {
+                    if (!team) return;
+                    if (!teamGamesByWeek[g.week]) teamGamesByWeek[g.week] = {};
+                    if (!teamGamesByWeek[g.week][team]) teamGamesByWeek[g.week][team] = [];
+                    teamGamesByWeek[g.week][team].push(g);
+                });
+            });
+
             // 3. Group picks by user_id
             const picksByUser = {};
             allPicks.forEach(pick => {
@@ -274,17 +286,36 @@ module.exports = function (app) {
                     const game = gamesMap[pick.game_id];
                     const gameStarted = game && game.game_date && now >= new Date(game.game_date);
 
+                    // Calculate the team's weekend record for this pick's week
+                    let wins = 0;
+                    let losses = 0;
+                    let pushes = 0;
+                    const teamGames = teamGamesByWeek[pick.week]?.[pick.team_name] || [];
+
+                    teamGames.forEach(tg => {
+                        const isFinal = ["STATUS_FINAL", "FINAL", "completed", "Final"].includes(tg.status);
+                        if (isFinal && tg.winner) {
+                            if (tg.winner === pick.team_name) wins++;
+                            else if (tg.winner === "PUSH") pushes++;
+                            else losses++;
+                        }
+                    });
+
+                    const recordStr = teamGames.length > 0 ? `${wins}-${losses}${pushes > 0 ? `-${pushes}` : ''}` : "";
+
                     if (isOwnEntry || gameStarted) {
                         picksMap[pick.week] = {
                             team_name: pick.team_name,
                             status: pick.status,
-                            game_id: pick.game_id
+                            game_id: pick.game_id,
+                            team_record: recordStr
                         };
                     } else {
                         picksMap[pick.week] = {
                             team_name: "🔒 Hidden",
                             status: "hidden",
-                            game_id: pick.game_id
+                            game_id: pick.game_id,
+                            team_record: ""
                         };
                     }
                 });
