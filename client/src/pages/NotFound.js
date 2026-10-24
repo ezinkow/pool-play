@@ -15,7 +15,6 @@ export default function NotFound() {
             flexDirection: "column",
             justifyContent: "center",
             alignItems: "center",
-            backgroundColor: "#001633",
             color: "white",
             overflow: "hidden",
             marginTop: "-20px" // Pulls it up to cover any default spacing from parent containers
