@@ -7,16 +7,12 @@ import PoolEmoji from "../../components/PoolEmoji";
 
 const NAVY = "#1c61ac";
 const GOLD = "#c89d3c";
-const DARK_BG = "#101b2c";
-const DARK_ROW_ALT = "#142136";
-const CURRENT_USER_BG = "#0f2d59";
 
 export default function GroupPicks() {
   const [series, setSeries] = useState([]);
   const [picks, setPicks] = useState([]);
   const [standings, setStandings] = useState([]);
   const [tiebreakers, setTiebreakers] = useState([]);
-  const [sortBy, setSortBy] = useState("overall"); // "overall" or "round"
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
@@ -67,33 +63,17 @@ export default function GroupPicks() {
   }, [picks]);
 
   const sortedStandings = useMemo(() => {
-    const standingsList = standings.map(st => {
-      let roundPoints = 0;
-      series.forEach(s => {
-        const p = pickMap[s.id]?.[st.entry_name];
-        if (p && s.status === "STATUS_FINAL" && p.pick === s.winner) {
-          const base = parseInt(p.confidence) || 0;
-          const bonus = (p.series_length_guess === s.series_length) ? base : 0;
-          roundPoints += (base + bonus);
-        }
-      });
-      return {
-        ...st,
-        totalPoints: Number(st.points) || 0,
-        roundPoints
-      };
-    });
+    const standingsList = standings.map(st => ({
+      ...st,
+      totalPoints: Number(st.points) || 0
+    }));
 
     standingsList.sort((a, b) => {
-      if (sortBy === "round") {
-        return b.roundPoints - a.roundPoints || b.totalPoints - a.totalPoints || a.entry_name.localeCompare(b.entry_name);
-      } else {
-        return b.totalPoints - a.totalPoints || b.roundPoints - a.roundPoints || a.entry_name.localeCompare(b.entry_name);
-      }
+      return b.totalPoints - a.totalPoints || a.entry_name.localeCompare(b.entry_name);
     });
 
     return standingsList;
-  }, [standings, series, pickMap, sortBy]);
+  }, [standings]);
 
   const getCellStyle = (s, pick) => {
     if (!pick || s.status !== "STATUS_FINAL") return { backgroundColor: "transparent" };
@@ -191,7 +171,7 @@ export default function GroupPicks() {
           )}
         </div>
 
-        {/* Series Score / Winner Callout - Shrink-wrapped to text width */}
+        {/* Series Score / Winner Callout */}
         {isFinal ? (
           <div style={{ display: "inline-block", backgroundColor: "rgba(15,23,42,0.95)", border: `1px solid ${GOLD}`, borderRadius: 3, padding: "1px 6px", marginTop: 3 }}>
             <div style={{ fontSize: 8, color: "#4ade80", fontWeight: 800 }}>
@@ -209,7 +189,7 @@ export default function GroupPicks() {
 
   return (
     <PoolGatekeeper user={user} gameKey="mlb_playoffs">
-      <div className="cfb-pickem-matrix-page mlb-playoffs-standings-page" style={{ width: "100%", margin: "0 auto", padding: "12px 4px", paddingBottom: 80, fontFamily: "system-ui, -apple-system, sans-serif" }}>
+      <div className="pickem-matrix-page mlb-playoffs-standings-page" style={{ width: "100%", margin: "0 auto", padding: "12px 4px", paddingBottom: 80, fontFamily: "system-ui, -apple-system, sans-serif" }}>
         <style>{`
           @keyframes pulse { 
             0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 
@@ -222,23 +202,19 @@ export default function GroupPicks() {
         `}</style>
 
         <div style={{ textAlign: "center", marginBottom: 12, padding: "0 8px" }}>
-          <h2 className="cfb-matrix-title" style={{ color: NAVY, fontSize: "20px", margin: 0, fontWeight: 800 }}>
+          <h2 className="pickem-matrix-title" style={{ color: NAVY, fontSize: "20px", margin: 0, fontWeight: 800 }}>
             <PoolEmoji gameKey="mlb_playoffs" /> Group Picks Matrix <PoolEmoji gameKey="mlb_playoffs" />
           </h2>
           <p className="text-subtitle" style={{ color: "#64748b", marginTop: 4, fontSize: "12px" }}>Track participant selections, confidence points, and series length outcomes for active/started series.</p>
         </div>
 
-        <div className="matrix-container cfb-pickem-matrix-container" style={{
-          backgroundColor: "var(--bg-secondary, white)",
-          borderRadius: 8,
-          boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-          border: "1px solid var(--border-color, #e2e8f0)",
+        <div className="pickem-matrix-container" style={{
           maxWidth: "100%",
           overflowX: "auto",
           position: "relative"
         }}>
           {series.length === 0 ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "var(--text-secondary, #94a3b8)", fontSize: "14px" }}>
+            <div style={{ padding: "40px", textAlign: "center", color: "var(--text-secondary)", fontSize: "14px" }}>
               No series have started yet. Picks will appear here once Game 1 of a series gets underway!
             </div>
           ) : (
@@ -259,51 +235,7 @@ export default function GroupPicks() {
                     verticalAlign: "middle",
                     borderBottom: `2px solid ${GOLD}`
                   }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                      <span>Player (Rnd / Ovr)</span>
-                      <div style={{ display: "flex", gap: "6px", width: "100%" }}>
-                        <button
-                          className={`cfb-matrix-sort-button ${sortBy === "overall" ? "is-selected" : ""}`}
-                          onClick={() => setSortBy("overall")}
-                          style={{
-                            width: "52px",
-                            padding: "1px 2px",
-                            borderRadius: 3,
-                            border: `1px solid ${GOLD}`,
-                            backgroundColor: sortBy === "overall" ? NAVY : "white",
-                            color: sortBy === "overall" ? GOLD : NAVY,
-                            cursor: "pointer",
-                            fontWeight: 800,
-                            fontSize: "10px",
-                            boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                            transition: "all 0.2s",
-                            textAlign: "center"
-                          }}
-                        >
-                          Ovr
-                        </button>
-                        <button
-                          className={`cfb-matrix-sort-button ${sortBy === "round" ? "is-selected" : ""}`}
-                          onClick={() => setSortBy("round")}
-                          style={{
-                            width: "52px",
-                            padding: "1px 2px",
-                            borderRadius: 3,
-                            border: `1px solid ${GOLD}`,
-                            backgroundColor: sortBy === "round" ? NAVY : "white",
-                            color: sortBy === "round" ? GOLD : NAVY,
-                            cursor: "pointer",
-                            fontWeight: 800,
-                            fontSize: "10px",
-                            boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                            transition: "all 0.2s",
-                            textAlign: "center"
-                          }}
-                        >
-                          Rnd
-                        </button>
-                      </div>
-                    </div>
+                    <span>Participant</span>
                   </th>
 
                   {series.map(s => (
@@ -330,43 +262,27 @@ export default function GroupPicks() {
                   const isCurrentUser = Number(player.user_id) === Number(user?.id) || player.entry_name === user?.name;
 
                   return (
-                    <tr key={player.entry_name || player.user_id} className={`cfb-matrix-row${isCurrentUser ? " is-current-user" : ""}`} style={{
-                      borderBottom: "1px solid var(--border-color, #f1f5f9)",
-                      backgroundColor: isCurrentUser ? "#eff6ff" : (idx % 2 === 0 ? "#fafafa" : "white")
-                    }}>
+                    <tr key={player.entry_name || player.user_id} className={`pickem-matrix-row${isCurrentUser ? " is-current-user" : ""}`}>
                       <td
-                        className="cfb-matrix-player-cell"
+                        className="pickem-matrix-player-cell"
                         style={{
-                          position: "sticky",
-                          left: 0,
-                          zIndex: 5,
-                          backgroundColor: isCurrentUser ? "#dbeafe" : (idx % 2 === 0 ? "#fafafa" : "white"),
-                          padding: "8px 12px",
                           width: PLAYER_COL_W,
                           minWidth: PLAYER_COL_W,
                           maxWidth: PLAYER_COL_W,
-                          boxShadow: "2px 0 5px rgba(0,0,0,0.05)",
-                          verticalAlign: "middle"
+                          padding: "8px 12px"
                         }}
                       >
                         <div style={{ display: "flex", flexDirection: "column", gap: "2px", overflow: "hidden" }}>
-                          <div className="cfb-matrix-player-name" style={{
+                          <div className="pickem-matrix-player-name" style={{
                             fontWeight: isCurrentUser ? 800 : 700,
-                            fontSize: 12,
-                            color: "var(--text-primary, #0f172a)",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
                             whiteSpace: "nowrap"
                           }}>
                             {rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`} {player.entry_name} {isCurrentUser && "(You)"}
                           </div>
-                          <div className="cfb-matrix-player-points" style={{
-                            fontSize: 10,
-                            fontWeight: 800,
-                            color: NAVY,
-                            letterSpacing: "-0.2px"
-                          }}>
-                            Rnd: {player.roundPoints} | Ovr: {player.totalPoints}
+                          <div className="pickem-matrix-player-points">
+                            Points: {player.totalPoints}
                           </div>
                         </div>
                       </td>
@@ -416,12 +332,12 @@ export default function GroupPicks() {
                                   )}
                                 </span>
                                 <div style={{ marginLeft: 6, textAlign: "left" }}>
-                                  <div style={{ fontSize: 11, fontWeight: 900, color: "var(--text-primary, #f8fafc)", lineHeight: 1.1 }}>{p.confidence} pts</div>
-                                  <div style={{ fontSize: 9, color: "var(--text-secondary, #94a3b8)", fontWeight: 600 }}>in {p.series_length_guess}g</div>
+                                  <div style={{ fontSize: 11, fontWeight: 900, color: "var(--text-primary)", lineHeight: 1.1 }}>{p.confidence} pts</div>
+                                  <div style={{ fontSize: 9, color: "var(--text-secondary)", fontWeight: 600 }}>in {p.series_length_guess}g</div>
                                 </div>
                               </div>
                             ) : (
-                              <span style={{ color: "var(--text-secondary, #475569)", fontSize: 11, fontWeight: 600 }}>{s.locked ? "-" : "—"}</span>
+                              <span style={{ color: "var(--text-secondary)", fontSize: 11, fontWeight: 600 }}>{s.locked ? "-" : "—"}</span>
                             )}
                           </td>
                         );
