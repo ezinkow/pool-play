@@ -370,7 +370,7 @@ async function syncNcaabSeason(targetWeek) {
         let allEvents = [];
 
         for (const dateStr of datesToQuery) {
-            const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=${dateStr}&limit=500`;
+            const scoreboardUrl = `https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=${dateStr}&groups=50&limit=500`;
             console.log(`[NCAAB Regular Season sync] Fetching Week ${targetWeek} data for date ${dateStr}`);
 
             try {
