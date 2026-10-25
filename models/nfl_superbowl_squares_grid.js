@@ -7,7 +7,7 @@ module.exports = function (sequelize, DataTypes) {
         grid_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
         createdAt: { type: DataTypes.DATE, allowNull: true },
     }, {
-        tableName: "nfl_superbowl_squares_grid",
+        tableName: "nfl_super_bowl_squares_grid",
         timestamps: true,
         createdAt: "createdAt",
         updatedAt: false,

@@ -17,7 +17,7 @@ module.exports = function (sequelize, DataTypes) {
             unique: true,
         },
     }, {
-        tableName: "nfl_superbowl_squares_entries",
+        tableName: "nfl_super_bowl_squares_entries",
         timestamps: true,
         createdAt: "createdAt",
         updatedAt: false,

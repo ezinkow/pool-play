@@ -246,6 +246,9 @@ export default function AdminDashboard() {
     const [reminderForm, setReminderForm] = useState({ email: "", subject: "", message: "", send_at: "" });
     const [remindersLoading, setRemindersLoading] = useState(false);
 
+    // Broadcast form state for helper quick-fill buttons
+    const [broadcastForm, setBroadcastForm] = useState({ pool_key: "", subject: "", message: "", send_at: "" });
+
     // Load NCAA team colors and logos mapping
     const { teamColors } = useTeamColors(token);
 
@@ -559,28 +562,27 @@ export default function AdminDashboard() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                     {/* Broadcast Pool Reminder Form */}
                     <div style={{ background: "white", padding: "20px", borderRadius: 8, border: "1px solid #e2e8f0", boxShadow: "0 2px 6px rgba(0,0,0,0.04)", marginTop: "20px" }}>
-                        <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 800, color: NAVY }}>Broadcast Pool Reminder (Group Email)</h3>
+                        <h3 style={{ margin: "0 0 4px 0", fontSize: "16px", fontWeight: 800, color: NAVY }}>Broadcast Pool Reminder (Group Email)</h3>
+                        <p style={{ margin: "0 0 12px 0", fontSize: "12px", color: "#64748b" }}>Send or schedule custom announcements and lock alerts to all participants in a pool.</p>
+                        
                         <form onSubmit={async (e) => {
                             e.preventDefault();
-                            const poolKey = e.target.pool_key.value;
-                            const subject = e.target.subject.value;
-                            const message = e.target.message.value;
-                            const sendAt = e.target.send_at.value; // Optional scheduled time
+                            const { pool_key, subject, message, send_at } = broadcastForm;
 
                             try {
-                                const endpoint = sendAt ? "/api/admin/reminders/schedule-broadcast" : "/api/admin/reminders/broadcast";
-                                const payload = sendAt
-                                    ? { pool_key: poolKey, subject, message, send_at: sendAt }
-                                    : { pool_key: poolKey, subject, message };
+                                const endpoint = send_at ? "/api/admin/reminders/schedule-broadcast" : "/api/admin/reminders/broadcast";
+                                const payload = send_at
+                                    ? { pool_key, subject, message, send_at }
+                                    : { pool_key, subject, message };
 
                                 const res = await axios.post(endpoint, payload, {
                                     headers: { Authorization: `Bearer ${token}` }
                                 });
                                 toast.success(res.data.message);
-                                e.target.reset();
+                                setBroadcastForm({ pool_key: "", subject: "", message: "", send_at: "" });
 
                                 // Refresh reminders list if a scheduled reminder was added
-                                if (sendAt) {
+                                if (send_at) {
                                     axios.get("/api/admin/reminders", { headers: { Authorization: `Bearer ${token}` } })
                                         .then(r => setReminders(r.data || []));
                                 }
@@ -591,28 +593,37 @@ export default function AdminDashboard() {
 
                             <div>
                                 <label style={{ display: "block", fontSize: "12px", fontWeight: 700, marginBottom: 4, color: "#475569" }}>Select Pool</label>
-                                <select name="pool_key" required style={{ width: "100%", padding: "8px", borderRadius: 4, border: "1px solid #cbd5e1" }}>
+                                <select 
+                                    name="pool_key" 
+                                    required 
+                                    value={broadcastForm.pool_key}
+                                    onChange={e => setBroadcastForm({ ...broadcastForm, pool_key: e.target.value })}
+                                    style={{ width: "100%", padding: "8px", borderRadius: 4, border: "1px solid #cbd5e1" }}
+                                >
                                     <option value="">-- Choose Pool --</option>
-                                    {allPoolSettings.map(pool => {
-                                        const now = new Date();
-                                        const isActive = pool.is_active === true || pool.is_active === 1 || pool.is_active === "true";
-                                        const lockTime = pool.lock_date ? new Date(pool.lock_date) : null;
+                                    <option value="all_users">All Users (Global Broadcast)</option>
+                                    {[...allPoolSettings]
+                                        .sort((a, b) => (a.game_label || a.game_key).localeCompare(b.game_label || b.game_key))
+                                        .map(pool => {
+                                            const now = new Date();
+                                            const isActive = pool.is_active === true || pool.is_active === 1 || pool.is_active === "true";
+                                            const lockTime = pool.lock_date ? new Date(pool.lock_date) : null;
 
-                                        let statusLabel = "🟢 Active";
-                                        if (!isActive) {
-                                            statusLabel = "🔴 Inactive";
-                                        } else if (lockTime && now >= lockTime) {
-                                            statusLabel = "🔒 Locked / Started";
-                                        } else if (lockTime) {
-                                            statusLabel = "⏳ Open (Pre-Lock)";
-                                        }
+                                            let statusLabel = "🟢 Active";
+                                            if (!isActive) {
+                                                statusLabel = "🔴 Inactive";
+                                            } else if (lockTime && now >= lockTime) {
+                                                statusLabel = "🔒 Locked / Started";
+                                            } else if (lockTime) {
+                                                statusLabel = "⏳ Open (Pre-Lock)";
+                                            }
 
-                                        return (
-                                            <option key={pool.game_key} value={pool.game_key}>
-                                                {pool.game_label || pool.game_key} ({statusLabel})
-                                            </option>
-                                        );
-                                    })}
+                                            return (
+                                                <option key={pool.game_key} value={pool.game_key}>
+                                                    {pool.game_label || pool.game_key} ({statusLabel})
+                                                </option>
+                                            );
+                                        })}
                                 </select>
                             </div>
 
@@ -622,25 +633,79 @@ export default function AdminDashboard() {
                                     type="text"
                                     name="subject"
                                     required
+                                    value={broadcastForm.subject}
+                                    onChange={e => setBroadcastForm({ ...broadcastForm, subject: e.target.value })}
                                     placeholder="Make your picks!"
                                     style={{ width: "100%", padding: "8px", borderRadius: 4, border: "1px solid #cbd5e1" }}
                                 />
                             </div>
 
                             <div>
-                                <label style={{ display: "block", fontSize: "12px", fontWeight: 700, marginBottom: 4, color: "#475569" }}>Send At (Optional - Leave blank to send now)</label>
+                                <label style={{ display: "block", fontSize: "12px", fontWeight: 700, marginBottom: 4, color: "#475569" }}>Send At (Optional - Blank for immediate)</label>
                                 <input
                                     type="datetime-local"
                                     name="send_at"
+                                    value={broadcastForm.send_at}
+                                    onChange={e => setBroadcastForm({ ...broadcastForm, send_at: e.target.value })}
                                     style={{ width: "100%", padding: "8px", borderRadius: 4, border: "1px solid #cbd5e1" }}
                                 />
                             </div>
 
                             <div style={{ gridColumn: "1 / -1" }}>
-                                <label style={{ display: "block", fontSize: "12px", fontWeight: 700, marginBottom: 4, color: "#475569" }}>Message Body</label>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                                    <label style={{ fontSize: "12px", fontWeight: 700, color: "#475569" }}>Message Body</label>
+                                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setBroadcastForm({
+                                                ...broadcastForm,
+                                                subject: broadcastForm.subject || "⚠️ Games are starting soon!",
+                                                message: "Games are starting soon! Make sure your picks are in before lock!"
+                                            })}
+                                            style={{ fontSize: "11px", background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: 4, padding: "2px 6px", cursor: "pointer", color: "#334155", fontWeight: 600 }}
+                                        >
+                                            ⚡ Quick: Starting Soon
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setBroadcastForm({
+                                                ...broadcastForm,
+                                                subject: broadcastForm.subject || "⏰ Deadline Approaching!",
+                                                message: "Friendly reminder that the lock deadline is fast approaching. Log in and get your selections submitted!"
+                                            })}
+                                            style={{ fontSize: "11px", background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: 4, padding: "2px 6px", cursor: "pointer", color: "#334155", fontWeight: 600 }}
+                                        >
+                                            ⏳ Quick: Lock Alert
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setBroadcastForm({
+                                                ...broadcastForm,
+                                                subject: broadcastForm.subject || "📊 Standings & Results Updated",
+                                                message: "Scores have been calculated and standings have been updated! Check the leaderboard to see where you rank."
+                                            })}
+                                            style={{ fontSize: "11px", background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: 4, padding: "2px 6px", cursor: "pointer", color: "#334155", fontWeight: 600 }}
+                                        >
+                                            📈 Quick: Standings Update
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setBroadcastForm({
+                                                ...broadcastForm,
+                                                subject: broadcastForm.subject || "🏈 New Week Is Open!",
+                                                message: "Matchups for the upcoming slate are now live. Head over to the site to lock in your picks."
+                                            })}
+                                            style={{ fontSize: "11px", background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: 4, padding: "2px 6px", cursor: "pointer", color: "#334155", fontWeight: 600 }}
+                                        >
+                                            🚀 Quick: New Week Open
+                                        </button>
+                                    </div>
+                                </div>
                                 <textarea
                                     name="message"
                                     required
+                                    value={broadcastForm.message}
+                                    onChange={e => setBroadcastForm({ ...broadcastForm, message: e.target.value })}
                                     placeholder="Reminder: Games lock soon, make sure your entries are submitted!"
                                     style={{ width: "100%", padding: "8px", borderRadius: 4, border: "1px solid #cbd5e1", minHeight: "80px" }}
                                 />
@@ -653,9 +718,10 @@ export default function AdminDashboard() {
                             </div>
                         </form>
                     </div>
+
                     {/* Create Form */}
                     <div style={{ background: "white", padding: "20px", borderRadius: 8, border: "1px solid #e2e8f0", boxShadow: "0 2px 6px rgba(0,0,0,0.04)" }}>
-                        <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 800, color: NAVY }}>Schedule New Email Reminder</h3>
+                        <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 800, color: NAVY }}>Schedule New Individual Email Reminder</h3>
                         <form onSubmit={handleCreateReminder} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px", alignItems: "end" }}>
                             <div>
                                 <label style={{ display: "block", fontSize: "12px", fontWeight: 700, marginBottom: 4, color: "#475569" }}>Recipient Email</label>
