@@ -57,7 +57,7 @@ module.exports = function (app) {
             // Execute raw query using your exact logic
             const [results] = await sequelize.query(`
                 SELECT u.email, u.name 
-                FROM Users u 
+                FROM users u 
                 JOIN ${tableName} e ON e.user_id = u.id
             `);
 
@@ -104,7 +104,7 @@ module.exports = function (app) {
             // Execute raw query to fetch participants
             const [results] = await sequelize.query(`
                 SELECT u.email, u.name, u.id as user_id 
-                FROM Users u 
+                FROM users u 
                 JOIN ${tableName} e ON e.user_id = u.id
             `);
 
