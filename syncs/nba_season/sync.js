@@ -289,24 +289,25 @@ async function syncTeamRecords() {
 async function evaluateSurvivorResults() {
     const { NbaSurvivorEntries, NbaSurvivorPicks, NbaRegularSeasonGames } = db;
     try {
-        const completedGames = await NbaRegularSeasonGames.findAll({
-            where: {
-                status: ["STATUS_FINAL", "Final", "completed", "FINAL"]
-            }
-        });
+        const allGames = await NbaRegularSeasonGames.findAll();
+        if (!allGames || allGames.length === 0) return;
 
-        if (!completedGames || completedGames.length === 0) return;
+        // 1. Map all games by week and team to track total games vs completed games
+        const weekTeamGames = {}; // { week: { teamName: [ { status, winner, home_team, away_team }, ... ] } }
 
-        const gameWinners = {};
-        completedGames.forEach(game => {
+        allGames.forEach(game => {
             if (!game.week) return;
-            if (!gameWinners[game.week]) {
-                gameWinners[game.week] = {};
+            if (!weekTeamGames[game.week]) {
+                weekTeamGames[game.week] = {};
             }
-            if (game.winner) {
-                gameWinners[game.week][game.away_team] = (game.winner === game.away_team ? "WIN" : (game.winner === "PUSH" ? "PUSH" : "LOSS"));
-                gameWinners[game.week][game.home_team] = (game.winner === game.home_team ? "WIN" : (game.winner === "PUSH" ? "PUSH" : "LOSS"));
-            }
+
+            const teams = [game.home_team, game.away_team];
+            teams.forEach(team => {
+                if (!weekTeamGames[game.week][team]) {
+                    weekTeamGames[game.week][team] = [];
+                }
+                weekTeamGames[game.week][team].push(game);
+            });
         });
 
         const entries = await NbaSurvivorEntries.findAll();
@@ -329,19 +330,55 @@ async function evaluateSurvivorResults() {
 
             for (const wk of weeksPlayed) {
                 const pick = userPicks[wk];
-                const weekResults = gameWinners[wk];
+                if (!pick || !pick.team_name) continue;
 
-                if (pick && weekResults && weekResults[pick.team_name]) {
-                    const outcome = weekResults[pick.team_name];
+                const teamGames = weekTeamGames[wk]?.[pick.team_name] || [];
+                if (teamGames.length === 0) continue;
 
-                    pick.status = outcome.toLowerCase();
+                // Check if ALL games for this team in this week are final
+                const allGamesFinal = teamGames.every(g => {
+                    const st = (g.status || "").toUpperCase();
+                    return st === "STATUS_FINAL" || st === "FINAL" || st === "COMPLETED";
+                });
+
+                if (!allGamesFinal) {
+                    // Team still has games left this week/weekend! Do not eliminate yet.
+                    pick.status = "pending";
+                    await pick.save();
+                    continue;
+                }
+
+                // All games are final for the week. Calculate aggregate or final game outcome.
+                // In NBA survivor, if they play multiple games, did they win at least one / avoid a total sweep loss, 
+                // or check standard win/loss. Let's look at individual outcomes: if they lost *all* games or if any loss seals elimination, 
+                // typically a survivor pick requires a win. Let's aggregate wins vs losses across their games that week.
+                let hasWonAny = false;
+                let hasLostAll = true;
+
+                teamGames.forEach(g => {
+                    if (g.winner === pick.team_name) {
+                        hasWonAny = true;
+                        hasLostAll = false;
+                    } else if (g.winner && g.winner !== "PUSH") {
+                        // They lost this specific game
+                    } else {
+                        // Push counts as not a clean win, but let's check standard logic
+                    }
+                });
+
+                // If they won at least one game during the week's slate, they survive! 
+                // (Alternatively, adjust if your pool requires winning a specific matchup; usually avoiding a loss or winning at least one game keeps them alive).
+                if (hasWonAny) {
+                    pick.status = "win";
+                    await pick.save();
+                } else {
+                    // They lost all games scheduled for that week
+                    pick.status = "loss";
                     await pick.save();
 
-                    if (outcome === "LOSS") {
-                        isEliminated = true;
-                        eliminatedWeek = wk;
-                        break;
-                    }
+                    isEliminated = true;
+                    eliminatedWeek = wk;
+                    break;
                 }
             }
 
@@ -350,7 +387,7 @@ async function evaluateSurvivorResults() {
             await entry.save();
         }
 
-        console.log("[NBA Survivor] Automated eliminations evaluated successfully.");
+        console.log("[NBA Survivor] Automated eliminations evaluated successfully with multi-game weekend protection.");
     } catch (err) {
         console.error("[NBA Survivor] Error evaluating automated survivor outcomes:", err);
     }
