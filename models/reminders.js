@@ -29,6 +29,9 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.BOOLEAN,
             defaultValue: false
         }
+    }, {
+        tableName: "reminders",
+        timestamps: true
     });
 
     return Reminder;
