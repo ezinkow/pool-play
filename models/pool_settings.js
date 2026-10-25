@@ -26,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: true
         },
-        prefix: {
+        url_path: {
             type: DataTypes.STRING,
             allowNull: true // Stores strings like "/worldcup", "/nba", "/tourneypickem"
         },
@@ -69,6 +69,11 @@ module.exports = (sequelize, DataTypes) => {
         credits: {
             type: DataTypes.INTEGER,
             allowNull: true
+        },
+        multi_entry: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+            allowNull: false
         }
     }, {
         tableName: "pool_settings",

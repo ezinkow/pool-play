@@ -87,15 +87,20 @@ export default function HrdHome() {
   };
   
 
-  const handleLeavePool = async () => {
+    const handleLeavePool = async () => {
     if (!activeToken) {
       toast.error("Please log in first.");
       navigate("/login");
       return;
     }
 
+    if (isPoolStarted) {
+      toast.error("Cannot leave pool after registration has closed or games have started.");
+      return;
+    }
+
     try {
-      await axios.post("/api/mlb_hrd/entry/leave", {}, {
+      await axios.post(`/api/${gameKey}/entries/leave`, {}, {
         headers: { Authorization: `Bearer ${activeToken}` }
       });
       setUserEntry(null);

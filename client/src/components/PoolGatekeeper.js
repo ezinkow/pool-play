@@ -173,7 +173,7 @@ export default function PoolGatekeeper({
                             </h3>
                             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                                 {otherActivePools.map(pool => (
-                                    <div key={pool.game_key} onClick={() => navigate(pool.prefix)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, cursor: "pointer", transition: "all 0.15s ease" }} onMouseEnter={e => e.currentTarget.style.borderColor = pool.accent || RED} onMouseLeave={e => e.currentTarget.style.borderColor = "#e2e8f0"}>
+                                    <div key={pool.game_key} onClick={() => navigate(pool.url_path)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, cursor: "pointer", transition: "all 0.15s ease" }} onMouseEnter={e => e.currentTarget.style.borderColor = pool.accent || RED} onMouseLeave={e => e.currentTarget.style.borderColor = "#e2e8f0"}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                                             <PoolEmoji gameKey={pool.game_key} style={{ fontSize: 24 }} />
                                             <span style={{ fontWeight: 700, color: NAVY, fontSize: 15 }}>{pool.title}</span>

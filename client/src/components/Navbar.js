@@ -81,18 +81,18 @@ export default function Navbar({ isDarkMode, toggleTheme }) {
 
     const currentGame = useMemo(() => {
         if (isHome) return null;
-        const sortedGames = [...rawPoolSettings].sort((a, b) => (b.prefix?.length || 0) - (a.prefix?.length || 0));
+        const sortedGames = [...rawPoolSettings].sort((a, b) => (b.url_path?.length || 0) - (a.url_path?.length || 0));
 
         return sortedGames.find(g => {
-            if (!g.prefix) return false;
-            const pfx = g.prefix;
+            if (!g.url_path) return false;
+            const pfx = g.url_path;
             return location.pathname === pfx || location.pathname.startsWith(pfx + "/");
         });
     }, [rawPoolSettings, location.pathname, isHome]);
 
     const activeLinks = useMemo(() => {
-        if (!currentGame || !currentGame.prefix) return [];
-        const pfx = currentGame.prefix;
+        if (!currentGame || !currentGame.url_path) return [];
+        const pfx = currentGame.url_path;
         const isAdmin = user?.is_admin === true;
 
         const signupLocked = currentGame.lock_date
@@ -175,7 +175,7 @@ export default function Navbar({ isDarkMode, toggleTheme }) {
     const renderGameLink = (game) => {
         const isLinkActive = (game.is_active === true || game.is_active === 1 || game.is_active === "true") || user?.is_admin === true;
         const isSelected = currentGame?.game_key === game.game_key;
-        const destination = `${game.prefix}/picks`;
+        const destination = `${game.url_path}/picks`;
 
         return (
             <Link
@@ -439,7 +439,7 @@ export default function Navbar({ isDarkMode, toggleTheme }) {
                                 const isLinkActive = true;
                                 const isSelected = currentGame?.game_key === game.game_key;
                                 return (
-                                    <Link key={game.game_key} to={`${game.prefix}/picks`} onClick={(e) => handleDropdownLinkClick(e, isLinkActive, `${game.prefix}/picks`)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 16px", textDecoration: "none", fontSize: "12px", fontWeight: isSelected ? 700 : 500, color: isSelected ? GOLD : "#f3f4f6", width: "100%", boxSizing: "border-box" }}>
+                                    <Link key={game.game_key} to={`${game.url_path}/picks`} onClick={(e) => handleDropdownLinkClick(e, isLinkActive, `${game.url_path}/picks`)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 16px", textDecoration: "none", fontSize: "12px", fontWeight: isSelected ? 700 : 500, color: isSelected ? GOLD : "#f3f4f6", width: "100%", boxSizing: "border-box" }}>
                                         <PoolEmoji gameKey={game.game_key} style={{ width: "16px", textAlign: "center", flexShrink: 0 }} /> {game.game_label.toUpperCase()}
                                     </Link>
                                 );

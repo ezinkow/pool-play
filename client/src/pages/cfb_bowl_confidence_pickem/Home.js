@@ -110,7 +110,7 @@ export default function CfbBowlConfidenceHome() {
     }
 
     try {
-      await axios.post("/api/cfb_bowl_pickem/entries/leave", {}, {
+      await axios.post(`/api/${gameKey}/entries/leave`, {}, {
         headers: { Authorization: `Bearer ${activeToken}` }
       });
       setUserEntry(null);

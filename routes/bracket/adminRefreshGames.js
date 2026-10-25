@@ -1,4 +1,4 @@
-const syncBracket = require("../../syncs/ncaa_bracket/sync.js");
+const syncBracket = require("../../syncs/ncaab_bracket/sync.js");
 
 module.exports = function (app) {
     app.post("/api/ncaab_bracket/admin/refresh-games", async (req, res) => {

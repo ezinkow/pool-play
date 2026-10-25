@@ -111,7 +111,7 @@ export default function Home() {
         setCollapsedSections(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }));
     };
 
- const renderCard = (card, group) => {
+    const renderCard = (card, group) => {
         const isExpanded = !!expandedCards[card.key];
         return (
             <div key={card.key} className="card homepage-pool-card" style={{
@@ -122,10 +122,10 @@ export default function Home() {
                 transition: "transform 0.2s ease"
             }}>
                 <div className="homepage-pool-card-heading" onClick={() => setExpandedCards(p => ({ ...p, [card.key]: !p[card.key] }))} style={{ padding: "14px 16px", cursor: "pointer" }}>
-                    
+
                     {/* Uses the CSS class that adapts automatically between desktop row and mobile stack */}
                     <div className="homepage-pool-row">
-                        
+
                         {/* Left: Emoji & Title */}
                         <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
                             {card.emoji && <span style={{ fontSize: "22px", lineHeight: 1, flexShrink: 0 }}>{card.emoji}</span>}
@@ -145,15 +145,15 @@ export default function Home() {
                         <div className="homepage-pool-actions-row" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                             {card.isActive && (
                                 <button
-                                    // onClick={(e) => { e.stopPropagation(); navigate(card.url_path); }}
-                                    onClick={(e) => { e.stopPropagation(); navigate(card.prefix); }}
+                                    onClick={(e) => { e.stopPropagation(); navigate(card.url_path); }}
+                                    // onClick={(e) => { e.stopPropagation(); navigate(card.prefix); }}
                                     className="homepage-pool-card-play"
                                     style={{ flex: 1, padding: "8px 16px", fontSize: "13px", fontWeight: "bold", textAlign: "center", cursor: "pointer" }}
                                 >
                                     Play →
                                 </button>
                             )}
-                            
+
                             <span className={`homepage-pool-card-chevron${isExpanded ? " homepage-pool-card-chevron--expanded" : ""}`} style={{ fontSize: "12px", opacity: 0.7, padding: "4px" }}>▼</span>
                         </div>
 
@@ -223,8 +223,8 @@ export default function Home() {
                     <>
                         {live.length > 0 && (
                             <div style={{ marginBottom: 16 }}>
-                                <div 
-                                    onClick={() => toggleSection('live')} 
+                                <div
+                                    onClick={() => toggleSection('live')}
                                     style={{ color: GOLD, fontSize: "13px", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.5px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", userSelect: "none", fontWeight: 700 }}
                                 >
                                     <span>🔥 Live & In-Play ({live.length})</span>
@@ -236,8 +236,8 @@ export default function Home() {
 
                         {upcoming.length > 0 && (
                             <div style={{ marginBottom: 16 }} id="open-entries-section">
-                                <div 
-                                    onClick={() => toggleSection('upcoming')} 
+                                <div
+                                    onClick={() => toggleSection('upcoming')}
                                     style={{ color: GOLD, fontSize: "13px", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", userSelect: "none", fontWeight: 700, scrollMarginTop: "20px" }}
                                 >
                                     <span>⏰ Open / Accepting Entries ({upcoming.length})</span>
@@ -249,8 +249,8 @@ export default function Home() {
 
                         {inactive.length > 0 && (
                             <div style={{ marginBottom: 16 }}>
-                                <div 
-                                    onClick={() => toggleSection('inactive')} 
+                                <div
+                                    onClick={() => toggleSection('inactive')}
                                     style={{ color: GRAY, fontSize: "13px", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", userSelect: "none", fontWeight: 700 }}
                                 >
                                     <span>💤 Inactive / Upcoming Season ({inactive.length})</span>

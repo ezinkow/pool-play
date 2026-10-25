@@ -293,7 +293,7 @@ module.exports = function (app) {
                             key: gameKey,
                             label: game.game_label,
                             emoji: game.emoji || "🏆",
-                            route: game.prefix,
+                            route: game.url_path,
                             accent: game.accent || "#13447a",
                             title: game.title || "",
                             is_active: game.is_active

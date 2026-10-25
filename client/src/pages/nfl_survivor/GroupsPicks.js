@@ -6,8 +6,8 @@ import PoolGatekeeper from "../../components/PoolGatekeeper";
 import SurvivorWeekSelector from "../../components/picks/SurvivorWeekSelector";
 import SurvivorGroupMatrixTable from "../../components/picks/SurvivorGroupMatrixTable";
 
-const NFL_BLUE = "#013369";
-const NFL_RED = "#D50A0A";
+const BLUE = "#013369";
+const RED = "#D50A0A";
 
 export default function NflSurvivorGroupPicks() {
     const { user, loading: authLoading } = useAuth();
@@ -29,7 +29,7 @@ export default function NflSurvivorGroupPicks() {
                 const map = {};
                 (res.data || []).forEach(t => {
                     map[t.name] = {
-                        primaryColor: t.color || t.primary_color || NFL_BLUE,
+                        primaryColor: t.color || t.primary_color || BLUE,
                         secondaryColor: t.secondary_color || t.alt_color || "#64748b",
                         logo: t.logo
                     };
@@ -95,7 +95,7 @@ export default function NflSurvivorGroupPicks() {
                 <Toaster />
 
                 <div style={{ textAlign: "center", marginBottom: 20 }}>
-                    <h2 style={{ color: NFL_BLUE, fontSize: "26px", margin: 0 }}>Survivor Group Matrix</h2>
+                    <h2 style={{ color: BLUE, fontSize: "26px", margin: 0 }}>Survivor Group Matrix</h2>
                     <p style={{ color: "#666", marginTop: 6, fontSize: "14px" }}>
                         See what team every participant selected for Week {currentWeek}.
                     </p>
@@ -105,15 +105,16 @@ export default function NflSurvivorGroupPicks() {
                     currentWeek={currentWeek}
                     maxAvailableWeek={maxAvailableWeek}
                     onWeekChange={handleWeekChange}
-                    accentColor={NFL_BLUE}
+                    accentColor={BLUE}
                 />
                 <SurvivorGroupMatrixTable
                     currentWeek={currentWeek}
                     rosterData={rosterData}
                     teamColors={teamColors}
                     user={user}
-                    accentColor={NFL_BLUE}
-                    eliminatedColor={NFL_RED}
+                    accentColor={BLUE}
+                    eliminatedColor={RED}
+                    showWeekendRecord={false}
                 />
 
             </div>

@@ -1,4 +1,4 @@
-const syncPickem = require("../../syncs/ncaa_tourney/sync.js");
+const syncPickem = require("../../syncs/ncaab_tourney/sync.js");
 const lockLines = require("../../jobs/tourney_pickem/lockLines.js");
 
 module.exports = function (app) {

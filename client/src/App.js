@@ -4,7 +4,7 @@ import { HashRouter as BrowserRouter, Routes, Route, Outlet, useLocation } from 
 import OpenPoolsCard from "./components/OpenPoolsCard"
 import UserLiveStandingsCard from "./components/UserLiveStandingsCard"
 
-// Shared
+// Global
 import Home from './pages/Home';
 import SignUp from './pages/SignUp';
 import Navbar from './components/Navbar';
@@ -104,14 +104,11 @@ import MlbPlayoffsMyPicks from './pages/mlb_playoffs/MyPicks';
 import MlbPlayoffsGroupPicks from './pages/mlb_playoffs/GroupPicks';
 import MlbPlayoffsStandings from './pages/mlb_playoffs/Standings';
 
-// NFL Playoffs pages
-import NflHome from './pages/nfl_playoffs/Home';
-import NflScoreboard from './pages/nfl_playoffs/Scoreboard';
-import NflStandings from './pages/nfl_playoffs/Standings';
-import NflRosterPicks from './pages/nfl_playoffs/RosterPicks';
-import NflMyRoster from './pages/nfl_playoffs/MyRoster';
-import NflSignUp from './pages/nfl_playoffs/SignUp';
-import NflPlayerPoolsTable from './pages/nfl_playoffs/PlayerStats';
+// NFL BTS pages
+import NflBtsHome from './pages/nfl_bts/Home';
+import NflBtsStandings from './pages/nfl_bts/Standings';
+import NflBtsPicks from './pages/nfl_bts/Picks';
+import NflBtsMyPicks from './pages/nfl_bts/MyPicks';
 
 // NFL Pickem ATS pages
 import NflPickemAtsHome from './pages/nfl_pickem_ats/Home';
@@ -119,13 +116,24 @@ import NflPickemAtsStandings from './pages/nfl_pickem_ats/Standings';
 import NflPickemAtsPicks from './pages/nfl_pickem_ats/Picks';
 import NflPickemAtsMyPicks from './pages/nfl_pickem_ats/MyPicks';
 import NflPickemAtsGroupPicks from './pages/nfl_pickem_ats/GroupPicks';
-
-// NFL BTS pages
-import NflBtsHome from './pages/nfl_bts/Home';
-import NflBtsStandings from './pages/nfl_bts/Standings';
-import NflBtsPicks from './pages/nfl_bts/Picks';
-import NflBtsMyPicks from './pages/nfl_bts/MyPicks';
 import NflBtsGroupPicks from './pages/nfl_bts/GroupPicks';
+
+// NFL Playoffs DFS pages
+import NflDfsHome from './pages/nfl_playoffs_dfs/Home';
+import NflDfsScoreboard from './pages/nfl_playoffs_dfs/Scoreboard';
+import NflDfsStandings from './pages/nfl_playoffs_dfs/Standings';
+import NflDfsRosterPicks from './pages/nfl_playoffs_dfs/RosterPicks';
+import NflDfsMyRoster from './pages/nfl_playoffs_dfs/MyRoster';
+import NflDfsPlayerPoolsTable from './pages/nfl_playoffs_dfs/PlayerStats';
+
+// NFL Playoffs Pick Three pages
+import NflPickThreeHome from './pages/nfl_playoffs_pick_three/Home';
+import NflPickThreeScoreboard from './pages/nfl_playoffs_pick_three/Scoreboard';
+import NflPickThreeStandings from './pages/nfl_playoffs_pick_three/Standings';
+import NflPickThreePicks from './pages/nfl_playoffs_pick_three/Picks';
+import NflPickThreeMyPicks from './pages/nfl_playoffs_pick_three/MyPicks';
+import NflPickThreeGroupPicks from './pages/nfl_playoffs_pick_three/GroupPicks';
+import NflPickThreePlayerPoolsTable from './pages/nfl_playoffs_pick_three/PlayerStats';
 
 // NFL Survivor pages
 import NflSurvivorHome from './pages/nfl_survivor/Home';
@@ -314,14 +322,12 @@ export default function App() {
             <Route path="/ncaabpickemats/standings" element={<NcaabPickemAtsStandings />} />
             <Route path="/ncaabpickemats/grouppicks" element={<NcaabPickemAtsGroupPicks />} />
 
-            {/* NFL Playoffs */}
-            <Route path="/nfl" element={<NflHome />} />
-            <Route path="/nfl/signup" element={<NflSignUp />} />
-            <Route path="/nfl/rosterpicks" element={<NflRosterPicks />} />
-            <Route path="/nfl/scoreboard" element={<NflScoreboard />} />
-            <Route path="/nfl/myroster" element={<NflMyRoster />} />
-            <Route path="/nfl/standings" element={<NflStandings />} />
-            <Route path="/nfl/playerstats" element={<NflPlayerPoolsTable />} />
+            {/* NFL BTS */}
+            <Route path="/nflbts" element={<NflBtsHome />} />
+            <Route path="/nflbts/picks" element={<NflBtsPicks />} />
+            <Route path="/nflbts/mypicks" element={<NflBtsMyPicks />} />
+            <Route path="/nflbts/standings" element={<NflBtsStandings />} />
+            <Route path="/nflbts/grouppicks" element={<NflBtsGroupPicks />} />
 
             {/* NFL Pickem ATS */}
             <Route path="/nflpickemats" element={<NflPickemAtsHome />} />
@@ -330,12 +336,22 @@ export default function App() {
             <Route path="/nflpickemats/standings" element={<NflPickemAtsStandings />} />
             <Route path="/nflpickemats/grouppicks" element={<NflPickemAtsGroupPicks />} />
 
-            {/* NFL BTS */}
-            <Route path="/nflbts" element={<NflBtsHome />} />
-            <Route path="/nflbts/picks" element={<NflBtsPicks />} />
-            <Route path="/nflbts/mypicks" element={<NflBtsMyPicks />} />
-            <Route path="/nflbts/standings" element={<NflBtsStandings />} />
-            <Route path="/nflbts/grouppicks" element={<NflBtsGroupPicks />} />
+            {/* NFL Playoffs DFS */}
+            <Route path="/nflplayoffsdfs" element={<NflDfsHome />} />
+            <Route path="/nflplayoffsdfs/rosterpicks" element={<NflDfsRosterPicks />} />
+            <Route path="/nflplayoffsdfs/scoreboard" element={<NflDfsScoreboard />} />
+            <Route path="/nflplayoffsdfs/myroster" element={<NflDfsMyRoster />} />
+            <Route path="/nflplayoffsdfs/standings" element={<NflDfsStandings />} />
+            <Route path="/nflplayoffsdfs/playerstats" element={<NflDfsPlayerPoolsTable />} />
+
+            {/* NFL Playoffs Pick Three */}
+            <Route path="/nflplayoffspickthree" element={<NflPickThreeHome />} />
+            <Route path="/nflplayoffspickthree/picks" element={<NflPickThreePicks />} />
+            <Route path="/nflplayoffspickthree/mypicks" element={<NflPickThreeMyPicks />} />
+            <Route path="/nflplayoffspickthree/grouppicks" element={<NflPickThreeGroupPicks />} />
+            <Route path="/nflplayoffspickthree/scoreboard" element={<NflPickThreeScoreboard />} />
+            <Route path="/nflplayoffspickthree/standings" element={<NflPickThreeStandings />} />
+            <Route path="/nflplayoffspickthree/playerstats" element={<NflPickThreePlayerPoolsTable />} />
 
             {/* NFL Survivor */}
             <Route path="/nflsurvivor" element={<NflSurvivorHome />} />

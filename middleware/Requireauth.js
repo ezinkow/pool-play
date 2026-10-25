@@ -27,7 +27,7 @@ async function requireAuth(req, res, next) {
         }
 
         const user = await Users.findByPk(record.user_id, {
-            attributes: ["id", "name", "real_name"],
+            attributes: ["id", "name", "real_name", "is_admin"],
         });
         if (!user) return res.status(401).json({ error: "User not found" });
 

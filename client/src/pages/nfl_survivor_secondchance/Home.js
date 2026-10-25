@@ -12,8 +12,8 @@ import PoolHomeActions from "../../components/PoolHomeActions";
 import usePoolMetadata from "../../hooks/usePoolMetadata";
 import { isPoolStarted as getIsPoolStarted } from "../../utils/poolStatus";
 
-const NFL_BLUE = "#013369";
-const NFL_RED = "#D50A0A";
+const BLUE = "#013369";
+const RED = "#D50A0A";
 const WHITE = "#FFFFFF";
 
 export default function NflSurvivorHome() {
@@ -137,7 +137,7 @@ export default function NflSurvivorHome() {
 
       <div className="container" style={{ textAlign: "center", padding: "20px 16px", boxSizing: "border-box" }}>
         
-        {!activeToken && <PoolLoginPrompt accentColor={NFL_BLUE} />}
+        {!activeToken && <PoolLoginPrompt accentColor={BLUE} />}
 
         <PoolJoinCard
           gameKey="nfl_survivor_secondchance"
@@ -151,7 +151,7 @@ export default function NflSurvivorHome() {
           customEntryName={customEntryName}
           setCustomEntryName={setCustomEntryName}
           user={user}
-          accentColor={poolMetadata?.accent_color || NFL_BLUE}
+          accentColor={poolMetadata?.accent_color || BLUE}
           poolEmoji={poolMetadata?.emoji}
           joinDescription="Pick one team to win straight up each week. Survive and advance!"
           joinButtonText="Join Survivor Pool"
@@ -167,7 +167,7 @@ export default function NflSurvivorHome() {
         <PoolRulesCard
           title={poolMetadata?.pool_title || "NFL 2nd Chance Survivor"}
           rulesHtml={poolMetadata?.rules_html}
-          accentColor={poolMetadata?.accent_color || NFL_RED}
+          accentColor={poolMetadata?.accent_color || RED}
         />
       </div>
 
@@ -175,8 +175,8 @@ export default function NflSurvivorHome() {
         .btn-survivor-secondary {
             padding: 14px 28px;
             background-color: transparent;
-            color: ${NFL_BLUE};
-            border: 2px solid ${NFL_BLUE};
+            color: ${BLUE};
+            border: 2px solid ${BLUE};
             border-radius: 8px;
             font-size: 15px;
             font-weight: 700;
@@ -184,7 +184,7 @@ export default function NflSurvivorHome() {
             text-transform: uppercase;
             transition: background-color 0.2s, color 0.2s;
         }
-        .btn-survivor-secondary:hover { background-color: ${NFL_BLUE}; color: white; }
+        .btn-survivor-secondary:hover { background-color: ${BLUE}; color: white; }
         
         @media (max-width: 576px) {
             .btn-survivor-secondary {

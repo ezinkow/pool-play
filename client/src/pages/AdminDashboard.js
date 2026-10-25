@@ -226,9 +226,10 @@ export default function AdminDashboard() {
     const { user, loading: authLoading } = useAuth();
     const [syncs, setSyncs] = useState([]);
     const [games, setGames] = useState([]);
-    const [activeTab, setActiveTab] = useState("syncs");
+    const [activeTab, setActiveTab] = useState("reminders");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [allPoolSettings, setAllPoolSettings] = useState([]);
 
     const [cfbWeek, setCfbWeek] = useState(1);
     const [cfbGames, setCfbGames] = useState([]);
@@ -240,6 +241,10 @@ export default function AdminDashboard() {
 
     const token = localStorage.getItem("token");
     const isAdmin = user?.is_admin === 1 || user?.is_admin === true;
+
+    const [reminders, setReminders] = useState([]);
+    const [reminderForm, setReminderForm] = useState({ email: "", subject: "", message: "", send_at: "" });
+    const [remindersLoading, setRemindersLoading] = useState(false);
 
     // Load NCAA team colors and logos mapping
     const { teamColors } = useTeamColors(token);
@@ -278,6 +283,16 @@ export default function AdminDashboard() {
     }, [isAdmin]);
 
     useEffect(() => {
+        if (token && isAdmin) {
+            axios.get("/api/settings/active-states", {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+                .then(res => setAllPoolSettings(res.data || []))
+                .catch(err => console.error("Failed to load pool settings for dropdown", err));
+        }
+    }, [token, isAdmin]);
+
+    useEffect(() => {
         if (activeTab === "cfb_must_picks" && token && isAdmin) {
             setCfbLoading(true);
             axios.get("/api/cfb_pickem_ats/games", {
@@ -312,6 +327,21 @@ export default function AdminDashboard() {
                 .finally(() => setNcaabLoading(false));
         }
     }, [activeTab, ncaabWeek, token, isAdmin]);
+
+    useEffect(() => {
+        if (activeTab === "reminders" && token && isAdmin) {
+            setRemindersLoading(true);
+            axios.get("/api/admin/reminders", {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+                .then(res => setReminders(res.data || []))
+                .catch(err => {
+                    console.error("Failed to load reminders", err);
+                    toast.error("Failed to load reminders");
+                })
+                .finally(() => setRemindersLoading(false));
+        }
+    }, [activeTab, token, isAdmin]);
 
     if (authLoading) {
         return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, sans-serif" }}>Verifying access...</div>;
@@ -407,6 +437,33 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleCreateReminder = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await axios.post("/api/admin/reminders", reminderForm, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setReminders([res.data.reminder, ...reminders]);
+            setReminderForm({ email: "", subject: "", message: "", send_at: "" });
+            toast.success("Reminder scheduled successfully!");
+        } catch (err) {
+            toast.error("Failed to schedule reminder.");
+        }
+    };
+
+    const handleDeleteReminder = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this reminder?")) return;
+        try {
+            await axios.delete(`/api/admin/reminders/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setReminders(prev => prev.filter(r => r.id !== id));
+            toast.success("Reminder deleted.");
+        } catch (err) {
+            toast.error("Failed to delete reminder.");
+        }
+    };
+
     if (loading) {
         return <div style={{ textAlign: "center", padding: 50, fontFamily: "system-ui, sans-serif" }}>Loading Admin Hub...</div>;
     }
@@ -435,6 +492,16 @@ export default function AdminDashboard() {
 
             {/* Navigation Tabs */}
             <div style={{ display: "flex", gap: "10px", marginBottom: "20px", borderBottom: "2px solid #e2e8f0", paddingBottom: "10px", flexWrap: "wrap" }}>
+                <button
+                    onClick={() => setActiveTab("reminders")}
+                    style={{
+                        padding: "8px 16px", fontWeight: 700, fontSize: "14px", borderRadius: "6px", border: "none",
+                        background: activeTab === "reminders" ? NAVY : "#f1f5f9",
+                        color: activeTab === "reminders" ? "white" : "#475569", cursor: "pointer"
+                    }}
+                >
+                    📧 Email Reminders ({reminders.length})
+                </button>
                 <button
                     onClick={() => setActiveTab("syncs")}
                     style={{
@@ -487,7 +554,194 @@ export default function AdminDashboard() {
                 </button>
             </div>
 
-            {/* TAB 1: SYNC CONTROLS */}
+            {/* TAB 1: EMAIL REMINDERS MANAGEMENT */}
+            {activeTab === "reminders" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                    {/* Broadcast Pool Reminder Form */}
+                    <div style={{ background: "white", padding: "20px", borderRadius: 8, border: "1px solid #e2e8f0", boxShadow: "0 2px 6px rgba(0,0,0,0.04)", marginTop: "20px" }}>
+                        <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 800, color: NAVY }}>Broadcast Pool Reminder (Group Email)</h3>
+                        <form onSubmit={async (e) => {
+                            e.preventDefault();
+                            const poolKey = e.target.pool_key.value;
+                            const subject = e.target.subject.value;
+                            const message = e.target.message.value;
+                            const sendAt = e.target.send_at.value; // Optional scheduled time
+
+                            try {
+                                const endpoint = sendAt ? "/api/admin/reminders/schedule-broadcast" : "/api/admin/reminders/broadcast";
+                                const payload = sendAt
+                                    ? { pool_key: poolKey, subject, message, send_at: sendAt }
+                                    : { pool_key: poolKey, subject, message };
+
+                                const res = await axios.post(endpoint, payload, {
+                                    headers: { Authorization: `Bearer ${token}` }
+                                });
+                                toast.success(res.data.message);
+                                e.target.reset();
+
+                                // Refresh reminders list if a scheduled reminder was added
+                                if (sendAt) {
+                                    axios.get("/api/admin/reminders", { headers: { Authorization: `Bearer ${token}` } })
+                                        .then(r => setReminders(r.data || []));
+                                }
+                            } catch (err) {
+                                toast.error(err.response?.data?.error || "Failed to process broadcast reminder.");
+                            }
+                        }} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px", alignItems: "end" }}>
+
+                            <div>
+                                <label style={{ display: "block", fontSize: "12px", fontWeight: 700, marginBottom: 4, color: "#475569" }}>Select Pool</label>
+                                <select name="pool_key" required style={{ width: "100%", padding: "8px", borderRadius: 4, border: "1px solid #cbd5e1" }}>
+                                    <option value="">-- Choose Pool --</option>
+                                    {allPoolSettings.map(pool => {
+                                        const now = new Date();
+                                        const isActive = pool.is_active === true || pool.is_active === 1 || pool.is_active === "true";
+                                        const lockTime = pool.lock_date ? new Date(pool.lock_date) : null;
+
+                                        let statusLabel = "🟢 Active";
+                                        if (!isActive) {
+                                            statusLabel = "🔴 Inactive";
+                                        } else if (lockTime && now >= lockTime) {
+                                            statusLabel = "🔒 Locked / Started";
+                                        } else if (lockTime) {
+                                            statusLabel = "⏳ Open (Pre-Lock)";
+                                        }
+
+                                        return (
+                                            <option key={pool.game_key} value={pool.game_key}>
+                                                {pool.game_label || pool.game_key} ({statusLabel})
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style={{ display: "block", fontSize: "12px", fontWeight: 700, marginBottom: 4, color: "#475569" }}>Subject</label>
+                                <input
+                                    type="text"
+                                    name="subject"
+                                    required
+                                    placeholder="Make your picks!"
+                                    style={{ width: "100%", padding: "8px", borderRadius: 4, border: "1px solid #cbd5e1" }}
+                                />
+                            </div>
+
+                            <div>
+                                <label style={{ display: "block", fontSize: "12px", fontWeight: 700, marginBottom: 4, color: "#475569" }}>Send At (Optional - Leave blank to send now)</label>
+                                <input
+                                    type="datetime-local"
+                                    name="send_at"
+                                    style={{ width: "100%", padding: "8px", borderRadius: 4, border: "1px solid #cbd5e1" }}
+                                />
+                            </div>
+
+                            <div style={{ gridColumn: "1 / -1" }}>
+                                <label style={{ display: "block", fontSize: "12px", fontWeight: 700, marginBottom: 4, color: "#475569" }}>Message Body</label>
+                                <textarea
+                                    name="message"
+                                    required
+                                    placeholder="Reminder: Games lock soon, make sure your entries are submitted!"
+                                    style={{ width: "100%", padding: "8px", borderRadius: 4, border: "1px solid #cbd5e1", minHeight: "80px" }}
+                                />
+                            </div>
+
+                            <div>
+                                <button type="submit" style={{ background: NAVY, color: "white", padding: "10px 16px", borderRadius: 6, fontWeight: 700, border: "none", cursor: "pointer" }}>
+                                    Send / Schedule Broadcast 🚀
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    {/* Create Form */}
+                    <div style={{ background: "white", padding: "20px", borderRadius: 8, border: "1px solid #e2e8f0", boxShadow: "0 2px 6px rgba(0,0,0,0.04)" }}>
+                        <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 800, color: NAVY }}>Schedule New Email Reminder</h3>
+                        <form onSubmit={handleCreateReminder} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px", alignItems: "end" }}>
+                            <div>
+                                <label style={{ display: "block", fontSize: "12px", fontWeight: 700, marginBottom: 4, color: "#475569" }}>Recipient Email</label>
+                                <input
+                                    type="email"
+                                    required
+                                    value={reminderForm.email}
+                                    onChange={e => setReminderForm({ ...reminderForm, email: e.target.value })}
+                                    placeholder="user@example.com"
+                                    style={{ width: "100%", padding: "8px", borderRadius: 4, border: "1px solid #cbd5e1" }}
+                                />
+                            </div>
+                            <div>
+                                <label style={{ display: "block", fontSize: "12px", fontWeight: 700, marginBottom: 4, color: "#475569" }}>Subject</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={reminderForm.subject}
+                                    onChange={e => setReminderForm({ ...reminderForm, subject: e.target.value })}
+                                    placeholder="Pool Reminder"
+                                    style={{ width: "100%", padding: "8px", borderRadius: 4, border: "1px solid #cbd5e1" }}
+                                />
+                            </div>
+                            <div>
+                                <label style={{ display: "block", fontSize: "12px", fontWeight: 700, marginBottom: 4, color: "#475569" }}>Send At Time</label>
+                                <input
+                                    type="datetime-local"
+                                    required
+                                    value={reminderForm.send_at}
+                                    onChange={e => setReminderForm({ ...reminderForm, send_at: e.target.value })}
+                                    style={{ width: "100%", padding: "8px", borderRadius: 4, border: "1px solid #cbd5e1" }}
+                                />
+                            </div>
+                            <div style={{ gridColumn: "1 / -1" }}>
+                                <label style={{ display: "block", fontSize: "12px", fontWeight: 700, marginBottom: 4, color: "#475569" }}>Message</label>
+                                <textarea
+                                    required
+                                    value={reminderForm.message}
+                                    onChange={e => setReminderForm({ ...reminderForm, message: e.target.value })}
+                                    placeholder="Don't forget to submit your picks before lock!"
+                                    style={{ width: "100%", padding: "8px", borderRadius: 4, border: "1px solid #cbd5e1", minHeight: "80px" }}
+                                />
+                            </div>
+                            <div>
+                                <button type="submit" style={{ background: NAVY, color: "white", padding: "10px 16px", borderRadius: 6, fontWeight: 700, border: "none", cursor: "pointer" }}>
+                                    Schedule Reminder
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    {/* Existing Reminders Table */}
+                    <div style={{ background: "white", borderRadius: 8, border: "1px solid #e2e8f0", overflow: "hidden" }}>
+                        <div style={{ backgroundColor: NAVY, color: "white", padding: "12px 16px", fontWeight: 800, fontSize: "14px" }}>
+                            Scheduled Reminders Queue
+                        </div>
+                        {remindersLoading ? (
+                            <div style={{ textAlign: "center", padding: "30px", color: "#64748b" }}>Loading reminders...</div>
+                        ) : reminders.length === 0 ? (
+                            <div style={{ textAlign: "center", padding: "30px", color: "#64748b" }}>No scheduled reminders found.</div>
+                        ) : (
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                {reminders.map((rem, idx) => (
+                                    <div key={rem.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid #f1f5f9", background: idx % 2 === 0 ? "#fafafa" : "white", gap: 12 }}>
+                                        <div>
+                                            <div style={{ fontWeight: 800, fontSize: "14px", color: "#0f172a" }}>{rem.subject} <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 450 }}>({rem.email})</span></div>
+                                            <div style={{ fontSize: "12px", color: "#475569", marginTop: 2 }}>{rem.message}</div>
+                                            <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: 4 }}>
+                                                Scheduled for: {new Date(rem.send_at).toLocaleString()} | Status: <strong style={{ color: rem.sent ? "#16a34a" : "#ca8a04" }}>{rem.sent ? "Sent ✓" : "Pending ⏳"}</strong>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => handleDeleteReminder(rem.id)}
+                                            style={{ background: "#fee2e2", color: "#991b1b", border: "1px solid #fca5a5", padding: "6px 10px", borderRadius: 6, fontWeight: 700, fontSize: "12px", cursor: "pointer", whiteSpace: "nowrap" }}
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* TAB 2: SYNC CONTROLS */}
             {activeTab === "syncs" && (
                 <div style={{ background: "white", borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.06)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
                     <div style={{ backgroundColor: NAVY, color: "white", padding: "12px 16px", fontWeight: 800, fontSize: "14px", display: "flex", justifyContent: "space-between" }}>
@@ -519,7 +773,7 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            {/* TAB 2: GAME SETTINGS */}
+            {/* TAB 3: GAME SETTINGS */}
             {activeTab === "games" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     {games.map((game) => {
@@ -591,7 +845,7 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            {/* TAB 3: CFB MUST-PICKS MANAGEMENT */}
+            {/* TAB 4: CFB MUST-PICKS MANAGEMENT */}
             {activeTab === "cfb_must_picks" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     <div style={{ background: "white", padding: "16px", borderRadius: 8, border: "1px solid #e2e8f0", boxShadow: "0 2px 6px rgba(0,0,0,0.04)" }}>
@@ -756,7 +1010,7 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            {/* TAB 4: NCAAB MUST-PICKS MANAGEMENT */}
+            {/* TAB 5: NCAAB MUST-PICKS MANAGEMENT */}
             {activeTab === "ncaab_must_picks" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     <div style={{ background: "white", padding: "16px", borderRadius: 8, border: "1px solid #e2e8f0", boxShadow: "0 2px 6px rgba(0,0,0,0.04)" }}>
@@ -823,7 +1077,7 @@ export default function AdminDashboard() {
 
                                     const awaySecondaryColor = awayMeta.secondaryColor || game.away_secondary_color || "#cbd5e1";
                                     const homeSecondaryColor = homeMeta.secondaryColor || game.home_secondary_color || "#cbd5e1";
-                                    
+
                                     return (
                                         <div key={game.id} style={{
                                             display: "flex",
@@ -921,12 +1175,13 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            {/* TAB 5: BTS Randomizer */}
+            {/* TAB 6: BTS Randomizer */}
             {activeTab === "bts_randomizer" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     <BTSrandomizer />
                 </div>
             )}
+
         </div>
     );
 }

@@ -75,7 +75,7 @@ export default function OpenPoolsCard({ isDarkMode = true }) {
                 ) : (
                     <div className="open-pools-card-list">
                         {pools.map(pool => {
-                            const poolRoute = pool.prefix ? `#${pool.prefix}` : `#/${pool.game_key}`;
+                            const poolRoute = pool.url_path ? `#${pool.url_path}` : `#/${pool.game_key}`;
                             const poolLabel = pool.title || pool.game_label || pool.game_key;
                             return (
                                 <a

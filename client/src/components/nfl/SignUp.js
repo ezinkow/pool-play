@@ -85,7 +85,7 @@ export default function NbaSignUp() {
 
                 {/* Header */}
                 <div style={{ textAlign: "center", marginBottom: 32 }}>
-                    <div style={{ fontSize: 40, marginBottom: 8 }}><PoolEmoji gameKey="nfl_playoffs" /></div>
+                    <div style={{ fontSize: 40, marginBottom: 8 }}><PoolEmoji gameKey="nfl_playoffs_dfs" /></div>
                     <h1 style={{
                         color: NAVY, fontSize: 26, fontWeight: 900,
                         textTransform: "uppercase", letterSpacing: 1, marginBottom: 6,

@@ -93,8 +93,13 @@ export default function NbaSurvivorHome() {
       return;
     }
 
+    if (isPoolStarted) {
+      toast.error("Cannot leave pool after registration has closed or games have started.");
+      return;
+    }
+
     try {
-      await axios.post("/api/nba_survivor/entries/leave", {}, {
+      await axios.post(`/api/${gameKey}/entries/leave`, {}, {
         headers: { Authorization: `Bearer ${activeToken}` }
       });
       setUserEntry(null);

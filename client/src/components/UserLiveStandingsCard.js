@@ -13,6 +13,8 @@ const STANDINGS_ENDPOINTS = {
     ncaab_pickem_ats: "/api/ncaab_pickem_ats/standings",
     nfl_bts: "/api/nfl_bts/standings",
     nfl_pickem_ats: "/api/nfl_pickem_ats/standings",
+    nfl_playoffs_dfs: "/api/nfl_playoffs_dfs/standings",
+    nfl_playoffs_pickthree: "/api/nfl_playoffs_pickthree/standings",
     olympics: { url: "/api/olympics/standings", nameField: "name" },
     world_cup: { url: "/api/worldcup/standings", userIdField: "id" },
     ncaab_tourney_bracket: { url: "/api/ncaab_bracket/standings", nameField: "name" },
@@ -135,8 +137,8 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                             return {
                                 gameKey,
                                 label: pool.game_label || gameKey,
-                                route: pool.prefix,
-                                 linkTo: `${pool.prefix}/grouppicks`,
+                                route: pool.url_path,
+                                 linkTo: `${pool.url_path}/grouppicks`,
                                 status: getSurvivorStatus(entry),
                             };
                         } catch (error) {
@@ -144,8 +146,8 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                             return {
                                 gameKey,
                                 label: pool.game_label || gameKey,
-                                route: pool.prefix,
-                                linkTo: pool.prefix,
+                                route: pool.url_path,
+                                linkTo: pool.url_path,
                                 status: "Unavailable",
                             };
                         }
@@ -155,8 +157,8 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                         return {
                             gameKey,
                             label: pool.game_label || gameKey,
-                            route: pool.prefix,
-                            linkTo: pool.prefix,
+                            route: pool.url_path,
+                            linkTo: pool.url_path,
                             rank: null,
                         };
                     }
@@ -166,12 +168,12 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                         const response = await axios.get(config.url, {
                             headers: token ? { Authorization: `Bearer ${token}` } : {},
                         });
-                        const linkTo = `${pool.prefix}/standings`;
+                        const linkTo = `${pool.url_path}/standings`;
                         if (gameKey === "nfl_bts") {
                             return {
                                 gameKey,
                                 label: pool.game_label || gameKey,
-                                route: pool.prefix,
+                                route: pool.url_path,
                                 linkTo,
                                 records: getBtsRecords(response.data, user.id),
                             };
@@ -179,7 +181,7 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                         return {
                             gameKey,
                             label: pool.game_label || gameKey,
-                            route: pool.prefix,
+                            route: pool.url_path,
                             linkTo,
                             rank: getUserSpot(response.data, user, config),
                         };
@@ -188,8 +190,8 @@ export default function UserLiveStandingsCard({ isDarkMode }) {
                         return {
                             gameKey,
                             label: pool.game_label || gameKey,
-                            route: pool.prefix,
-                            linkTo: `${pool.prefix}/standings`,
+                            route: pool.url_path,
+                            linkTo: `${pool.url_path}/standings`,
                             rank: null,
                         };
                     }

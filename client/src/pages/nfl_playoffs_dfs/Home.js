@@ -9,15 +9,15 @@ export default function Home() {
     <>
       <div className="home-hero">
         <div className="hero-content">
-          <h1><PoolEmoji gameKey="nfl_playoffs" /> NFL Playoff Pool</h1>
-          <PoolCreditsSubtitle gameKey="nfl_playoffs" />
+          <h1><PoolEmoji gameKey="nfl_playoffs_dfs" /> NFL Playoff Pool</h1>
+          <PoolCreditsSubtitle gameKey="nfl_playoffs_dfs" />
           <p>
             Build your roster. Start your guys.
             Most points wins.
           </p>
 
           <div className="hero-actions">
-            <PoolHomeActions gameKey="nfl_playoffs" />
+            <PoolHomeActions gameKey="nfl_playoffs_dfs" />
 
             <a
               href="https://www.nfl.com/scores"

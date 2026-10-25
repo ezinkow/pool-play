@@ -1,15 +1,16 @@
-const { Users } = require("../models");
 const requireAuth = require("./Requireauth");
 
 const requireAdmin = async (req, res, next) => {
-    // First run standard token authentication (provided by requireAuth pattern)
-    requireAuth(req, res, async () => {
+    // Run requireAuth first
+    requireAuth(req, res, () => {
         try {
-            const user = await Users.findByPk(req.user.id);
-            if (!user || !user.is_admin) {
+            // Check the is_admin flag directly from req.user
+            const isAdmin = req.user?.is_admin === true || req.user?.is_admin === 1 || req.user?.is_admin === "true";
+            
+            if (!isAdmin) {
                 return res.status(403).json({ error: "Access denied. Administrator privileges required." });
             }
-            req.adminUser = user;
+            
             next();
         } catch (err) {
             console.error("Admin authorization error:", err);

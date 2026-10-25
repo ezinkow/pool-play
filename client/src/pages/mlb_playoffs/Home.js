@@ -92,15 +92,20 @@ export default function MlbHome() {
     }
   };
 
-  const handleLeavePool = async () => {
+   const handleLeavePool = async () => {
     if (!activeToken) {
       toast.error("Please log in first.");
       navigate("/login");
       return;
     }
 
+    if (isPoolStarted) {
+      toast.error("Cannot leave pool after registration has closed or games have started.");
+      return;
+    }
+
     try {
-      await axios.delete("/api/mlb_playoffs/entries/me", {
+      await axios.post(`/api/${gameKey}/entries/leave`, {}, {
         headers: { Authorization: `Bearer ${activeToken}` }
       });
       setUserEntry(null);

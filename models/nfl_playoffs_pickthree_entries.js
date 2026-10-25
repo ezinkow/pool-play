@@ -1,5 +1,5 @@
 module.exports = function (sequelize, DataTypes) {
-    const NflPlayoffsEntries = sequelize.define("NflPlayoffsEntries", {
+    const NflPlayoffsPickThreeEntries = sequelize.define("NflPlayoffsPickThreeEntries", {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
@@ -15,16 +15,16 @@ module.exports = function (sequelize, DataTypes) {
             allowNull: false,
         },
     }, {
-        tableName: "nfl_playoffs_entries",
+        tableName: "nfl_playoffs_pickthree_entries",
         timestamps: true,
         createdAt: "createdAt",
         updatedAt: false,
     });
 
     // Standard association mapping block
-    NflPlayoffsEntries.associate = function (models) {
-        NflPlayoffsEntries.belongsTo(models.Users, { foreignKey: "user_id" });
+    NflPlayoffsPickThreeEntries.associate = function (models) {
+        NflPlayoffsPickThreeEntries.belongsTo(models.Users, { foreignKey: "user_id" });
     };
 
-    return NflPlayoffsEntries;
+    return NflPlayoffsPickThreeEntries;
 };
