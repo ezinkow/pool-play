@@ -282,6 +282,76 @@ async function evaluateSurvivorResults() {
     }
 }
 
+async function evaluateSurvivorSecondChanceResults() {
+    const { NflSurvivorSecondChanceEntries, NflSurvivorSecondChancePicks, NflRegularSeasonGames } = db;
+    try {
+        const completedGames = await NflRegularSeasonGames.findAll({
+            where: {
+                status: ["STATUS_FINAL", "Final", "completed", "FINAL"]
+            }
+        });
+
+        if (!completedGames || completedGames.length === 0) return;
+
+        const gameWinners = {};
+        completedGames.forEach(game => {
+            if (!game.week) return;
+            if (!gameWinners[game.week]) {
+                gameWinners[game.week] = {};
+            }
+            if (game.winner) {
+                gameWinners[game.week][game.away_team] = (game.winner === game.away_team ? "WIN" : (game.winner === "PUSH" ? "PUSH" : "LOSS"));
+                gameWinners[game.week][game.home_team] = (game.winner === game.home_team ? "WIN" : (game.winner === "PUSH" ? "PUSH" : "LOSS"));
+            }
+        });
+
+        const entries = await NflSurvivorSecondChanceEntries.findAll();
+        const allPicks = await NflSurvivorSecondChancePicks.findAll();
+
+        const picksByUserAndWeek = {};
+        allPicks.forEach(p => {
+            if (!picksByUserAndWeek[p.user_id]) {
+                picksByUserAndWeek[p.user_id] = {};
+            }
+            picksByUserAndWeek[p.user_id][p.week] = p;
+        });
+
+        for (const entry of entries) {
+            let isEliminated = false;
+            let eliminatedWeek = null;
+            const userPicks = picksByUserAndWeek[entry.user_id] || {};
+
+            const weeksPlayed = Object.keys(userPicks).map(Number).sort((a, b) => a - b);
+
+            for (const wk of weeksPlayed) {
+                const pick = userPicks[wk];
+                const weekResults = gameWinners[wk];
+
+                if (pick && weekResults && weekResults[pick.team_name]) {
+                    const outcome = weekResults[pick.team_name];
+
+                    pick.status = outcome.toLowerCase();
+                    await pick.save();
+
+                    if (outcome === "LOSS") {
+                        isEliminated = true;
+                        eliminatedWeek = wk;
+                        break;
+                    }
+                }
+            }
+
+            entry.is_eliminated = isEliminated;
+            entry.eliminated_week = eliminatedWeek;
+            await entry.save();
+        }
+
+        console.log("[NFL Survivor 2nd Chance] Automated eliminations evaluated successfully.");
+    } catch (err) {
+        console.error("[NFL Survivor 2nd Chance] Error evaluating automated survivor outcomes:", err);
+    }
+}
+
 async function processMatchup(m) {
     const { NflRegularSeasonGames } = db;
     try {
@@ -366,6 +436,7 @@ async function syncNflSeason() {
         }
 
         await evaluateSurvivorResults();
+        await evaluateSurvivorSecondChanceResults();
 
     } catch (err) {
         console.error("[NFL Regular Season sync] Fatal Error:", err.response?.status, err.response?.data || err.message);
