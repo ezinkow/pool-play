@@ -101,7 +101,7 @@ export default function CfbPickemAtsPicks() {
 
         setPicks(prev => {
             const currentPickedTeam = prev[gameId]?.picked_team;
-            
+
             // If unpicking, always allow
             if (currentPickedTeam === team) {
                 const copy = { ...prev };
@@ -112,13 +112,14 @@ export default function CfbPickemAtsPicks() {
             const currentSelectedEntries = Object.values(prev).filter(p => p.picked_team);
             const totalCount = currentSelectedEntries.length;
 
-            // Calculate current standard picks count (excluding this game if switching teams)
+            // Count ONLY currently picked standard (non-must-pick) games
             const standardCount = Object.entries(prev).filter(([id, p]) => {
                 if (!p.picked_team) return false;
-                if (Number(id) === Number(gameId)) return false;
+                if (Number(id) === Number(gameId)) return false; // ignore current toggle
                 return !mustPickGameIds.has(Number(id));
             }).length;
 
+            // If it's a standard game and they've already hit the max allowed standard picks, block it
             if (!isTargetMustPick && standardCount >= maxStandardPicks) {
                 toast.error(`You can only select a maximum of ${maxStandardPicks} standard games (reserving ${totalMustPicks} slots for Must-Picks)!`);
                 return prev;
@@ -498,7 +499,7 @@ export default function CfbPickemAtsPicks() {
                             const hasStarted = isLocked || (game.home_score !== null && game.home_score !== undefined) || (game.away_score !== null && game.away_score !== undefined);
                             const rawStatus = (game.status || "").toUpperCase();
                             const liveStatusText = game.live_status || game.status_detail || (rawStatus.includes("FINAL") || rawStatus.includes("COMPLETED") ? "Final" : (hasStarted ? "In Progress" : ""));
-                            
+
                             const displayDateStr = game.game_date ? new Date(game.game_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).toUpperCase() : "TBD";
 
                             const gameHeaderLabel = hasStarted
