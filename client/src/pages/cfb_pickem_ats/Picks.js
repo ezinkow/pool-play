@@ -8,8 +8,8 @@ import PickSortSelect from "../../components/picks/PickSortSelect";
 import ClearPicksButton from "../../components/picks/ClearPicksButton";
 import PoolEmoji from "../../components/PoolEmoji";
 
-const CFB_BLUE = "#013369";
-const CFB_RED = "#D50A0A";
+const BLUE = "#013369";
+const RED = "#D50A0A";
 const GOLD = "#c89d3c";
 
 export default function CfbPickemAtsPicks() {
@@ -95,15 +95,36 @@ export default function CfbPickemAtsPicks() {
             return;
         }
 
+        const mustPickGameIds = new Set(games.filter(g => g.must_pick).map(g => g.id));
+        const isTargetMustPick = mustPickGameIds.has(Number(gameId));
+        const maxStandardPicks = 15 - totalMustPicks;
+
         setPicks(prev => {
             const currentPickedTeam = prev[gameId]?.picked_team;
+            
+            // If unpicking, always allow
             if (currentPickedTeam === team) {
                 const copy = { ...prev };
                 delete copy[gameId];
                 return copy;
             }
 
-            if (!currentPickedTeam && totalSelectedCount >= 15) {
+            const currentSelectedEntries = Object.values(prev).filter(p => p.picked_team);
+            const totalCount = currentSelectedEntries.length;
+
+            // Calculate current standard picks count (excluding this game if switching teams)
+            const standardCount = Object.entries(prev).filter(([id, p]) => {
+                if (!p.picked_team) return false;
+                if (Number(id) === Number(gameId)) return false;
+                return !mustPickGameIds.has(Number(id));
+            }).length;
+
+            if (!isTargetMustPick && standardCount >= maxStandardPicks) {
+                toast.error(`You can only select a maximum of ${maxStandardPicks} standard games (reserving ${totalMustPicks} slots for Must-Picks)!`);
+                return prev;
+            }
+
+            if (!currentPickedTeam && totalCount >= 15) {
                 toast.error("You can only select a maximum of 15 games!");
                 return prev;
             }
@@ -222,6 +243,7 @@ export default function CfbPickemAtsPicks() {
             return;
         }
 
+        // Changed from a hard block to a warning notification so users can submit partial/missing must-picks if desired
         if (completedMustPicks < totalMustPicks) {
             toast("Note: Submitting with incomplete must-picks!", { icon: '⚠️' });
         }
@@ -292,11 +314,11 @@ export default function CfbPickemAtsPicks() {
                     paddingRight: "8px"
                 }}>
                     <div style={{ textAlign: "center" }}>
-                        <h2 style={{ color: CFB_BLUE, fontSize: "19px", margin: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                        <h2 style={{ color: BLUE, fontSize: "19px", margin: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                             <PoolEmoji gameKey="cfb_pickem_ats" /> {poolTitle || "CFB PICK 'EM ATS"} <PoolEmoji gameKey="cfb_pickem_ats" />
                         </h2>
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
-                            Select up to {totalMustPicks} must-pick games & up to 15 total games (up to 3 Best Bets ⭐).
+                            Select all {totalMustPicks} must-pick games & up to 15 total games (up to 3 Best Bets ⭐).
                         </p>
                         <p style={{ color: "#666", marginTop: 2, marginBottom: 8, fontSize: "11px", lineHeight: 1.3 }}>
                             Lines will change throughout the week until 48 hours before kickoff. Picks/games are locked at kickoff.
@@ -356,7 +378,7 @@ export default function CfbPickemAtsPicks() {
                                 padding: "6px 10px",
                                 borderRadius: 6,
                                 border: "1px solid #ddd",
-                                backgroundColor: currentWeek === i + 1 ? CFB_BLUE : "white",
+                                backgroundColor: currentWeek === i + 1 ? BLUE : "white",
                                 color: currentWeek === i + 1 ? "white" : "#333",
                                 cursor: "pointer",
                                 fontWeight: 600,
@@ -538,7 +560,7 @@ export default function CfbPickemAtsPicks() {
                                                         MUST
                                                     </span>
                                                 )}
-                                                <span className={`pick-game-card-date${hasStarted ? " is-live" : ""}`} style={{ fontSize: "10px", color: hasStarted ? CFB_RED : "#000000", fontWeight: 700, textTransform: "uppercase", flexShrink: 0 }}>
+                                                <span className={`pick-game-card-date${hasStarted ? " is-live" : ""}`} style={{ fontSize: "10px", color: hasStarted ? RED : "#000000", fontWeight: 700, textTransform: "uppercase", flexShrink: 0 }}>
                                                     {gameHeaderLabel}
                                                 </span>
 
@@ -571,7 +593,7 @@ export default function CfbPickemAtsPicks() {
                                                         </span>
                                                     )}
                                                 </span>
-                                                {isLocked && <span style={{ fontSize: "9px", color: CFB_RED, fontWeight: 700 }}>🔒</span>}
+                                                {isLocked && <span style={{ fontSize: "9px", color: RED, fontWeight: 700 }}>🔒</span>}
                                             </div>
 
                                             <div style={{ flexShrink: 0 }}>
@@ -758,7 +780,7 @@ export default function CfbPickemAtsPicks() {
 
                 {sortedGames.length > 0 && (
                     <div style={{ marginTop: 20 }}>
-                        {(completedMustPicks < totalMustPicks || bestBetCount > 3) && (
+                        {completedMustPicks < totalMustPicks && (
                             <div style={{
                                 backgroundColor: "#fff7ed",
                                 border: "1px solid #fdba74",
@@ -770,7 +792,7 @@ export default function CfbPickemAtsPicks() {
                                 textAlign: "center",
                                 marginBottom: 10
                             }}>
-                                ⚠️ Note: You have completed {completedMustPicks} of {totalMustPicks} must-pick matchups. You can save with partial selections.
+                                ⚠️ Note: You have completed {completedMustPicks} of {totalMustPicks} must-pick matchups.
                             </div>
                         )}
                         <button
